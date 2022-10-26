@@ -49,6 +49,9 @@ func TestClusterCapacityUsedMetric(t *testing.T) {
 		cluster.ClientID = "some-client-id"
 		cluster.ClientSecret = "some-client-secret"
 		cluster.ClusterID = "some-cluster-id"
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.IdentityProviderID = "some-identity-provider"
 	})
 
 	kafka := kafkaMocks.BuildKafkaRequest(kafkaMocks.WithPredefinedTestValues(), func(kr *dbapi.KafkaRequest) {
@@ -92,10 +95,17 @@ func TestOCMClusterResourceQuotaMetrics(t *testing.T) {
 
 	mockClusterRelatedResourceBuilder := amsv1.NewRelatedResource().Product(clusters.AMSQuotaOSDProductName).ResourceType(clusters.AMSQuotaClusterResourceType)
 	mockClusterQuotaCostBuilder := amsv1.NewQuotaCost().
-		QuotaID(mocks.MockQuotaId).
+		QuotaID("cluster-quota-id").
 		Allowed(mocks.MockQuotaMaxAllowed).
 		Consumed(mocks.MockQuotaConsumed).
 		RelatedResources(mockClusterRelatedResourceBuilder)
+
+	mockComputeNodeRelatedResourceBuilder := amsv1.NewRelatedResource().Product(clusters.AMSQuotaOSDProductName).ResourceType(clusters.AMSQuotaComputeNodeResourceType)
+	mockComputeNodeQuotaCostBuilder := amsv1.NewQuotaCost().
+		QuotaID("compute-node-quota-id").
+		Allowed(mocks.MockQuotaMaxAllowed).
+		Consumed(mocks.MockQuotaConsumed).
+		RelatedResources(mockComputeNodeRelatedResourceBuilder)
 
 	// create a mock quota that will not be exposed as a metric as it should be ignored by the get quota cost filter
 	mockIgnoredRelatedResourceBuilder := amsv1.NewRelatedResource().ResourceName("resource-to-ignore")
@@ -105,7 +115,7 @@ func TestOCMClusterResourceQuotaMetrics(t *testing.T) {
 		Consumed(mocks.MockQuotaConsumed).
 		RelatedResources(mockIgnoredRelatedResourceBuilder)
 
-	quotaCostList, err := amsv1.NewQuotaCostList().Items(mockClusterQuotaCostBuilder, mockIgnoredQuotaCostBuilder).Build()
+	quotaCostList, err := amsv1.NewQuotaCostList().Items(mockClusterQuotaCostBuilder, mockIgnoredQuotaCostBuilder, mockComputeNodeQuotaCostBuilder).Build()
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to build mock quota list")
 	ocmServerBuilder.SetGetOrganizationQuotaCost(quotaCostList, nil)
 
@@ -125,10 +135,18 @@ func TestOCMClusterResourceQuotaMetrics(t *testing.T) {
 		t.SkipNow()
 	}
 
-	checkMetricsError := common.WaitForMetricToBePresent(h, t, metrics.ClusterProviderResourceQuotaConsumed, fmt.Sprintf("%d", mocks.MockQuotaConsumed), `cluster_provider="ocm"`, fmt.Sprintf(`quota_id="%s"`, mocks.MockQuotaId))
+	// Verify cluster quota metric is present
+	checkMetricsError := common.WaitForMetricToBePresent(h, t, metrics.ClusterProviderResourceQuotaConsumed, fmt.Sprintf("%d", mocks.MockQuotaConsumed), `cluster_provider="ocm"`, `quota_id="cluster-quota-id"`)
 	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
 
-	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterProviderResourceQuotaMaxAllowed, fmt.Sprintf("%d", mocks.MockQuotaMaxAllowed), `cluster_provider="ocm"`, fmt.Sprintf(`quota_id="%s"`, mocks.MockQuotaId))
+	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterProviderResourceQuotaMaxAllowed, fmt.Sprintf("%d", mocks.MockQuotaMaxAllowed), `cluster_provider="ocm"`, `quota_id="cluster-quota-id"`)
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
+
+	// Verify compute node quota metric is present
+	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterProviderResourceQuotaMaxAllowed, fmt.Sprintf("%d", mocks.MockQuotaMaxAllowed), `cluster_provider="ocm"`, `quota_id="compute-node-quota-id"`)
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
+
+	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterProviderResourceQuotaMaxAllowed, fmt.Sprintf("%d", mocks.MockQuotaConsumed), `cluster_provider="ocm"`, `quota_id="compute-node-quota-id"`)
 	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
 
 	// ensure any other quota that we are not interested in are not exposed (quotas are filtered to only include addons, cluster and compute node quotas)

@@ -1,10 +1,8 @@
 package auth
 
 import (
-	"net/http"
-	"strings"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
+	"net/http"
 
 	"github.com/golang/glog"
 
@@ -12,29 +10,24 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 )
 
-const (
-	KasFleetManagerAdminReadRole        = "kas-fleet-manager-admin-read"
-	KasFleetManagerAdminWriteRole       = "kas-fleet-manager-admin-write"
-	KasFleetManagerAdminFullRole        = "kas-fleet-manager-admin-full"
-	ConnectorFleetManagerAdminReadRole  = "connector-fleet-manager-admin-read"
-	ConnectorFleetManagerAdminWriteRole = "connector-fleet-manager-admin-write"
-	ConnectorFleetManagerAdminFullRole  = "connector-fleet-manager-admin-full"
-)
-
 // RolesAuthorizationMiddleware can be used to perform RBAC authorization checks on endpoints
 type RolesAuthorizationMiddleware interface {
 	// RequireRealmRole will check the given realm role exists in the request token
 	RequireRealmRole(roleName string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
 	// RequireRolesForMethods will check that at least one of the realm roles exists in the request token based on the http method in the request
-	RequireRolesForMethods(roles map[string][]string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
+	RequireRolesForMethods(code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
 }
 
-type rolesAuthMiddleware struct{}
+type rolesAuthMiddleware struct {
+	roleMapping map[string][]string
+}
 
 var _ RolesAuthorizationMiddleware = &rolesAuthMiddleware{}
 
-func NewRolesAuhzMiddleware() RolesAuthorizationMiddleware {
-	return &rolesAuthMiddleware{}
+func NewRolesAuthzMiddleware(config *AdminRoleAuthZConfig) RolesAuthorizationMiddleware {
+	return &rolesAuthMiddleware{
+		roleMapping: config.GetRoleMapping(),
+	}
 }
 
 func (m *rolesAuthMiddleware) RequireRealmRole(roleName string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
@@ -58,12 +51,12 @@ func (m *rolesAuthMiddleware) RequireRealmRole(roleName string, code errors.Serv
 	}
 }
 
-func (m *rolesAuthMiddleware) RequireRolesForMethods(roles map[string][]string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
+func (m *rolesAuthMiddleware) RequireRolesForMethods(code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			serviceErr := errors.New(code, "")
 			method := request.Method
-			allowedRoles, ok := roles[method]
+			allowedRoles, ok := m.roleMapping[method]
 			if !ok {
 				// no allowed roles defined for the given method, deny the request by default to be safer
 				glog.Infof("no allowed roles defined for method %s, deny the request for url %s", method, request.URL)
@@ -97,11 +90,7 @@ func getRealmRolesClaim(claims KFMClaims) []string {
 	if realmRoles, ok := claims["realm_access"]; ok {
 		if roles, ok := realmRoles.(map[string]interface{}); ok {
 			if arr, ok := roles["roles"].([]interface{}); ok {
-				var r []string
-				for _, i := range arr {
-					r = append(r, i.(string))
-				}
-				return r
+				return arrays.Map(arr, func(v any) string { return v.(string) })
 			}
 		}
 	}
@@ -109,7 +98,5 @@ func getRealmRolesClaim(claims KFMClaims) []string {
 }
 
 func hasRole(roles []string, roleName string) bool {
-	return arrays.FindFirstString(roles, func(role string) bool {
-		return strings.EqualFold(role, roleName)
-	}) != -1
+	return arrays.AnyMatch(roles, arrays.StringEqualsIgnoreCasePredicate(roleName))
 }

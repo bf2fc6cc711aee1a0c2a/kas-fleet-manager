@@ -5,20 +5,29 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	adminprivate "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
+	mockclusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	mockkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/onsi/gomega"
+)
+
+const (
+	testFullRole  = "kas-fleet-manager-admin-full"
+	testReadRole  = "kas-fleet-manager-admin-read"
+	testWriteRole = "kas-fleet-manager-admin-write"
+	invalidRole   = "invalid"
 )
 
 func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []string) context.Context {
@@ -27,7 +36,7 @@ func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []s
 
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
-		"iss": keycloakConfig.OSDClusterIDPRealm.ValidIssuerURI,
+		"iss": keycloakConfig.AdminAPISSORealm.ValidIssuerURI,
 		"realm_access": map[string][]string{
 			"roles": realmRoles,
 		},
@@ -69,7 +78,7 @@ func TestAdminKafka_Get(t *testing.T) {
 			name: "should fail when the role defined in the request is not any of read, write or full",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{"notallowedrole"})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{invalidRole})
 				},
 				kafkaID: sampleKafkaID,
 			},
@@ -79,15 +88,15 @@ func TestAdminKafka_Get(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminReadRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testReadRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testReadRole})
 				},
 				kafkaID: sampleKafkaID,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID))
 				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal(desiredStrimziVersion))
@@ -96,15 +105,15 @@ func TestAdminKafka_Get(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminWriteRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testWriteRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testWriteRole})
 				},
 				kafkaID: sampleKafkaID,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID))
 				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal(desiredStrimziVersion))
@@ -113,15 +122,15 @@ func TestAdminKafka_Get(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testFullRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID))
 				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal(desiredStrimziVersion))
@@ -133,7 +142,7 @@ func TestAdminKafka_Get(t *testing.T) {
 			name: "should fail when the requested kafka does not exist",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testReadRole})
 				},
 				kafkaID: "unexistingkafkaID",
 			},
@@ -150,7 +159,7 @@ func TestAdminKafka_Get(t *testing.T) {
 					claims := jwt.MapClaims{
 						"iss": "invalidiss",
 						"realm_access": map[string][]string{
-							"roles": {auth.KasFleetManagerAdminReadRole},
+							"roles": {testReadRole},
 						},
 					}
 					token := h.CreateJWTStringWithClaim(account, claims)
@@ -226,10 +235,10 @@ func TestAdminKafka_Delete(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should fail when the role defined in the request is not %s", auth.KasFleetManagerAdminFullRole),
+			name: fmt.Sprintf("should fail when the role defined in the request is not %s", testFullRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testWriteRole})
 				},
 			},
 			verifyResponse: func(resp *http.Response, err error) {
@@ -238,14 +247,14 @@ func TestAdminKafka_Delete(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testFullRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 			},
 			verifyResponse: func(resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
 			},
 		},
@@ -321,43 +330,43 @@ func TestAdminKafka_List(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testFullRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaListSize: 2,
 			},
 			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, ExpectedSize int) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(len(kafkaList.Items)).To(gomega.Equal(ExpectedSize))
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminWriteRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testWriteRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testWriteRole})
 				},
 				kafkaListSize: 2,
 			},
 			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, ExpectedSize int) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(len(kafkaList.Items)).To(gomega.Equal(ExpectedSize))
 			},
 		},
 		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminReadRole),
+			name: fmt.Sprintf("should success when the role defined in the request is %s", testReadRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testReadRole})
 				},
 				kafkaListSize: 2,
 			},
 			verifyResponse: func(resp *http.Response, err error, kafkaList adminprivate.KafkaList, ExpectedSize int) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(len(kafkaList.Items)).To(gomega.Equal(ExpectedSize))
 			},
@@ -415,16 +424,25 @@ func TestAdminKafka_Update(t *testing.T) {
 	sampleKafkaID2 := api.NewID()
 	sampleKafkaID3 := api.NewID()
 	sampleKafkaID4 := api.NewID()
+	suspendedKafkaID := api.NewID()
+	suspendingKafkaID := api.NewID()
+	deprovisionKafkaID := api.NewID()
+	deletingKafkaID := api.NewID()
+
+	falseB := false
+	trueB := true
 
 	allFieldsUpdateRequest := adminprivate.KafkaUpdateRequest{
 		StrimziVersion:       "strimzi-cluster-operator.v0.25.0-0",
 		KafkaVersion:         "2.8.3",
 		KafkaIbpVersion:      "2.8.1",
 		MaxDataRetentionSize: "70Gi",
+		Suspended:            &falseB,
 	}
 
 	initialStorageSize := "60Gi"
 	biggerStorageSizeDifferentFormat := "75000Mi"
+	muchBiggerStorageSizeDifferentFormat := "85000Mi"
 	smallerStorageSize := "50Gi"
 	smallerStorageSizeDifferentFormat := "50000Mi"
 	wrongFormatStorageSize := "80Gb"
@@ -445,7 +463,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when kafkaUpdateRequest is empty",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID:            sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{},
@@ -458,7 +476,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when kafkaUpdateRequest request params contain only strings with whitespaces",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -477,7 +495,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when the requested kafka does not exist",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testReadRole})
 				},
 				kafkaID:            "nonexistentkafkaID",
 				kafkaUpdateRequest: allFieldsUpdateRequest,
@@ -491,13 +509,13 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when upgrading all possible values",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID:            sampleKafkaID1,
 				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal(allFieldsUpdateRequest.KafkaVersion))
@@ -529,7 +547,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when the role defined in the request is not any of read, write or full",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{"notallowedrole"})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{invalidRole})
 				},
 				kafkaID: sampleKafkaID1,
 			},
@@ -539,10 +557,10 @@ func TestAdminKafka_Update(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should fail when the role defined in the request is %s", auth.KasFleetManagerAdminReadRole),
+			name: fmt.Sprintf("should fail when the role defined in the request is %s", testReadRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testReadRole})
 				},
 				kafkaID: sampleKafkaID1,
 			},
@@ -552,31 +570,31 @@ func TestAdminKafka_Update(t *testing.T) {
 			},
 		},
 		{
-			name: fmt.Sprintf("should succeed when the role defined in the request is %s", auth.KasFleetManagerAdminWriteRole),
+			name: fmt.Sprintf("should succeed when the role defined in the request is %s", testWriteRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testWriteRole})
 				},
 				kafkaID:            sampleKafkaID1,
 				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 			},
 		},
 		{
-			name: fmt.Sprintf("should succeed when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
+			name: fmt.Sprintf("should succeed when the role defined in the request is %s", testFullRole),
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID:            sampleKafkaID1,
 				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 			},
@@ -589,7 +607,7 @@ func TestAdminKafka_Update(t *testing.T) {
 					claims := jwt.MapClaims{
 						"iss": "invalidiss",
 						"realm_access": map[string][]string{
-							"roles": {auth.KasFleetManagerAdminReadRole},
+							"roles": {testReadRole},
 						},
 					}
 					token := h.CreateJWTStringWithClaim(account, claims)
@@ -609,7 +627,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when downgrading ibp version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -625,7 +643,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading ibp version to version higher than kafka version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -641,7 +659,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading ibp version when already upgrade in progress",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -656,7 +674,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when upgrading ibp version to lower than kafka version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -665,7 +683,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DesiredKafkaIbpVersion).To(gomega.Equal("2.8.2"))
@@ -676,7 +694,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when downgrading to lower minor kafka version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -692,7 +710,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading to higher minor kafka version when not in status",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -707,7 +725,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when downgrading to lower patch kafka version smaller than ibp version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID3,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -722,7 +740,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when downgrading to lower major kafka version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID4,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -737,7 +755,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading kafka version when already upgrade in progress",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -752,7 +770,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when downgrading to lower patch kafka version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -761,7 +779,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal("2.8.2"))
@@ -771,7 +789,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when upgrading to higher minor kafka version when in status",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -780,7 +798,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal("2.9.0"))
@@ -791,7 +809,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading strimzi version when already upgrade in progress",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -806,7 +824,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading strimzi version to a version not in the status",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -821,7 +839,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading simultaneously kafka, ibp and strimzi version when any of those not in status",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -838,7 +856,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when upgrading strimzi version to a version that is not ready",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -854,7 +872,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when upgrading simultaneously kafka, ibp and strimzi version",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -864,7 +882,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal("2.9.1"))
@@ -877,7 +895,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when attempting to update to the same storage size using kafka_storage_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -901,7 +919,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update to smaller storage size using kafka_storage_size_field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -916,7 +934,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update to smaller storage size in different format using kafka_storage_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -931,7 +949,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update to smaller storage size in the wrong format using kafka_storage_size_field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -946,7 +964,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when updating to bigger storage size using kafka_storage_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -954,7 +972,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(biggerStorageSizeDifferentFormat))
@@ -969,7 +987,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update storage size to a random string using kafka_storage_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -985,7 +1003,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when attempting to update to the same storage size using max_data_retention_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1007,7 +1025,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to upgrade to smaller storage size using max_data_retention_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1022,7 +1040,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update to smaller storage size in different format using kafka_storage_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1037,7 +1055,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update storage using an invalid format using max_data_retention_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1052,7 +1070,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should succeed when upgrading to bigger storage size using max_data_retention_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID2,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1060,7 +1078,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID2))
 				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(biggerStorageSizeDifferentFormat))
@@ -1075,7 +1093,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update storage size to a random string using max_data_retention_size field",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1090,7 +1108,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update storage when current storage size not set",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID4,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1105,7 +1123,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should fail when attempting to update storage when current storage size is set to some incorrect value",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID3,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1120,7 +1138,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			name: "should use max_data_retention_size over kafka_storage_size if both are specified",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
@@ -1129,7 +1147,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).To(gomega.BeNil())
+				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
 				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal("100Gi"))
@@ -1138,6 +1156,147 @@ func TestAdminKafka_Update(t *testing.T) {
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
 				g.Expect(convErr).ToNot(gomega.HaveOccurred())
 				g.Expect(result.MaxDataRetentionSize.Bytes).To(gomega.Equal(dataRetentionSizeBytes))
+			},
+		},
+		{
+			name: "should have no effect on kafka status when setting suspended to false on unsuspended kafka",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &falseB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusReady.String()))
+			},
+		},
+		{
+			name: "should turn ready kafka into suspending state",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: sampleKafkaID1,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &trueB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusSuspending.String()))
+			},
+		},
+		{
+			name: "should keep suspended kafka status unchanged when passing suspended=true",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: suspendedKafkaID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &trueB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(suspendedKafkaID))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusSuspended.String()))
+			},
+		},
+		{
+			name: "should keep deprovision kafka status unchanged when passing suspended=true",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: deprovisionKafkaID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &trueB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
+			},
+		},
+		{
+			name: "should fail when attempting to update deleting kafka when passing suspended=true",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: deletingKafkaID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &trueB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
+			},
+		},
+		{
+			name: "should change suspended kafka status to resuming when passing suspended=false",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: suspendedKafkaID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &falseB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(suspendedKafkaID))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
+			},
+		},
+		{
+			name: "should change suspending kafka status to resuming when passing suspended=false",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: suspendingKafkaID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &falseB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(suspendingKafkaID))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
+			},
+		},
+		{
+			name: "should not change kafka status if suspended parameter is omitted",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: suspendingKafkaID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					MaxDataRetentionSize: muchBiggerStorageSizeDifferentFormat,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Id).To(gomega.Equal(suspendingKafkaID))
+				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(muchBiggerStorageSizeDifferentFormat))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
 			},
 		},
 	}
@@ -1152,23 +1311,34 @@ func TestAdminKafka_Update(t *testing.T) {
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
+	h, _, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(reconcilerConfig *workers.ReconcilerConfig) {
+		// set the reconciliation interval to 1m to delay the kafka deletion process so that we can test kafka in 'deprovision'
+		// and 'deleting' state without them being deleted before our test is run.
+		// This avoid some randomly failures where the Kafka under test will be reported as not found.
+		reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Minute
+	})
+
 	defer tearDown()
 	db := test.TestServices.DBFactory.New()
 	// create a dummy cluster and assign a kafka to it
-	cluster := &api.Cluster{
-		Meta: api.Meta{
+	cluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
 			ID: api.NewID(),
-		},
-		ClusterID:          api.NewID(),
-		MultiAZ:            true,
-		Region:             "baremetal",
-		CloudProvider:      "baremetal",
-		Status:             api.ClusterReady,
-		IdentityProviderID: "some-id",
-		ClusterDNS:         "some-cluster-dns",
-		ProviderType:       api.ClusterProviderStandalone,
-	}
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = api.NewID()
+		cluster.Region = "baremetal"
+		cluster.CloudProvider = "baremetal"
+		cluster.MultiAZ = true
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterDNS = "some-cluster-dns"
+		cluster.IdentityProviderID = "some-identity-provider-id"
+	})
 
 	err2 := cluster.SetAvailableStrimziVersions(getTestStrimziVersionsMatrix())
 
@@ -1273,6 +1443,90 @@ func TestAdminKafka_Update(t *testing.T) {
 		StrimziUpgrading:       true,
 	}
 
+	suspendedKafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: suspendedKafkaID,
+		},
+		MultiAZ:                false,
+		Owner:                  "test-user",
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-kafka1",
+		OrganisationId:         "13640203",
+		Status:                 constants.KafkaRequestStatusSuspended.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualKafkaVersion:     "2.8.1",
+		DesiredKafkaVersion:    "2.8.1",
+		ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:  "2.7.0",
+		DesiredKafkaIBPVersion: "2.7.0",
+		KafkaStorageSize:       initialStorageSize,
+	}
+
+	suspendingKafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: suspendingKafkaID,
+		},
+		MultiAZ:                false,
+		Owner:                  "test-user",
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-kafka1",
+		OrganisationId:         "13640203",
+		Status:                 constants.KafkaRequestStatusSuspending.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualKafkaVersion:     "2.8.1",
+		DesiredKafkaVersion:    "2.8.1",
+		ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:  "2.7.0",
+		DesiredKafkaIBPVersion: "2.7.0",
+		KafkaStorageSize:       initialStorageSize,
+	}
+
+	deprovisionKafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: deprovisionKafkaID,
+		},
+		MultiAZ:                false,
+		Owner:                  "test-user",
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-kafka1",
+		OrganisationId:         "13640203",
+		Status:                 constants.KafkaOperationDeprovision.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualKafkaVersion:     "2.8.1",
+		DesiredKafkaVersion:    "2.8.1",
+		ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:  "2.7.0",
+		DesiredKafkaIBPVersion: "2.7.0",
+		KafkaStorageSize:       initialStorageSize,
+	}
+
+	deletingKafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: deletingKafkaID,
+		},
+		MultiAZ:                false,
+		Owner:                  "test-user",
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-kafka1",
+		OrganisationId:         "13640203",
+		Status:                 constants.KafkaRequestStatusDeleting.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualKafkaVersion:     "2.8.1",
+		DesiredKafkaVersion:    "2.8.1",
+		ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:  "2.7.0",
+		DesiredKafkaIBPVersion: "2.7.0",
+		KafkaStorageSize:       initialStorageSize,
+	}
+
 	if err := db.Create(kafka1).Error; err != nil {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
 	}
@@ -1286,6 +1540,22 @@ func TestAdminKafka_Update(t *testing.T) {
 	}
 
 	if err := db.Create(kafka4).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	if err := db.Create(suspendedKafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	if err := db.Create(suspendingKafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	if err := db.Create(deprovisionKafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	if err := db.Create(deletingKafka).Error; err != nil {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
 	}
 

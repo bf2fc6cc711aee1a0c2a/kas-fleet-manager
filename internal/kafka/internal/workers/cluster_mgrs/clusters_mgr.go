@@ -38,8 +38,7 @@ import (
 )
 
 const (
-	observabilityNamespace          = "managed-application-services-observability"
-	observabilityCatalogSourceImage = "quay.io/rhoas/observability-operator-index:v3.0.10"
+	observabilityNamespace          = constants.ObservabilityOperatorNamespace
 	observabilityOperatorGroupName  = "observability-operator-group-name"
 	observabilityCatalogSourceName  = "observability-operator-manifests"
 	observabilitySubscriptionName   = "observability-operator"
@@ -411,15 +410,20 @@ func (c *ClusterManager) reconcileDynamicCapacityInfo(cluster api.Cluster) error
 			return nil
 		}
 
+		computeMachinesConfig, err := c.DataplaneClusterConfig.DefaultComputeMachinesConfig(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
+		if err != nil {
+			return errors.Wrapf(err, "ClusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
+		}
+
 		supportedInstanceTypes := cluster.GetSupportedInstanceTypes()
 		for _, supportedInstanceType := range supportedInstanceTypes {
-			config, ok := c.DataplaneClusterConfig.DynamicScalingConfig.ForInstanceType(supportedInstanceType)
+			config, ok := computeMachinesConfig.GetKafkaWorkloadConfigForInstanceType(supportedInstanceType)
 			if !ok {
 				continue
 			}
 
 			updatedDynamicCapacityInfo[supportedInstanceType] = api.DynamicCapacityInfo{
-				MaxNodes: int32(config.ComputeNodesConfig.MaxComputeNodes),
+				MaxNodes: int32(config.ComputeNodesAutoscaling.MaxComputeNodes),
 			}
 		}
 	}
@@ -811,7 +815,7 @@ func (c *ClusterManager) buildObservabilityCatalogSourceResource() *v1alpha1.Cat
 		},
 		Spec: v1alpha1.CatalogSourceSpec{
 			SourceType: v1alpha1.SourceTypeGrpc,
-			Image:      observabilityCatalogSourceImage,
+			Image:      c.DataplaneClusterConfig.ObservabilityOperatorOLMConfig.IndexImage,
 		},
 	}
 }
@@ -846,7 +850,7 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 			CatalogSource:          observabilityCatalogSourceName,
 			Channel:                "alpha",
 			CatalogSourceNamespace: observabilityNamespace,
-			StartingCSV:            "observability-operator.v3.0.10",
+			StartingCSV:            c.DataplaneClusterConfig.ObservabilityOperatorOLMConfig.SubscriptionStartingCSV,
 			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 			Package:                observabilitySubscriptionName,
 		},
@@ -956,7 +960,12 @@ func (c *ClusterManager) buildKafkaSreClusterRoleBindingResource() *authv1.Clust
 }
 
 func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supportedInstanceType string, cluster api.Cluster) (*types.MachinePoolRequest, error) {
-	dynamicScalingConfig, found := c.DataplaneClusterConfig.DynamicScalingConfig.ForInstanceType(supportedInstanceType)
+	computeMachinesConfig, err := c.DataplaneClusterConfig.DefaultComputeMachinesConfig(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
+	if err != nil {
+		return nil, errors.Wrapf(err, "ClusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
+	}
+
+	dynamicScalingConfig, found := computeMachinesConfig.GetKafkaWorkloadConfigForInstanceType(supportedInstanceType)
 	if !found {
 		return nil, fmt.Errorf("No dynamic scaling configuration found for instance type '%s'", supportedInstanceType)
 	}
@@ -968,21 +977,16 @@ func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supported
 		Key:    kafkaInstanceProfileType,
 		Value:  supportedInstanceType,
 	}
-	instanceSize := c.DataplaneClusterConfig.DefaultComputeMachineType(cloudproviders.ParseCloudProviderID(cluster.CloudProvider))
-	if instanceSize == "" {
-		return nil, fmt.Errorf("ClusterID's %q cloud provider %q is not a recognized cloud provider", cluster.ClusterID, cluster.CloudProvider)
-	}
+
 	machinePoolTaints := []types.CluserNodeTaint{machinePoolTaint}
 	machinePool := &types.MachinePoolRequest{
 		ID:                 machinePoolID,
-		InstanceSize:       instanceSize,
+		InstanceSize:       dynamicScalingConfig.ComputeMachineType,
 		MultiAZ:            cluster.MultiAZ,
 		AutoScalingEnabled: true,
 		AutoScaling: types.MachinePoolAutoScaling{
-			// explicitely set min nodes to 1 to allow the autoscaler to consider this machine pool for scaling.
-			// The value will be rounded up to 3 on the ocm cluster provider dependending on whether the cluster is single az or multi az
-			MinNodes: 1,
-			MaxNodes: dynamicScalingConfig.ComputeNodesConfig.MaxComputeNodes,
+			MinNodes: dynamicScalingConfig.ComputeNodesAutoscaling.MinComputeNodes,
+			MaxNodes: dynamicScalingConfig.ComputeNodesAutoscaling.MaxComputeNodes,
 		},
 		ClusterID:  cluster.ClusterID,
 		NodeLabels: machinePoolLabels,

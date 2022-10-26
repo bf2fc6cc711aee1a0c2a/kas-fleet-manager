@@ -15,6 +15,7 @@ package cucumber
 
 import (
 	"context"
+	"github.com/rs/xid"
 	"sync"
 	"time"
 
@@ -28,6 +29,7 @@ func init() {
 		ctx.Step(`^LOCK-*$`, s.lock)
 		ctx.Step(`^UNLOCK-*$`, s.unlock)
 		ctx.Step(`^I sleep for (\d+(.\d+)?) seconds?$`, s.iSleepForSecond)
+		ctx.Step(`^I store an UID as \${([^"]*)}$`, s.iStoreARandomValueAs)
 
 		ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 			testCaseLock.RLock()
@@ -70,5 +72,10 @@ func (s *TestScenario) unlock() error {
 
 func (s *TestScenario) iSleepForSecond(seconds float64) error {
 	time.Sleep(time.Duration(seconds * float64(time.Second)))
+	return nil
+}
+
+func (s *TestScenario) iStoreARandomValueAs(as string) error {
+	s.Variables[as] = xid.New().String()
 	return nil
 }

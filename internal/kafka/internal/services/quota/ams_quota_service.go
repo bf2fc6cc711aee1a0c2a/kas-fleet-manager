@@ -81,12 +81,15 @@ func (q amsQuotaService) newBaseQuotaReservedResourceBuilder(kafka *dbapi.KafkaR
 		rr.ResourceType(resourceType)
 	}
 	rr.ResourceName(ocm.RHOSAKResourceName)
-	rr.BillingModel(amsv1.BillingModelMarketplace)
 	rr.Count(1)
 	return *rr
 }
 
-var supportedAMSBillingModels map[string]struct{} = map[string]struct{}{
+// supportedAMSRelatedResourceBillingModels returns the supported AMS billing
+// models for AMS RelatedResources. An AMS RelatedResource is not to be confused
+// with an AMS ReservedResource. The set of Billing models shown/accepted is
+// different between them
+var supportedAMSRelatedResourceBillingModels = map[string]struct{}{
 	string(amsv1.BillingModelMarketplace): {},
 	string(amsv1.BillingModelStandard):    {},
 }
@@ -182,7 +185,8 @@ func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, e
 // one AMS QuotaCost that complies with the following conditions:
 //   - Matches the given input quotaType
 //   - Contains at least one AMS RelatedResources whose billing model is one
-//     of the supported Billing Models specified in supportedAMSBillingModels
+//     of the supported Billing Models specified in
+//     supportedAMSRelatedResourceBillingModels
 //   - Has an "Allowed" value greater than 0
 //
 // An error is returned if the given organizationID has a QuotaCost
@@ -197,7 +201,7 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, quotaType
 	for _, qc := range quotaCosts {
 		if qc.Allowed() > 0 {
 			for _, rr := range qc.RelatedResources() {
-				if _, isCompatibleBillingModel := supportedAMSBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
+				if _, isCompatibleBillingModel := supportedAMSRelatedResourceBillingModels[rr.BillingModel()]; isCompatibleBillingModel {
 					return true, nil
 				}
 				foundUnsupportedBillingModel = rr.BillingModel()
@@ -358,6 +362,17 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		return "", errors.InvalidBillingAccount("requested billing model does not match assigned. requested: %s, assigned: %s", kafka.BillingModel, bm)
 	}
 	kafka.BillingModel = matchedBillingModel
+
+	// For Kafka requests to be provisioned on GCP currently the only supported
+	// AMS billing models are standard or Red Hat Marketplace ("marketplace").
+	// If the AMS billing model to be requested is none of those we return an error.
+	// TODO change the logic to send "marketplace-rhm" instead of the deprecated
+	// "marketplace" once the billing dependencies are updated to deal with it.
+	if kafka.CloudProvider == cloudproviders.GCP.String() &&
+		bm != string(amsv1.BillingModelStandard) &&
+		bm != string(amsv1.BillingModelMarketplace) {
+		return "", errors.GeneralError("failed to reserve quota: unsupported billing model %q for Kafka %q in cloud provider %q", bm, kafka.ID, kafka.CloudProvider)
+	}
 
 	rr.BillingModel(amsv1.BillingModel(bm))
 	rr.Count(kafkaInstanceSize.QuotaConsumed)

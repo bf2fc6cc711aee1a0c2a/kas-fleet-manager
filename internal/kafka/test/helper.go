@@ -65,8 +65,8 @@ func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 			observabilityConfiguration.EnableMock = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
 			dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
-			dataplaneClusterConfig.EnableDynamicScaleUpManagerScaleUpTrigger = false
-			dataplaneClusterConfig.EnableDynamicScaleDownManagerScaleDownTrigger = false
+			dataplaneClusterConfig.DynamicScalingConfig.EnableDynamicScaleUpManagerScaleUpTrigger = false
+			dataplaneClusterConfig.DynamicScalingConfig.EnableDynamicScaleDownManagerScaleDownTrigger = false
 
 			// enable only aws for integration tests
 			providerConfig.ProvidersConfig = config.ProviderConfiguration{

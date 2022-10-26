@@ -38,13 +38,15 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"mas-sso-realm":                     "rhoas",
 		"osd-idp-mas-sso-realm":             "rhoas-kafka-sre",
 		"enable-kafka-external-certificate": "false",
-		"aws-cluster-compute-machine-type":  "m5.xlarge",
 		"allow-developer-instance":          "true",
 		"quota-type":                        "quota-management-list",
 		"enable-deletion-of-expired-kafka":  "true",
 		"dataplane-cluster-scaling-type":    "manual",
 		"strimzi-operator-addon-id":         "managed-kafka-qe",
 		"kas-fleetshard-addon-id":           "kas-fleetshard-operator-qe",
+		"admin-api-sso-base-url":            "http://127.0.0.1:8180",
+		"admin-api-sso-endpoint-uri":        "/auth/realms/rhoas-kafka-sre",
+		"admin-api-sso-realm":               "rhoas-kafka-sre",
 	}
 }
 

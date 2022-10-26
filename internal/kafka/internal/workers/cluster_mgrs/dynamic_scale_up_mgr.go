@@ -100,7 +100,7 @@ func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
 					kafkaStreamingUnitCountPerClusterList: kafkaStreamingUnitCountPerClusterList,
 					supportedKafkaInstanceTypesConfig:     &m.KafkaConfig.SupportedInstanceTypes.Configuration,
 					clusterService:                        m.ClusterService,
-					dryRun:                                !m.DataplaneClusterConfig.EnableDynamicScaleUpManagerScaleUpTrigger,
+					dryRun:                                !m.DataplaneClusterConfig.DynamicScalingConfig.IsDataplaneScaleUpTriggerEnabled(),
 				}
 				glog.Infof("evaluating dynamic scale up for locator '%+v'", currLocator)
 				shouldScaleUp, err := dynamicScaleUpProcessor.ShouldScaleUp()
@@ -407,6 +407,13 @@ func (i *instanceTypeConsumptionSummaryCalculator) Calculate() (instanceTypeCons
 
 		if arrays.Contains(clusterStatesTowardReadyState, kafkaStreamingUnitCountPerCluster.Status) {
 			scaleUpActionIsOngoing = true
+			continue // ignore the rest of calculation as MaxUnits and Count are 0 for clusters that are in terraforming phase
+		}
+
+		clusterIsInDeletingState := arrays.Contains(clusterStatesTowardDeletion, kafkaStreamingUnitCountPerCluster.Status)
+		// ignore cluster is deleting state as they can't accept kafka anymore
+		if clusterIsInDeletingState {
+			continue
 		}
 
 		if kafkaStreamingUnitCountPerCluster.FreeStreamingUnits() >= int32(biggestKafkaInstanceSizeCapacityConsumption) {
@@ -414,9 +421,7 @@ func (i *instanceTypeConsumptionSummaryCalculator) Calculate() (instanceTypeCons
 		}
 
 		consumedStreamingUnitsInRegion = consumedStreamingUnitsInRegion + int(kafkaStreamingUnitCountPerCluster.Count)
-		if !arrays.Contains(clusterStatesTowardDeletion, kafkaStreamingUnitCountPerCluster.Status) {
-			maxStreamingUnitsInRegion = maxStreamingUnitsInRegion + int(kafkaStreamingUnitCountPerCluster.MaxUnits)
-		}
+		maxStreamingUnitsInRegion = maxStreamingUnitsInRegion + int(kafkaStreamingUnitCountPerCluster.MaxUnits)
 	}
 
 	freeStreamingUnitsInRegion := maxStreamingUnitsInRegion - consumedStreamingUnitsInRegion

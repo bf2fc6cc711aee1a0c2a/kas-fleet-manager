@@ -25,6 +25,12 @@ const (
 	KafkaRequestStatusDeprovision KafkaStatus = "deprovision"
 	// KafkaRequestStatusDeleting - external resources are being deleted for the kafka request
 	KafkaRequestStatusDeleting KafkaStatus = "deleting"
+	// KafkaStatusSuspending - status of a kafka request to be put in suspended state
+	KafkaRequestStatusSuspending KafkaStatus = "suspending"
+	// KafkaStatusSuspended - suspended kafka request
+	KafkaRequestStatusSuspended KafkaStatus = "suspended"
+	// KafkaStatusResuming - kafka request being resumed from the suspended state
+	KafkaRequestStatusResuming KafkaStatus = "resuming"
 	// KafkaOperationCreate - Kafka cluster create operations
 	KafkaOperationCreate KafkaOperation = "create"
 	// KafkaOperationDelete = Kafka cluster delete operations
@@ -56,16 +62,13 @@ var ordinals = map[string]int{
 	KafkaRequestStatusAccepted.String():     0,
 	KafkaRequestStatusPreparing.String():    10,
 	KafkaRequestStatusProvisioning.String(): 20,
+	KafkaRequestStatusResuming.String():     20,
 	KafkaRequestStatusReady.String():        30,
 	KafkaRequestStatusDeprovision.String():  40,
 	KafkaRequestStatusDeleting.String():     50,
+	KafkaRequestStatusSuspending.String():   60,
+	KafkaRequestStatusSuspended.String():    70,
 	KafkaRequestStatusFailed.String():       500,
-}
-
-// NamespaceLabels contains labels that indicates if a namespace is a managed application services namespace.
-// A namespace with these labels will be scrapped by the Observability operator to retrieve metrics
-var NamespaceLabels = map[string]string{
-	"mas-managed": "true",
 }
 
 func (k KafkaOperation) String() string {
@@ -99,5 +102,12 @@ func GetUpdateableStatuses() []string {
 		KafkaRequestStatusFailed.String(),
 		KafkaRequestStatusReady.String(),
 		KafkaRequestStatusDeprovision.String(),
+		KafkaRequestStatusSuspending.String(),
+		KafkaRequestStatusSuspended.String(),
+		KafkaRequestStatusResuming.String(),
 	}
+}
+
+func GetSuspendedStatuses() []string {
+	return []string{KafkaRequestStatusSuspending.String(), KafkaRequestStatusSuspended.String()}
 }

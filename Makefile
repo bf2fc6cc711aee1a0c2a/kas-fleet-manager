@@ -317,10 +317,12 @@ test: gotestsum
 		$(shell $(GO) list ./... | grep -v /test) \
 		$(TESTFLAGS)
 
-# filter out mocked, generated, and other files which do not need to be tested from the coverage results
+# filter out mocked, generated, and other files which do not need to be tested from the unit test coverage results
 	grep -v -e "_moq.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/main.go" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/" \
+    -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/migrations/" \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/"  \
     -e "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters/"  \
@@ -772,6 +774,8 @@ deploy/service: ALLOW_DEVELOPER_INSTANCE ?= "true"
 deploy/service: QUOTA_TYPE ?= "quota-management-list"
 deploy/service: STRIMZI_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-kafka:production-82b42db"
 deploy/service: KAS_FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
+deploy/service: OBSERVABILITY_OPERATOR_INDEX_IMAGE ?= "quay.io/rhoas/observability-operator-index:v3.0.15"
+deploy/service: OBSERVABILITY_OPERATOR_STARTING_CSV ?= "observability-operator.v3.0.15"
 deploy/service: DEX_USERNAME ?= "admin@example.com"
 deploy/service: DEX_URL ?= "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io"
 deploy/service: OBSERVATORIUM_GATEWAY ?= "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io"
@@ -794,9 +798,13 @@ deploy/service: ENABLE_KAFKA_OWNER="false"
 deploy/service: KAFKA_OWNERS="[]"
 deploy/service: SSO_PROVIDER_TYPE ?= "mas_sso"
 deploy/service: REGISTERED_USERS_PER_ORGANISATION ?= "[{id: 13640203, max_allowed_instances: 5, any_user: true, registered_users: []}, {id: 12147054, max_allowed_instances: 1, any_user: true, registered_users: []}, {id: 13639843, max_allowed_instances: 1, any_user: true, registered_users: []}]"
-deploy/service: DYNAMIC_SCALING_CONFIG ?= "{developer: {compute_nodes_config: {max_compute_nodes: 3}}, standard: {compute_nodes_config: {max_compute_nodes: 9}}}"
+deploy/service: DYNAMIC_SCALING_CONFIG ?= "{new_data_plane_openshift_version: '', enable_dynamic_data_plane_scale_up: false, enable_dynamic_data_plane_scale_down: false, compute_machine_per_cloud_provider: {aws: {cluster_wide_workload: {compute_machine_type: m5.2xlarge, compute_node_autoscaling: {min_compute_nodes: 3, max_compute_nodes: 18}}, kafka_workload_per_instance_type: {standard: {compute_machine_type: r5.xlarge, compute_node_autoscaling: {min_compute_nodes: 3, max_compute_nodes: 18}}, developer: {compute_machine_type: m5.2xlarge, compute_node_autoscaling: {min_compute_nodes: 1, max_compute_nodes: 3}}}}, gcp: {cluster_wide_workload: {compute_machine_type: custom-8-32768, compute_node_autoscaling: {min_compute_nodes: 3, max_compute_nodes: 18}}, kafka_workload_per_instance_type: {standard: {compute_machine_type: custom-8-32768, compute_node_autoscaling: {min_compute_nodes: 3, max_compute_nodes: 18}}, developer: {compute_machine_type: custom-8-32768, compute_node_autoscaling: {min_compute_nodes: 1, max_compute_nodes: 3}}}}}}"
 deploy/service: NODE_PREWARMING_CONFIG ?= "{}"
+deploy/service: ADMIN_AUTHZ_CONFIG ?= "[{method: GET, roles: [kas-fleet-manager-admin-full, kas-fleet-manager-admin-read, kas-fleet-manager-admin-write]}, {method: PATCH, roles: [kas-fleet-manager-admin-full, kas-fleet-manager-admin-write]}, {method: DELETE, roles: [kas-fleet-manager-admin-full]}]"
 deploy/service: MAX_ALLOWED_DEVELOPER_INSTANCES ?= "1"
+deploy/service: ADMIN_API_SSO_BASE_URL ?= "https://auth.redhat.com"
+deploy/service: ADMIN_API_SSO_ENDPOINT_URI ?= "/auth/realms/EmployeeIDP"
+deploy/service: ADMIN_API_SSO_REALM ?= "EmployeeIDP"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until $(OC) get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
@@ -853,6 +861,8 @@ deploy/service: deploy/envoy deploy/route
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
 		-p KAS_FLEETSHARD_OLM_INDEX_IMAGE="${KAS_FLEETSHARD_OLM_INDEX_IMAGE}" \
 		-p STRIMZI_OLM_INDEX_IMAGE="${STRIMZI_OLM_INDEX_IMAGE}" \
+		-p OBSERVABILITY_OPERATOR_INDEX_IMAGE="${OBSERVABILITY_OPERATOR_INDEX_IMAGE}" \
+		-p OBSERVABILITY_OPERATOR_STARTING_CSV="${OBSERVABILITY_OPERATOR_STARTING_CSV}" \
 		-p STRIMZI_OPERATOR_ADDON_ID="${STRIMZI_OPERATOR_ADDON_ID}" \
 		-p KAS_FLEETSHARD_ADDON_ID="${KAS_FLEETSHARD_ADDON_ID}" \
 		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
@@ -869,7 +879,11 @@ deploy/service: deploy/envoy deploy/route
 		-p REGISTERED_USERS_PER_ORGANISATION=${REGISTERED_USERS_PER_ORGANISATION} \
 		-p DYNAMIC_SCALING_CONFIG=${DYNAMIC_SCALING_CONFIG} \
 		-p NODE_PREWARMING_CONFIG=${NODE_PREWARMING_CONFIG} \
+		-p ADMIN_AUTHZ_CONFIG=${ADMIN_AUTHZ_CONFIG} \
 		-p MAX_ALLOWED_DEVELOPER_INSTANCES="${MAX_ALLOWED_DEVELOPER_INSTANCES}" \
+		-p ADMIN_API_SSO_BASE_URL="${ADMIN_API_SSO_BASE_URL}" \
+		-p ADMIN_API_SSO_ENDPOINT_URI="${ADMIN_API_SSO_ENDPOINT_URI}" \
+		-p ADMIN_API_SSO_REALM="${ADMIN_API_SSO_REALM}" \
 		| $(OC) apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 

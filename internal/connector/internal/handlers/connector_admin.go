@@ -73,14 +73,14 @@ func (h *ConnectorAdminHandler) ListConnectorClusters(w http.ResponseWriter, r *
 				return nil, err
 			}
 
-			resourceList := private.ConnectorClusterList{
+			resourceList := private.ConnectorClusterAdminList{
 				Kind:  "ConnectorClusterList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
 				Total: int32(paging.Total),
 			}
 
-			resourceList.Items = make([]private.ConnectorCluster, len(resources))
+			resourceList.Items = make([]private.ConnectorClusterAdminView, len(resources))
 			for i, resource := range resources {
 				resourceList.Items[i] = presenters.PresentPrivateConnectorCluster(resource)
 			}
@@ -393,7 +393,7 @@ func (h *ConnectorAdminHandler) GetConnector(writer http.ResponseWriter, request
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
-			connector, serviceError := h.ConnectorsService.Get(request.Context(), connectorId, "")
+			connector, serviceError := h.ConnectorsService.Get(request.Context(), connectorId)
 			if serviceError != nil {
 				return nil, serviceError
 			}

@@ -10,6 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	mockclusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -28,24 +29,41 @@ const usEast1Region = "us-east-1"
 var limit = int(1)
 
 var dummyClusters = []*api.Cluster{
-	{
-		ClusterID:          api.NewID(),
-		MultiAZ:            true,
-		Region:             afEast1Region,
-		CloudProvider:      gcp,
-		Status:             api.ClusterReady,
-		ProviderType:       api.ClusterProviderStandalone,
-		IdentityProviderID: "some-identity-provider-id",
-	},
-	{
-		ClusterID:          api.NewID(),
-		MultiAZ:            true,
-		Region:             usEast1Region,
-		CloudProvider:      aws,
-		Status:             api.ClusterReady,
-		ProviderType:       api.ClusterProviderOCM,
-		IdentityProviderID: "some-identity-provider-id",
-	},
+	mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = api.NewID()
+		cluster.Region = afEast1Region
+		cluster.CloudProvider = gcp
+		cluster.MultiAZ = true
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.IdentityProviderID = "some-identity-provider-id"
+	}),
+	mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = api.NewID()
+		cluster.MultiAZ = true
+		cluster.Region = usEast1Region
+		cluster.CloudProvider = aws
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ProviderType = api.ClusterProviderOCM
+		cluster.IdentityProviderID = "some-identity-provider-id"
+	}),
 }
 
 var mockSupportedInstanceTypes = &config.KafkaSupportedInstanceTypesConfig{
@@ -280,7 +298,7 @@ func TestListCloudProviders(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers: %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(cloudProviderList.Items).NotTo(gomega.BeEmpty(), "g.Expected cloud providers list")
+	g.Expect(cloudProviderList.Items).NotTo(gomega.BeEmpty(), "Expected cloud providers list")
 
 	// verify that the cloud providers list should contain atleast "gcp" which comes from standalone provider type
 	hasGcp := false
@@ -337,6 +355,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 
 		kc.SupportedInstanceTypes = mockSupportedInstanceTypes
 		dc.DataPlaneClusterScalingType = config.ManualScaling
+		dc.EnableReadyDataPlaneClustersReconcile = false
 		dc.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 			{
 				Name:                  "dummyCluster1",
@@ -386,7 +405,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
 	g.Expect(resp1.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(cloudProviderRegionsList.Items).NotTo(gomega.BeEmpty(), "g.Expected aws cloud provider regions to return a non-empty list")
+	g.Expect(cloudProviderRegionsList.Items).NotTo(gomega.BeEmpty(), "Expected aws cloud provider regions to return a non-empty list")
 
 	// enabled should only be set to true for regions that support at least one instance type in the providers config
 	for _, cpr := range cloudProviderRegionsList.Items {
@@ -425,7 +444,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
 	g.Expect(resp1.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(cloudProviderRegionsList.Items).NotTo(gomega.BeEmpty(), "g.Expected aws cloud provider regions to return a non-empty list")
+	g.Expect(cloudProviderRegionsList.Items).NotTo(gomega.BeEmpty(), "Expected aws cloud provider regions to return a non-empty list")
 
 	for _, cpr := range cloudProviderRegionsList.Items {
 		if cpr.Id == "us-east-1" {
@@ -450,7 +469,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 
 	g.Expect(gcpErr).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list gcp cloud providers regions:  %v", gcpErr)
 	g.Expect(gcpResp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(gcpCloudProviderRegions.Items).NotTo(gomega.BeEmpty(), "g.Expected gcp cloud provider regions to return a non-empty list")
+	g.Expect(gcpCloudProviderRegions.Items).NotTo(gomega.BeEmpty(), "Expected gcp cloud provider regions to return a non-empty list")
 
 	// all gcp regions returned should have enabled set to false as they do not support any instance types as specified in the providers config
 	for _, cpr := range gcpCloudProviderRegions.Items {
@@ -464,5 +483,5 @@ func TestListCloudProviderRegions(t *testing.T) {
 	}
 	g.Expect(errFromWrongId).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", errFromWrongId)
 	g.Expect(respFromWrongID.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(wrongCloudProviderList.Items).To(gomega.BeEmpty(), "g.Expected cloud providers regions list empty")
+	g.Expect(wrongCloudProviderList.Items).To(gomega.BeEmpty(), "Expected cloud providers regions list empty")
 }

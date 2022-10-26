@@ -614,6 +614,23 @@ components:
         version:
           description: the version of the operator
           type: string
+    ConnectorClusterPlatform:
+      description: information about the kubernetes platform
+      example:
+        id: id
+        type: type
+        version: version
+      properties:
+        type:
+          description: the kubernetes cluster type
+          type: string
+        id:
+          description: uniquely identifies the kubernetes cluster
+          type: string
+        version:
+          description: optional version of the kubernetes cluster
+          type: string
+      type: object
     ConnectorClusterStatus:
       description: Schema for the request to update a data plane cluster's status
       example:
@@ -642,6 +659,10 @@ components:
           message: message
           status: status
         version: version
+        platform:
+          id: id
+          type: type
+          version: version
         namespaces:
         - connectors_deployed: 0
           id: id
@@ -680,6 +701,8 @@ components:
           items:
             $ref: '#/components/schemas/MetaV1Condition'
           type: array
+        platform:
+          $ref: '#/components/schemas/ConnectorClusterPlatform'
         operators:
           description: the list of installed operators
           items:

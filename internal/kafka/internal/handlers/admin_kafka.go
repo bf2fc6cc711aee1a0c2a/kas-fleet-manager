@@ -9,12 +9,14 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	shared "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/gorilla/mux"
 )
 
@@ -154,6 +156,20 @@ func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				return nil
 			},
 			validateVersionsCompatibility(h, kafkaRequest, &kafkaUpdateReq),
+			func() *errors.ServiceError { // Validate Suspended parameter
+				// Kafka can only be suspended when its in a 'ready' state
+				// If Kafka is already in a 'suspending' or 'suspended' state, the request is still valid. However,
+				// no changes will be applied to the status of the Kafka instance.
+				if kafkaUpdateReq.Suspended != nil && *kafkaUpdateReq.Suspended {
+					if kafkaRequest.Status == constants.KafkaRequestStatusReady.String() ||
+						kafkaRequest.Status == constants.KafkaRequestStatusSuspended.String() ||
+						kafkaRequest.Status == constants.KafkaRequestStatusSuspending.String() {
+						return nil
+					}
+					return errors.New(errors.ErrorValidation, "kafka instance with a status of %q cannot be suspended. Kafka instances can only be suspended in the following states: [%q]", kafkaRequest.Status, constants.KafkaRequestStatusReady)
+				}
+				return nil
+			},
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
@@ -169,12 +185,32 @@ func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				return false
 			}
 
+			getStatusBasedOnSuspendedParam := func(susp *bool, kafka *dbapi.KafkaRequest) string {
+				if shared.IsNilPredicate(susp) {
+					return kafka.Status
+				} else {
+					if *susp {
+						if kafka.Status == constants.KafkaRequestStatusReady.String() {
+							return constants.KafkaRequestStatusSuspending.String()
+						}
+					} else {
+						if kafka.Status == constants.KafkaRequestStatusSuspended.String() || kafka.Status == constants.KafkaRequestStatusSuspending.String() {
+							return constants.KafkaRequestStatusResuming.String()
+						}
+					}
+				}
+				return kafka.Status
+			}
+
 			requestedStorageSize, _ := arrays.FirstNonEmpty(kafkaUpdateReq.MaxDataRetentionSize, kafkaUpdateReq.DeprecatedKafkaStorageSize)
 
 			updateRequired := update(&kafkaRequest.DesiredKafkaVersion, kafkaUpdateReq.KafkaVersion)
 			updateRequired = update(&kafkaRequest.DesiredStrimziVersion, kafkaUpdateReq.StrimziVersion) || updateRequired
 			updateRequired = update(&kafkaRequest.DesiredKafkaIBPVersion, kafkaUpdateReq.KafkaIbpVersion) || updateRequired
 			updateRequired = update(&kafkaRequest.KafkaStorageSize, requestedStorageSize) || updateRequired
+
+			newStatus := getStatusBasedOnSuspendedParam(kafkaUpdateReq.Suspended, kafkaRequest)
+			updateRequired = update(&kafkaRequest.Status, newStatus) || updateRequired
 
 			if updateRequired {
 				err := h.kafkaService.VerifyAndUpdateKafkaAdmin(ctx, kafkaRequest)

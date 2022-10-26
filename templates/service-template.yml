@@ -165,12 +165,17 @@ parameters:
 - name: DYNAMIC_SCALING_CONFIG
   displayName: Dynamic Scaling configuration
   description: "YAML content containing a map of the dynamic scaling configuration for each instance type"
-  value: "{developer: {compute_nodes_config: {max_compute_nodes: 3}}, standard: {compute_nodes_config: {max_compute_nodes: 9}}}"
+  value: "{new_data_plane_openshift_version: '', enable_dynamic_data_plane_scale_up: false, enable_dynamic_data_plane_scale_down: false, compute_machine_per_cloud_provider: {aws: {cluster_wide_workload: {compute_machine_type: m5.2xlarge, compute_node_autoscaling: {min_compute_nodes: 3, max_compute_nodes: 18}}, kafka_workload_per_instance_type: {standard: {compute_machine_type: r5.xlarge, compute_node_autoscaling: {min_compute_nodes: 3, max_compute_nodes: 18}}, developer: {compute_machine_type: m5.2xlarge, compute_node_autoscaling: {min_compute_nodes: 1, max_compute_nodes: 3}}}}, gcp: {cluster_wide_workload: {compute_machine_type: custom-8-32768, compute_node_autoscaling: {min_compute_nodes: 3, max_compute_nodes: 18}}, kafka_workload_per_instance_type: {standard: {compute_machine_type: custom-8-32768, compute_node_autoscaling: {min_compute_nodes: 3, max_compute_nodes: 18}}, developer: {compute_machine_type: custom-8-32768, compute_node_autoscaling: {min_compute_nodes: 1, max_compute_nodes: 3}}}}}}"
 
 - name: NODE_PREWARMING_CONFIG
   displayName: Node prewarming configuration
   description: "YAML content containing a map of the node prewarming configuration for each instance type"
   value: "{}"
+
+- name: ADMIN_AUTHZ_CONFIG
+  displayName: Admin API AUTHZ configuration
+  description: "YAML configuration for admin API endpoints authorization"
+  value: "[{method: GET, roles: [kas-fleet-manager-admin-full, kas-fleet-manager-admin-read, kas-fleet-manager-admin-write]}, {method: PATCH, roles: [kas-fleet-manager-admin-full, kas-fleet-manager-admin-write]}, {method: DELETE, roles: [kas-fleet-manager-admin-full]}]"
 
 - name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
   displayName: Enable Kafka TLS
@@ -411,20 +416,17 @@ parameters:
   description: redhat_sso base url
   value:  "https://sso.redhat.com"
 
-- name: CLUSTER_OPENSHIFT_VERSION
-  displayName: The version of openshift
-  description: The version of openshift to be deployed on a new created OSD cluster
-  value: ""
+- name: ADMIN_API_SSO_BASE_URL
+  description: Admin API SSO Base URL
+  value: "https://auth.redhat.com"
 
-- name: AWS_CLUSTER_COMPUTE_MACHINE_TYPE
-  displayName: AWS Compute machine type
-  description: The instance type of the AWS compute instances of Data Planes created in AWS
-  value: "m5.2xlarge"
+- name: ADMIN_API_SSO_ENDPOINT_URI
+  description: Admin API SSO Endpoint URI
+  value: "/auth/realms/EmployeeIDP"
 
-- name: GCP_CLUSTER_COMPUTE_MACHINE_TYPE
-  displayName: GCP Compute machine type
-  description: The instance type of the GCP compute instances for Data Planes created in GCP
-  value: "custom-8-32768"
+- name: ADMIN_API_SSO_REALM
+  description: Admin API SSO Realm
+  value: "EmployeeIDP"
 
 - name: ALLOW_DEVELOPER_INSTANCE
   displayName: Allow Developer Instance
@@ -540,6 +542,16 @@ parameters:
   description: kas-fleetshard operator OLM package name
   value: "kas-fleetshard-operator"
 
+- name: OBSERVABILITY_OPERATOR_INDEX_IMAGE
+  displayName: Observability operator index image
+  description: Observability operator index image
+  value: "quay.io/rhoas/observability-operator-index:v3.0.15"
+
+- name: OBSERVABILITY_OPERATOR_STARTING_CSV
+  displayName: Observability operator subscription starting csv
+  description: Observability operator subscription starting csv
+  value: "observability-operator.v3.0.15"
+
 - name: IMAGE_PULL_POLICY
   displayName: image pull policy
   description: image pull polilcy
@@ -615,6 +627,15 @@ objects:
     data:
       node-prewarming-configuration.yaml: |-
         ${NODE_PREWARMING_CONFIG}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: kas-fleet-manager-admin-authz-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      admin-authz-configuration.yaml: |-
+        ${ADMIN_AUTHZ_CONFIG}
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -816,7 +837,10 @@ objects:
               name: kas-fleet-manager-dynamic-scaling-config
           - name: kas-fleet-manager-node-prewarming-config
             configMap:
-              name: kas-fleet-manager-node-prewarming-config    
+              name: kas-fleet-manager-node-prewarming-config   
+          - name: kas-fleet-manager-admin-authz-config
+            configMap:
+              name: kas-fleet-manager-admin-authz-config 
           - name: kas-fleet-manager-allowed-users-config
             configMap:
               name: kas-fleet-manager-allowed-users-config
@@ -911,7 +935,10 @@ objects:
               subPath: dynamic-scaling-configuration.yaml
             - name: kas-fleet-manager-node-prewarming-config
               mountPath: /config/node-prewarming-configuration.yaml
-              subPath: node-prewarming-configuration.yaml  
+              subPath: node-prewarming-configuration.yaml
+            - name: kas-fleet-manager-admin-authz-config
+              mountPath: /config/admin-authz-configuration.yaml
+              subPath: admin-authz-configuration.yaml
             - name: kas-fleet-manager-allowed-users-config
               mountPath: /config/quota-management-list-configuration.yaml
               subPath: quota-management-list-configuration.yaml
@@ -1057,9 +1084,6 @@ objects:
             - --enable-access-list=${ENABLE_ACCESS_LIST}
             - --enable-instance-limit-control=${ENABLE_INSTANCE_LIMIT_CONTROL}
             - --max-allowed-instances=${MAX_ALLOWED_INSTANCES}
-            - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
-            - --aws-cluster-compute-machine-type=${AWS_CLUSTER_COMPUTE_MACHINE_TYPE}
-            - --gcp-cluster-compute-machine-type=${GCP_CLUSTER_COMPUTE_MACHINE_TYPE}
             - --dataplane-cluster-config-file=/config/dataplane-cluster-configuration.yaml
             - --kubeconfig=/secrets/service/kubeconfig
             - --kas-fleetshard-poll-interval=${KAS_FLEETSHARD_POLL_INTERVAL}
@@ -1074,6 +1098,8 @@ objects:
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
             - --strimzi-operator-index-image=${STRIMZI_OLM_INDEX_IMAGE}
             - --kas-fleetshard-operator-index-image=${KAS_FLEETSHARD_OLM_INDEX_IMAGE}
+            - --observability-operator-index-image=${OBSERVABILITY_OPERATOR_INDEX_IMAGE}
+            - --observability-operator-starting-csv=${OBSERVABILITY_OPERATOR_STARTING_CSV}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --kafka-domain-name=${KAFKA_DOMAIN_NAME}
             - --browser-url=${BROWSER_URL}
@@ -1094,7 +1120,11 @@ objects:
             - --redhat-sso-client-id-file=/secrets/service/redhatsso-service.clientId
             - --redhat-sso-client-secret-file=/secrets/service/redhatsso-service.clientSecret
             - --redhat-sso-base-url=${REDHAT_SSO_BASE_URL}
-            - --max-allowed-developer-instances=${MAX_ALLOWED_DEVELOPER_INSTANCES}
+            - --max-allowed-developer-instances=${MAX_ALLOWED_DEVELOPER_INSTANCES}    
+            - --admin-api-sso-base-url=${ADMIN_API_SSO_BASE_URL}
+            - --admin-api-sso-endpoint-uri=${ADMIN_API_SSO_ENDPOINT_URI}
+            - --admin-api-sso-realm=${ADMIN_API_SSO_REALM}
+            - --admin-authz-config-file=/config/admin-authz-configuration.yaml
             - -v=${GLOG_V}
             resources:
               requests:

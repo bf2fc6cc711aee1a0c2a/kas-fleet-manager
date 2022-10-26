@@ -10,17 +10,23 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	kafkatest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	mockclusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	mockkafkas "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 
 	"github.com/onsi/gomega"
@@ -42,19 +48,45 @@ func TestKafkaCreate_ManualScaling(t *testing.T) {
 			MultiAZ:               true,
 			Schedulable:           true,
 			KafkaInstanceLimit:    2,
-			Status:                api.ClusterWaitingForKasFleetShardOperator,
+			Status:                api.ClusterReady,
 			ProviderType:          api.ClusterProviderStandalone, // ensures there will be no errors with this test cluster not being available in ocm
 			SupportedInstanceType: api.AllInstanceTypeSupport.String(),
 		},
 	}
 	h, client, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig) {
 		d.DataPlaneClusterScalingType = config.ManualScaling
+		d.EnableReadyDataPlaneClustersReconcile = false
 		d.ClusterConfig = config.NewClusterConfig(clusterList)
 	})
 	defer teardown()
 
 	// run mock fleetshard sync
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasFleetshardSyncBuilder.SetUpdateDataplaneClusterStatusFunc(func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error {
+		clusters, err := test.TestServices.ClusterService.FindAllClusters(services.FindClusterCriteria{
+			Status: api.ClusterReady,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		for _, cluster := range clusters {
+			ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(helper, cluster.ClusterID)
+			if err != nil {
+				return err
+			}
+			clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+			resp, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, cluster.ClusterID, *clusterStatusUpdateRequest)
+			resp.Body.Close()
+			if err != nil {
+				return fmt.Errorf("failed to update cluster status via agent endpoint: %v", err)
+			}
+		}
+
+		return nil
+	})
+
 	mockKasFleetshardSync := mockKasFleetshardSyncBuilder.Build()
 	mockKasFleetshardSync.Start()
 	defer mockKasFleetshardSync.Stop()
@@ -227,6 +259,31 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 	h, client, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, providerConfig *config.ProviderConfig) {
 		if enableAutoscale {
 			d.DataPlaneClusterScalingType = config.AutoScaling
+			d.DynamicScalingConfig.ComputeMachinePerCloudProvider[cloudproviders.AWS] = config.ComputeMachinesConfig{
+				ClusterWideWorkload: &config.ComputeMachineConfig{
+					ComputeMachineType: "m5.2xlarge",
+					ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+						MaxComputeNodes: 3,
+						MinComputeNodes: 3,
+					},
+				},
+				KafkaWorkloadPerInstanceType: map[string]config.ComputeMachineConfig{
+					api.StandardTypeSupport.String(): {
+						ComputeMachineType: "r5.xlarge",
+						ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+							MaxComputeNodes: 1,
+							MinComputeNodes: 1,
+						},
+					},
+					api.DeveloperTypeSupport.String(): {
+						ComputeMachineType: "m5.2xlarge",
+						ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+							MaxComputeNodes: 1,
+							MinComputeNodes: 1,
+						},
+					},
+				},
+			}
 		}
 
 		providerConfig.ProvidersConfig.SupportedProviders = config.ProviderList{
@@ -494,7 +551,7 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 	// successful creation of kafka with a valid "standard" plan format
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error posting object:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
-	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 	g.Expect(kafka.InstanceType).To(gomega.Equal(types.STANDARD.String()))
 	g.Expect(kafka.MultiAz).To(gomega.BeTrue())
 	g.Expect(kafka.ExpiresAt).To(gomega.BeNil())
@@ -514,7 +571,7 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error posting object:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
-	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 	g.Expect(kafka.InstanceType).To(gomega.Equal(types.DEVELOPER.String()))
 	g.Expect(kafka.MultiAz).To(gomega.BeFalse())
 	// Verify that developer instances should have an expiration time set

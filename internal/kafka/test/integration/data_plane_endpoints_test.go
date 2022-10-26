@@ -16,14 +16,17 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	kafkamocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
@@ -52,7 +55,6 @@ var clusterId = api.NewID()
 var clusterDNS = "some-cluster.dns.org"
 
 func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer {
-
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, startupHook)
 	db := test.TestServices.DBFactory.New()
@@ -240,7 +242,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	})
 	defer testServer.TearDown()
 
-	// the following kafkas are g.Expected to be returned by the endpoint
+	// the following kafkas are Expected to be returned by the endpoint
 	validKafkas := []*dbapi.KafkaRequest{
 		kafkamocks.BuildKafkaRequest(
 			kafkamocks.WithPredefinedTestValues(),
@@ -267,6 +269,26 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-4"),
 			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusDeprovision.String()),
+		),
+
+		// suspending related kafkas
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-5"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusSuspended.String()),
+		),
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-6"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusSuspending.String()),
+		),
+		kafkamocks.BuildKafkaRequest(
+			kafkamocks.WithPredefinedTestValues(),
+			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
+			kafkamocks.With(kafkamocks.NAME, "test-kafka-7"),
+			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusResuming.String()),
 		),
 	}
 
@@ -312,7 +334,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(list.Items).To(gomega.HaveLen(4)) // only count valid Managed Kafka CR
+	g.Expect(list.Items).To(gomega.HaveLen(7)) // only count valid Managed Kafka CR
 
 	var kafkaConfig *config.KafkaConfig
 	testServer.Helper.Env.MustResolve(&kafkaConfig)
@@ -329,6 +351,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 			g.Expect(mk.Metadata.Annotations.Bf2OrgId).To(gomega.Equal(k.ID))
 			g.Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileType).To(gomega.Equal(k.InstanceType))
 			g.Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileQuotaConsumed).To(gomega.Equal(strconv.Itoa(instanceSize.QuotaConsumed)))
+			g.Expect(mk.Metadata.Labels.Bf2OrgSuspended).To(gomega.Equal(fmt.Sprintf("%t", arrays.Contains(constants2.GetSuspendedStatuses(), k.Status))))
 			g.Expect(mk.Metadata.Namespace).NotTo(gomega.BeEmpty())
 			g.Expect(mk.Spec.Deleted).To(gomega.Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
 			g.Expect(mk.Spec.Versions.Kafka).To(gomega.Equal(k.DesiredKafkaVersion))
@@ -427,7 +450,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 	}
 
 	// updating KafkaStorageSize, so that later it can be validated against "PrivateClient.AgentClustersApi.GetKafkas()"
-	adminCtx := NewAuthenticatedContextForAdminEndpoints(testServer.Helper, []string{auth.KasFleetManagerAdminWriteRole})
+	adminCtx := NewAuthenticatedContextForAdminEndpoints(testServer.Helper, []string{testFullRole})
 	client := test.NewAdminPrivateAPIClient(testServer.Helper)
 	for _, kafka := range testKafkas {
 		result, resp, err := client.DefaultApi.UpdateKafkaById(adminCtx, kafka.ID, biggerStorageUpdateRequest)
@@ -990,7 +1013,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 				return false, err
 			}
 			if len(routes) != 2 {
-				return false, errors.Errorf("g.Expected length of routes array to be 1")
+				return false, errors.Errorf("Expected length of routes array to be 1")
 			}
 			wantDomain1 := "admin-api-prefix.some-bootstrap⁻host"
 			if routes[0].Domain != wantDomain1 {
@@ -1021,16 +1044,6 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 		}
 		g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusReady.String()))
 		g.Expect(c.AdminApiServerURL).To(gomega.Equal(adminApiServerUrl))
-	}
-
-	db = test.TestServices.DBFactory.New()
-	clusterDetails := &api.Cluster{
-		ClusterID: testServer.ClusterID,
-	}
-	err = db.Unscoped().Where(clusterDetails).First(clusterDetails).Error
-	g.Expect(err).NotTo(gomega.HaveOccurred(), "failed to find kafka request")
-	if err := getAndDeleteServiceAccounts(clusterDetails.ClientID, testServer.Helper.Env); err != nil {
-		t.Fatalf("Failed to delete service account with client id: %v", clusterDetails.ClientID)
 	}
 }
 
@@ -1229,6 +1242,107 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 	g.Expect(c.FailedReason).To(gomega.BeEmpty())
 }
 
+func TestDataPlaneEndpoints_UpdateManagedKafka_PrewarmingStatusInfoMetrics(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
+		username, _ := account.GetUsername()
+		return jwt.MapClaims{
+			"username": username,
+			"iss":      test.TestServices.KeycloakConfig.SSOProviderRealm().ValidIssuerURI,
+			"realm_access": map[string][]string{
+				"roles": {"kas_fleetshard_operator"},
+			},
+			"clientId": fmt.Sprintf("kas-fleetshard-agent-%s", cid),
+		}
+	}, nil)
+
+	defer testServer.TearDown()
+
+	updateReq := map[string]private.DataPlaneKafkaStatus{
+		"reserved-kafka-standard-1": {
+			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+				{
+					Type:   "Ready",
+					Reason: "Error",
+					Status: "False",
+				},
+			},
+		},
+		"reserved-kafka-developer-1": {
+			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+				{
+					Type:   "Ready",
+					Reason: "",
+					Status: "False",
+				},
+			},
+		},
+		"reserved-kafka-developer-2": {
+			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+				{
+					Type:   "Ready",
+					Reason: "Error",
+					Status: "False",
+				},
+			},
+		},
+		"reserved-kafka-standard-2": {
+			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+				{
+					Type:   "Ready",
+					Status: "True",
+				},
+			},
+		},
+		"reserved-kafka-developer-3": {
+			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
+				{
+					Type:   "Ready",
+					Reason: "",
+					Status: "Unknown",
+				},
+			},
+		},
+	}
+	resp, err := testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	prewarmedCountForStandard := map[string]int{
+		"error":               1,
+		"ready":               1,
+		"unknown":             0,
+		"deleted":             0,
+		"rejected":            0,
+		"installing":          0,
+		"rejectedClusterFull": 0,
+	}
+	prewarmedCountForDeveloper := map[string]int{
+		"error":               1,
+		"ready":               0,
+		"deleted":             0,
+		"unknown":             1,
+		"rejected":            0,
+		"installing":          1,
+		"rejectedClusterFull": 0,
+	}
+
+	// now verify that the metric value have been published
+	for status, count := range prewarmedCountForStandard {
+		metricValue := fmt.Sprintf("%d", count)
+		checkMetricsError := common.WaitForMetricToBePresent(testServer.Helper, t, metrics.PrewarmingStatusInfoCount, metricValue, api.StandardTypeSupport.String(), testServer.ClusterID, status)
+		g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
+	}
+	for status, count := range prewarmedCountForDeveloper {
+		metricValue := fmt.Sprintf("%d", count)
+		checkMetricsError := common.WaitForMetricToBePresent(testServer.Helper, t, metrics.PrewarmingStatusInfoCount, metricValue, api.DeveloperTypeSupport.String(), testServer.ClusterID, status)
+		g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
+	}
+}
+
 func findManagedKafkaByID(slice []private.ManagedKafka, kafkaId string) *private.ManagedKafka {
 	match := func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Bf2OrgId == kafkaId }
 	for _, item := range slice {
@@ -1253,9 +1367,10 @@ func TestDataPlaneEndpoints_ReassignRejectedKafkaDueToInsufficientResources(t *t
 	configHook := func(clusterConfig *config.DataplaneClusterConfig, reconcilerConfig *workers.ReconcilerConfig) {
 		reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Second
 		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+		clusterConfig.EnableReadyDataPlaneClustersReconcile = false
 		clusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
-			config.ManualCluster{ClusterId: standardClusterID, ClusterDNS: standardClusterDNS, Status: api.ClusterWaitingForKasFleetShardOperator, KafkaInstanceLimit: 1, Region: region, MultiAZ: true, CloudProvider: cloudProvider, Schedulable: true, SupportedInstanceType: "standard", ProviderType: api.ClusterProviderStandalone},
-			config.ManualCluster{ClusterId: developerClusterID, ClusterDNS: developerClusterDNS, Status: api.ClusterWaitingForKasFleetShardOperator, KafkaInstanceLimit: 1, Region: region, MultiAZ: false, CloudProvider: cloudProvider, Schedulable: true, SupportedInstanceType: "developer", ProviderType: api.ClusterProviderStandalone},
+			config.ManualCluster{ClusterId: standardClusterID, ClusterDNS: standardClusterDNS, Status: api.ClusterReady, KafkaInstanceLimit: 1, Region: region, MultiAZ: true, CloudProvider: cloudProvider, Schedulable: true, SupportedInstanceType: "standard", ProviderType: api.ClusterProviderStandalone},
+			config.ManualCluster{ClusterId: developerClusterID, ClusterDNS: developerClusterDNS, Status: api.ClusterReady, KafkaInstanceLimit: 1, Region: region, MultiAZ: false, CloudProvider: cloudProvider, Schedulable: true, SupportedInstanceType: "developer", ProviderType: api.ClusterProviderStandalone},
 		})
 	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
@@ -1275,6 +1390,32 @@ func TestDataPlaneEndpoints_ReassignRejectedKafkaDueToInsufficientResources(t *t
 		// We don't need to update the status of the kafka as it will be updated by the test itself
 		return nil
 	})
+
+	kasFleetshardSyncBuilder.SetUpdateDataplaneClusterStatusFunc(func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error {
+		clusters, err := test.TestServices.ClusterService.FindAllClusters(services.FindClusterCriteria{
+			Status: api.ClusterReady,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		for _, cluster := range clusters {
+			ctx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(helper, cluster.ClusterID)
+			if err != nil {
+				return err
+			}
+			clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+			resp, err := privateClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, cluster.ClusterID, *clusterStatusUpdateRequest)
+			resp.Body.Close()
+			if err != nil {
+				return fmt.Errorf("failed to update cluster status via agent endpoint: %v", err)
+			}
+		}
+
+		return nil
+	})
+
 	kasFleetshardSync := kasFleetshardSyncBuilder.Build()
 	kasFleetshardSync.Start()
 

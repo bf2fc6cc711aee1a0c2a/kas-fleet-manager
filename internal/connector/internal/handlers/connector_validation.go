@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"context"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
@@ -21,21 +22,16 @@ func validateConnectorClusterId(ctx context.Context, clusterService services.Con
 	}
 }
 
-func validateConnectorRequest(connectorTypesService services.ConnectorTypesService, resource *public.ConnectorRequest, tid string) handlers.Validate {
-	return connectorValidationFunction(connectorTypesService, &resource.ConnectorTypeId, &resource.Channel, &resource.Connector, tid)
+func validateConnectorRequest(connectorTypesService services.ConnectorTypesService, resource *public.ConnectorRequest) handlers.Validate {
+	return connectorValidationFunction(connectorTypesService, &resource.ConnectorTypeId, &resource.Channel, &resource.Connector)
 }
 
-func validateConnector(connectorTypesService services.ConnectorTypesService, resource *public.Connector, tid string) handlers.Validate {
-	return connectorValidationFunction(connectorTypesService, &resource.ConnectorTypeId, &resource.Channel, &resource.Connector, tid)
+func validateConnector(connectorTypesService services.ConnectorTypesService, resource *public.Connector) handlers.Validate {
+	return connectorValidationFunction(connectorTypesService, &resource.ConnectorTypeId, &resource.Channel, &resource.Connector)
 }
 
-func connectorValidationFunction(connectorTypesService services.ConnectorTypesService, connectorTypeId *string, channel *public.Channel, connectorConfiguration *map[string]interface{}, tid string) handlers.Validate {
+func connectorValidationFunction(connectorTypesService services.ConnectorTypesService, connectorTypeId *string, channel *public.Channel, connectorConfiguration *map[string]interface{}) handlers.Validate {
 	return func() *errors.ServiceError {
-
-		// If a tid was defined on the URL verify that it matches the posted resource connector type
-		if tid != "" && tid != *connectorTypeId {
-			return errors.BadRequest("resource type id should be: %s", tid)
-		}
 		ct, err := connectorTypesService.Get(*connectorTypeId)
 		if err != nil {
 			return errors.BadRequest("YYY invalid connector type id %v : %s", connectorTypeId, err)

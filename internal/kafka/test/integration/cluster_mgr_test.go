@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 
@@ -18,6 +19,7 @@ import (
 	kafkaMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -37,6 +39,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	// start servers
 	zeroDeveloperLimit := 0
+	var dataplaneConfig *config.DataplaneClusterConfig
 	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, p *config.ProviderConfig) {
 		p.ProvidersConfig.SupportedProviders = config.ProviderList{
 			config.Provider{
@@ -61,7 +64,8 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 		// turn auto scaling on to enable cluster auto creation
 		d.DataPlaneClusterScalingType = config.AutoScaling
-		d.EnableDynamicScaleUpManagerScaleUpTrigger = true
+		d.DynamicScalingConfig.EnableDynamicScaleUpManagerScaleUpTrigger = true
+		dataplaneConfig = d
 	})
 
 	// setup required services
@@ -72,8 +76,8 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	kasfFleetshardSync.Start()
 
 	defer func() {
-		teardown()
 		kasfFleetshardSync.Stop()
+		teardown()
 
 		list, _ := test.TestServices.ClusterService.FindAllClusters(services.FindClusterCriteria{
 			Region:   mocks.MockCluster.Region().ID(),
@@ -100,12 +104,22 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
 
-	// waiting for cluster state to become `cluster_provisioning`, so that its struct can be persisted
+	// waiting for cluster state to become `provisioning`, so that its struct can be persisted
 	cluster, checkProvisioningErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterProvisioning)
 	g.Expect(checkProvisioningErr).NotTo(gomega.HaveOccurred(), "Error waiting for cluster to start provisioning: %s %v", cluster.ClusterID, checkProvisioningErr)
 
 	// save cluster struct to be reused in by the cleanup script if the cluster won't become ready before the timeout
 	err = common.PersistClusterStruct(*cluster, api.ClusterProvisioning)
+	if err != nil {
+		t.Fatalf("failed to persist cluster struct %v", err)
+	}
+
+	// waiting for cluster state to become `waiting_for_kas_fleetshard_operator`, so that its persisted struct can be updated after terraforming phase
+	cluster, checkWaitingForKasFleetshardOperatorErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterWaitingForKasFleetShardOperator)
+	g.Expect(checkWaitingForKasFleetshardOperatorErr).NotTo(gomega.HaveOccurred(), "Error waiting for cluster to start provisioning: %s %v", cluster.ClusterID, checkWaitingForKasFleetshardOperatorErr)
+
+	// save the updated cluster struct
+	err = common.PersistClusterStruct(*cluster, api.ClusterWaitingForKasFleetShardOperator)
 	if err != nil {
 		t.Fatalf("failed to persist cluster struct %v", err)
 	}
@@ -126,9 +140,9 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to persist cluster struct %v", err)
 	}
-	g.Expect(cluster.DeletedAt.Valid).To(gomega.Equal(false), fmt.Sprintf("g.Expected deleted_at property to be non valid meaning cluster not soft deleted, instead got %v", cluster.DeletedAt))
-	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterReady), fmt.Sprintf("g.Expected status property to be %s, instead got %s ", api.ClusterReady, cluster.Status))
-	g.Expect(cluster.IdentityProviderID).ToNot(gomega.BeEmpty(), "g.Expected identity_provider_id property to be defined")
+	g.Expect(cluster.DeletedAt.Valid).To(gomega.Equal(false), fmt.Sprintf("Expected deleted_at property to be non valid meaning cluster not soft deleted, instead got %v", cluster.DeletedAt))
+	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterReady), fmt.Sprintf("Expected status property to be %s, instead got %s ", api.ClusterReady, cluster.Status))
+	g.Expect(cluster.IdentityProviderID).ToNot(gomega.BeEmpty(), "Expected identity_provider_id property to be defined")
 
 	// check the state of cluster on ocm to ensure cluster was provisioned successfully
 	ocmCluster, err := ocmClient.GetCluster(cluster.ClusterID)
@@ -140,12 +154,65 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	g.Expect(cluster.ExternalID).NotTo(gomega.Equal(""))
 	g.Expect(cluster.ExternalID).To(gomega.Equal(ocmCluster.ExternalID()))
 
+	// check that the default machine pool is created with correct min/max node and machine type.
+	// Only do the check for when running against real OCM environment
+	ocmConfig := test.TestServices.OCMConfig
+	computeMachinesConfig, err := dataplaneConfig.DefaultComputeMachinesConfig(cloudproviders.AWS)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	if ocmConfig.MockMode != ocm.MockModeEmulateServer {
+		clusterWideWorkloadConfig := computeMachinesConfig.ClusterWideWorkload
+		nodes := ocmCluster.Nodes()
+		g.Expect(nodes.ComputeMachineType().ID()).To(gomega.Equal(clusterWideWorkloadConfig.ComputeMachineType))
+		g.Expect(nodes.AutoscaleCompute().MinReplicas()).To(gomega.Equal(clusterWideWorkloadConfig.ComputeNodesAutoscaling.MinComputeNodes))
+		g.Expect(nodes.AutoscaleCompute().MaxReplicas()).To(gomega.Equal(clusterWideWorkloadConfig.ComputeNodesAutoscaling.MaxComputeNodes))
+	}
+
 	// check the state of the managed kafka addon on ocm to ensure it was installed successfully
 	strimziOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, test.TestServices.OCMConfig.StrimziOperatorAddonID)
 	if err != nil {
 		t.Fatalf("failed to get the strimzi operator addon for cluster %s", cluster.ClusterID)
 	}
 	g.Expect(strimziOperatorAddonInstallation.State()).To(gomega.Equal(clustersmgmtv1.AddOnInstallationStateReady))
+
+	// check that the kafka-standard machine pool is created in OCM
+	standardKafkaMachinePoolID := "kafka-standard"
+	if ocmConfig.MockMode != ocm.MockModeEmulateServer {
+		standardKafkaWorkloadMachineConfig, ok := computeMachinesConfig.GetKafkaWorkloadConfigForInstanceType(api.StandardTypeSupport.String())
+		g.Expect(ok).To(gomega.BeTrue())
+
+		standardKafkaMachinePool, machinePoolErr := ocmClient.GetMachinePool(cluster.ClusterID, standardKafkaMachinePoolID)
+		// check that the machinepool is present
+		g.Expect(machinePoolErr).NotTo(gomega.HaveOccurred())
+		g.Expect(standardKafkaMachinePool).NotTo(gomega.BeNil())
+		g.Expect(standardKafkaMachinePool.InstanceType()).To(gomega.Equal(standardKafkaWorkloadMachineConfig.ComputeMachineType))
+
+		// check min and max nodes configuration
+		autoscaling := standardKafkaMachinePool.Autoscaling()
+		g.Expect(autoscaling.MinReplicas()).To(gomega.Equal(standardKafkaWorkloadMachineConfig.ComputeNodesAutoscaling.MinComputeNodes))
+		g.Expect(autoscaling.MaxReplicas()).To(gomega.Equal(standardKafkaWorkloadMachineConfig.ComputeNodesAutoscaling.MaxComputeNodes))
+
+		// check that the machinepool labels match what's expected
+		bf2InstanceProfileTypeKey := "bf2.org/kafkaInstanceProfileType"
+		labels := standardKafkaMachinePool.Labels()
+		labelValue, ok := labels[bf2InstanceProfileTypeKey]
+		g.Expect(ok).To(gomega.BeTrue())
+		g.Expect(labelValue).To(gomega.Equal(api.StandardTypeSupport.String()))
+
+		// check that the machinepool taints match what's expected
+		taints := standardKafkaMachinePool.Taints()
+		taintFound := false
+		for _, taint := range taints {
+			if taint.Key() == bf2InstanceProfileTypeKey {
+				taintFound = true
+				g.Expect(taint.Effect()).To(gomega.Equal("NoExecute"))
+				g.Expect(taint.Value()).To(gomega.Equal(api.StandardTypeSupport.String()))
+				break
+			}
+		}
+
+		g.Expect(taintFound).To(gomega.BeTrue())
+	}
 
 	// The cluster DNS should have been persisted
 	ocmClusterDNS, err := ocmClient.GetClusterDNS(cluster.ClusterID)
@@ -202,8 +269,8 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 			},
 		}
 		// enable scale down trigger
-		d.EnableDynamicScaleDownManagerScaleDownTrigger = true
-		d.EnableDynamicScaleUpManagerScaleUpTrigger = false
+		d.DynamicScalingConfig.EnableDynamicScaleDownManagerScaleDownTrigger = true
+		d.DynamicScalingConfig.EnableDynamicScaleUpManagerScaleUpTrigger = false
 		d.DataPlaneClusterScalingType = config.AutoScaling
 	})
 

@@ -1,67 +1,90 @@
-# Array Utilities
-This document describes how to use array utilities in `pkg/shared/utils` folder
+# Slice Utilities
+This document describes how to use array utilities in `pkg/shared/utils` folder.
 
-## Generic Array
+## API
 
 ### FindFirst
 ```go
-func FindFirst(predicate func(x interface{}) bool, values ...interface{}) (int, interface{})
+func FindFirst[T any](values []T, predicate PredicateFunc[T]) (index int, value T)
 ```
-This function finds the first value `x` into the passed in values where `predicate(x)` is `true`.
-It takes a variadic list of `interface{}` so that it can be used with any values
+This function finds the first value `x` into the passed-in values where `predicate(x)` is `true`.
 
 Returned values are:
-* the index of the value into the list of passed in values (-1 if not found)
-* the value that has been found or `nil` (type: `interface{}`)
+* The index of the value into the list of passed-in values (-1 if not found)
+* The found value or the _zero value_ for the `T` type
 
 Some example usage can be found [here](../pkg/shared/utils/arrays/generic_array_utils_test.go)
 
-## String Array
+### Filter
 
-### FindFirstString
 ```go
-func FindFirstString(values []string, predicate func(x string) bool) int
+func Filter[T any](values []T, predicate PredicateFunc[T]) []T
 ```
-Finds the first `string` into the array matching the given predicate.
-If the `string` is found, returns its index, otherwise returns `-1`
+This function returns a slice whose values are all the value `x` of the passed in slice (`values`) where `predicate(x)` is `true`
 
-### FilterStringSlice
+### AnyMatch
 ```go
-func FilterStringSlice(values []string, predicate func(x string) bool) []string
+func AnyMatch[T any](values []T, predicate PredicateFunc[T]) bool
 ```
-Returns a `slice` containing all the values of `values` that match the predicate `predicate`
+This function checks whether the passed-in slice contains at least one element `x` where `predicate(x)` is `true`.
 
-### FirstNonEmpty
+### NoneMatch
 ```go
-func FirstNonEmpty(values ...string) (string, error)
+func NoneMatch[T any](values []T, predicate PredicateFunc[T]) bool
 ```
-Returns the first value among the passed in values that is not equal to the empty string ("").
-If there are no non-empty strings, it returns an empty string and an error.
+This function checks whether the passed-in slice does not contain any element `x` where `predicate(x)` is `true`.
 
-This function is useful when we need to assign one value among a list of alternatives.
-For example, the following code:
+### AllMatch
 ```go
-val := option1
-if val == "" {
-	val = option2
-}
-if val == "" {
-	val = option3
-}
-if val == "" {
-	return fmt.Errorf("Value not found")
-}
+func AllMatch[T any](values []T, predicate PredicateFunc[T]) bool
 ```
-would become:
-```go
-val, err := arrays.FirstNonEmpty(option1, option2, option3)
-if err != nil {
-	return err
-}
-```
+This function checks whether `predicate(x)` is `true` for all the element `x` of the passed-in slice.
 
-### FirstNonEmptyOrDefault
+### Map
 ```go
-func FirstNonEmptyOrDefault(defaultValue string, values ...string)
+func Map[T any, U any](values []T, mapper MapperFunc[T, U]) []U
 ```
-This function works the same as [FirstNonEmpty](#FirstNonEmpty), but instead of returning an error, returns the default value when no non-empty string can be found
+This function transforms all the elements of a slice of `T`s into a slice of `U`s by applying the `mapper` function to each element.
+
+### Reduce
+```go
+func Reduce[T any, U any](values []T, reducer ReducerFunc[T, U], initialValue U) U
+```
+This function reduces the passed-in slice to a single value by applying the reducer function.
+
+### Contains
+```go
+func Contains[T comparable](values []T, s T) bool
+```
+This function checks whether the given slice contains the given value.
+
+### ForEach
+```go
+func ForEach[T any](values []T, consumer ConsumerFunc[T])
+```
+This function applies the consumer function to each of the elements of the slice.
+
+## Common predicates
+
+### IsNotNilPredicate
+Checks whether the value is not nil
+
+### IsNilPredicate
+Checks whether the value is nil
+
+### StringNotEmptyPredicate
+This predicate works for both `string` and `*string` and returns `true` when the `string` is not empty.
+A `string` is `empty` when it is equal to `""`.
+A `*string` is `empty` when it is equal to `""` or is `nil`.
+
+### StringEmptyPredicate
+This predicate works for both `string` and `*string` and returns `true` when the `string` is empty.
+A `string` is `empty` when it is equal to `""`.
+A `*string` is `empty` when it is equal to `""` or is `nil`.
+
+### CompositePredicateAll
+This predicate is composed of a list of predicates and returns `true` only if all of its sub-predicates return `true`.
+
+### CompositePredicateAny
+This predicate is composed of a list of predicates and returns `true` only if at least one sub-predicate returns `true`.
+

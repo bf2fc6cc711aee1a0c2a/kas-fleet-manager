@@ -333,6 +333,7 @@ func (k *connectorClusterService) UpdateConnectorClusterStatus(ctx context.Conte
 				Version:    status.Version,
 				Conditions: status.Conditions,
 				Operators:  status.Operators,
+				Platform:   status.Platform,
 			}}).Error; err != nil {
 			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update status")
 		}

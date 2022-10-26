@@ -12,6 +12,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/onsi/gomega"
 )
 
@@ -54,10 +56,11 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 			want: errors.BadRequest("Cluster id test-cluster-id not found"),
 			expectCounters: map[string]int{
-				"ready":    0,
-				"failed":   0,
-				"deleting": 0,
-				"rejected": 0,
+				"ready":     0,
+				"failed":    0,
+				"deleting":  0,
+				"rejected":  0,
+				"suspended": 0,
 			},
 		},
 		{
@@ -65,7 +68,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			fields: fields{
 				clusterService: &ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return &api.Cluster{}, nil
+						return &api.Cluster{ClusterID: "test-cluster-id"}, nil
 					},
 				},
 				kafkaService: func(c map[string]int) KafkaService {
@@ -169,10 +172,11 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 			want: nil,
 			expectCounters: map[string]int{
-				"ready":    1,
-				"failed":   1,
-				"deleting": 1,
-				"rejected": 1,
+				"ready":     1,
+				"failed":    1,
+				"deleting":  1,
+				"rejected":  1,
+				"suspended": 0,
 			},
 		},
 		{
@@ -180,7 +184,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			fields: fields{
 				clusterService: &ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return &api.Cluster{}, nil
+						return &api.Cluster{ClusterID: "test-cluster-id"}, nil
 					},
 					GetClusterDNSFunc: func(clusterID string) (string, *errors.ServiceError) {
 						return bootstrapServer, nil
@@ -321,10 +325,11 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 			want: nil,
 			expectCounters: map[string]int{
-				"ready":    1,
-				"failed":   0,
-				"deleting": 0,
-				"rejected": 0,
+				"ready":     1,
+				"failed":    0,
+				"deleting":  0,
+				"rejected":  0,
+				"suspended": 0,
 			},
 		},
 		{
@@ -332,7 +337,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			fields: fields{
 				clusterService: &ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return &api.Cluster{}, nil
+						return &api.Cluster{ClusterID: "test-cluster-id"}, nil
 					},
 				},
 				kafkaService: func(c map[string]int) KafkaService {
@@ -400,10 +405,308 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 			want: nil,
 			expectCounters: map[string]int{
-				"ready":    1,
-				"failed":   0,
-				"deleting": 0,
-				"rejected": 0,
+				"ready":     1,
+				"failed":    0,
+				"deleting":  0,
+				"rejected":  0,
+				"suspended": 0,
+			},
+		},
+		// Kafka suspension test cases
+		{
+			name: "should only update a suspending Kafka instance to suspended",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{ClusterID: "test-cluster-id"}, nil
+					},
+				},
+				kafkaService: func(c map[string]int) KafkaService {
+					return &KafkaServiceMock{
+						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+							return &dbapi.KafkaRequest{
+								ClusterID:     "test-cluster-id",
+								Status:        constants2.KafkaRequestStatusSuspending.String(),
+								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+								RoutesCreated: true,
+							}, nil
+						},
+						UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
+							if status == constants2.KafkaRequestStatusSuspended {
+								c["suspended"]++
+							}
+							return true, nil
+						},
+					}
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+				status: []*dbapi.DataPlaneKafkaStatus{
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Status: "True",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Reason: "Installing",
+								Status: "False",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Error",
+								Status:  "False",
+								Message: "kafka reported as failed by data plane",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Rejected",
+								Status:  "False",
+								Message: "kafka reported as rejected by data plane",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Rejected",
+								Status:  "False",
+								Message: "Cluster has insufficient resources",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Reason: "Suspended",
+								Status: "False",
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+			expectCounters: map[string]int{
+				"ready":     0,
+				"deleting":  0,
+				"failed":    0,
+				"rejected":  0,
+				"suspended": 1,
+			},
+		},
+		{
+			name: "should only update a resuming Kafka instance to ready or failed",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{ClusterID: "test-cluster-id"}, nil
+					},
+				},
+				kafkaService: func(c map[string]int) KafkaService {
+					return &KafkaServiceMock{
+						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+							return &dbapi.KafkaRequest{
+								ClusterID:     "test-cluster-id",
+								Status:        constants2.KafkaRequestStatusResuming.String(),
+								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+								RoutesCreated: true,
+							}, nil
+						},
+						UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+							v, ok := values["status"]
+							if ok {
+								statusValue := v.(string)
+								c[statusValue]++
+							}
+							return nil
+						},
+						UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+							if kafkaRequest.Status == string(constants2.KafkaRequestStatusFailed) {
+								if arrays.StringEmptyPredicate(kafkaRequest.FailedReason) {
+									return errors.GeneralError("Test failure error. FailedReason should not be empty")
+								}
+								c["failed"]++
+							}
+							return nil
+						},
+					}
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+				status: []*dbapi.DataPlaneKafkaStatus{
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Status: "True",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Reason: "Installing",
+								Status: "False",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Error",
+								Status:  "False",
+								Message: "kafka reported as failed by data plane",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Rejected",
+								Status:  "False",
+								Message: "kafka reported as rejected by data plane",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Rejected",
+								Status:  "False",
+								Message: "Cluster has insufficient resources",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Reason: "Suspended",
+								Status: "False",
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+			expectCounters: map[string]int{
+				"ready":     1,
+				"deleting":  0,
+				"failed":    1,
+				"rejected":  0,
+				"suspended": 0,
+			},
+		},
+		{
+			name: "should never update a suspended Kafka instance",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{ClusterID: "test-cluster-id"}, nil
+					},
+				},
+				kafkaService: func(c map[string]int) KafkaService {
+					return &KafkaServiceMock{
+						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+							return &dbapi.KafkaRequest{
+								ClusterID:     "test-cluster-id",
+								Status:        constants2.KafkaRequestStatusSuspended.String(),
+								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+								RoutesCreated: true,
+							}, nil
+						},
+					}
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+				status: []*dbapi.DataPlaneKafkaStatus{
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Status: "True",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Reason: "Installing",
+								Status: "False",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Error",
+								Status:  "False",
+								Message: "kafka reported as failed by data plane",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Rejected",
+								Status:  "False",
+								Message: "kafka reported as rejected by data plane",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:    "Ready",
+								Reason:  "Rejected",
+								Status:  "False",
+								Message: "Cluster has insufficient resources",
+							},
+						},
+					},
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Reason: "Suspended",
+								Status: "False",
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+			expectCounters: map[string]int{
+				"ready":     0,
+				"deleting":  0,
+				"failed":    0,
+				"rejected":  0,
+				"suspended": 0,
 			},
 		},
 	}
@@ -414,10 +717,11 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			counter := map[string]int{
-				"ready":    0,
-				"failed":   0,
-				"deleting": 0,
-				"rejected": 0,
+				"ready":     0,
+				"failed":    0,
+				"deleting":  0,
+				"rejected":  0,
+				"suspended": 0,
 			}
 			s := NewDataPlaneKafkaService(tt.fields.kafkaService(counter), tt.fields.clusterService, &config.KafkaConfig{})
 			err := s.UpdateDataPlaneKafkaService(context.TODO(), tt.args.clusterId, tt.args.status)
@@ -450,7 +754,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 			name: "should update versions",
 			clusterService: &ClusterServiceMock{
 				FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-					return &api.Cluster{}, nil
+					return &api.Cluster{ClusterID: "test-cluster-id"}, nil
 				},
 			},
 			kafkaService: func(v *versions) KafkaService {
@@ -512,7 +816,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 			name: "when the condition does not contain a reason then all upgrading fields should be set to false",
 			clusterService: &ClusterServiceMock{
 				FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-					return &api.Cluster{}, nil
+					return &api.Cluster{ClusterID: "test-cluster-id"}, nil
 				},
 			},
 			kafkaService: func(v *versions) KafkaService {
@@ -576,7 +880,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 			name: "when received condition is upgrading kafka then it is set to true if it wasn't",
 			clusterService: &ClusterServiceMock{
 				FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-					return &api.Cluster{}, nil
+					return &api.Cluster{ClusterID: "test-cluster-id"}, nil
 				},
 			},
 			kafkaService: func(v *versions) KafkaService {
@@ -635,7 +939,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 			name: "when received condition is upgrading kafka ibp then it is set to true if it wasn't",
 			clusterService: &ClusterServiceMock{
 				FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-					return &api.Cluster{}, nil
+					return &api.Cluster{ClusterID: "test-cluster-id"}, nil
 				},
 			},
 			kafkaService: func(v *versions) KafkaService {
@@ -708,14 +1012,14 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 	}
 }
 
-func Test_DataPlaneKafkaStatus_getStatus(t *testing.T) {
+func Test_DataPlaneKafkaStatus_getManagedKafkaStatus(t *testing.T) {
 	type args struct {
 		status *dbapi.DataPlaneKafkaStatus
 	}
 	tests := []struct {
 		name string
 		args args
-		want kafkaStatus
+		want managedKafkaStatus
 	}{
 		{
 			name: "should return statusInstalling if status condition Type is not ready.",
@@ -841,7 +1145,8 @@ func Test_DataPlaneKafkaStatus_getStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			got := getStatus(tt.args.status)
+			d := &dataPlaneKafkaService{}
+			got := d.getManagedKafkaStatus(tt.args.status)
 			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
@@ -916,6 +1221,507 @@ func Test_dataPlaneKafkaService_unassignKafkaFromDataplaneCluster(t *testing.T) 
 			}
 			got := d.unassignKafkaFromDataplaneCluster(tt.args.kafka)
 			g.Expect(got).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
+func Test_dataPlaneKafkaService_getManagedKafkaDeploymentType(t *testing.T) {
+	t.Parallel()
+	type args struct {
+		ks *dbapi.DataPlaneKafkaStatus
+	}
+	tests := []struct {
+		name string
+		args args
+		want managedKafkaDeploymentType
+	}{
+		{
+			name: "should return 'reserved' if the status id begins with 'reserved-kafka-'",
+			args: args{
+				&dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-standard",
+				},
+			},
+			want: reservedDeploymentType,
+		},
+		{
+			name: "should return 'real' if the status id does not begin with 'reserved-kafka-'",
+			args: args{
+				&dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "kafka-id",
+				},
+			},
+			want: realDeploymentType,
+		},
+	}
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(testcase.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			d := &dataPlaneKafkaService{}
+			deploymentType := d.getManagedKafkaDeploymentType(testcase.args.ks)
+			g.Expect(deploymentType).To(gomega.Equal(testcase.want))
+		})
+	}
+}
+
+func Test_dataPlaneKafkaService_processReservedKafkaDeployment(t *testing.T) {
+	type args struct {
+		ks                   *dbapi.DataPlaneKafkaStatus
+		prewarmingStatusInfo reservedManagedKafkaStatusCountPerInstanceType
+	}
+	tests := []struct {
+		name string
+		args args
+		want reservedManagedKafkaStatusCountPerInstanceType
+	}{
+		{
+			name: "should increase the 'ready' count of standard by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.StandardTypeSupport: {
+						statusReady: 0,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-standard-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "True",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.StandardTypeSupport: {
+					statusReady: 1,
+				},
+			},
+		},
+		{
+			name: "should increase the 'ready' count of developer by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.StandardTypeSupport: {
+						statusReady: 0,
+					},
+					api.DeveloperTypeSupport: {
+						statusReady: 1,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-developer-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "True",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.StandardTypeSupport: {
+					statusReady: 0,
+				},
+				api.DeveloperTypeSupport: {
+					"ready": 2,
+				},
+			},
+		},
+		{
+			name: "should increase the 'error' count of standard by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.StandardTypeSupport: {
+						statusError: 0,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-standard-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "False",
+							Reason: "Error",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.StandardTypeSupport: {
+					statusError: 1,
+				},
+			},
+		},
+		{
+			name: "should increase the 'rejected' count of standard by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.StandardTypeSupport: {
+						statusRejected: 0,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-standard-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "False",
+							Reason: "Rejected",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.StandardTypeSupport: {
+					statusRejected: 1,
+				},
+			},
+		},
+		{
+			name: "should increase the 'rejected' count of developer by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.DeveloperTypeSupport: {
+						statusRejected: 0,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-developer-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "False",
+							Reason: "Rejected",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.DeveloperTypeSupport: {
+					statusRejected: 1,
+				},
+			},
+		},
+		{
+			name: "should increase the 'rejectedClusterFull' count of standard by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.StandardTypeSupport: {
+						statusRejectedClusterFull: 1,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-standard-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status:  "False",
+							Reason:  "Rejected",
+							Message: "Cluster has insufficient resources",
+							Type:    "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.StandardTypeSupport: {
+					statusRejectedClusterFull: 2,
+				},
+			},
+		},
+		{
+			name: "should increase the 'rejectedClusterFull' count of developer by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.DeveloperTypeSupport: {
+						statusRejectedClusterFull: 1,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-developer-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status:  "False",
+							Reason:  "Rejected",
+							Message: "Cluster has insufficient resources",
+							Type:    "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.DeveloperTypeSupport: {
+					statusRejectedClusterFull: 2,
+				},
+			},
+		},
+		{
+			name: "should increase the 'deleted' count of standard by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.StandardTypeSupport: {
+						statusDeleted: 0,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-standard-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "False",
+							Reason: "Deleted",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.StandardTypeSupport: {
+					statusDeleted: 1,
+				},
+			},
+		},
+		{
+			name: "should increase the 'deleted' count of developer by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.DeveloperTypeSupport: {
+						statusDeleted: 0,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-developer-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "False",
+							Reason: "Deleted",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.DeveloperTypeSupport: {
+					statusDeleted: 1,
+				},
+			},
+		},
+		{
+			name: "should increase the 'error' count of developer by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.DeveloperTypeSupport: {
+						statusError: 0,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-developer-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "False",
+							Reason: "Error",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.DeveloperTypeSupport: {
+					statusError: 1,
+				},
+			},
+		},
+		{
+			name: "should increase the 'installing' count of developer by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.StandardTypeSupport: {
+						statusReady: 0,
+					},
+					api.DeveloperTypeSupport: {
+						statusInstalling: 1,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-developer-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "False",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.StandardTypeSupport: {
+					statusReady: 0,
+				},
+				api.DeveloperTypeSupport: {
+					statusInstalling: 2,
+				},
+			},
+		},
+		{
+			name: "should increase the 'installing' count of standard by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.StandardTypeSupport: {
+						statusInstalling: 0,
+					},
+					api.DeveloperTypeSupport: {
+						statusInstalling: 1,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-standard-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "False",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.StandardTypeSupport: {
+					statusInstalling: 1,
+				},
+				api.DeveloperTypeSupport: {
+					statusInstalling: 1,
+				},
+			},
+		},
+		{
+			name: "should increase the 'unknown' count of developer by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.StandardTypeSupport: {
+						statusReady: 0,
+					},
+					api.DeveloperTypeSupport: {
+						statusUnknown: 5,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-developer-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "Unknown",
+							Reason: "",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.StandardTypeSupport: {
+					statusReady: 0,
+				},
+				api.DeveloperTypeSupport: {
+					statusUnknown: 6,
+				},
+			},
+		},
+		{
+			name: "should increase the 'unknown' count of standard by one",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.StandardTypeSupport: {
+						statusUnknown: 0,
+					},
+					api.DeveloperTypeSupport: {
+						statusInstalling: 1,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-standard-1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "Unknown",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.StandardTypeSupport: {
+					statusUnknown: 1,
+				},
+				api.DeveloperTypeSupport: {
+					statusInstalling: 1,
+				},
+			},
+		},
+		{
+			name: "shouldn't change the prewarming status info count when the kafka id does not follow the reserved kafka ID pattern",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.StandardTypeSupport: {
+						statusUnknown: 0,
+					},
+					api.DeveloperTypeSupport: {
+						statusInstalling: 1,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reservedstandard1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "Unknown",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.StandardTypeSupport: {
+					statusUnknown: 0,
+				},
+				api.DeveloperTypeSupport: {
+					statusInstalling: 1,
+				},
+			},
+		},
+		{
+			name: "shouldn't change the prewarming status info count when the reserved kafka is not supported",
+			args: args{
+				prewarmingStatusInfo: reservedManagedKafkaStatusCountPerInstanceType{
+					api.StandardTypeSupport: {
+						statusUnknown: 0,
+					},
+					api.DeveloperTypeSupport: {
+						statusInstalling: 1,
+					},
+				},
+				ks: &dbapi.DataPlaneKafkaStatus{
+					KafkaClusterId: "reserved-kafka-standard1",
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Status: "Unknown",
+							Type:   "Ready",
+						},
+					},
+				},
+			},
+			want: reservedManagedKafkaStatusCountPerInstanceType{
+				api.StandardTypeSupport: {
+					statusUnknown: 0,
+				},
+				api.DeveloperTypeSupport: {
+					statusInstalling: 1,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(testcase.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			d := &dataPlaneKafkaService{}
+			d.processReservedKafkaDeployment(testcase.args.ks, testcase.args.prewarmingStatusInfo, logger.Logger, "some-cluster-id")
+			g.Expect(testcase.args.prewarmingStatusInfo).To(gomega.Equal(testcase.want))
 		})
 	}
 }

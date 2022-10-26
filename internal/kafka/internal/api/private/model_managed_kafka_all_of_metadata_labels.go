@@ -14,4 +14,5 @@ type ManagedKafkaAllOfMetadataLabels struct {
 	Bf2OrgKafkaInstanceProfileType          string `json:"bf2.org/kafkaInstanceProfileType,omitempty"`
 	Bf2OrgKafkaInstanceProfileQuotaConsumed string `json:"bf2.org/kafkaInstanceProfileQuotaConsumed"`
 	Bf2OrgDeployment                        string `json:"bf2.org/deployment,omitempty"`
+	Bf2OrgSuspended                         string `json:"bf2.org/suspended,omitempty"`
 }

@@ -9,6 +9,8 @@ import (
 	"github.com/spyzhov/ajson"
 )
 
+const OwningResourcePrefix = "/v1/connector/"
+
 func stripSecretReferences(resource *dbapi.Connector, ct *dbapi.ConnectorType) *errors.ServiceError {
 	// clear out secrets..
 	resource.ServiceAccount.ClientSecret = ""
@@ -43,7 +45,7 @@ func moveSecretsToVault(resource *dbapi.Connector, ct *dbapi.ConnectorType, vaul
 	// move secrets to a vault.
 	if resource.ServiceAccount.ClientSecret != "" {
 		keyId := api.NewID()
-		if err := vault.SetSecretString(keyId, resource.ServiceAccount.ClientSecret, "/v1/connector/"+resource.ID); err != nil {
+		if err := vault.SetSecretString(keyId, resource.ServiceAccount.ClientSecret, OwningResourcePrefix+resource.ID); err != nil {
 			return errors.GeneralError("could not store kafka client secret in the vault: %v", err.Error())
 		}
 		resource.ServiceAccount.ClientSecret = ""
@@ -58,7 +60,7 @@ func moveSecretsToVault(resource *dbapi.Connector, ct *dbapi.ConnectorType, vaul
 				if err != nil {
 					return err
 				}
-				err = vault.SetSecretString(keyId, s, "/v1/connector/"+resource.ID)
+				err = vault.SetSecretString(keyId, s, OwningResourcePrefix+resource.ID)
 				if err != nil {
 					return err
 				}

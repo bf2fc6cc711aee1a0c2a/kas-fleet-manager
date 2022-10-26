@@ -8,10 +8,13 @@ import (
 
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"gorm.io/gorm"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -26,6 +29,7 @@ import (
 	"github.com/golang/glog"
 
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
+	v1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/aws-sdk-go/service/route53"
@@ -38,7 +42,15 @@ import (
 )
 
 var kafkaDeletionStatuses = []string{constants2.KafkaRequestStatusDeleting.String(), constants2.KafkaRequestStatusDeprovision.String()}
-var kafkaManagedCRStatuses = []string{constants2.KafkaRequestStatusProvisioning.String(), constants2.KafkaRequestStatusDeprovision.String(), constants2.KafkaRequestStatusReady.String(), constants2.KafkaRequestStatusFailed.String()}
+var kafkaManagedCRStatuses = []string{
+	constants2.KafkaRequestStatusProvisioning.String(),
+	constants2.KafkaRequestStatusDeprovision.String(),
+	constants2.KafkaRequestStatusReady.String(),
+	constants2.KafkaRequestStatusFailed.String(),
+	constants2.KafkaRequestStatusSuspended.String(),
+	constants2.KafkaRequestStatusSuspending.String(),
+	constants2.KafkaRequestStatusResuming.String(),
+}
 
 type KafkaRoutesAction string
 
@@ -883,6 +895,7 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 		"desired_strimzi_version":   kafkaRequest.DesiredStrimziVersion,
 		"desired_kafka_version":     kafkaRequest.DesiredKafkaVersion,
 		"desired_kafka_ibp_version": kafkaRequest.DesiredKafkaIBPVersion,
+		"status":                    kafkaRequest.Status,
 	}
 
 	dbConn := k.connectionFactory.New().
@@ -927,12 +940,17 @@ func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest,
 
 	domainRecordBatch := buildKafkaClusterCNAMESRecordBatch(routes, string(action))
 
-	// Create AWS client with the region of this Kafka Cluster
 	awsConfig := aws.Config{
 		AccessKeyID:     k.awsConfig.Route53AccessKey,
 		SecretAccessKey: k.awsConfig.Route53SecretAccessKey,
 	}
-	awsClient, err := k.awsClientFactory.NewClient(awsConfig, kafkaRequest.Region)
+
+	route53Region, err := k.getRoute53RegionFromKafkaRequest(kafkaRequest)
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "error getting route 53 region from kafka request")
+	}
+
+	awsClient, err := k.awsClientFactory.NewClient(awsConfig, route53Region)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create aws client")
 	}
@@ -950,7 +968,13 @@ func (k *kafkaService) GetCNAMERecordStatus(kafkaRequest *dbapi.KafkaRequest) (*
 		AccessKeyID:     k.awsConfig.Route53AccessKey,
 		SecretAccessKey: k.awsConfig.Route53SecretAccessKey,
 	}
-	awsClient, err := k.awsClientFactory.NewClient(awsConfig, kafkaRequest.Region)
+
+	route53Region, err := k.getRoute53RegionFromKafkaRequest(kafkaRequest)
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "error getting route 53 region from kafka request")
+	}
+
+	awsClient, err := k.awsClientFactory.NewClient(awsConfig, route53Region)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create aws client")
 	}
@@ -1032,10 +1056,13 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka request")
 	}
+
 	labels := map[string]string{
 		"bf2.org/kafkaInstanceProfileQuotaConsumed": strconv.Itoa(k.QuotaConsumed),
 		"bf2.org/kafkaInstanceProfileType":          kafkaRequest.InstanceType,
+		v1.ManagedKafkaBf2SuspendedLabelKey:         fmt.Sprintf("%t", arrays.Contains(constants.GetSuspendedStatuses(), kafkaRequest.Status)),
 	}
+
 	managedKafkaCR := &managedkafka.ManagedKafka{
 		Id: kafkaRequest.ID,
 		TypeMeta: metav1.TypeMeta{
@@ -1245,4 +1272,26 @@ func (k *kafkaService) AssignBootstrapServerHost(kafkaRequest *dbapi.KafkaReques
 	}
 
 	return nil
+}
+
+// getRoute53RegionFromKafkaRequest calculates the AWS region to be used for
+// Route53 from the kafka request. It calculates its value using the
+// cloud provider specified in the kafka request.
+// Route53 is a global service which means that in most of the cases
+// the region specified is only used to access a regional endpoint in AWS.
+// There are some parts of the Route53 functionality that are regional.
+// For what we perform which is create hosted zones and entries in them
+// that is a global functionality.
+// See: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/disaster-recovery-resiliency.html
+// If at some point we end up needing Route53 regional functionalities this
+// mechanism should be reevaluated
+func (k *kafkaService) getRoute53RegionFromKafkaRequest(kafkaRequest *dbapi.KafkaRequest) (string, error) {
+	switch kafkaRequest.CloudProvider {
+	case cloudproviders.AWS.String():
+		return aws.DefaultAWSRoute53Region, nil
+	case cloudproviders.GCP.String():
+		return aws.DefaultGCPRoute53Region, nil
+	default:
+		return "", errors.GeneralError("unknown cloud provider: %q", kafkaRequest.CloudProvider)
+	}
 }

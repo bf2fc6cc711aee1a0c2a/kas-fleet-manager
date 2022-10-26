@@ -2,6 +2,7 @@ package queryparser
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/state_machine"
@@ -87,14 +88,7 @@ func (p *queryParser) initStateMachine() (*state_machine.State, checkUnbalancedB
 	// counts the number of joins
 	complexity := 0
 
-	contains := func(s []string, value string) bool {
-		for _, item := range s {
-			if item == value {
-				return true
-			}
-		}
-		return false
-	}
+	contains := arrays.Contains[string]
 
 	// This variable counts the open openBraces
 	openBraces := 0

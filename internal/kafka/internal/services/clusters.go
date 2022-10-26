@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -657,20 +658,9 @@ func (c clusterService) IsStrimziKafkaVersionAvailableInCluster(cluster *api.Clu
 	}
 	for _, version := range readyStrimziVersions {
 		if version.Version == strimziVersion {
-			kVvalid := false
-			for _, kversion := range version.KafkaVersions {
-				if kversion.Version == kafkaVersion {
-					kVvalid = true
-					break
-				}
-			}
-			ibpVvalid := false
-			for _, iversion := range version.KafkaIBPVersions {
-				if iversion.Version == ibpVersion {
-					ibpVvalid = true
-					break
-				}
-			}
+			kVvalid := arrays.AnyMatch(version.KafkaVersions, func(v api.KafkaVersion) bool { return v.Version == kafkaVersion })
+			ibpVvalid := arrays.AnyMatch(version.KafkaIBPVersions, func(v api.KafkaIBPVersion) bool { return v.Version == ibpVersion })
+
 			return kVvalid && ibpVvalid, nil
 		}
 	}

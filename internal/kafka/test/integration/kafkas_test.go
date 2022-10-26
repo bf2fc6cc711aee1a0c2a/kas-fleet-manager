@@ -25,6 +25,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	clusterMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
+	mockclusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
@@ -79,6 +80,7 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		// so that metrics checks does not timeout after 10s
 		reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Second
 		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+		clusterConfig.EnableReadyDataPlaneClustersReconcile = false
 		clusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 			config.ManualCluster{ClusterId: "first", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard,developer"},
 			config.ManualCluster{ClusterId: "second", ClusterDNS: clusterDns, Status: api.ClusterReady, KafkaInstanceLimit: 2, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true, SupportedInstanceType: "standard"},
@@ -107,6 +109,11 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
 	kasfFleetshardSync.Start()
+
+	defer func() {
+		kasfFleetshardSync.Stop()
+		h.Env.Stop()
+	}()
 
 	unsupportedRegion := "eu-west-1"
 
@@ -486,21 +493,6 @@ func TestKafka_InstanceTypeCapacity(t *testing.T) {
 		},
 	}
 
-	defer func() {
-		kasfFleetshardSync.Stop()
-		h.Env.Stop()
-
-		list, _ := test.TestServices.ClusterService.FindAllClusters(clusterCriteria)
-		for _, clusters := range list {
-			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil {
-				t.Fatalf("Failed to delete service account with client id: %v", clusters.ClientID)
-			}
-			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil {
-				t.Fatalf("Failed to delete service account with cluster id: %v", clusters.ID)
-			}
-		}
-	}()
-
 	testValidations(h, t, kafkaValidations)
 }
 
@@ -526,21 +518,10 @@ func testValidations(h *coreTest.Helper, t *testing.T, kafkaValidations []kafkaV
 
 	for _, val := range kafkaValidations {
 		errK := test.TestServices.KafkaService.RegisterKafkaJob(val.kafka)
-		if (errK != nil) != val.eCheck.wantErr {
-			t.Errorf("Ung.Expected error %v, wantErr = %v for kafka %s", errK, val.eCheck.wantErr, val.kafka.Name)
-		}
-
+		g.Expect(errK != nil).To(gomega.Equal(val.eCheck.wantErr))
 		if val.eCheck.wantErr {
-			if errK == nil {
-				t.Errorf("RegisterKafkaJob() g.Expected err to be received but got nil")
-			} else {
-				if errK.Code != val.eCheck.code {
-					t.Errorf("RegisterKafkaJob() received error code %v, g.Expected error %v for kafka %s", errK.Code, val.eCheck.code, val.kafka.Name)
-				}
-				if errK.HttpCode != val.eCheck.httpCode {
-					t.Errorf("RegisterKafkaJob() received http code %v, g.Expected %v for kafka %s", errK.HttpCode, val.eCheck.httpCode, val.kafka.Name)
-				}
-			}
+			g.Expect(errK.Code).To(gomega.Equal(val.eCheck.code), fmt.Sprintf("RegisterKafkaJob() received error code %v, Expected error %v for kafka %s", errK.Code, val.eCheck.code, val.kafka.Name))
+			g.Expect(errK.HttpCode).To(gomega.Equal(val.eCheck.httpCode), fmt.Sprintf("RegisterKafkaJob() received error code %v, Expected error %v for kafka %s", errK.Code, val.eCheck.code, val.kafka.Name))
 		} else {
 			g.Expect(val.kafka.ClusterID).To(gomega.Equal(val.assignedClusterID))
 			checkMetricsError := common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityUsed, val.capacityUsed, val.kafka.InstanceType, val.assignedClusterID, val.kafka.Region, val.kafka.CloudProvider)
@@ -709,19 +690,24 @@ func TestKafka_Update(t *testing.T) {
 
 	db := test.TestServices.DBFactory.New()
 	// create a dummy cluster and assign a kafka to it
-	cluster := &api.Cluster{
-		Meta: api.Meta{
+	cluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
 			ID: api.NewID(),
-		},
-		ClusterID:          api.NewID(),
-		MultiAZ:            true,
-		Region:             "baremetal",
-		CloudProvider:      "baremetal",
-		Status:             api.ClusterReady,
-		IdentityProviderID: "some-id",
-		ClusterDNS:         "some-cluster-dns",
-		ProviderType:       api.ClusterProviderStandalone,
-	}
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = api.NewID()
+		cluster.Region = "baremetal"
+		cluster.CloudProvider = "baremetal"
+		cluster.MultiAZ = true
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterDNS = "some-cluster-dns"
+		cluster.IdentityProviderID = "some-identity-provider-id"
+	})
 
 	if err := db.Create(cluster).Error; err != nil {
 		t.Error("failed to create dummy cluster")
@@ -760,6 +746,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	// Start with no cluster config and manual scaling.
 	configHook := func(clusterConfig *config.DataplaneClusterConfig) {
 		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+		clusterConfig.EnableReadyDataPlaneClustersReconcile = false
 		clusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 			config.ManualCluster{ClusterId: "test01", ClusterDNS: "app.example.com", Status: api.ClusterReady, KafkaInstanceLimit: 1, Region: mocks.MockCluster.Region().ID(), MultiAZ: testMultiAZ, CloudProvider: mocks.MockCluster.CloudProvider().ID(), Schedulable: true, SupportedInstanceType: "standard,developer"},
 		})
@@ -788,7 +775,10 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
 	kasfFleetshardSync.Start()
-	defer kasfFleetshardSync.Stop()
+	defer func() {
+		kasfFleetshardSync.Stop()
+		h.Env.Stop()
+	}()
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
@@ -804,7 +794,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 		resp.Body.Close()
 	}
 
-	g.Expect(err).ToNot(gomega.HaveOccurred(), "Ung.Expected error occurred when creating kafka:  %v", err)
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "Unexpected error occurred when creating kafka:  %v", err)
 
 	k.Name = mockKafkaName
 
@@ -812,29 +802,8 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	g.Expect(err).To(gomega.HaveOccurred(), "g.Expecting error to be thrown when creating more kafkas than allowed by the cluster limit:  %v", err)
+	g.Expect(err).To(gomega.HaveOccurred(), "Expecting error to be thrown when creating more kafkas than allowed by the cluster limit:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusForbidden))
-
-	clusterCriteria := services.FindClusterCriteria{
-		Provider: "aws",
-		Region:   "us-east-1",
-		MultiAZ:  true,
-	}
-
-	defer func() {
-		kasfFleetshardSync.Stop()
-		h.Env.Stop()
-
-		list, _ := test.TestServices.ClusterService.FindAllClusters(clusterCriteria)
-		for _, clusters := range list {
-			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil {
-				t.Fatalf("Failed to delete service account with client id: %v", clusters.ClientID)
-			}
-			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil {
-				t.Fatalf("Failed to delete service account with cluster id: %v", clusters.ID)
-			}
-		}
-	}()
 }
 
 // TestKafkaPost_Validations tests the API validations performed by the kafka creation endpoint
@@ -1415,7 +1384,7 @@ func TestKafkaGet(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 	g.Expect(kafka.Kind).To(gomega.Equal(presenters.KindKafka))
 	g.Expect(kafka.Href).To(gomega.Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 	g.Expect(kafka.Region).To(gomega.Equal(mocks.MockCluster.Region().ID()))
@@ -1557,19 +1526,24 @@ func TestKafka_Delete(t *testing.T) {
 
 	db := test.TestServices.DBFactory.New()
 	// create a dummy cluster and assign a kafka to it
-	cluster := &api.Cluster{
-		Meta: api.Meta{
+	cluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
 			ID: api.NewID(),
-		},
-		ClusterID:          api.NewID(),
-		MultiAZ:            true,
-		Region:             "baremetal",
-		CloudProvider:      "baremetal",
-		Status:             api.ClusterReady,
-		IdentityProviderID: "some-id",
-		ClusterDNS:         "some-cluster-dns",
-		ProviderType:       api.ClusterProviderStandalone,
-	}
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = api.NewID()
+		cluster.Region = "baremetal"
+		cluster.CloudProvider = "baremetal"
+		cluster.MultiAZ = true
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterDNS = "some-cluster-dns"
+		cluster.IdentityProviderID = "some-identity-provider-id"
+	})
 
 	if err := db.Create(cluster).Error; err != nil {
 		t.Error("failed to create dummy cluster")
@@ -1700,7 +1674,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
-	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 
 	_, resp, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	if resp != nil {
@@ -1728,7 +1702,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
-	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 
 	kafka, err = common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusPreparing)
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for kafka request to be preparing: %v", err)
@@ -1759,7 +1733,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
-	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "g.Expected ID assigned on creation")
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
 
 	kafka, err = common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusProvisioning)
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for kafka request to be provisioning: %v", err)
@@ -1809,7 +1783,7 @@ func TestKafkaDelete_Fail(t *testing.T) {
 		resp.Body.Close()
 	}
 	g.Expect(err).To(gomega.HaveOccurred())
-	// The id is invalid, so the metric is not g.Expected to exist
+	// The id is invalid, so the metric is not Expected to exist
 	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount), false)
 	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount), false)
 }
@@ -1880,19 +1854,24 @@ func TestKafka_DeleteAdminNonOwner(t *testing.T) {
 
 	db := test.TestServices.DBFactory.New()
 	// create a dummy cluster and assign a kafka to it
-	cluster := &api.Cluster{
-		Meta: api.Meta{
+	cluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
 			ID: api.NewID(),
-		},
-		ClusterID:          api.NewID(),
-		MultiAZ:            true,
-		Region:             "baremetal",
-		CloudProvider:      "baremetal",
-		Status:             api.ClusterReady,
-		IdentityProviderID: "some-id",
-		ClusterDNS:         "some-cluster-dns",
-		ProviderType:       api.ClusterProviderStandalone,
-	}
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = api.NewID()
+		cluster.Region = "baremetal"
+		cluster.CloudProvider = "baremetal"
+		cluster.MultiAZ = true
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterDNS = "some-cluster-dns"
+		cluster.IdentityProviderID = "some-identity-provider-id"
+	})
 
 	if err := db.Create(cluster).Error; err != nil {
 		t.Error("failed to create dummy cluster")
@@ -1969,9 +1948,9 @@ func TestKafkaList_Success(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(initList.Items).To(gomega.BeEmpty(), "g.Expected empty kafka requests list")
-	g.Expect(initList.Size).To(gomega.Equal(int32(0)), "g.Expected Size == 0")
-	g.Expect(initList.Total).To(gomega.Equal(int32(0)), "g.Expected Total == 0")
+	g.Expect(initList.Items).To(gomega.BeEmpty(), "Expected empty kafka requests list")
+	g.Expect(initList.Size).To(gomega.Equal(int32(0)), "Expected Size == 0")
+	g.Expect(initList.Total).To(gomega.Equal(int32(0)), "Expected Total == 0")
 
 	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
@@ -2004,9 +1983,9 @@ func TestKafkaList_Success(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(len(afterPostList.Items)).To(gomega.Equal(1), "g.Expected kafka requests list length to be 1")
-	g.Expect(afterPostList.Size).To(gomega.Equal(int32(1)), "g.Expected Size == 1")
-	g.Expect(afterPostList.Total).To(gomega.Equal(int32(1)), "g.Expected Total == 1")
+	g.Expect(len(afterPostList.Items)).To(gomega.Equal(1), "Expected kafka requests list length to be 1")
+	g.Expect(afterPostList.Size).To(gomega.Equal(int32(1)), "Expected Size == 1")
+	g.Expect(afterPostList.Total).To(gomega.Equal(int32(1)), "Expected Total == 1")
 
 	// get kafka request item from the list
 	listItem := afterPostList.Items[0]
@@ -2038,9 +2017,9 @@ func TestKafkaList_Success(t *testing.T) {
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(len(afterPostList.Items)).To(gomega.Equal(1), "g.Expected kafka requests list length to be 1")
-	g.Expect(afterPostList.Size).To(gomega.Equal(int32(1)), "g.Expected Size == 1")
-	g.Expect(afterPostList.Total).To(gomega.Equal(int32(1)), "g.Expected Total == 1")
+	g.Expect(len(afterPostList.Items)).To(gomega.Equal(1), "Expected kafka requests list length to be 1")
+	g.Expect(afterPostList.Size).To(gomega.Equal(int32(1)), "Expected Size == 1")
+	g.Expect(afterPostList.Total).To(gomega.Equal(int32(1)), "Expected Total == 1")
 
 	// get kafka request item from the list
 	listItem = afterPostList.Items[0]
@@ -2064,16 +2043,16 @@ func TestKafkaList_Success(t *testing.T) {
 	account = h.NewAccount(h.NewID(), faker.Name(), faker.Email(), anotherOrgID)
 	ctx = h.NewAuthenticatedContext(account, nil)
 
-	// g.Expecting empty list for user that hasn't created any kafkas yet
+	// Expecting empty list for user that hasn't created any kafkas yet
 	newUserList, resp, err := client.DefaultApi.GetKafkas(ctx, nil)
 	if resp != nil {
 		resp.Body.Close()
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-	g.Expect(len(newUserList.Items)).To(gomega.Equal(0), "g.Expected kafka requests list length to be 0")
-	g.Expect(newUserList.Size).To(gomega.Equal(int32(0)), "g.Expected Size == 0")
-	g.Expect(newUserList.Total).To(gomega.Equal(int32(0)), "g.Expected Total == 0")
+	g.Expect(len(newUserList.Items)).To(gomega.Equal(0), "Expected kafka requests list length to be 0")
+	g.Expect(newUserList.Size).To(gomega.Equal(int32(0)), "Expected Size == 0")
+	g.Expect(newUserList.Total).To(gomega.Equal(int32(0)), "Expected Total == 0")
 }
 
 // TestKafkaList_InvalidToken - tests listing kafkas with invalid token
@@ -2094,11 +2073,11 @@ func TestKafkaList_UnauthUser(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	g.Expect(err).To(gomega.HaveOccurred()) // g.Expecting an error here due unauthenticated user
+	g.Expect(err).To(gomega.HaveOccurred()) // Expecting an error here due unauthenticated user
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusUnauthorized))
 	g.Expect(kafkaRequests.Items).To(gomega.BeNil())
-	g.Expect(kafkaRequests.Size).To(gomega.Equal(int32(0)), "g.Expected Size == 0")
-	g.Expect(kafkaRequests.Total).To(gomega.Equal(int32(0)), "g.Expected Total == 0")
+	g.Expect(kafkaRequests.Size).To(gomega.Equal(int32(0)), "Expected Size == 0")
+	g.Expect(kafkaRequests.Total).To(gomega.Equal(int32(0)), "Expected Total == 0")
 }
 
 func deleteTestKafka(t *testing.T, h *coreTest.Helper, ctx context.Context, client *public.APIClient, kafkaID string) {

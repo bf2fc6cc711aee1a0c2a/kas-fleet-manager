@@ -514,7 +514,6 @@ func Test_configService_Validate(t *testing.T) {
 		t.Errorf("failed to initialize environment")
 	}
 	testDataPlaneClusterConfig := NewDataplaneClusterConfig()
-	testDataPlaneClusterConfig.AWSComputeMachineType = "testmachine"
 	if err := env.ConfigContainer.ProvideValue(testDataPlaneClusterConfig); err != nil {
 		t.Errorf("failed to set data plane cluster configuration")
 	}

@@ -1582,7 +1582,8 @@ Feature: create a connector
             "collections": null,
             "href": "/api/connector_mgmt/v1",
             "id": "v1",
-            "kind": "APIVersion"
+            "kind": "APIVersion",
+            "server_version": ""
           }
         ]
       }
@@ -1600,6 +1601,7 @@ Feature: create a connector
           {
             "kind": "APIVersion",
             "id": "v1",
+            "server_version": "",
             "href": "/api/connector_mgmt/v1",
             "collections": null
           }
@@ -1614,6 +1616,7 @@ Feature: create a connector
       {
         "kind": "APIVersion",
         "id": "v1",
+        "server_version": "",
         "href": "/api/connector_mgmt/v1",
         "collections": [
           {
@@ -1647,6 +1650,7 @@ Feature: create a connector
       {
         "kind": "APIVersion",
         "id": "v1",
+        "server_version": "",
         "href": "/api/connector_mgmt/v1",
         "collections": [
           {

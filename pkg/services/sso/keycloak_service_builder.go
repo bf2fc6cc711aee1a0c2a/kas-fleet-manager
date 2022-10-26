@@ -92,17 +92,17 @@ func (builder *osdKeycloackServiceBuilder) WithRealmConfig(realmConfig *keycloak
 }
 
 func build(providerName string, keycloakConfig *keycloak.KeycloakConfig, realmConfig *keycloak.KeycloakRealmConfig) KeycloakService {
-	notNilPredicate := func(x interface{}) bool {
-		return x.(*keycloak.KeycloakRealmConfig) != nil
+	notNilPredicate := func(x *keycloak.KeycloakRealmConfig) bool {
+		return x != nil
 	}
 
 	// Temporary: if a realm configuration different from the one into the config is specified
 	// we always instantiate MAS_SSO irrespective of the selected provider
 	if providerName == keycloak.MAS_SSO ||
 		realmConfig != nil {
-		_, realmConfig := arrays.FindFirst(notNilPredicate, realmConfig, keycloakConfig.KafkaRealm)
+		_, realmConfig := arrays.FindFirst([]*keycloak.KeycloakRealmConfig{realmConfig, keycloakConfig.KafkaRealm}, notNilPredicate)
 
-		client := keycloak.NewClient(keycloakConfig, realmConfig.(*keycloak.KeycloakRealmConfig))
+		client := keycloak.NewClient(keycloakConfig, realmConfig)
 		return &keycloakServiceProxy{
 			getToken: client.GetToken,
 			service: &masService{
@@ -111,8 +111,8 @@ func build(providerName string, keycloakConfig *keycloak.KeycloakConfig, realmCo
 		}
 
 	} else {
-		_, realmConfig := arrays.FindFirst(notNilPredicate, realmConfig, keycloakConfig.RedhatSSORealm)
-		client := redhatsso.NewSSOClient(keycloakConfig, realmConfig.(*keycloak.KeycloakRealmConfig))
+		_, realmConfig := arrays.FindFirst([]*keycloak.KeycloakRealmConfig{realmConfig, keycloakConfig.RedhatSSORealm}, notNilPredicate)
+		client := redhatsso.NewSSOClient(keycloakConfig, realmConfig)
 		return &keycloakServiceProxy{
 			getToken: client.GetToken,
 			service: &redhatssoService{

@@ -7,7 +7,7 @@ import (
 
 func ConfigProviders() di.Option {
 	return di.Options(
-		di.Provide(NewConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(NewConfig, di.As(new(environments.ConfigModule)), di.As(new(environments.ServiceValidator))),
 		di.Provide(environments.Func(ServiceProviders)),
 	)
 }

@@ -14,6 +14,7 @@ import (
 const (
 	MAS_SSO                       string = "mas_sso"
 	REDHAT_SSO                    string = "redhat_sso"
+	INTERNAL_SSO_REALM            string = "internal_sso"
 	SSO_SPEICAL_MGMT_ORG_ID_STAGE string = "13640203"
 	//AUTH_SSO SSOProvider ="auth_sso"
 )
@@ -32,6 +33,7 @@ type KeycloakConfig struct {
 	KafkaRealm                                 *KeycloakRealmConfig `json:"kafka_realm"`
 	OSDClusterIDPRealm                         *KeycloakRealmConfig `json:"osd_cluster_idp_realm"`
 	RedhatSSORealm                             *KeycloakRealmConfig `json:"redhat_sso_config"`
+	AdminAPISSORealm                           *KeycloakRealmConfig `json:"internal_sso_config"`
 	MaxAllowedServiceAccounts                  int                  `json:"max_allowed_service_accounts"`
 	MaxLimitForGetClients                      int                  `json:"max_limit_for_get_clients"`
 	SelectSSOProvider                          string               `json:"select_sso_provider"`
@@ -62,6 +64,8 @@ func (kc *KeycloakConfig) SSOProviderRealm() *KeycloakRealmConfig {
 		return kc.KafkaRealm
 	case REDHAT_SSO:
 		return kc.RedhatSSORealm
+	case INTERNAL_SSO_REALM:
+		return kc.AdminAPISSORealm
 	default:
 		return kc.KafkaRealm
 	}
@@ -94,6 +98,11 @@ func NewKeycloakConfig() *KeycloakConfig {
 			ClientSecretFile: "secrets/redhatsso-service.clientSecret",
 			GrantType:        "client_credentials",
 			Scope:            "api.iam.service_accounts",
+		},
+		AdminAPISSORealm: &KeycloakRealmConfig{
+			BaseURL:        "https://auth.redhat.com",
+			APIEndpointURI: "/auth/realms/EmployeeIDP",
+			Realm:          "EmployeeIDP",
 		},
 		TLSTrustedCertificatesFile:                 "secrets/keycloak-service.crt",
 		Debug:                                      false,
@@ -133,6 +142,9 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.SSOSpecialManagementOrgID, "sso-special-management-org-id", SSO_SPEICAL_MGMT_ORG_ID_STAGE, "The Special Management Organization ID used for creating internal Service accounts")
 	fs.StringVar(&kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "service-account-limits-check-skip-org-id-list-file", kc.ServiceAccounttLimitCheckSkipOrgIdListFile, "File containing a list of Org IDs for which service account limits check will be skipped")
 	fs.StringVar(&kc.SelectSSOProvider, "sso-provider-type", kc.SelectSSOProvider, "Option to choose between sso providers i.e, mas_sso or redhat_sso, mas_sso by default")
+	fs.StringVar(&kc.AdminAPISSORealm.BaseURL, "admin-api-sso-base-url", kc.AdminAPISSORealm.BaseURL, "Base url of admin api sso realm, 'https://auth.redhat.com' by default")
+	fs.StringVar(&kc.AdminAPISSORealm.APIEndpointURI, "admin-api-sso-endpoint-uri", kc.AdminAPISSORealm.APIEndpointURI, "API Endpoint URI of admin api sso realm, '/auth/realms/EmployeeIDP' by default")
+	fs.StringVar(&kc.AdminAPISSORealm.Realm, "admin-api-sso-realm", kc.AdminAPISSORealm.Realm, "Admin api sso realm, 'EmployeeIDP' by default")
 }
 
 func (kc *KeycloakConfig) Validate(env *environments.Env) error {
@@ -188,7 +200,7 @@ func (kc *KeycloakConfig) ReadFiles() error {
 	err = shared.ReadYamlFile(kc.ServiceAccounttLimitCheckSkipOrgIdListFile, &kc.ServiceAccounttLimitCheckSkipOrgIdList)
 	if err != nil {
 		if os.IsNotExist(err) {
-			glog.V(10).Infof("Specified service account limits skip org IDs  file '%s' does not exist. Proceeding as if no service account org ID skip list was provided", kc.ServiceAccounttLimitCheckSkipOrgIdListFile)
+			glog.V(10).Infof("Specified service account limits skip org IDs file '%s' does not exist. Proceeding as if no service account org ID skip list was provided", kc.ServiceAccounttLimitCheckSkipOrgIdListFile)
 		} else {
 			return err
 		}
@@ -197,5 +209,6 @@ func (kc *KeycloakConfig) ReadFiles() error {
 	kc.KafkaRealm.setDefaultURIs(kc.BaseURL)
 	kc.OSDClusterIDPRealm.setDefaultURIs(kc.BaseURL)
 	kc.RedhatSSORealm.setDefaultURIs(kc.SsoBaseUrl)
+	kc.AdminAPISSORealm.setDefaultURIs((kc.AdminAPISSORealm.BaseURL))
 	return nil
 }

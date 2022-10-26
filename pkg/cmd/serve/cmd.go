@@ -2,12 +2,14 @@ package serve
 
 import (
 	"context"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/golang/glog"
-	"github.com/spf13/cobra"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/buildinformation"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/golang/glog"
+	"github.com/spf13/cobra"
 )
 
 func NewServeCommand(env *environments.Env) *cobra.Command {
@@ -18,8 +20,13 @@ func NewServeCommand(env *environments.Env) *cobra.Command {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			err := env.CreateServices()
 			if err != nil {
-				glog.Fatalf("Unable to initialize environment: %s", err.Error())
+				glog.Fatalf("unable to initialize environment: %s", err.Error())
 			}
+			info, e := buildinformation.GetBuildInfo()
+			if e != nil {
+				glog.Fatalf("unable to retrieve buildinfo: %s.", e.Error())
+			}
+			glog.Infof("GoVersion: %q. Commit time: %q. Architecture: %q. Operating System: %q. VCS Type: %q. CommitSha: %q.", info.GetGoVersion(), info.GetVCSTime(), info.GetArchitecture(), info.GetOperatingSystem(), info.GetVCSType(), info.GetCommitSHA())
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx, cancel := context.WithCancel(context.Background())

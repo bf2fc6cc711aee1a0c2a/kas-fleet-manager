@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,32 +32,28 @@ const (
 )
 
 type DataplaneClusterConfig struct {
-	OpenshiftVersion             string
-	AWSComputeMachineType        string
-	GCPComputeMachineType        string
 	ImagePullDockerConfigContent string
 	ImagePullDockerConfigFile    string
 	// Possible values are:
 	// 'manual' to use OSD Cluster configuration file,
 	// 'auto' to use dynamic scaling
 	// 'none' to disabled scaling all together, useful in testing
-	DataPlaneClusterScalingType                   string
-	DataPlaneClusterConfigFile                    string
-	ReadOnlyUserList                              userv1.OptionalNames
-	ReadOnlyUserListFile                          string
-	KafkaSREUsers                                 userv1.OptionalNames
-	KafkaSREUsersFile                             string
-	ClusterConfig                                 *ClusterConfig
-	EnableReadyDataPlaneClustersReconcile         bool
-	EnableKafkaSreIdentityProviderConfiguration   bool
-	EnableDynamicScaleUpManagerScaleUpTrigger     bool
-	EnableDynamicScaleDownManagerScaleDownTrigger bool
-	Kubeconfig                                    string
-	RawKubernetesConfig                           *clientcmdapi.Config
-	StrimziOperatorOLMConfig                      OperatorInstallationConfig
-	KasFleetshardOperatorOLMConfig                OperatorInstallationConfig
-	DynamicScalingConfig                          DynamicScalingConfig
-	NodePrewarmingConfig                          NodePrewarmingConfig
+	DataPlaneClusterScalingType                 string
+	DataPlaneClusterConfigFile                  string
+	ReadOnlyUserList                            userv1.OptionalNames
+	ReadOnlyUserListFile                        string
+	KafkaSREUsers                               userv1.OptionalNames
+	KafkaSREUsersFile                           string
+	ClusterConfig                               *ClusterConfig
+	EnableReadyDataPlaneClustersReconcile       bool
+	EnableKafkaSreIdentityProviderConfiguration bool
+	Kubeconfig                                  string
+	RawKubernetesConfig                         *clientcmdapi.Config
+	StrimziOperatorOLMConfig                    OperatorInstallationConfig
+	KasFleetshardOperatorOLMConfig              OperatorInstallationConfig
+	ObservabilityOperatorOLMConfig              OperatorInstallationConfig
+	DynamicScalingConfig                        DynamicScalingConfig
+	NodePrewarmingConfig                        NodePrewarmingConfig
 }
 
 type OperatorInstallationConfig struct {
@@ -92,6 +89,12 @@ const (
 	defaultFleetShardOperatorSubscriptionConfigFile     = "config/kas-fleetshard-operator-subscription-spec-config.yaml"
 )
 
+// constants for Observability Operator installation via OpenShift Lifecycle Manager
+const (
+	defaultObservabilityOperatorIndexImage  = "quay.io/rhoas/observability-operator-index:v3.0.15"
+	defaultObservabilityOperatorStartingCSV = "observability-operator.v3.0.15"
+)
+
 func getDefaultKubeconfig() string {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -102,21 +105,16 @@ func getDefaultKubeconfig() string {
 
 func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 	return &DataplaneClusterConfig{
-		OpenshiftVersion:                              "",
-		AWSComputeMachineType:                         defaultAWSComputeMachineType,
-		GCPComputeMachineType:                         defaultGCPComputeMachineType,
-		ImagePullDockerConfigContent:                  "",
-		ImagePullDockerConfigFile:                     "secrets/image-pull.dockerconfigjson",
-		DataPlaneClusterConfigFile:                    "config/dataplane-cluster-configuration.yaml",
-		ReadOnlyUserListFile:                          "config/read-only-user-list.yaml",
-		KafkaSREUsersFile:                             "config/kafka-sre-user-list.yaml",
-		DataPlaneClusterScalingType:                   ManualScaling,
-		ClusterConfig:                                 &ClusterConfig{},
-		EnableReadyDataPlaneClustersReconcile:         true,
-		EnableKafkaSreIdentityProviderConfiguration:   true,
-		EnableDynamicScaleUpManagerScaleUpTrigger:     true,
-		EnableDynamicScaleDownManagerScaleDownTrigger: true,
-		Kubeconfig: getDefaultKubeconfig(),
+		ImagePullDockerConfigContent:                "",
+		ImagePullDockerConfigFile:                   "secrets/image-pull.dockerconfigjson",
+		DataPlaneClusterConfigFile:                  "config/dataplane-cluster-configuration.yaml",
+		ReadOnlyUserListFile:                        "config/read-only-user-list.yaml",
+		KafkaSREUsersFile:                           "config/kafka-sre-user-list.yaml",
+		DataPlaneClusterScalingType:                 ManualScaling,
+		ClusterConfig:                               &ClusterConfig{},
+		EnableReadyDataPlaneClustersReconcile:       true,
+		EnableKafkaSreIdentityProviderConfiguration: true,
+		Kubeconfig:                                  getDefaultKubeconfig(),
 		StrimziOperatorOLMConfig: OperatorInstallationConfig{
 			IndexImage:             defaultStrimziOperatorIndexImage,
 			Namespace:              constants.StrimziOperatorNamespace,
@@ -132,6 +130,10 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 			Package:                defaultFleetShardOperatorOLMPackageName,
 			SubscriptionConfigFile: defaultFleetShardOperatorSubscriptionConfigFile,
 			SubscriptionConfig:     nil,
+		},
+		ObservabilityOperatorOLMConfig: OperatorInstallationConfig{
+			IndexImage:              defaultObservabilityOperatorIndexImage,
+			SubscriptionStartingCSV: defaultObservabilityOperatorStartingCSV,
 		},
 		DynamicScalingConfig: NewDynamicScalingConfig(),
 		NodePrewarmingConfig: NewNodePrewarmingConfig(),
@@ -179,7 +181,9 @@ func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 			return errors.Errorf("Standalone cluster with id %s does not have the name field provided", c.ClusterId)
 		}
 
-		c.Status = api.ClusterProvisioning // force to cluster provisioning status as we do not want to call StandaloneProvider to create the cluster.
+		if c.Status == api.ClusterAccepted {
+			c.Status = api.ClusterProvisioning // force to cluster provisioning status as we do not want to call StandaloneProvider to create the cluster.
+		}
 	}
 
 	if c.SupportedInstanceType == "" {
@@ -196,14 +200,13 @@ type ClusterConfig struct {
 }
 
 func NewClusterConfig(clusters ClusterList) *ClusterConfig {
-	clusterMap := make(map[string]ManualCluster)
-	for _, c := range clusters {
-		clusterMap[c.ClusterId] = c
-	}
-	return &ClusterConfig{
+	return arrays.Reduce(clusters, func(clusterConfig *ClusterConfig, c ManualCluster) *ClusterConfig {
+		clusterConfig.clusterConfigMap[c.ClusterId] = c
+		return clusterConfig
+	}, &ClusterConfig{
 		clusterList:      clusters,
-		clusterConfigMap: clusterMap,
-	}
+		clusterConfigMap: make(map[string]ManualCluster),
+	})
 }
 
 func (conf *ClusterConfig) GetCapacityForRegion(region string) int {
@@ -295,24 +298,18 @@ func (c *DataplaneClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool
 	return c.EnableReadyDataPlaneClustersReconcile
 }
 
-// DefaultComputeMachineType returns the default Compute Machine Type for the
-// given `cloudProviderID`. If `cloudProviderID` is not a known cloud provider
-// the empty string is returned.
-func (c *DataplaneClusterConfig) DefaultComputeMachineType(cloudProviderID cloudproviders.CloudProviderID) string {
-	switch cloudProviderID {
-	case cloudproviders.AWS:
-		return c.AWSComputeMachineType
-	case cloudproviders.GCP:
-		return c.GCPComputeMachineType
-	default:
-		return ""
+// DefaultComputeMachinesConfig returns the Compute Machine config for the
+// given `cloudProviderID`. If `cloudProviderID` is not a known cloud provider return an error.
+func (c *DataplaneClusterConfig) DefaultComputeMachinesConfig(cloudProviderID cloudproviders.CloudProviderID) (ComputeMachinesConfig, error) {
+	config, ok := c.DynamicScalingConfig.ComputeMachinePerCloudProvider[cloudProviderID]
+	if !ok {
+		return ComputeMachinesConfig{}, errors.Errorf("cloud provider %q is missing from the 'compute_machine_per_cloud_provider' field in the %q dynamic scaling file", cloudProviderID.String(), c.DynamicScalingConfig.filePath)
 	}
+
+	return config, nil
 }
 
 func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.OpenshiftVersion, "cluster-openshift-version", c.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")
-	fs.StringVar(&c.AWSComputeMachineType, "aws-cluster-compute-machine-type", c.AWSComputeMachineType, "The instance type of the AWS compute instances for Data Planes created in AWS")
-	fs.StringVar(&c.GCPComputeMachineType, "gcp-cluster-compute-machine-type", c.GCPComputeMachineType, "The instance type of the GCP compute instances for Data Planes created in GCP")
 	fs.StringVar(&c.ImagePullDockerConfigFile, "image-pull-docker-config-file", c.ImagePullDockerConfigFile, "The file that contains the docker config content for pulling MK operator images on clusters")
 	fs.StringVar(&c.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", c.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
 	fs.StringVar(&c.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", c.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")
@@ -333,6 +330,8 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionStartingCSV, "kas-fleetshard-operator-starting-csv", c.KasFleetshardOperatorOLMConfig.SubscriptionStartingCSV, "kas-fleetshard operator subscription starting CSV")
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionChannel, "kas-fleetshard-operator-sub-channel", c.KasFleetshardOperatorOLMConfig.SubscriptionChannel, "kas-fleetshard operator subscription channel")
 	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile, "kas-fleetshard-operator-subscription-config-file", c.KasFleetshardOperatorOLMConfig.SubscriptionConfigFile, "kas-fleetshard operator subscription config. This is applied for standalone clusters only. The configuration must be of type https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig")
+	fs.StringVar(&c.ObservabilityOperatorOLMConfig.IndexImage, "observability-operator-index-image", c.ObservabilityOperatorOLMConfig.IndexImage, "Observability operator index image")
+	fs.StringVar(&c.ObservabilityOperatorOLMConfig.SubscriptionStartingCSV, "observability-operator-starting-csv", c.ObservabilityOperatorOLMConfig.SubscriptionStartingCSV, "Observability operator subscription starting CSV")
 	fs.StringVar(&c.DynamicScalingConfig.filePath, "dynamic-scaling-config-file", c.DynamicScalingConfig.filePath, "File path to a file containing the dynamic scaling configuration")
 	fs.StringVar(&c.NodePrewarmingConfig.filePath, "node-prewarming-config-file", c.NodePrewarmingConfig.filePath, "File path to a file containing the node prewarming configuration")
 }
@@ -410,7 +409,7 @@ func (c *DataplaneClusterConfig) ReadFiles() error {
 	}
 
 	if c.IsDataPlaneAutoScalingEnabled() {
-		err := shared.ReadYamlFile(c.DynamicScalingConfig.filePath, &c.DynamicScalingConfig.Configuration)
+		err := shared.ReadYamlFile(c.DynamicScalingConfig.filePath, &c.DynamicScalingConfig)
 		if err != nil {
 			return err
 		}

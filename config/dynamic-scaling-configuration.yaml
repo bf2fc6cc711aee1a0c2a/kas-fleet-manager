@@ -1,12 +1,59 @@
 #This configuration file contains information about each Kafka instance types, dynamic scaling configuration
-#
-#The following properties must be defined for each instance types compute node configuration:
-#   - max_compute_nodes: the maximum number of nodes needed to create an appropriate machine pool with the configuration needed by the autoscaler
-
 ---
-developer:
-  compute_nodes_config:
-    max_compute_nodes: 3
-standard:
-  compute_nodes_config:
-    max_compute_nodes: 9
+# The version of OpenShift used during installation of newly auto created data plane clusters.
+# If the value is empty (default) or not defined, then OpenShift Cluster Manager (OCM) will provision the data plane cluster using the latest version. 
+new_data_plane_openshift_version: ""
+# Whether to auto create a data plane cluster.
+# The value is used to control whether kas-fleet-manager (KFM) should trigger the creation of new data plane clusters.
+# If it is set to false, then KFM will only perform scale up evaluation without triggering scale up i.e a dry run of cluster's creation.
+# If set to true, then KFM will perform scale up evaluation and trigger scaling up if it is needed based on the evaluation results.
+enable_dynamic_data_plane_scale_up: false
+# Whether to auto delete a data plane cluster cluster
+# The value is used to control whether KFM should trigger the deletion of data plane clusters.
+# If it is set to false, then KFM will only perform scale down evaluation without triggering scale down i.e a dry run for clusters' deletion.
+# If set to true, then KFM will perform scale down evaluation and trigger scaling down if it is needed based on the evaluation results.
+enable_dynamic_data_plane_scale_down: false
+# compute machine configuration per cloud provider.
+# For each cloud provider, two level of informations are provided:
+# 1. cluster wide workload e.g ingress controllers, observability operators etc configuration
+# 2. kafka workload configuration per instance type.
+# Each of the above configuration have the below structure
+#      compute_machine_type: <cloud provider specific identifier>. This value is the machine type. It is cloud provider specific.
+#      compute_node_autoscaling: The min and max number of nodes for this workload group. The value can never be zero and min has to be less or equal to maximum.
+#        min_compute_nodes: <int>
+#        max_compute_nodes: <int>
+compute_machine_per_cloud_provider:
+  aws:
+    cluster_wide_workload:
+      compute_machine_type:  m5.2xlarge
+      compute_node_autoscaling:
+        min_compute_nodes: 3
+        max_compute_nodes: 18
+    kafka_workload_per_instance_type: 
+      standard: 
+        compute_machine_type: r5.xlarge
+        compute_node_autoscaling:
+          min_compute_nodes: 3
+          max_compute_nodes: 18
+      developer:
+        compute_machine_type: m5.2xlarge
+        compute_node_autoscaling:
+          min_compute_nodes: 1
+          max_compute_nodes: 3
+  gcp:
+    cluster_wide_workload:
+      compute_machine_type: custom-8-32768
+      compute_node_autoscaling:
+        min_compute_nodes: 3
+        max_compute_nodes: 18
+    kafka_workload_per_instance_type: 
+      standard: 
+        compute_machine_type: custom-8-32768
+        compute_node_autoscaling:
+          min_compute_nodes: 3
+          max_compute_nodes: 18
+      developer:
+        compute_machine_type: custom-8-32768
+        compute_node_autoscaling:
+          min_compute_nodes: 1
+          max_compute_nodes: 3

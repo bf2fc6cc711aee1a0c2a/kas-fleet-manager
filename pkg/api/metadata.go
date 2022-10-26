@@ -21,8 +21,12 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/buildinformation"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 )
@@ -40,10 +44,7 @@ func (m *Metadata) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		HREF: r.URL.Path,
 	}
 	for _, v := range m.Versions {
-		href := v.HREF
-		if href == "" {
-			href = v.ID
-		}
+		href, _ := arrays.FirstNonEmpty(v.HREF, v.ID)
 		body.Versions = append(body.Versions, VersionMetadata{
 			ID:   v.ID,
 			Kind: "APIVersion",
@@ -60,7 +61,7 @@ func (m *Metadata) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Send the response:
 	_, err = w.Write(data)
 	if err != nil {
-		err = fmt.Errorf("Can't send response body for request '%s'", r.URL.Path)
+		err = fmt.Errorf("can't send response body for request '%s'", r.URL.Path)
 		glog.Error(err)
 		sentry.CaptureException(err)
 		return
@@ -69,14 +70,20 @@ func (m *Metadata) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // ServeHTTP sends API version v1 documentation response.
 func (v *VersionMetadata) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Get the version:
+	info, e := buildinformation.GetBuildInfo()
+	if e != nil {
+		shared.HandleError(r, w, errors.ToServiceError(e))
+	}
 	// Set the content type:
 	w.Header().Set("Content-Type", "application/json")
 
 	// Prepare the body:
 	body := VersionMetadata{
-		ID:   v.ID,
-		Kind: "APIVersion",
-		HREF: r.URL.Path,
+		ID:            v.ID,
+		Kind:          "APIVersion",
+		HREF:          r.URL.Path,
+		ServerVersion: info.GetCommitSHA(),
 	}
 	for _, c := range v.Collections {
 		href := c.HREF
@@ -99,7 +106,7 @@ func (v *VersionMetadata) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Send the response:
 	_, err = w.Write(data)
 	if err != nil {
-		glog.Errorf("Can't send response body for request '%s'", r.URL.Path)
+		glog.Errorf("can't send response body for request '%s'", r.URL.Path)
 		return
 	}
 }

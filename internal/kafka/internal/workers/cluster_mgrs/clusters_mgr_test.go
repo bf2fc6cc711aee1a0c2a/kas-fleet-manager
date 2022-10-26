@@ -2143,7 +2143,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 			},
 			Spec: v1alpha1.CatalogSourceSpec{
 				SourceType: v1alpha1.SourceTypeGrpc,
-				Image:      observabilityCatalogSourceImage,
+				Image:      clusterConfig.ObservabilityOperatorOLMConfig.IndexImage,
 			},
 		},
 		&v1alpha2.OperatorGroup{
@@ -2172,7 +2172,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				CatalogSource:          observabilityCatalogSourceName,
 				Channel:                "alpha",
 				CatalogSourceNamespace: observabilityNamespace,
-				StartingCSV:            "observability-operator.v3.0.10",
+				StartingCSV:            clusterConfig.ObservabilityOperatorOLMConfig.SubscriptionStartingCSV,
 				InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 				Package:                observabilitySubscriptionName,
 			},
@@ -2249,6 +2249,10 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 		},
 		KasFleetshardOperatorOLMConfig: config.OperatorInstallationConfig{
 			Namespace: "kas-fleet-shard-namespace",
+		},
+		ObservabilityOperatorOLMConfig: config.OperatorInstallationConfig{
+			IndexImage:              "quay.io/rhoas/observability-operator-index:v3.0.15",
+			SubscriptionStartingCSV: "observability-operator.v3.0.15",
 		},
 	}
 	type fields struct {
@@ -3036,6 +3040,7 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 			},
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
+				CloudProvider:         cloudproviders.AWS.String(),
 				SupportedInstanceType: "developer,standard",
 			},
 			want:    true,
@@ -3067,6 +3072,7 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 			},
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
+				CloudProvider:         cloudproviders.AWS.String(),
 				SupportedInstanceType: "developer,standard",
 			},
 			want:    false,
@@ -3078,15 +3084,19 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					DataPlaneClusterScalingType: config.AutoScaling,
 					DynamicScalingConfig: config.DynamicScalingConfig{
-						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
-							"developer": {
-								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
-									MaxComputeNodes: 3,
+						ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]config.ComputeMachinesConfig{
+							cloudproviders.AWS: {
+								KafkaWorkloadPerInstanceType: map[string]config.ComputeMachineConfig{
+									api.DeveloperTypeSupport.String(): {
+										ComputeMachineType: "testmachinetype",
+										ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+											MaxComputeNodes: 3,
+										},
+									},
 								},
 							},
 						},
 					},
-					AWSComputeMachineType: "testmachinetype",
 				},
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
@@ -3130,6 +3140,7 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
 				SupportedInstanceType: "developer,standard",
+				CloudProvider:         cloudproviders.AWS.String(),
 			},
 			want:    true,
 			wantErr: false,
@@ -3144,6 +3155,7 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
 				SupportedInstanceType: "developer,standard",
+				CloudProvider:         cloudproviders.AWS.String(),
 			},
 			want:    true,
 			wantErr: false,
@@ -3163,6 +3175,7 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
 				SupportedInstanceType: "developer,standard",
+				CloudProvider:         cloudproviders.AWS.String(),
 			},
 			want:    false,
 			wantErr: true,
@@ -3185,6 +3198,7 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 			},
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
+				CloudProvider:         cloudproviders.AWS.String(),
 				SupportedInstanceType: "developer,standard",
 			},
 			want:    false,
@@ -3211,6 +3225,7 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 			},
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
+				CloudProvider:         cloudproviders.AWS.String(),
 				SupportedInstanceType: "developer",
 			},
 			want:    false,
@@ -3239,7 +3254,7 @@ func TestClusterManager_reconcileClusterMachinePool(t *testing.T) {
 }
 
 func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
-
+	t.Parallel()
 	type fields struct {
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 		clusterService         services.ClusterService
@@ -3270,6 +3285,7 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
 				SupportedInstanceType: "developer,standard",
+				CloudProvider:         "cp",
 				DynamicCapacityInfo:   api.JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
 			},
 			wantErr: false,
@@ -3284,6 +3300,7 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 			},
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
+				CloudProvider:         "cp",
 				SupportedInstanceType: "developer,standard",
 				DynamicCapacityInfo:   api.JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
 			},
@@ -3304,6 +3321,7 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
 				SupportedInstanceType: "developer,standard",
+				CloudProvider:         "cp",
 				DynamicCapacityInfo:   api.JSON([]byte(`{}`)),
 			},
 			wantErr: true,
@@ -3314,15 +3332,19 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					DataPlaneClusterScalingType: config.AutoScaling,
 					DynamicScalingConfig: config.DynamicScalingConfig{
-						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
-							api.StandardTypeSupport.String(): {
-								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
-									MaxComputeNodes: 2,
-								},
-							},
-							api.DeveloperTypeSupport.String(): {
-								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
-									MaxComputeNodes: 3,
+						ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]config.ComputeMachinesConfig{
+							cloudproviders.AWS: {
+								KafkaWorkloadPerInstanceType: map[string]config.ComputeMachineConfig{
+									api.StandardTypeSupport.String(): {
+										ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+											MaxComputeNodes: 2,
+										},
+									},
+									api.DeveloperTypeSupport.String(): {
+										ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+											MaxComputeNodes: 3,
+										},
+									},
 								},
 							},
 						},
@@ -3362,9 +3384,44 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
 				SupportedInstanceType: "developer,standard",
+				CloudProvider:         cloudproviders.AWS.String(),
 				DynamicCapacityInfo:   api.JSON([]byte(`{}`)),
 			},
 			wantErr: false,
+		},
+		{
+			name: "return error when cluster cloud provider is missing from the dynamic scaling configuration",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]config.ComputeMachinesConfig{
+							"another-cloud-provider": {
+								KafkaWorkloadPerInstanceType: map[string]config.ComputeMachineConfig{
+									api.StandardTypeSupport.String(): {
+										ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+											MaxComputeNodes: 2,
+										},
+									},
+									api.DeveloperTypeSupport.String(): {
+										ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+											MaxComputeNodes: 3,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				clusterService: nil,
+			}, // set to nil as it should never be called
+			arg: api.Cluster{
+				ClusterID:             "test-cluster-id",
+				SupportedInstanceType: "developer,standard",
+				CloudProvider:         "cp",
+				DynamicCapacityInfo:   api.JSON([]byte(`{}`)),
+			},
+			wantErr: true,
 		},
 		{
 			name: "return no error when cluster service update succeed when cluster supports only one instance type and when autoscaling is enabled",
@@ -3372,15 +3429,19 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					DataPlaneClusterScalingType: config.AutoScaling,
 					DynamicScalingConfig: config.DynamicScalingConfig{
-						Configuration: map[string]config.InstanceTypeDynamicScalingConfig{
-							api.StandardTypeSupport.String(): {
-								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
-									MaxComputeNodes: 20,
-								},
-							},
-							api.DeveloperTypeSupport.String(): {
-								ComputeNodesConfig: &config.DynamicScalingComputeNodesConfig{
-									MaxComputeNodes: 3,
+						ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]config.ComputeMachinesConfig{
+							cloudproviders.AWS: {
+								KafkaWorkloadPerInstanceType: map[string]config.ComputeMachineConfig{
+									api.StandardTypeSupport.String(): {
+										ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+											MaxComputeNodes: 20,
+										},
+									},
+									api.DeveloperTypeSupport.String(): {
+										ComputeNodesAutoscaling: &config.ComputeNodesAutoscalingConfig{
+											MaxComputeNodes: 3,
+										},
+									},
 								},
 							},
 						},
@@ -3416,6 +3477,7 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 			arg: api.Cluster{
 				ClusterID:             "test-cluster-id",
 				SupportedInstanceType: "standard",
+				CloudProvider:         cloudproviders.AWS.String(),
 				DynamicCapacityInfo:   api.JSON([]byte(`{}`)),
 			},
 			wantErr: false,
@@ -3426,6 +3488,7 @@ func TestClusterManager_reconcileDynamicCapacityInfo(t *testing.T) {
 		test := tc
 		t.Run(test.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
+			t.Parallel()
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					DataplaneClusterConfig: test.fields.dataplaneClusterConfig,

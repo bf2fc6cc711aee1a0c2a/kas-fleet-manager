@@ -340,6 +340,7 @@ components:
         max_data_retention_size: max_data_retention_size
         kafka_version: kafka_version
         kafka_storage_size: kafka_storage_size
+        suspended: true
       properties:
         strimzi_version:
           type: string
@@ -355,6 +356,13 @@ components:
         max_data_retention_size:
           description: Maximum data storage available to this Kafka
           type: string
+        suspended:
+          description: boolean value indicating whether kafka should be suspended
+            or not depending on the value provided. Suspended kafkas have their certain
+            resources removed and become inaccessible until fully unsuspended (restored
+            to Ready state).
+          nullable: true
+          type: boolean
       type: object
     SupportedKafkaSizeBytesValueItem:
       properties:

@@ -13,6 +13,5 @@ func NewStageEnvLoader() environments.EnvLoader {
 		"mas-sso-base-url":                  "https://identity.api.stage.openshift.com",
 		"mas-sso-realm":                     "rhoas",
 		"enable-kafka-external-certificate": "true",
-		"aws-cluster-compute-machine-type":  "m5.2xlarge",
 	}
 }

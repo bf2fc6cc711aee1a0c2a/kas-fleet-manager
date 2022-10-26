@@ -20,7 +20,7 @@ var _ DataPlaneKafkaService = &DataPlaneKafkaServiceMock{}
 //
 //		// make and configure a mocked DataPlaneKafkaService
 //		mockedDataPlaneKafkaService := &DataPlaneKafkaServiceMock{
-//			UpdateDataPlaneKafkaServiceFunc: func(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *apiErrors.ServiceError {
+//			UpdateDataPlaneKafkaServiceFunc: func(ctx context.Context, clusterID string, status []*dbapi.DataPlaneKafkaStatus) *apiErrors.ServiceError {
 //				panic("mock out the UpdateDataPlaneKafkaService method")
 //			},
 //		}
@@ -31,7 +31,7 @@ var _ DataPlaneKafkaService = &DataPlaneKafkaServiceMock{}
 //	}
 type DataPlaneKafkaServiceMock struct {
 	// UpdateDataPlaneKafkaServiceFunc mocks the UpdateDataPlaneKafkaService method.
-	UpdateDataPlaneKafkaServiceFunc func(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *apiErrors.ServiceError
+	UpdateDataPlaneKafkaServiceFunc func(ctx context.Context, clusterID string, status []*dbapi.DataPlaneKafkaStatus) *apiErrors.ServiceError
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -39,8 +39,8 @@ type DataPlaneKafkaServiceMock struct {
 		UpdateDataPlaneKafkaService []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// ClusterId is the clusterId argument value.
-			ClusterId string
+			// ClusterID is the clusterID argument value.
+			ClusterID string
 			// Status is the status argument value.
 			Status []*dbapi.DataPlaneKafkaStatus
 		}
@@ -49,23 +49,23 @@ type DataPlaneKafkaServiceMock struct {
 }
 
 // UpdateDataPlaneKafkaService calls UpdateDataPlaneKafkaServiceFunc.
-func (mock *DataPlaneKafkaServiceMock) UpdateDataPlaneKafkaService(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *apiErrors.ServiceError {
+func (mock *DataPlaneKafkaServiceMock) UpdateDataPlaneKafkaService(ctx context.Context, clusterID string, status []*dbapi.DataPlaneKafkaStatus) *apiErrors.ServiceError {
 	if mock.UpdateDataPlaneKafkaServiceFunc == nil {
 		panic("DataPlaneKafkaServiceMock.UpdateDataPlaneKafkaServiceFunc: method is nil but DataPlaneKafkaService.UpdateDataPlaneKafkaService was just called")
 	}
 	callInfo := struct {
 		Ctx       context.Context
-		ClusterId string
+		ClusterID string
 		Status    []*dbapi.DataPlaneKafkaStatus
 	}{
 		Ctx:       ctx,
-		ClusterId: clusterId,
+		ClusterID: clusterID,
 		Status:    status,
 	}
 	mock.lockUpdateDataPlaneKafkaService.Lock()
 	mock.calls.UpdateDataPlaneKafkaService = append(mock.calls.UpdateDataPlaneKafkaService, callInfo)
 	mock.lockUpdateDataPlaneKafkaService.Unlock()
-	return mock.UpdateDataPlaneKafkaServiceFunc(ctx, clusterId, status)
+	return mock.UpdateDataPlaneKafkaServiceFunc(ctx, clusterID, status)
 }
 
 // UpdateDataPlaneKafkaServiceCalls gets all the calls that were made to UpdateDataPlaneKafkaService.
@@ -74,12 +74,12 @@ func (mock *DataPlaneKafkaServiceMock) UpdateDataPlaneKafkaService(ctx context.C
 //	len(mockedDataPlaneKafkaService.UpdateDataPlaneKafkaServiceCalls())
 func (mock *DataPlaneKafkaServiceMock) UpdateDataPlaneKafkaServiceCalls() []struct {
 	Ctx       context.Context
-	ClusterId string
+	ClusterID string
 	Status    []*dbapi.DataPlaneKafkaStatus
 } {
 	var calls []struct {
 		Ctx       context.Context
-		ClusterId string
+		ClusterID string
 		Status    []*dbapi.DataPlaneKafkaStatus
 	}
 	mock.lockUpdateDataPlaneKafkaService.RLock()

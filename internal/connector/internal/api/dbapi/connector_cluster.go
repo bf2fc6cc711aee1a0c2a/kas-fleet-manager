@@ -32,12 +32,19 @@ type ConnectorCluster struct {
 	Status         ConnectorClusterStatus `gorm:"embedded;embeddedPrefix:status_"`
 }
 
+type ConnectorClusterPlatform struct {
+	ID      string
+	Type    string
+	Version string
+}
+
 type ConnectorClusterStatus struct {
 	Phase ConnectorClusterPhaseEnum
 	// the version of the agent
 	Version    string
-	Conditions ConditionList `gorm:"type:jsonb"`
-	Operators  OperatorList  `gorm:"type:jsonb"`
+	Platform   ConnectorClusterPlatform `gorm:"embedded;embeddedPrefix:platform_"`
+	Conditions ConditionList            `gorm:"type:jsonb"`
+	Operators  OperatorList             `gorm:"type:jsonb"`
 }
 
 type ConditionList []Condition
