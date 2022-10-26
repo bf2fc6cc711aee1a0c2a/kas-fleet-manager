@@ -1220,6 +1220,14 @@ Feature: connector agent API
     Then the response code should be 200
     And the ".desired_state" selection from the response should match "ready"
 
+    When I PATCH path "/v1/admin/kafka_connectors/${connector_id}" with json body:
+        """
+        {
+            "some_stuff": "does not exist"
+        }
+        """
+    Then the response code should be 400
+
     #-----------------------------------------------------------------------------------------------------------------
     # In this part of the Scenario we test out getting connector updates using the admin API
     #-----------------------------------------------------------------------------------------------------------------

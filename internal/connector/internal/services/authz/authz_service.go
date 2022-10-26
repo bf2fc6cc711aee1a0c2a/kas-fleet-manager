@@ -148,6 +148,10 @@ func (u *ValidationUser) AuthorizedNamespaceUser(errorCode errors.ServiceErrorCo
 		if u.err != nil {
 			err = u.err
 		} else {
+			if u.IsAdmin() {
+				return nil
+			}
+
 			if value != nil && len(*value) > 0 {
 				if namespace, serr := u.service.namespaceService.GetNamespaceTenant(*value); serr != nil {
 					err = errors.New(errorCode, serr.Reason)

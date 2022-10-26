@@ -146,6 +146,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			if serr != nil {
 				return nil, serr
 			}
+			originalResource, _ := presenters.PresentConnector(&dbresource.Connector)
 
 			resource, serr := presenters.PresentConnector(&dbresource.Connector)
 			if serr != nil {
@@ -182,7 +183,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 
 			// get and validate patch operation type
 			var operation phase.ConnectorOperation
-			if operation, serr = getOperation(resource, patch); err != nil {
+			if operation, serr = h.getOperation(resource, patch); err != nil {
 				return nil, serr
 			}
 			if operation == phase.UnassignConnector && !h.connectorsConfig.ConnectorEnableUnassignedConnectors {
@@ -215,7 +216,6 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// If we didn't change anything, then just skip the update...
-			originalResource, _ := presenters.PresentConnector(&dbresource.Connector)
 			if reflect.DeepEqual(originalResource, resource) {
 				return originalResource, nil
 			}
@@ -292,7 +292,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 	handlers.Handle(w, r, cfg, http.StatusAccepted)
 }
 
-func getOperation(resource public.Connector, patch public.ConnectorRequest) (phase.ConnectorOperation, *errors.ServiceError) {
+func (h ConnectorsHandler) getOperation(resource public.Connector, patch public.ConnectorRequest) (phase.ConnectorOperation, *errors.ServiceError) {
 	operation, ok := stateToOperationsMap[patch.DesiredState]
 	if !ok {
 		return operation, errors.BadRequest("Unsupported patch desired state %s", patch.DesiredState)

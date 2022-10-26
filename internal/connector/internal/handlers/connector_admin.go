@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/phase"
 	"io"
-	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
@@ -405,94 +405,27 @@ func (h *ConnectorAdminHandler) GetConnector(writer http.ResponseWriter, request
 }
 
 func (h *ConnectorAdminHandler) PatchConnector(writer http.ResponseWriter, request *http.Request) {
-	connectorId := mux.Vars(request)["connector_id"]
-	contentType := request.Header.Get("Content-Type")
-
-	cfg := &handlers.HandlerConfig{
-		Validate: []handlers.Validate{
-			handlers.Validation("connector_id", &connectorId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
-			handlers.Validation("Content-Type header", &contentType, handlers.IsOneOf("application/json", "application/json-patch+json", "application/merge-patch+json")),
-		},
-		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			connector, serviceError := h.ConnectorsService.Get(request.Context(), connectorId, "")
-			if serviceError != nil {
-				return nil, serviceError
-			}
-
-			resource, serviceError := presenters.PresentConnector(&connector.Connector)
-			if serviceError != nil {
-				return nil, serviceError
-			}
-
-			// Apply the patch..
-			patchBytes, err := io.ReadAll(request.Body)
-			if err != nil {
-				return nil, errors.BadRequest("failed to get patch bytes")
-			}
-
-			patch := public.ConnectorRequest{}
-			serviceError = PatchResource(resource, contentType, patchBytes, &patch)
-			if serviceError != nil {
-				return nil, serviceError
-			}
-
-			// get and validate patch operation type
-			var operation phase.ConnectorOperation
-			if operation, serviceError = getOperation(resource, patch); err != nil {
-				return nil, serviceError
-			}
-			if operation == phase.UnassignConnector && !h.ConnectorsConfig.ConnectorEnableUnassignedConnectors {
-				return nil, errors.FieldValidationError("Unsupported connector state %s", patch.DesiredState)
-			}
-
-			// But we don't want to allow the user to update ALL fields. Copy
-			// over the fields that they are allowed to modify, in this case only DesiredState
-			resource.DesiredState = public.ConnectorDesiredState(patch.DesiredState)
-
-			// If we didn't change anything, then just skip the update...
-			originalResource, _ := presenters.PresentConnector(&connector.Connector)
-			if reflect.DeepEqual(originalResource, resource) {
-				return originalResource, nil
-			}
-
-			// revalidate
-			validates := []handlers.Validate{
-				handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
-			}
-
-			for _, v := range validates {
-				err := v()
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			p, svcErr := presenters.ConvertConnector(resource)
-			if svcErr != nil {
-				return nil, svcErr
-			}
-
-			// update connector phase before desired state
-			if originalResource.Status.State != public.ConnectorState(dbapi.ConnectorStatusPhaseAssigning) {
-				connector.Status.Phase = phase.ConnectorStartingPhase[operation]
-				p.Status.Phase = connector.Status.Phase
-				serviceError = h.ConnectorsService.SaveStatus(request.Context(), connector.Status)
-				if serviceError != nil {
-					return nil, serviceError
-				}
-			}
-			// update modified connector including desired state
-			serviceError = h.ConnectorsService.Update(request.Context(), p)
-			if serviceError != nil {
-				return nil, serviceError
-			}
-
-			return presenters.PresentConnector(p)
-		},
+	body, err := io.ReadAll(request.Body)
+	if err != nil {
+		handlers.Handle(writer, request, nil, http.StatusBadRequest)
 	}
 
-	// return 202 status accepted
-	handlers.Handle(writer, request, cfg, http.StatusAccepted)
+	rConnector := public.ConnectorRequest{}
+	err = json.Unmarshal(body, &rConnector)
+	if err != nil {
+		handlers.Handle(writer, request, nil, http.StatusBadRequest)
+	}
+
+	r := io.NopCloser(strings.NewReader(fmt.Sprintf("{\"desired_state\": \"%s\"}", rConnector.DesiredState)))
+	request.Body = r
+
+	ConnectorsHandler{
+		connectorsService:     h.ConnectorsService,
+		connectorTypesService: h.ConnectorTypesService,
+		namespaceService:      h.NamespaceService,
+		authZService:          h.AuthZService,
+		connectorsConfig:      h.ConnectorsConfig,
+	}.Patch(writer, request)
 }
 
 func (h *ConnectorAdminHandler) DeleteConnector(writer http.ResponseWriter, request *http.Request) {
