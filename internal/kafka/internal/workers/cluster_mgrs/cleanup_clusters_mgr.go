@@ -4,6 +4,7 @@ import (
 	fleeterrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/google/uuid"
@@ -25,13 +26,14 @@ type CleanupClustersManager struct {
 	clusterService             services.ClusterService
 	kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 	osdIDPKeycloakService      sso.OsdKeycloakService
+	dataplaneClusterConfig     *config.DataplaneClusterConfig
 }
 
 // NewCleanupClustersManager creates a new worker that reconciles data plane clusters in cleanup state.
 func NewCleanupClustersManager(reconciler workers.Reconciler,
 	clusterService services.ClusterService,
 	kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon,
-	osdIDPKeycloakService sso.OsdKeycloakService) *CleanupClustersManager {
+	osdIDPKeycloakService sso.OsdKeycloakService, dataplaneClusterConfig *config.DataplaneClusterConfig) *CleanupClustersManager {
 	return &CleanupClustersManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -41,6 +43,7 @@ func NewCleanupClustersManager(reconciler workers.Reconciler,
 		clusterService:             clusterService,
 		kasFleetshardOperatorAddon: kasFleetshardOperatorAddon,
 		osdIDPKeycloakService:      osdIDPKeycloakService,
+		dataplaneClusterConfig:     dataplaneClusterConfig,
 	}
 }
 
@@ -93,10 +96,12 @@ func (m *CleanupClustersManager) processCleanupClusters() error {
 }
 
 func (m *CleanupClustersManager) reconcileCleanupCluster(cluster api.Cluster) error {
-	glog.Infof("Removing Dataplane cluster %s IDP client", cluster.ClusterID)
-	keycloakDeregistrationErr := m.osdIDPKeycloakService.DeRegisterClientInSSO(cluster.ID)
-	if keycloakDeregistrationErr != nil {
-		return errors.Wrapf(keycloakDeregistrationErr, "failed to removed Dataplance cluster %s IDP client", cluster.ClusterID)
+	if m.dataplaneClusterConfig.EnableKafkaSreIdentityProviderConfiguration {
+		glog.Infof("Removing Dataplane cluster %s IDP client", cluster.ClusterID)
+		keycloakDeregistrationErr := m.osdIDPKeycloakService.DeRegisterClientInSSO(cluster.ID)
+		if keycloakDeregistrationErr != nil {
+			return errors.Wrapf(keycloakDeregistrationErr, "failed to removed Dataplance cluster %s IDP client", cluster.ClusterID)
+		}
 	}
 	glog.Infof("Removing Dataplane cluster %s fleetshard service account", cluster.ClusterID)
 	serviceAcountRemovalErr := m.kasFleetshardOperatorAddon.RemoveServiceAccount(cluster)

@@ -27,7 +27,6 @@ import (
 	clusterMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	mockclusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
 
@@ -2294,28 +2293,4 @@ func TestKafka_RemovingExpiredKafkas_WithStandardInstances(t *testing.T) {
 
 	kafkaDeletionErr := common.WaitForNumberOfKafkaToBeGivenCount(ctx, test.TestServices.DBFactory, client, 2)
 	g.Expect(kafkaDeletionErr).NotTo(gomega.HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
-}
-
-func getAndDeleteServiceAccounts(clientID string, env *environments.Env) error {
-	var keycloakConfig *keycloak.KeycloakConfig
-	env.MustResolve(&keycloakConfig)
-	defer env.Cleanup()
-
-	kcClientKafkaSre := keycloak.NewClient(keycloakConfig, keycloakConfig.OSDClusterIDPRealm)
-	accessTokenKafkaSre, _ := kcClientKafkaSre.GetToken()
-
-	client, err := kcClientKafkaSre.GetClient(clientID, accessTokenKafkaSre)
-	if err != nil {
-		return err
-	}
-	if client != nil {
-		err = kcClientKafkaSre.DeleteClient(*client.ID, accessTokenKafkaSre)
-	} else {
-		kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.KafkaRealm)
-		accessToken, _ := kcClient.GetToken()
-		if client, _ := kcClient.GetClient(clientID, accessToken); client != nil {
-			err = kcClient.DeleteClient(*client.ID, accessToken)
-		}
-	}
-	return err
 }

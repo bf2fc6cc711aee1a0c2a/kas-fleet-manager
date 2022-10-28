@@ -64,18 +64,19 @@ else
   -e "s/<report_portal_project>/${REPORTPORTAL_PROJECT}/g" Dockerfile_integration_tests
 fi
 
-if [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_ID}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_SECRET}" ]];
+if [[ -z "${REDHAT_SSO_CLIENT_ID}" ]] || [[ -z "${REDHAT_SSO_CLIENT_SECRET}" ]];
 then
-   echo "Required mas sso env var: client id & client secret & crt is not provided"
+   echo "Required redhat sso env var: client id & client secret is not provided"
    exit 1
 else
-  sed -i -e "s/<mas_sso_client_id>/${MAS_SSO_CLIENT_ID}/g" -e "s/<mas_sso_client_secret>/${MAS_SSO_CLIENT_SECRET}/g" \
-  -e  "s/<osd_idp_mas_sso_client_id>/${OSD_IDP_MAS_SSO_CLIENT_ID}/g" \
-  -e  "s/<osd_idp_mas_sso_client_secret>/${OSD_IDP_MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
+  sed -i -e "s/<sso_client_id>/${REDHAT_SSO_CLIENT_ID}/g" -e "s/<sso_client_secret>/${REDHAT_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
 fi
 
-sed -i -e 's/http:\/\/127.0.0.1:8180/https:\/\/identity.api.stage.openshift.com/g' internal/kafka/internal/environments/integration.go
-sed -i -e 's/http:\/\/127.0.0.1:8180/https:\/\/identity.api.stage.openshift.com/g' internal/connector/internal/environments/integration.go
+# Use redhat_sso as the SSO Provider for the kas-fleet-manager and connector-fleet-manager
+sed -i -e 's/mas_sso/redhat_sso/g' internal/kafka/internal/environments/development.go
+sed -i -e 's/mas_sso/redhat_sso/g' internal/kafka/internal/environments/integration.go
+sed -i -e 's/mas_sso/redhat_sso/g' internal/connector/internal/environments/development.go
+sed -i -e 's/mas_sso/redhat_sso/g' internal/connector/internal/environments/integration.go
 
 docker login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
 docker build -t "$IMAGE_NAME" -f Dockerfile_integration_tests .

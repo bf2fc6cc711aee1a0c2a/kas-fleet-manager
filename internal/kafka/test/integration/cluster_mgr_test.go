@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -19,8 +20,11 @@ import (
 	kafkaMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -84,13 +88,8 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 			Provider: mocks.MockCluster.CloudProvider().ID(),
 		})
 
-		for _, clusters := range list {
-			if err := getAndDeleteServiceAccounts(clusters.ClientID, h.Env); err != nil {
-				t.Fatalf("Failed to delete service account with client id: %v", clusters.ClientID)
-			}
-			if err := getAndDeleteServiceAccounts(clusters.ID, h.Env); err != nil {
-				t.Fatalf("Failed to delete service account with cluster id: %v", clusters.ID)
-			}
+		for _, cluster := range list {
+			deleteClientsFromSSOService(cluster, h.Env)
 		}
 	}()
 
@@ -142,7 +141,10 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	}
 	g.Expect(cluster.DeletedAt.Valid).To(gomega.Equal(false), fmt.Sprintf("Expected deleted_at property to be non valid meaning cluster not soft deleted, instead got %v", cluster.DeletedAt))
 	g.Expect(cluster.Status).To(gomega.Equal(api.ClusterReady), fmt.Sprintf("Expected status property to be %s, instead got %s ", api.ClusterReady, cluster.Status))
-	g.Expect(cluster.IdentityProviderID).ToNot(gomega.BeEmpty(), "Expected identity_provider_id property to be defined")
+
+	if dataplaneConfig.EnableKafkaSreIdentityProviderConfiguration {
+		g.Expect(cluster.IdentityProviderID).ToNot(gomega.BeEmpty(), "Expected identity_provider_id property to be defined")
+	}
 
 	// check the state of cluster on ocm to ensure cluster was provisioned successfully
 	ocmCluster, err := ocmClient.GetCluster(cluster.ClusterID)
@@ -354,4 +356,37 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	err = common.WaitForClusterToBeDeleted(test.TestServices.DBFactory, &test.TestServices.ClusterService, dummyCluster.ClusterID)
 
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for cluster deletion: %v", err)
+}
+
+func deleteClientsFromSSOService(cluster *api.Cluster, env *environments.Env) {
+	var keycloakConfig *keycloak.KeycloakConfig
+	env.MustResolve(&keycloakConfig)
+	defer env.Cleanup()
+
+	kafkaSsoService := sso.NewKeycloakServiceBuilder().
+		ForKFM().
+		WithConfiguration(keycloakConfig).
+		Build()
+
+	err := kafkaSsoService.DeRegisterKasFleetshardOperatorServiceAccount(cluster.ClientID)
+
+	if err != nil {
+		glog.Warningf("Failed to delete Fleetshard client from SSO for cluster %q. The sso provider is %q", cluster.ClusterID, keycloakConfig.SelectSSOProvider)
+	}
+
+	if keycloakConfig.SelectSSOProvider != keycloak.MAS_SSO {
+		return
+	}
+
+	osdSSOService := sso.NewKeycloakServiceBuilder().
+		ForOSD().
+		WithConfiguration(keycloakConfig).
+		WithRealmConfig(keycloakConfig.OSDClusterIDPRealm).
+		Build()
+
+	err = osdSSOService.DeRegisterClientInSSO(cluster.ID)
+
+	if err != nil {
+		glog.Warningf("Failed to delete IDP configuration client from SSO for cluster %q. The sso provider is %q", cluster.ClusterID, keycloakConfig.SelectSSOProvider)
+	}
 }

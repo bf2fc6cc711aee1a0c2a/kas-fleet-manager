@@ -257,6 +257,7 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 	defer ocmServer.Close()
 	var enableAutoscale bool
 	h, client, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, providerConfig *config.ProviderConfig) {
+		d.EnableReadyDataPlaneClustersReconcile = false
 		if enableAutoscale {
 			d.DataPlaneClusterScalingType = config.AutoScaling
 			d.DynamicScalingConfig.ComputeMachinePerCloudProvider[cloudproviders.AWS] = config.ComputeMachinesConfig{
@@ -336,6 +337,11 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 	h.Env.Stop()
 
 	enableAutoscale = true
+
+	// mark the old leader lease as expired so that a new leader gets re-elected
+	err = db.Exec("Update leader_leases set expires = current_timestamp").Error
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "failed to mark leader leases as expired")
+
 	err = h.Env.CreateServices()
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "unable to initialize testing environment: %v", err)
 
@@ -354,8 +360,8 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 	account2 := h.NewAccount("test-user-2", "", "", "test-org-2")
 
 	kafkaRequestPayload := public.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Region:        mocks.MockCloudRegionID,
+		CloudProvider: mocks.MockCloudProviderID,
 		Name:          mockKafkaName,
 		Plan:          fmt.Sprintf("%s.x1", types.STANDARD.String()),
 	}
