@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
@@ -16,7 +17,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	shared "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/gorilla/mux"
 )
 
@@ -186,7 +186,7 @@ func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 			}
 
 			getStatusBasedOnSuspendedParam := func(susp *bool, kafka *dbapi.KafkaRequest) string {
-				if shared.IsNilPredicate(susp) {
+				if shared.IsNil(susp) {
 					return kafka.Status
 				} else {
 					if *susp {

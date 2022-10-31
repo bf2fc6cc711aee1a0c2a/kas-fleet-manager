@@ -3,11 +3,11 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"regexp"
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -261,7 +261,7 @@ func ValidateKafkaUpdateFields(kafkaUpdateRequest *private.KafkaUpdateRequest) h
 			stringSet(&kafkaUpdateRequest.KafkaIbpVersion) ||
 			stringSet(&kafkaUpdateRequest.DeprecatedKafkaStorageSize) ||
 			stringSet(&kafkaUpdateRequest.MaxDataRetentionSize) ||
-			arrays.IsNotNilPredicate(kafkaUpdateRequest.Suspended)) {
+			shared.IsNotNil(kafkaUpdateRequest.Suspended)) {
 			return errors.FieldValidationError("failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version, kafka_storage_size, max_data_retention_size or suspended to be provided")
 		}
 		return nil
