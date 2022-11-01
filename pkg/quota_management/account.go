@@ -1,20 +1,62 @@
 package quota_management
 
+import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
+)
+
 type Account struct {
-	Username            string `yaml:"username"`
-	MaxAllowedInstances int    `yaml:"max_allowed_instances"`
+	Username            string    `yaml:"username"`
+	MaxAllowedInstances int       `yaml:"max_allowed_instances"`
+	GrantedQuota        QuotaList `yaml:"granted_quota,omitempty"`
 }
 
-func (account Account) IsInstanceCountWithinLimit(count int) bool {
-	return count <= account.GetMaxAllowedInstances()
+var _ QuotaManagementListItem = &Account{}
+
+func (account Account) IsInstanceCountWithinLimit(instanceTypeID string, billingModelName string, count int) bool {
+	return count <= account.GetMaxAllowedInstances(instanceTypeID, billingModelName)
 }
 
-func (account Account) GetMaxAllowedInstances() int {
-	if account.MaxAllowedInstances <= 0 {
-		return MaxAllowedInstances
+func (account Account) GetMaxAllowedInstances(instanceTypeID string, billingModelName string) int {
+	bm, ok := account.getBillingModel(instanceTypeID, billingModelName)
+
+	if !ok {
+		return 0
 	}
 
-	return account.MaxAllowedInstances
+	if bm.Allowed <= 0 {
+		if account.MaxAllowedInstances <= 0 {
+			return MaxAllowedInstances
+		}
+		return account.MaxAllowedInstances
+	}
+
+	return bm.Allowed
+}
+
+func (account Account) GetGrantedQuota() QuotaList {
+	if len(account.GrantedQuota) == 0 {
+		return defaultInstanceTypes
+	}
+	return account.GrantedQuota
+}
+
+func (account Account) getBillingModel(instanceTypeId string, billingModelName string) (BillingModel, bool) {
+	grantedQuota := account.GetGrantedQuota()
+
+	idx, instanceType := arrays.FindFirst(grantedQuota, func(x Quota) bool { return shared.StringEqualsIgnoreCase(x.InstanceTypeID, instanceTypeId) })
+	if idx != -1 {
+		idx, bm := arrays.FindFirst(instanceType.GetBillingModels(), func(bm BillingModel) bool { return shared.StringEqualsIgnoreCase(bm.Name, billingModelName) })
+		if idx != -1 {
+			return bm, true
+		}
+	}
+	return BillingModel{}, false
+}
+
+func (account Account) HasQuotaFor(instanceTypeId string, billingModelName string) bool {
+	_, ok := account.getBillingModel(instanceTypeId, billingModelName)
+	return ok
 }
 
 type AccountList []Account

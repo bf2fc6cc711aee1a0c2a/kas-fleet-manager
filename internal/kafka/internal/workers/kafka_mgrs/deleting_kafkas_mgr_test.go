@@ -67,7 +67,7 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 					DeleteQuotaFunc: func(id string) *errors.ServiceError {
 						return errors.GeneralError("failed to delete quota")
 					},
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(username string, externalId string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 				},
@@ -100,7 +100,7 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 					DeleteQuotaFunc: func(id string) *errors.ServiceError {
 						return nil
 					},
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(username string, externalId string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 				},

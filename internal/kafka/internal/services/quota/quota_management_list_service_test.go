@@ -28,6 +28,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 
 	type args struct {
 		instanceType types.KafkaInstanceType
+		billingModel string
 	}
 
 	tests := []struct {
@@ -63,7 +64,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "return true when user is not part of the quota list and instance type is standard",
+			name: "return false when user is not part of the quota list and instance type is standard",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				QuotaManagementList: &quota_management.QuotaManagementListConfig{
@@ -77,7 +78,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "return true when user is part of the quota list as a service account and instance type is standard",
+			name: "Test user is part of the quota list as a service account and instance type is standard",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				QuotaManagementList: &quota_management.QuotaManagementListConfig{
@@ -94,6 +95,59 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 			},
 			args: args{
 				instanceType: types.STANDARD,
+			},
+			want: true,
+		},
+		{
+			name: "Test user is part of the quota list as a service account and instance type is standard/BILLING_MODEL=EVAL, but eval is not allowed",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
+					EnableInstanceLimitControl: true,
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						ServiceAccounts: quota_management.AccountList{
+							quota_management.Account{
+								Username:            "username",
+								MaxAllowedInstances: 4,
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				instanceType: "EVAL",
+			},
+			want: false,
+		},
+		{
+			name: "Test user is part of the quota list as a service account and instance type is standard/BILLING_MODEL=EVAL and eval is allowed",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
+					EnableInstanceLimitControl: true,
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						ServiceAccounts: quota_management.AccountList{
+							quota_management.Account{
+								Username:            "username",
+								MaxAllowedInstances: 4,
+								GrantedQuota: []quota_management.Quota{
+									{
+										InstanceTypeID: "standard",
+										BillingModels: []quota_management.BillingModel{
+											{
+												Name: "EVAL",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				instanceType: "standard",
+				billingModel: "EVAL",
 			},
 			want: true,
 		},
@@ -116,6 +170,62 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 			},
 			args: args{
 				instanceType: types.STANDARD,
+			},
+			want: true,
+		},
+		{
+			name: "return false when user is part of the quota list under an organisation and instance type is standard/EVAL, but EVAL is not allowed",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
+					EnableInstanceLimitControl: true,
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						Organisations: quota_management.OrganisationList{
+							quota_management.Organisation{
+								Id:                  "org-id",
+								MaxAllowedInstances: 4,
+								AnyUser:             true,
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				instanceType: types.STANDARD,
+				billingModel: "EVAL",
+			},
+			want: false,
+		},
+		{
+			name: "return true when user is part of the quota list under an organisation and instance type is standard/EVAL and EVAL is allowed",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
+					EnableInstanceLimitControl: true,
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						Organisations: quota_management.OrganisationList{
+							quota_management.Organisation{
+								Id:                  "org-id",
+								MaxAllowedInstances: 4,
+								AnyUser:             true,
+								GrantedQuota: []quota_management.Quota{
+									{
+										InstanceTypeID: "standard",
+										BillingModels: []quota_management.BillingModel{
+											{
+												Name: "EVAL",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				instanceType: types.STANDARD,
+				billingModel: "EVAL",
 			},
 			want: true,
 		},
@@ -154,7 +264,7 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 				Owner:          "username",
 				OrganisationId: "org-id",
 			}
-			allowed, _ := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, tt.args.instanceType)
+			allowed, _ := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, tt.args.instanceType, tt.args.billingModel)
 			g.Expect(tt.want).To(gomega.Equal(allowed))
 		})
 	}
@@ -314,8 +424,8 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND (organisation_id = $2) AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs(types.STANDARD.String(), "org-id").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND billing_model = $2 AND (organisation_id = $3) AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.STANDARD.String(), "standard", "org-id").
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -350,8 +460,8 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs(types.DEVELOPER.String(), "username").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND billing_model = $2 AND owner = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.DEVELOPER.String(), "standard", "username").
 					WithReply(nil)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -377,13 +487,14 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs(types.DEVELOPER.String(), "username").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND billing_model = $2 AND owner = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.DEVELOPER.String(), "standard", "username").
 					WithReply(converters.ConvertKafkaRequest(
 						buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 							kafkaRequest.Owner = "username"
 							kafkaRequest.InstanceType = types.DEVELOPER.String()
 							kafkaRequest.OrganisationId = "org-id"
+							kafkaRequest.BillingModel = "standard"
 						})))
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -416,8 +527,8 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND (organisation_id = $2) AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs(types.STANDARD.String(), "org-id").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND billing_model = $2 AND (organisation_id = $3) AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.STANDARD.String(), "standard", "org-id").
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -437,8 +548,8 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs(types.DEVELOPER.String(), "username").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND billing_model = $2 AND owner = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.DEVELOPER.String(), "standard", "username").
 					WithReply(nil)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -464,8 +575,9 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 				OrganisationId: "org-id",
 				SizeId:         "x1",
 				InstanceType:   tt.args.instanceType.String(),
+				BillingModel:   "standard",
 			}
-			_, err := quotaService.ReserveQuota(kafka, tt.args.instanceType)
+			_, err := quotaService.ReserveQuota(kafka)
 			g.Expect(tt.wantErr).To(gomega.Equal(err))
 		})
 	}

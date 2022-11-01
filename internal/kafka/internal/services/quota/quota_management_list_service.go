@@ -2,6 +2,7 @@ package quota
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 
@@ -18,33 +19,48 @@ type QuotaManagementListService struct {
 	kafkaConfig         *config.KafkaConfig
 }
 
+var _ services.QuotaService = &QuotaManagementListService{}
+
 // don't validate billing accounts when using the quota list
 func (q QuotaManagementListService) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
 	return nil
 }
 
-func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(username string, organisationId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(username string, organisationId string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
 	orgId := organisationId
+	var org quota_management.Organisation
+	var account quota_management.Account
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetById(orgId)
 	userIsRegistered := false
+	serviceAccountIsRegistered := false
+
 	if orgFound && org.IsUserRegistered(username) {
 		userIsRegistered = true
 	} else {
-		_, userFound := q.quotaManagementList.QuotaList.ServiceAccounts.GetByUsername(username)
-		userIsRegistered = userFound
+		account, serviceAccountIsRegistered = q.quotaManagementList.QuotaList.ServiceAccounts.GetByUsername(username)
+	}
+
+	if billingModelName == "" {
+		billingModelName = "standard"
 	}
 
 	// allow user defined in quota list to create standard instances
-	if userIsRegistered && instanceType == types.STANDARD {
+	if userIsRegistered && org.HasQuotaFor(instanceType.String(), billingModelName) {
 		return true, nil
-	} else if !userIsRegistered && instanceType == types.DEVELOPER { // allow user who are not in quota list to create developer instances
+	}
+
+	if serviceAccountIsRegistered && account.HasQuotaFor(instanceType.String(), billingModelName) {
+		return true, nil
+	}
+
+	if !userIsRegistered && !serviceAccountIsRegistered && instanceType == types.DEVELOPER { // allow user who are not in quota list to create developer instances
 		return true, nil
 	}
 
 	return false, nil
 }
 
-func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 	if !q.quotaManagementList.EnableInstanceLimitControl {
 		return "", nil
 	}
@@ -54,16 +70,16 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, inst
 	var quotaManagementListItem quota_management.QuotaManagementListItem
 	message := fmt.Sprintf("user '%s' has reached a maximum number of %d allowed streaming units", username, quota_management.GetDefaultMaxAllowedInstances())
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetById(orgId)
-	filterByOrd := false
+	filterByOrg := false
 	if orgFound && org.IsUserRegistered(username) {
 		quotaManagementListItem = org
-		message = fmt.Sprintf("organization '%s' has reached a maximum number of %d allowed streaming units", orgId, org.GetMaxAllowedInstances())
-		filterByOrd = true
+		message = fmt.Sprintf("organization '%s' has reached a maximum number of %d allowed streaming units.", orgId, org.GetMaxAllowedInstances(kafka.InstanceType, kafka.BillingModel))
+		filterByOrg = true
 	} else {
 		user, userFound := q.quotaManagementList.QuotaList.ServiceAccounts.GetByUsername(username)
 		if userFound {
 			quotaManagementListItem = user
-			message = fmt.Sprintf("user '%s' has reached a maximum number of %d allowed streaming units", username, user.GetMaxAllowedInstances())
+			message = fmt.Sprintf("user '%s' has reached a maximum number of %d allowed streaming units.", username, user.GetMaxAllowedInstances(kafka.InstanceType, kafka.BillingModel))
 		}
 	}
 
@@ -74,9 +90,10 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, inst
 
 	dbConn := q.connectionFactory.New().
 		Model(&dbapi.KafkaRequest{}).
-		Where("instance_type = ?", instanceType.String())
+		Where("instance_type = ?", kafka.InstanceType).
+		Where("billing_model = ?", kafka.BillingModel)
 
-	if instanceType == types.STANDARD && filterByOrd {
+	if kafka.InstanceType != types.DEVELOPER.String() && filterByOrg {
 		dbConn = dbConn.Where("organisation_id = ?", orgId)
 	} else {
 		dbConn = dbConn.Where("owner = ?", username)
@@ -95,19 +112,19 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest, inst
 		totalInstanceCount += kafkaInstanceSize.CapacityConsumed
 	}
 
-	if quotaManagementListItem != nil && instanceType == types.STANDARD {
+	if quotaManagementListItem != nil && kafka.InstanceType != types.DEVELOPER.String() {
 		kafkaInstanceSize, e := q.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
 		if e != nil {
 			return "", errors.NewWithCause(errors.ErrorGeneral, e, "error reserving quota")
 		}
-		if quotaManagementListItem.IsInstanceCountWithinLimit(totalInstanceCount + kafkaInstanceSize.CapacityConsumed) {
+		if quotaManagementListItem.IsInstanceCountWithinLimit(kafka.InstanceType, kafka.InstanceType, totalInstanceCount+kafkaInstanceSize.CapacityConsumed) {
 			return "", nil
 		} else {
 			return "", errors.MaximumAllowedInstanceReached(message)
 		}
 	}
 
-	if instanceType == types.DEVELOPER && quotaManagementListItem == nil {
+	if kafka.InstanceType == types.DEVELOPER.String() && quotaManagementListItem == nil {
 		if totalInstanceCount >= quota_management.GetDefaultMaxAllowedInstances() {
 			return "", errors.MaximumAllowedInstanceReached(message)
 		}
