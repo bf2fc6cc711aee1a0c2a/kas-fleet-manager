@@ -17,7 +17,11 @@ type KafkaProduct string
 const (
 	RHOSAKProduct      KafkaProduct = "RHOSAK"
 	RHOSAKTrialProduct KafkaProduct = "RHOSAKTrial"
-	RHOSAKResourceName string       = "rhosak"
+	RHOSAKEvalProduct  KafkaProduct = "RHOSAKEval"
+)
+
+const (
+	RHOSAKResourceName string = "rhosak"
 )
 
 func (t KafkaQuotaType) GetProduct() string {

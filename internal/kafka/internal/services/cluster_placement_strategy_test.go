@@ -379,7 +379,7 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 				),
 			},
 			want: nil,
-			wantErr: errors.Wrapf(errors.New("Unable to find kafka instance type for 'unsupported'"), fmt.Sprintf("failed to get kafka instance size for cluster with criteria '%v'", FindClusterCriteria{
+			wantErr: errors.Wrapf(errors.New("unable to find kafka instance type for 'unsupported'"), fmt.Sprintf("failed to get kafka instance size for cluster with criteria '%v'", FindClusterCriteria{
 				MultiAZ:               mockkafkas.BuildKafkaRequest().MultiAZ,
 				Status:                api.ClusterReady,
 				SupportedInstanceType: "unsupported",
