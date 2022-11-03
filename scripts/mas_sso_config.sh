@@ -1,5 +1,7 @@
 #!/bin/bash
 
+MAX_KEYCLOAK_ATTEMPT_COUNT=24
+
 TOKEN_PATH="/auth/realms/master/protocol/openid-connect/token"
 
 CLIENT_ID=admin-cli
@@ -8,8 +10,24 @@ FLEET_OPERATOR_ROLE=kas_fleetshard_operator
 CONNECTOR_OPERATOR_ROLE=connector_fleetshard_operator
 
 # wait for keycloak container to be up or timeout after 2 minutes
-ERR_MESSAGE="Keycloak server not running at localhost:8180. No realm configuration will be applied"
-timeout 120 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' http://localhost:8180/auth/realms/master)" != "200" ]]; do echo "Waiting for keycloak server at localhost:8180"; sleep 10; done' || echo "$ERR_MESSAGE"
+
+COUNT=0
+while [[ $COUNT -lt $MAX_KEYCLOAK_ATTEMPT_COUNT ]]; do
+  ((COUNT+=1))
+  if [[ $(curl -s -o /dev/null -w ''%{http_code}'' "$KEYCLOAK_URL"/auth/realms/master) == "200" ]]; then
+    echo "[$COUNT/$MAX_KEYCLOAK_ATTEMPT_COUNT] - Keycloak ready"
+    KEYCLOAK_READY=1
+    break
+  fi
+
+  echo "[$COUNT/$MAX_KEYCLOAK_ATTEMPT_COUNT] - Waiting for keycloak server at $KEYCLOAK_URL"
+  sleep 5
+done
+
+if [[ ! $KEYCLOAK_READY ]]; then
+  echo "Max number of attempt reached ($MAX_KEYCLOAK_ATTEMPT_COUNT): Keycloak server not running at $KEYCLOAK_URL. No realm configuration will be applied"
+  exit 1
+fi
 
 RESULT=$(curl -sk --data "grant_type=password&client_id=$CLIENT_ID&username=$KEYCLOAK_USER&password=$KEYCLOAK_PASSWORD" "$KEYCLOAK_URL"$TOKEN_PATH)
 TOKEN=$(jq -r '.access_token' <<< "$RESULT")
@@ -125,7 +143,7 @@ ADMIN_CLIENT_ID=$(curl --fail --show-error -sk -H"${AUTHN_HEADER}" ${REALM_URL}/
 ADMIN_FULL_ROLE_ID=$(curl --fail --show-error -sk -H"${AUTHN_HEADER}" ${REALM_URL}/roles |\
     jq -r -c '.[] | select( .name | contains("'${FLEETMANAGER_ADMIN_ROLE}'")).id')
 
-if [ -z $ADMIN_FULL_ROLE_ID ] ; then 
+if [ -z $ADMIN_FULL_ROLE_ID ] ; then
     # Only create "kas-fleet-manager-admin-full" role if not already created
     ROLE_CREATE_RESPONSE=$(curl --fail --show-error -sk -H"${JSON_CONTENT}" -H"${AUTHN_HEADER}" ${REALM_URL}/roles --data-raw '{
     "name": "'${FLEETMANAGER_ADMIN_ROLE}'"
@@ -160,3 +178,5 @@ if [ $? -ne 0 ] ; then
 fi
 
 echo "Associated role ${FLEETMANAGER_ADMIN_ROLE}(${ADMIN_FULL_ROLE_ID}) with client ${FLEETMANAGER_ADMIN_CLIENT}(${ADMIN_CLIENT_ID}) service account"
+
+
