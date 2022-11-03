@@ -577,7 +577,7 @@ docker/login/internal:
 
 # Build the binary and image
 image/build:
-	$(DOCKER) --config="${DOCKER_CONFIG}" build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
+	$(DOCKER) --config="${DOCKER_CONFIG}" build --pull -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
 .PHONY: image/build
 
 # Build and push the image
