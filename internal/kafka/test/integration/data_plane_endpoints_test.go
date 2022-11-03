@@ -745,6 +745,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 		t.Error("failed matching managedkafka id with kafkarequest id")
 	}
 }
+
 func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 	g := gomega.NewWithT(t)
 
@@ -766,16 +767,18 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 	bootstrapServerHost := "some-bootstrap⁻host"
 
 	testKafka := &dbapi.KafkaRequest{
-		ClusterID:              testServer.ClusterID,
-		MultiAZ:                false,
-		Name:                   mockKafkaName1,
-		Status:                 constants2.KafkaRequestStatusReady.String(),
-		BootstrapServerHost:    bootstrapServerHost,
-		PlacementId:            "some-placement-id",
-		DesiredKafkaVersion:    "2.7.0",
-		DesiredKafkaIBPVersion: "2.7",
-		InstanceType:           types.STANDARD.String(),
-		SizeId:                 "x1",
+		ClusterID:                        testServer.ClusterID,
+		MultiAZ:                          false,
+		Name:                             mockKafkaName1,
+		Status:                           constants2.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:              bootstrapServerHost,
+		PlacementId:                      "some-placement-id",
+		DesiredKafkaVersion:              "2.7.0",
+		DesiredKafkaIBPVersion:           "2.7",
+		InstanceType:                     types.STANDARD.String(),
+		SizeId:                           "x1",
+		CanaryServiceAccountClientID:     "some-fake-service-account-secret",
+		CanaryServiceAccountClientSecret: "some-fake-canary-service-account-secret",
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -824,17 +827,19 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 	bootstrapServerHost := "some-bootstrap⁻host"
 
 	testKafka := &dbapi.KafkaRequest{
-		ClusterID:               testServer.ClusterID,
-		MultiAZ:                 false,
-		Name:                    mockKafkaName1,
-		Status:                  constants2.KafkaRequestStatusReady.String(),
-		BootstrapServerHost:     bootstrapServerHost,
-		PlacementId:             "some-placement-id",
-		DesiredKafkaVersion:     "2.7.0",
-		DesiredKafkaIBPVersion:  "2.7",
-		InstanceType:            types.STANDARD.String(),
-		ReauthenticationEnabled: true, // enable session reauthentication
-		SizeId:                  "x1",
+		ClusterID:                        testServer.ClusterID,
+		MultiAZ:                          false,
+		Name:                             mockKafkaName1,
+		Status:                           constants2.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:              bootstrapServerHost,
+		PlacementId:                      "some-placement-id",
+		DesiredKafkaVersion:              "2.7.0",
+		DesiredKafkaIBPVersion:           "2.7",
+		InstanceType:                     types.STANDARD.String(),
+		ReauthenticationEnabled:          true, // enable session reauthentication
+		SizeId:                           "x1",
+		CanaryServiceAccountClientID:     "some-fake-service-account-secret",
+		CanaryServiceAccountClientSecret: "some-fake-canary-service-account-secret",
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -871,17 +876,19 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 
 	// create another dummy kafka
 	anotherTestKafka := &dbapi.KafkaRequest{
-		ClusterID:               testServer.ClusterID,
-		MultiAZ:                 false,
-		Name:                    "another-kafka",
-		Status:                  constants2.KafkaRequestStatusReady.String(),
-		BootstrapServerHost:     bootstrapServerHost,
-		PlacementId:             "some-placement-id",
-		DesiredKafkaVersion:     "2.7.0",
-		DesiredKafkaIBPVersion:  "2.7",
-		InstanceType:            types.STANDARD.String(),
-		ReauthenticationEnabled: true, // enable session reauthentication
-		SizeId:                  "x1",
+		ClusterID:                        testServer.ClusterID,
+		MultiAZ:                          false,
+		Name:                             "another-kafka",
+		Status:                           constants2.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:              bootstrapServerHost,
+		PlacementId:                      "some-placement-id",
+		DesiredKafkaVersion:              "2.7.0",
+		DesiredKafkaIBPVersion:           "2.7",
+		InstanceType:                     types.STANDARD.String(),
+		ReauthenticationEnabled:          true, // enable session reauthentication
+		SizeId:                           "x1",
+		CanaryServiceAccountClientID:     "some-fake-service-account-secret",
+		CanaryServiceAccountClientSecret: "some-fake-canary-service-account-secret",
 	}
 
 	if err := db.Create(anotherTestKafka).Error; err != nil {
@@ -941,15 +948,17 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 
 	var testKafkas = []*dbapi.KafkaRequest{
 		{
-			ClusterID:              testServer.ClusterID,
-			MultiAZ:                false,
-			Name:                   mockKafkaName2,
-			Status:                 constants2.KafkaRequestStatusProvisioning.String(),
-			BootstrapServerHost:    bootstrapServerHost,
-			DesiredKafkaVersion:    "2.6.0",
-			DesiredKafkaIBPVersion: "2.6",
-			InstanceType:           types.DEVELOPER.String(),
-			SizeId:                 "x1",
+			ClusterID:                        testServer.ClusterID,
+			MultiAZ:                          false,
+			Name:                             mockKafkaName2,
+			Status:                           constants2.KafkaRequestStatusProvisioning.String(),
+			BootstrapServerHost:              bootstrapServerHost,
+			DesiredKafkaVersion:              "2.6.0",
+			DesiredKafkaIBPVersion:           "2.6",
+			InstanceType:                     types.DEVELOPER.String(),
+			SizeId:                           "x1",
+			CanaryServiceAccountClientID:     "some-fake-service-account-secret",
+			CanaryServiceAccountClientSecret: "some-fake-canary-service-account-secret",
 		},
 	}
 
@@ -1080,9 +1089,10 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		DesiredKafkaIBPVersion: "2.7",
 		InstanceType:           types.STANDARD.String(),
 		SizeId:                 "x1",
-	}
 
-	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
+		CanaryServiceAccountClientID:     "some-fake-service-account-secret",
+		CanaryServiceAccountClientSecret: "some-fake-canary-service-account-secret",
+	}
 
 	db := test.TestServices.DBFactory.New()
 

@@ -9,7 +9,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
-	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -20,11 +19,8 @@ import (
 	kafkaMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -82,15 +78,6 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	defer func() {
 		kasfFleetshardSync.Stop()
 		teardown()
-
-		list, _ := test.TestServices.ClusterService.FindAllClusters(services.FindClusterCriteria{
-			Region:   mocks.MockCluster.Region().ID(),
-			Provider: mocks.MockCluster.CloudProvider().ID(),
-		})
-
-		for _, cluster := range list {
-			deleteClientsFromSSOService(cluster, h.Env)
-		}
 	}()
 
 	// checks that there is a cluster created
@@ -356,37 +343,4 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	err = common.WaitForClusterToBeDeleted(test.TestServices.DBFactory, &test.TestServices.ClusterService, dummyCluster.ClusterID)
 
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for cluster deletion: %v", err)
-}
-
-func deleteClientsFromSSOService(cluster *api.Cluster, env *environments.Env) {
-	var keycloakConfig *keycloak.KeycloakConfig
-	env.MustResolve(&keycloakConfig)
-	defer env.Cleanup()
-
-	kafkaSsoService := sso.NewKeycloakServiceBuilder().
-		ForKFM().
-		WithConfiguration(keycloakConfig).
-		Build()
-
-	err := kafkaSsoService.DeRegisterKasFleetshardOperatorServiceAccount(cluster.ClientID)
-
-	if err != nil {
-		glog.Warningf("Failed to delete Fleetshard client from SSO for cluster %q. The sso provider is %q", cluster.ClusterID, keycloakConfig.SelectSSOProvider)
-	}
-
-	if keycloakConfig.SelectSSOProvider != keycloak.MAS_SSO {
-		return
-	}
-
-	osdSSOService := sso.NewKeycloakServiceBuilder().
-		ForOSD().
-		WithConfiguration(keycloakConfig).
-		WithRealmConfig(keycloakConfig.OSDClusterIDPRealm).
-		Build()
-
-	err = osdSSOService.DeRegisterClientInSSO(cluster.ID)
-
-	if err != nil {
-		glog.Warningf("Failed to delete IDP configuration client from SSO for cluster %q. The sso provider is %q", cluster.ClusterID, keycloakConfig.SelectSSOProvider)
-	}
 }

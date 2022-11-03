@@ -10,6 +10,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	adminprivate "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -22,6 +23,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	coreWorkers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/goava/di"
@@ -96,7 +98,13 @@ func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
 		glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
 	}
-	return h, NewApiClient(h), teardown
+
+	finalTeardownFun := func() {
+		deleteLeftOverServiceAccounts(h)
+		teardown()
+	}
+
+	return h, NewApiClient(h), finalTeardownFun
 }
 
 func NewApiClient(helper *test.Helper) *public.APIClient {
@@ -139,5 +147,75 @@ func NewMockDataplaneCluster(name string, capacity int) config.ManualCluster {
 		KafkaInstanceLimit:    capacity,
 		Status:                api.ClusterReady,
 		SupportedInstanceType: "developer,standard",
+	}
+}
+
+func deleteLeftOverServiceAccounts(h *test.Helper) {
+	var keycloakConfig *keycloak.KeycloakConfig
+	h.Env.MustResolve(&keycloakConfig)
+	defer h.Env.Cleanup()
+
+	db := h.DBFactory().DB
+
+	// delete cluster service accounts
+	var clusters []*api.Cluster
+	if err := db.Model(&api.Cluster{}).Scan(&clusters).Error; err != nil {
+		glog.Fatalf("Unable to scan clusters: %s", err.Error())
+	}
+
+	for _, cluster := range clusters {
+		deleteClustersServiceAccountsFromSSOService(cluster, keycloakConfig)
+	}
+
+	// delete kafka service accounts
+	var kafkas []*dbapi.KafkaRequest
+	if err := db.Model(&dbapi.KafkaRequest{}).Scan(&kafkas).Error; err != nil {
+		glog.Fatalf("Unable to scan kafkas: %s", err.Error())
+	}
+
+	for _, kafka := range kafkas {
+		deleteKafkasServiceAccountsFromSSOService(kafka, keycloakConfig)
+	}
+}
+
+func deleteClustersServiceAccountsFromSSOService(cluster *api.Cluster, keycloakConfig *keycloak.KeycloakConfig) {
+	kafkaSsoService := sso.NewKeycloakServiceBuilder().
+		ForKFM().
+		WithConfiguration(keycloakConfig).
+		Build()
+
+	err := kafkaSsoService.DeleteServiceAccountInternal(cluster.ClientID)
+
+	if err != nil {
+		glog.Warningf("Failed to delete Fleetshard client from SSO for cluster %q. The sso provider is %q", cluster.ClusterID, keycloakConfig.SelectSSOProvider)
+	}
+
+	if keycloakConfig.SelectSSOProvider != keycloak.MAS_SSO {
+		return
+	}
+
+	osdSSOService := sso.NewKeycloakServiceBuilder().
+		ForOSD().
+		WithConfiguration(keycloakConfig).
+		WithRealmConfig(keycloakConfig.OSDClusterIDPRealm).
+		Build()
+
+	err = osdSSOService.DeRegisterClientInSSO(cluster.ID)
+
+	if err != nil {
+		glog.Warningf("Failed to delete IDP configuration client from SSO for cluster %q. The sso provider is %q", cluster.ClusterID, keycloakConfig.SelectSSOProvider)
+	}
+}
+
+func deleteKafkasServiceAccountsFromSSOService(kafka *dbapi.KafkaRequest, keycloakConfig *keycloak.KeycloakConfig) {
+	kafkaSsoService := sso.NewKeycloakServiceBuilder().
+		ForKFM().
+		WithConfiguration(keycloakConfig).
+		Build()
+
+	err := kafkaSsoService.DeleteServiceAccountInternal(kafka.CanaryServiceAccountClientID)
+
+	if err != nil {
+		glog.Warningf("Failed to delete Kafka canary service account from SSO service for kafka %q. The sso provider is %q", kafka.Name, keycloakConfig.SelectSSOProvider)
 	}
 }
