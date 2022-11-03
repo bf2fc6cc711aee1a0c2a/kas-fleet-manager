@@ -101,7 +101,7 @@ func ReadYamlFile(filename string, out interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	return yaml.UnmarshalStrict([]byte(fileContents), out)
+	return yaml.Unmarshal([]byte(fileContents), out)
 }
 
 // ReadJSONFile reads a JSON file located in `filename` path and
