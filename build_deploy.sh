@@ -112,7 +112,7 @@ if [[ -n "$AUTHOR_EMAIL" ]] && [[ -n "$AUTHOR_NAME" ]] && [[ -n "$GITLAB_TOKEN" 
   LATEST_COMMIT=$(git rev-parse HEAD)
   export IMAGE_NAME="kas-fleet-manager/create_release"
 
-  docker build -t "$IMAGE_NAME" -f "$PWD"/docker/Dockerfile_build .
+  docker build --pull -t "$IMAGE_NAME" -f "$PWD"/docker/Dockerfile_build .
 
   docker run -e AUTHOR_EMAIL="$AUTHOR_EMAIL" -e AUTHOR_NAME="$AUTHOR_NAME" -e GITLAB_TOKEN="$GITLAB_TOKEN" \
   -e VERSION="$VERSION" -e LATEST_COMMIT="$LATEST_COMMIT" -i "$IMAGE_NAME"
