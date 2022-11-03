@@ -133,6 +133,7 @@ func TestKafkaCreate_ManualScaling(t *testing.T) {
 				g.Expect(kafka.BrowserUrl).To(gomega.Equal(fmt.Sprintf("%s%s/dashboard", kafkatest.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
 				g.Expect(kafka.ExpiresAt).To(gomega.BeNil())
 				g.Expect(kafka.AdminApiServerUrl).To(gomega.BeEmpty())
+				common.IsMetricExposedWithValue(t, metrics.KafkaRequestsCurrentStatusInfo, constants.KafkaRequestStatusAccepted.String())
 
 				// wait until the kafka goes into a ready state
 				// the timeout here assumes a backing cluster has already been provisioned
@@ -142,6 +143,7 @@ func TestKafkaCreate_ManualScaling(t *testing.T) {
 				g.Expect(strings.HasSuffix(readyKafka.BootstrapServerHost, ":443")).To(gomega.Equal(true))
 				g.Expect(readyKafka.Version).To(gomega.Equal(kasfleetshardsync.GetDefaultReportedKafkaVersion()))
 				g.Expect(readyKafka.AdminApiServerUrl).To(gomega.Equal(kasfleetshardsync.AdminServerURI))
+				common.IsMetricExposedWithValue(t, metrics.KafkaRequestsCurrentStatusInfo, constants.KafkaRequestStatusReady.String())
 
 				// default kafka max data retention size should be set on creation
 				instanceType, err := kafkatest.TestServices.KafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(readyKafka.InstanceType)
@@ -586,7 +588,7 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	instanceTypeSizeConfig, err := instanceTypeConfig.GetKafkaInstanceSizeByID("x1")
 	g.Expect(err).ToNot(gomega.HaveOccurred())
-	g.Expect(*kafka.ExpiresAt).To(gomega.Equal(kafka.CreatedAt.Add(time.Duration(*instanceTypeSizeConfig.LifespanSeconds) * time.Second)))
+	g.Expect(kafka.ExpiresAt.Equal(kafka.CreatedAt.Add(time.Duration(*instanceTypeSizeConfig.LifespanSeconds) * time.Second))).To(gomega.BeTrue())
 
 	// unsuccessful creation of kafka with invalid instance type provided in the "plan" parameter
 	k.Plan = "invalid.x1"

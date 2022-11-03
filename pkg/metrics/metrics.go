@@ -34,6 +34,7 @@ const (
 	// KafkaRequestsStatus - kafka requests status metric
 	KafkaRequestsStatusSinceCreated = "kafka_requests_status_since_created_in_seconds"
 	KafkaRequestsStatusCount        = "kafka_requests_status_count"
+	KafkaRequestsCurrentStatusInfo  = "kafka_requests_current_status_info"
 
 	// ClusterOperationsSuccessCount - name of the metric for cluster-related successful operations
 	ClusterOperationsSuccessCount = "cluster_operations_success_count"
@@ -116,14 +117,21 @@ var JobsMetricsLabels = []string{
 	labelJobType,
 }
 
-// kafkaStatusSinceCreatedMetricLabels  is the slice of labels to add to
+// kafkaStatusSinceCreatedMetricLabels is the slice of labels to add to
 var kafkaStatusSinceCreatedMetricLabels = []string{
 	LabelStatus,
 	LabelID,
 	LabelClusterID,
 }
 
-// kafkaStatusCountMetricLabels  is the slice of labels to add to
+// kafkaStatusSinceLastSetMetricLabels is the slice of labels to add to
+var kafkaStatusSinceLastSetMetricLabels = []string{
+	LabelStatus,
+	LabelID,
+	LabelClusterID,
+}
+
+// kafkaStatusCountMetricLabels is the slice of labels to add to
 var kafkaStatusCountMetricLabels = []string{
 	LabelStatus,
 }
@@ -474,6 +482,26 @@ func UpdateKafkaRequestsStatusSinceCreatedMetric(status constants2.KafkaStatus, 
 	kafkaStatusSinceCreatedMetric.With(labels).Set(elapsed.Seconds())
 }
 
+// create a new GaugeVec for kafkas status duration
+var kafkaRequestsCurrentStatusInfoMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: KasFleetManager,
+		Name:      KafkaRequestsCurrentStatusInfo,
+		Help:      "metrics tracking current status of each kafka",
+	},
+	kafkaStatusSinceLastSetMetricLabels,
+)
+
+// UpdateKafkaRequestsCurrentStatusInfoMetric
+func UpdateKafkaRequestsCurrentStatusInfoMetric(status constants2.KafkaStatus, kafkaId string, clusterId string) {
+	labels := prometheus.Labels{
+		LabelStatus:    string(status),
+		LabelID:        kafkaId,
+		LabelClusterID: clusterId,
+	}
+	kafkaRequestsCurrentStatusInfoMetric.With(labels).Set(1.0)
+}
+
 // UpdateKafkaRequestsStatusCountMetric
 func UpdateKafkaRequestsStatusCountMetric(status constants2.KafkaStatus, count int) {
 	labels := prometheus.Labels{
@@ -802,6 +830,7 @@ func init() {
 	prometheus.MustRegister(kafkaOperationsSuccessCountMetric)
 	prometheus.MustRegister(kafkaOperationsTotalCountMetric)
 	prometheus.MustRegister(kafkaStatusSinceCreatedMetric)
+	prometheus.MustRegister(kafkaRequestsCurrentStatusInfoMetric)
 	prometheus.MustRegister(KafkaStatusCountMetric)
 
 	// metrics for reconcilers

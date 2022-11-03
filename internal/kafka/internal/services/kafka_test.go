@@ -1991,6 +1991,108 @@ func Test_kafkaService_List(t *testing.T) {
 	}
 }
 
+func Test_kafkaService_ListAll(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		want    dbapi.KafkaList
+		wantErr bool
+		setupFn func(dbapi.KafkaList)
+	}{
+		{
+			name: "success list all kafkas",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			want: dbapi.KafkaList{
+				&dbapi.KafkaRequest{
+					Region:        testKafkaRequestRegion,
+					ClusterID:     testClusterID,
+					CloudProvider: testKafkaRequestProvider,
+					MultiAZ:       false,
+					Name:          "dummy-cluster-name",
+					Status:        "accepted",
+					Owner:         testUser,
+					Meta: api.Meta{
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
+						DeletedAt: gorm.DeletedAt{Valid: true},
+					},
+				},
+				&dbapi.KafkaRequest{
+					Region:        testKafkaRequestRegion,
+					ClusterID:     testClusterID,
+					CloudProvider: testKafkaRequestProvider,
+					MultiAZ:       false,
+					Name:          "dummy-cluster-name2",
+					Status:        "accepted",
+					Owner:         testUser,
+					Meta: api.Meta{
+						CreatedAt: time.Now(),
+						UpdatedAt: time.Now(),
+						DeletedAt: gorm.DeletedAt{Valid: true},
+					},
+				},
+			},
+			wantErr: false,
+			setupFn: func(kafkaList dbapi.KafkaList) {
+				mocket.Catcher.Reset()
+
+				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
+				response := converters.ConvertKafkaRequestList(kafkaList)
+				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "fail: database returns an error",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			want:    dbapi.KafkaList{},
+			wantErr: true,
+			setupFn: func(kafkaList dbapi.KafkaList) {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+			},
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			tt.setupFn(tt.want)
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         config.NewAWSConfig(),
+			}
+
+			result, err := k.ListAll()
+
+			// check errors
+			if (err != nil) != tt.wantErr {
+				t.Errorf("kafkaService.List() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// compare wanted vs actual results
+			if len(result) != len(tt.want) {
+				t.Errorf("kafka.Service.List(): total number of results: got = %d want = %d", len(result), len(tt.want))
+			}
+
+			for i, got := range result {
+				g.Expect(got).To(gomega.Equal(tt.want[i]))
+			}
+		})
+	}
+}
+
 func Test_kafkaService_ListByStatus(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
