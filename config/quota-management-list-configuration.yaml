@@ -5,25 +5,62 @@
 # In the future it may support service accounts outside RH.
 # The structure of registered service accounts is:
 #       - username: is the account of the user. The username must be unique
-#       - max_allowed_instances: is the maximum number of instances this user can create.
+#       - max_allowed_instances: is the maximum number of instances of a given instance_type/billing_model pair this user can create.
+#         This value is used if `allowed` field (inside `billing_model`) is 0 or omitted.
 #         Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
+#       - granted_quota: the configuration of the quota granted to the user. The configuration is defined as follows:
+#         - instance_type_id: the id of the instance type for which we are configuring the quota
+#         - billing_models: the list of billing models that we are going to configure. This is defined as follows:
+#           - id: the id of the billing model we are going to configure
+#           - allowed: the number of instances of this type the user can create
+#           - expiration: after how many days the instance will expire (it will be suspended). Defaults to 0 (unlimited)
+#           - grace_period: after how many days after being suspended, the instance will be deleted. Defaults to 0 (unlimited)
 registered_service_accounts:
   - username: testuser1@example.com
     max_allowed_instances: 3
+    granted_quota:
+      - instance_type_id: standard
+        billing_models:
+          - id: standard
   - username: testuser2@example.com
     max_allowed_instances: 2
+    granted_quota:
+      - instance_type_id: standard
+        billing_models:
+          - id: standard
   - username: testuser3@example.com
     max_allowed_instances: 2
+    granted_quota:
+      - instance_type_id: standard
+        billing_models:
+          - id: standard
   - username: testuser4@example.com
     max_allowed_instances: 2
+    granted_quota:
+      - instance_type_id: standard
+        billing_models:
+          - id: standard
   - username: testuser5@example.com
     max_allowed_instances: 2
+    granted_quota:
+      - instance_type_id: standard
+        billing_models:
+          - id: standard
 
 # A list of registered users per organisation (see structure below). The list current contains known organisations - add yours if it is missing.
 # If a user is not in this or in the `registered_service_accounts` list, only DEVELOPER kafka instances will be allowed.
 # - "id": is the organisation id
 # - "any_user": "any_user": Controls whether to allow all users to create standard kafka instances with this organisation if "registered_users" list is empty.
-# - max_allowed_instances: is the maximum number of instances this orgnisation. Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
+# - max_allowed_instances: is the maximum number of instances of a given instance_type/billing_model pair this user can create.
+#   This value is used if `allowed` field (inside `billing_model`) is 0 or omitted.
+#   Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
+# - granted_quota: the configuration of the quota granted to the user. The configuration is defined as follows:
+#   - instance_type_id: the id of the instance type for which we are configuring the quota
+#   - billing_models: the list of billing models that we are going to configure. This is defined as follows:
+#     - id: the id of the billing model we are going to configure
+#     - allowed: the number of instances of this type the user can create
+#     - expiration: after how many days the instance will expire (it will be suspended). Defaults to 0 (unlimited)
+#     - grace_period: after how many days after being suspended, the instance will be deleted. Defaults to 0 (unlimited)
 # - "registered_users": A list of registered users for this organisation. If empty, no one is registered unless "any_user" is set to true.
 #      - username: is the account of the user. The username must be unique within the organisation and across organisations.
 registered_users_per_organisation:
@@ -32,23 +69,48 @@ registered_users_per_organisation:
     any_user: true
     max_allowed_instances: 5
     registered_users: []
+    granted_quota:
+      - instance_type_id: standard
+        billing_models:
+          - id: standard
+            allowed: 5
     # The App SRE team
   - id: 12147054
     any_user: true
     max_allowed_instances: 1
     registered_users: []
+    granted_quota:
+      - instance_type_id: standard
+        billing_models:
+          - id: standard
+            allowed: 1
     # The Kafka Instances team
   - id: 13639843
     any_user: true
     max_allowed_instances: 1
     registered_users: []
+    granted_quota:
+      - instance_type_id: standard
+        billing_models:
+          - id: standard
+            allowed: 1
     # The MK Security team
   - id: 13785172
     any_user: true
     max_allowed_instances: 1
     registered_users: []
+    granted_quota:
+      - instance_type_id: standard
+        billing_models:
+          - id: standard
+            allowed: 1
     # The Running the Service team
   - id: 13645369
     any_user: true
     max_allowed_instances: 3
     registered_users: []
+    granted_quota:
+      - instance_type_id: standard
+        billing_models:
+          - id: standard
+            allowed: 3

@@ -5,12 +5,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 )
 
-var defaultInstanceType = Quota{
-	InstanceTypeID: "STANDARD",
+var defaultQuotaForStandard = Quota{
+	InstanceTypeID: "standard",
 	BillingModels:  nil,
 }
 
-var defaultInstanceTypes = []Quota{defaultInstanceType}
+var defaultQuotaList = []Quota{defaultQuotaForStandard}
 
 var _ QuotaManagementListItem = &Organisation{}
 
@@ -34,12 +34,12 @@ func (org Organisation) HasUsersRegistered() bool {
 	return len(org.RegisteredUsers) > 0
 }
 
-func (org Organisation) IsInstanceCountWithinLimit(instanceTypeID string, billingModelName string, count int) bool {
-	return count <= org.GetMaxAllowedInstances(instanceTypeID, billingModelName)
+func (org Organisation) IsInstanceCountWithinLimit(instanceTypeID string, billingModelID string, count int) bool {
+	return count <= org.GetMaxAllowedInstances(instanceTypeID, billingModelID)
 }
 
-func (org Organisation) GetMaxAllowedInstances(instanceTypeID string, billingModelName string) int {
-	bm, ok := org.getBillingModel(instanceTypeID, billingModelName)
+func (org Organisation) GetMaxAllowedInstances(instanceTypeID string, billingModelID string) int {
+	bm, ok := org.getBillingModel(instanceTypeID, billingModelID)
 
 	if !ok {
 		return 0
@@ -57,17 +57,17 @@ func (org Organisation) GetMaxAllowedInstances(instanceTypeID string, billingMod
 
 func (org Organisation) GetGrantedQuota() QuotaList {
 	if len(org.GrantedQuota) == 0 {
-		return defaultInstanceTypes
+		return defaultQuotaList
 	}
 	return org.GrantedQuota
 }
 
-func (org Organisation) getBillingModel(instanceTypeId string, billingModelName string) (BillingModel, bool) {
+func (org Organisation) getBillingModel(instanceTypeId string, billingModelID string) (BillingModel, bool) {
 	grantedQuota := org.GetGrantedQuota()
 
 	idx, instanceType := arrays.FindFirst(grantedQuota, func(x Quota) bool { return shared.StringEqualsIgnoreCase(x.InstanceTypeID, instanceTypeId) })
 	if idx != -1 {
-		idx, bm := arrays.FindFirst(instanceType.GetBillingModels(), func(bm BillingModel) bool { return shared.StringEqualsIgnoreCase(bm.Name, billingModelName) })
+		idx, bm := arrays.FindFirst(instanceType.GetBillingModels(), func(bm BillingModel) bool { return shared.StringEqualsIgnoreCase(bm.ID, billingModelID) })
 		if idx != -1 {
 			return bm, true
 		}
@@ -75,11 +75,11 @@ func (org Organisation) getBillingModel(instanceTypeId string, billingModelName 
 	return BillingModel{}, false
 }
 
-func (org Organisation) HasQuotaFor(instanceTypeId string, billingModelName string) bool {
+func (org Organisation) HasQuotaFor(instanceTypeId string, billingModelID string) bool {
 	instanceTypes := org.GetGrantedQuota()
 
 	idx, instanceType := arrays.FindFirst(instanceTypes, func(x Quota) bool { return shared.StringEqualsIgnoreCase(x.InstanceTypeID, instanceTypeId) })
-	return idx != -1 && arrays.AnyMatch(instanceType.GetBillingModels(), func(bm BillingModel) bool { return shared.StringEqualsIgnoreCase(bm.Name, billingModelName) })
+	return idx != -1 && arrays.AnyMatch(instanceType.GetBillingModels(), func(bm BillingModel) bool { return shared.StringEqualsIgnoreCase(bm.ID, billingModelID) })
 }
 
 type OrganisationList []Organisation

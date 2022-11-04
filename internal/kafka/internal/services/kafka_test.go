@@ -1017,7 +1017,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
@@ -1060,7 +1060,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(username, externalId string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(username, externalId string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
@@ -1112,7 +1112,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
@@ -1155,7 +1155,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
@@ -1201,7 +1201,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 						return false, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
@@ -1244,7 +1244,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
@@ -1307,7 +1307,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
@@ -1371,7 +1371,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 						// No RHOSAK quota assigned
 						return instanceType != types.STANDARD, nil
 					},
@@ -1411,7 +1411,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
@@ -1456,7 +1456,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
@@ -1499,7 +1499,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					},
 				},
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
@@ -1539,7 +1539,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaConfig:            defaultKafkaConf,
 				clusterService:         nil,
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
@@ -1634,7 +1634,7 @@ func Test_AssignInstanceType(t *testing.T) {
 			name: "registering kafka job fails: quota error",
 			fields: fields{
 				quotaService: &QuotaServiceMock{
-					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 						return false, errors.InsufficientQuotaError("insufficient quota error")
 					},
 				},

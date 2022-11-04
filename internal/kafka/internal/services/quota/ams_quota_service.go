@@ -170,7 +170,9 @@ func (q amsQuotaService) ValidateBillingAccount(organisationId string, instanceT
 	return nil
 }
 
-func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType, billingModelName string) (bool, *errors.ServiceError) {
+// TODO: added the `billing model` parameter to the QuotaService interface when adding KafkaBillingModel support to the QUOTA-LIST
+// The parameter is currently unused for AMSQuota management: will be used in a subsequent PR when KafkaBillingModel support will be added.
+func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType, kafkaBillingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(externalId)
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("error checking quota: failed to get organization with external id %v", externalId))

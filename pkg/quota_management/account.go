@@ -13,12 +13,12 @@ type Account struct {
 
 var _ QuotaManagementListItem = &Account{}
 
-func (account Account) IsInstanceCountWithinLimit(instanceTypeID string, billingModelName string, count int) bool {
-	return count <= account.GetMaxAllowedInstances(instanceTypeID, billingModelName)
+func (account Account) IsInstanceCountWithinLimit(instanceTypeID string, billingModelID string, count int) bool {
+	return count <= account.GetMaxAllowedInstances(instanceTypeID, billingModelID)
 }
 
-func (account Account) GetMaxAllowedInstances(instanceTypeID string, billingModelName string) int {
-	bm, ok := account.getBillingModel(instanceTypeID, billingModelName)
+func (account Account) GetMaxAllowedInstances(instanceTypeID string, billingModelID string) int {
+	bm, ok := account.getBillingModel(instanceTypeID, billingModelID)
 
 	if !ok {
 		return 0
@@ -36,17 +36,17 @@ func (account Account) GetMaxAllowedInstances(instanceTypeID string, billingMode
 
 func (account Account) GetGrantedQuota() QuotaList {
 	if len(account.GrantedQuota) == 0 {
-		return defaultInstanceTypes
+		return defaultQuotaList
 	}
 	return account.GrantedQuota
 }
 
-func (account Account) getBillingModel(instanceTypeId string, billingModelName string) (BillingModel, bool) {
+func (account Account) getBillingModel(instanceTypeId string, billingModelID string) (BillingModel, bool) {
 	grantedQuota := account.GetGrantedQuota()
 
 	idx, instanceType := arrays.FindFirst(grantedQuota, func(x Quota) bool { return shared.StringEqualsIgnoreCase(x.InstanceTypeID, instanceTypeId) })
 	if idx != -1 {
-		idx, bm := arrays.FindFirst(instanceType.GetBillingModels(), func(bm BillingModel) bool { return shared.StringEqualsIgnoreCase(bm.Name, billingModelName) })
+		idx, bm := arrays.FindFirst(instanceType.GetBillingModels(), func(bm BillingModel) bool { return shared.StringEqualsIgnoreCase(bm.ID, billingModelID) })
 		if idx != -1 {
 			return bm, true
 		}
@@ -54,8 +54,8 @@ func (account Account) getBillingModel(instanceTypeId string, billingModelName s
 	return BillingModel{}, false
 }
 
-func (account Account) HasQuotaFor(instanceTypeId string, billingModelName string) bool {
-	_, ok := account.getBillingModel(instanceTypeId, billingModelName)
+func (account Account) HasQuotaFor(instanceTypeId string, billingModelID string) bool {
+	_, ok := account.getBillingModel(instanceTypeId, billingModelID)
 	return ok
 }
 
