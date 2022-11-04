@@ -1,6 +1,8 @@
 package cluster_mgrs
 
 import (
+	"math"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	fleeterrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -231,6 +233,7 @@ var _ dynamicScaleUpProcessor = &standardDynamicScaleUpProcessor{}
 func (p *standardDynamicScaleUpProcessor) ShouldScaleUp() (bool, error) {
 	summaryCalculator := instanceTypeConsumptionSummaryCalculator{
 		locator:                               p.locator,
+		instanceTypeConfig:                    p.instanceTypeConfig,
 		kafkaStreamingUnitCountPerClusterList: p.kafkaStreamingUnitCountPerClusterList,
 		supportedKafkaInstanceTypesConfig:     p.supportedKafkaInstanceTypesConfig,
 	}
@@ -239,8 +242,8 @@ func (p *standardDynamicScaleUpProcessor) ShouldScaleUp() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	glog.Infof("consumption summary for locator '%+v': '%+v'", p.locator, instanceTypeConsumptionInRegionSummary)
 
+	glog.Infof("consumption summary for locator '%+v': '%+v'", p.locator, instanceTypeConsumptionInRegionSummary)
 	regionLimitReached := p.regionLimitReached(instanceTypeConsumptionInRegionSummary)
 	if regionLimitReached {
 		glog.Infof("region limit for locator '%+v' reached. No cluster scale up action should be performed", p.locator)
@@ -260,9 +263,15 @@ func (p *standardDynamicScaleUpProcessor) ShouldScaleUp() (bool, error) {
 	}
 
 	enoughCapacitySlackInRegion := p.enoughCapacitySlackInRegion(instanceTypeConsumptionInRegionSummary)
+
 	if !enoughCapacitySlackInRegion {
-		glog.Infof("there is not enough capacity slack for locator '%+v'. Cluster scale up action should be performed", p.locator)
-		return true, nil
+		regionLimitWillBeBreached := p.regionLimitWillBeBreached(instanceTypeConsumptionInRegionSummary)
+		if !regionLimitWillBeBreached {
+			glog.Infof("there is not enough capacity slack for locator '%+v'. Cluster scale up action should be performed", p.locator)
+			return true, nil
+		} else {
+			glog.Infof("there is not enough capacity slack for locator '%+v'. Cluster scale up action couldn't be performed because this will cause region limits to be breached", p.locator)
+		}
 	}
 
 	glog.Infof("no conditions for cluster scale up action have been detected for locator '%+v'. No cluster scale up action should be performed", p.locator)
@@ -313,7 +322,6 @@ func (p *standardDynamicScaleUpProcessor) enoughCapacitySlackInRegion(summary in
 
 func (p *standardDynamicScaleUpProcessor) regionLimitReached(summary instanceTypeConsumptionSummary) bool {
 	streamingUnitsLimitInRegion := p.instanceTypeConfig.Limit
-	consumedStreamingUnitsInRegion := summary.consumedStreamingUnits
 
 	if streamingUnitsLimitInRegion == nil {
 		glog.V(10).Infof("region limit for locator '%+v' is nil", p.locator)
@@ -321,7 +329,24 @@ func (p *standardDynamicScaleUpProcessor) regionLimitReached(summary instanceTyp
 	}
 
 	glog.V(10).Infof("region limit in streaming units for locator '%+v': '%+v'", p.locator, *streamingUnitsLimitInRegion)
-	return consumedStreamingUnitsInRegion >= *streamingUnitsLimitInRegion
+	return summary.consumedStreamingUnits >= *streamingUnitsLimitInRegion
+}
+
+func (p *standardDynamicScaleUpProcessor) regionLimitWillBeBreached(summary instanceTypeConsumptionSummary) bool {
+	streamingUnitsLimitInRegion := p.instanceTypeConfig.Limit
+	if streamingUnitsLimitInRegion == nil {
+		glog.V(10).Infof("region limit for locator '%+v' is nil", p.locator)
+		return false
+	}
+
+	maxPossibleFutureStreamingUnitsInARegion := summary.consumedStreamingUnits + p.instanceTypeConfig.MinAvailableCapacitySlackStreamingUnits
+	regionLimitWillBeBreachedIfWeProvisionANewCluster := maxPossibleFutureStreamingUnitsInARegion > *streamingUnitsLimitInRegion
+	if regionLimitWillBeBreachedIfWeProvisionANewCluster {
+		glog.V(10).Infof("region limit will be breached if we provision a new cluster to accomodate for region slack capacity '%+v': '%+v'", p.locator, *streamingUnitsLimitInRegion)
+		return true
+	}
+
+	return false
 }
 
 func (p *standardDynamicScaleUpProcessor) freeCapacityForBiggestInstanceSize(summary instanceTypeConsumptionSummary) bool {
@@ -358,6 +383,7 @@ type instanceTypeConsumptionSummary struct {
 // provided KafkaStreamingUnitCountPerClusterList
 type instanceTypeConsumptionSummaryCalculator struct {
 	locator                               supportedInstanceTypeLocator
+	instanceTypeConfig                    *config.InstanceTypeConfig
 	kafkaStreamingUnitCountPerClusterList services.KafkaStreamingUnitCountPerClusterList
 	supportedKafkaInstanceTypesConfig     *config.SupportedKafkaInstanceTypesConfig
 }
@@ -376,14 +402,14 @@ type instanceTypeConsumptionSummaryCalculator struct {
 //     following states: 'provisioning', 'provisioned', 'accepted',
 //     'waiting_for_kas_fleetshard_operator'
 func (i *instanceTypeConsumptionSummaryCalculator) Calculate() (instanceTypeConsumptionSummary, error) {
-	biggestKafkaInstanceSizeCapacityConsumption, err := i.getBiggestCapacityConsumedSize()
+	kafkaInstanceTypeConfig, err := i.supportedKafkaInstanceTypesConfig.GetKafkaInstanceTypeByID(i.locator.instanceTypeName)
 	if err != nil {
 		return instanceTypeConsumptionSummary{}, err
 	}
 
 	consumedStreamingUnitsInRegion := 0
 	maxStreamingUnitsInRegion := 0
-	atLeastOneClusterHasCapacityForBiggestInstanceType := false
+	biggestFreeStreamingUnitsOnACluster := int32(0)
 	scaleUpActionIsOngoing := false
 
 	clusterStatesTowardReadyState := []string{
@@ -416,8 +442,9 @@ func (i *instanceTypeConsumptionSummaryCalculator) Calculate() (instanceTypeCons
 			continue
 		}
 
-		if kafkaStreamingUnitCountPerCluster.FreeStreamingUnits() >= int32(biggestKafkaInstanceSizeCapacityConsumption) {
-			atLeastOneClusterHasCapacityForBiggestInstanceType = true
+		freeStreamingUnits := kafkaStreamingUnitCountPerCluster.FreeStreamingUnits()
+		if freeStreamingUnits > biggestFreeStreamingUnitsOnACluster {
+			biggestFreeStreamingUnitsOnACluster = freeStreamingUnits
 		}
 
 		consumedStreamingUnitsInRegion = consumedStreamingUnitsInRegion + int(kafkaStreamingUnitCountPerCluster.Count)
@@ -426,25 +453,32 @@ func (i *instanceTypeConsumptionSummaryCalculator) Calculate() (instanceTypeCons
 
 	freeStreamingUnitsInRegion := maxStreamingUnitsInRegion - consumedStreamingUnitsInRegion
 
+	// find the max size consumption that can current be accomodated on the cluster that has biggest size capacity in this region
+	maxSizeConsumption := i.findBiggestSizeConsumptionThatCurrentFitsOnAvailableRegionCapacity(kafkaInstanceTypeConfig, consumedStreamingUnitsInRegion)
+
 	return instanceTypeConsumptionSummary{
 		maxStreamingUnits:                    maxStreamingUnitsInRegion,
 		consumedStreamingUnits:               consumedStreamingUnitsInRegion,
 		freeStreamingUnits:                   freeStreamingUnitsInRegion,
 		ongoingScaleUpAction:                 scaleUpActionIsOngoing,
-		biggestInstanceSizeCapacityAvailable: atLeastOneClusterHasCapacityForBiggestInstanceType,
+		biggestInstanceSizeCapacityAvailable: biggestFreeStreamingUnitsOnACluster >= int32(maxSizeConsumption),
 	}, nil
 }
 
-func (i *instanceTypeConsumptionSummaryCalculator) getBiggestCapacityConsumedSize() (int, error) {
-	kafkaInstanceTypeConfig, err := i.supportedKafkaInstanceTypesConfig.GetKafkaInstanceTypeByID(i.locator.instanceTypeName)
-	if err != nil {
-		return -1, err
+func (i *instanceTypeConsumptionSummaryCalculator) findBiggestSizeConsumptionThatCurrentFitsOnAvailableRegionCapacity(kafkaInstanceTypeConfig *config.KafkaInstanceType, consumedStreamingUnitsInRegion int) int {
+	maxSizeConsumption := 0
+	availableStreamingUnitCapapacityInTheRegionRegion := 0
+	if i.instanceTypeConfig.Limit == nil {
+		availableStreamingUnitCapapacityInTheRegionRegion = math.MaxInt - consumedStreamingUnitsInRegion
+	} else {
+		availableStreamingUnitCapapacityInTheRegionRegion = *i.instanceTypeConfig.Limit - consumedStreamingUnitsInRegion
 	}
-	biggestKafkaInstanceSizeCapacityConsumption := -1
-	maxKafkaInstanceSizeConfig := kafkaInstanceTypeConfig.GetBiggestCapacityConsumedSize()
-	if maxKafkaInstanceSizeConfig != nil {
-		biggestKafkaInstanceSizeCapacityConsumption = maxKafkaInstanceSizeConfig.CapacityConsumed
+
+	for _, kafkaSizeConfig := range kafkaInstanceTypeConfig.Sizes {
+		if kafkaSizeConfig.CapacityConsumed > maxSizeConsumption && kafkaSizeConfig.CapacityConsumed <= availableStreamingUnitCapapacityInTheRegionRegion {
+			maxSizeConsumption = kafkaSizeConfig.CapacityConsumed
+		}
 	}
-	glog.V(10).Infof("capacity consumption value of biggest kafka size of locator '%+v': '%v'", i.locator, biggestKafkaInstanceSizeCapacityConsumption)
-	return biggestKafkaInstanceSizeCapacityConsumption, nil
+
+	return maxSizeConsumption
 }

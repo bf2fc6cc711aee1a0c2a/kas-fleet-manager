@@ -59,6 +59,71 @@ func Test_standardDynamicScaleUpProcessor_ShouldScaleUp(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "When the region limit will be reached once we provision a new cluster to handle capacity slack then no scale up is performed",
+			fields: fields{
+				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				supportedKafkaInstanceTypesConfigFactory: func() *config.SupportedKafkaInstanceTypesConfig {
+					return newTestHelperBaseSupportedKafkaInstanceTypesConfig()
+				},
+				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
+					return newTestHelperBaseKafkaStreamingUnitCountPerClusterList()
+				},
+				instanceTypeConfig: &config.InstanceTypeConfig{
+					Limit:                                   &[]int{60}[0],
+					MinAvailableCapacitySlackStreamingUnits: 90, // this will cause region limits to be breached
+				},
+			},
+			want:    false,
+			wantErr: false,
+		},
+
+		{
+			name: "When the region limit will be reached once we provision a new cluster to accomodate biggest Kafka streaming unit then no scale up is performed",
+			fields: fields{
+				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				supportedKafkaInstanceTypesConfigFactory: func() *config.SupportedKafkaInstanceTypesConfig {
+					return newTestHelperBaseSupportedKafkaInstanceTypesConfig()
+				},
+				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
+					return newTestHelperBaseKafkaStreamingUnitCountPerClusterList()
+				},
+				instanceTypeConfig: &config.InstanceTypeConfig{
+					Limit:                                   &[]int{7}[0], // the limit is 7, but there are 6 consumed units already and the biggest streaming unit size is 2. This will cause region limits to be breached
+					MinAvailableCapacitySlackStreamingUnits: 0,
+				},
+			},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "When there is no cluster with free capacity, scale up is performed",
+			fields: fields{
+				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				supportedKafkaInstanceTypesConfigFactory: func() *config.SupportedKafkaInstanceTypesConfig {
+					return newTestHelperBaseSupportedKafkaInstanceTypesConfig()
+				},
+				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
+					locator := newTestHelperBaseSupportedInstanceTypeLocator()
+					return services.KafkaStreamingUnitCountPerClusterList{
+						services.KafkaStreamingUnitCountPerCluster{
+							CloudProvider: locator.provider,
+							Region:        locator.region,
+							InstanceType:  locator.instanceTypeName,
+							Count:         6,
+							MaxUnits:      6,
+							Status:        api.ClusterReady.String(),
+						},
+					}
+				},
+				instanceTypeConfig: &config.InstanceTypeConfig{
+					Limit:                                   &[]int{7}[0],
+					MinAvailableCapacitySlackStreamingUnits: 4,
+				},
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
 			name: "When there is an ongoing scale up action then no scale up is performed",
 			fields: fields{
 				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
@@ -526,6 +591,101 @@ func Test_standardDynamicScaleUpProcessor_regionLimitReached(t *testing.T) {
 	}
 }
 
+func Test_standardDynamicScaleUpProcessor_regionLimitWillBeBreached(t *testing.T) {
+	type fields struct {
+		standardDynamicScaleUpProcessor *standardDynamicScaleUpProcessor
+	}
+
+	type args struct {
+		summary instanceTypeConsumptionSummary
+	}
+
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "When there is no region limit configured then the region limit is never reached",
+			fields: fields{
+				standardDynamicScaleUpProcessor: &standardDynamicScaleUpProcessor{
+					instanceTypeConfig: &config.InstanceTypeConfig{
+						Limit: nil,
+					},
+				},
+			},
+			args: args{
+				summary: instanceTypeConsumptionSummary{
+					consumedStreamingUnits: 1000,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "When the region limit is bigger than the sum of capacity slack and consumed units then the limit is never reached",
+			fields: fields{
+				standardDynamicScaleUpProcessor: &standardDynamicScaleUpProcessor{
+					instanceTypeConfig: &config.InstanceTypeConfig{
+						Limit:                                   &[]int{4}[0],
+						MinAvailableCapacitySlackStreamingUnits: 2,
+					},
+				},
+			},
+			args: args{
+				summary: instanceTypeConsumptionSummary{
+					consumedStreamingUnits: 1,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "When the region limit is less than the sum of capacity slack and consumed units then the limit will be breached",
+			fields: fields{
+				standardDynamicScaleUpProcessor: &standardDynamicScaleUpProcessor{
+					instanceTypeConfig: &config.InstanceTypeConfig{
+						Limit:                                   &[]int{4}[0],
+						MinAvailableCapacitySlackStreamingUnits: 4,
+					},
+				},
+			},
+			args: args{
+				summary: instanceTypeConsumptionSummary{
+					consumedStreamingUnits: 1,
+				},
+			},
+			want: true,
+		},
+		{
+			name: "When the region limit is 0 then the limit is always reached",
+			fields: fields{
+				standardDynamicScaleUpProcessor: &standardDynamicScaleUpProcessor{
+					instanceTypeConfig: &config.InstanceTypeConfig{
+						Limit:                                   &[]int{0}[0],
+						MinAvailableCapacitySlackStreamingUnits: 4,
+					},
+				},
+			},
+			args: args{
+				summary: instanceTypeConsumptionSummary{
+					consumedStreamingUnits: 0,
+				},
+			},
+			want: true,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			t.Parallel()
+			res := tt.fields.standardDynamicScaleUpProcessor.regionLimitWillBeBreached(tt.args.summary)
+			g.Expect(res).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
 func Test_standardDynamicScaleUpProcessor_freeCapacityForBiggestInstanceSize(t *testing.T) {
 	type fields struct {
 		standardDynamicScaleUpProcessor *standardDynamicScaleUpProcessor
@@ -876,6 +1036,7 @@ func Test_supportedInstanceTypeLocator_Equal(t *testing.T) {
 func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 	type fields struct {
 		locator                                      supportedInstanceTypeLocator
+		instanceTypeConfig                           *config.InstanceTypeConfig
 		kafkaStreamingUnitCountPerClusterListFactory func() services.KafkaStreamingUnitCountPerClusterList
 		supportedKafkaInstanceTypesConfigFactory     func() *config.SupportedKafkaInstanceTypesConfig
 	}
@@ -889,7 +1050,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 		{
 			name: "Calculate correctly computes the result",
 			fields: fields{
-				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				locator:            newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{},
 				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
 					return newTestHelperBaseKafkaStreamingUnitCountPerClusterList()
 				},
@@ -909,7 +1071,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 		{
 			name: "Cluster information that does not match the provided locator's region is ignored",
 			fields: fields{
-				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				locator:            newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{},
 				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
 					res := []services.KafkaStreamingUnitCountPerCluster(newTestHelperBaseKafkaStreamingUnitCountPerClusterList())
 					clusterInfoForAnotherLocator := services.KafkaStreamingUnitCountPerCluster{
@@ -940,7 +1103,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 		{
 			name: "Cluster information that does not match the provided locator's provider is ignored",
 			fields: fields{
-				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				locator:            newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{},
 				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
 					res := []services.KafkaStreamingUnitCountPerCluster(newTestHelperBaseKafkaStreamingUnitCountPerClusterList())
 					clusterInfoForAnotherLocator := services.KafkaStreamingUnitCountPerCluster{
@@ -971,7 +1135,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 		{
 			name: "Cluster information that does not match the provided locator's instance type name is ignored",
 			fields: fields{
-				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				locator:            newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{},
 				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
 					res := []services.KafkaStreamingUnitCountPerCluster(newTestHelperBaseKafkaStreamingUnitCountPerClusterList())
 					clusterInfoForAnotherLocator := services.KafkaStreamingUnitCountPerCluster{
@@ -1002,7 +1167,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 		{
 			name: "When one of the clusters that match the locator is in accepted state ongoing scale up is true",
 			fields: fields{
-				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				locator:            newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{},
 				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
 					res := []services.KafkaStreamingUnitCountPerCluster(newTestHelperBaseKafkaStreamingUnitCountPerClusterList())
 					locator := newTestHelperBaseSupportedInstanceTypeLocator()
@@ -1033,7 +1199,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 		{
 			name: "When one of the clusters that match the locator is in waiting for kasfleetshard state ongoing scale up is true",
 			fields: fields{
-				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				locator:            newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{},
 				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
 					res := []services.KafkaStreamingUnitCountPerCluster(newTestHelperBaseKafkaStreamingUnitCountPerClusterList())
 					locator := newTestHelperBaseSupportedInstanceTypeLocator()
@@ -1064,7 +1231,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 		{
 			name: "When one of the clusters that match the locator is in provisioning state ongoing scale up is true",
 			fields: fields{
-				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				locator:            newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{},
 				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
 					res := []services.KafkaStreamingUnitCountPerCluster(newTestHelperBaseKafkaStreamingUnitCountPerClusterList())
 					locator := newTestHelperBaseSupportedInstanceTypeLocator()
@@ -1095,7 +1263,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 		{
 			name: "When one of the clusters that match the locator is in provisioned state ongoing scale up is true",
 			fields: fields{
-				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				locator:            newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{},
 				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
 					res := []services.KafkaStreamingUnitCountPerCluster(newTestHelperBaseKafkaStreamingUnitCountPerClusterList())
 					locator := newTestHelperBaseSupportedInstanceTypeLocator()
@@ -1124,9 +1293,10 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "When there is no cluster where the biggest size of the locator's instance type can fit biggestInstanceSizeCapacityAvailable is false",
+			name: "When regions limit are not specified and when there is no cluster where the biggest size of the locator's instance type can fit biggestInstanceSizeCapacityAvailable is false",
 			fields: fields{
-				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				locator:            newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{},
 				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
 					return newTestHelperBaseKafkaStreamingUnitCountPerClusterList()
 				},
@@ -1165,9 +1335,98 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "When one of the clusters that match the locator is in deprovisioning state its max units are not taken into account",
+			name: "When regions limit are specified and when there is no cluster where the biggest size of the locator's instance type can fit biggestInstanceSizeCapacityAvailable is false",
 			fields: fields{
 				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{
+					Limit: &[]int{10}[0],
+				},
+				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
+					return newTestHelperBaseKafkaStreamingUnitCountPerClusterList()
+				},
+				supportedKafkaInstanceTypesConfigFactory: func() *config.SupportedKafkaInstanceTypesConfig {
+					return &config.SupportedKafkaInstanceTypesConfig{
+						SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+							config.KafkaInstanceType{
+								Id: "t1",
+								Sizes: []config.KafkaInstanceSize{
+									config.KafkaInstanceSize{
+										Id:               "s1",
+										CapacityConsumed: 1,
+									},
+									config.KafkaInstanceSize{
+										Id:               "s2",
+										CapacityConsumed: 2,
+									},
+									config.KafkaInstanceSize{
+										Id:               "s3",
+										CapacityConsumed: 4,
+									},
+								},
+							},
+						},
+					}
+
+				},
+			},
+			want: instanceTypeConsumptionSummary{
+				maxStreamingUnits:                    8,
+				freeStreamingUnits:                   3,
+				consumedStreamingUnits:               5,
+				ongoingScaleUpAction:                 false,
+				biggestInstanceSizeCapacityAvailable: false,
+			},
+			wantErr: false,
+		},
+		{
+			name: "When regions limit are specified and when there is a cluster where the biggest size of the locator's instance type can fit biggestInstanceSizeCapacityAvailable is true",
+			fields: fields{
+				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{
+					Limit: &[]int{8}[0],
+				},
+				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
+					return newTestHelperBaseKafkaStreamingUnitCountPerClusterList()
+				},
+				supportedKafkaInstanceTypesConfigFactory: func() *config.SupportedKafkaInstanceTypesConfig {
+					return &config.SupportedKafkaInstanceTypesConfig{
+						SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+							config.KafkaInstanceType{
+								Id: "t1",
+								Sizes: []config.KafkaInstanceSize{
+									config.KafkaInstanceSize{
+										Id:               "s1",
+										CapacityConsumed: 1,
+									},
+									config.KafkaInstanceSize{
+										Id:               "s2",
+										CapacityConsumed: 2,
+									},
+									config.KafkaInstanceSize{
+										Id:               "s3",
+										CapacityConsumed: 4,
+									},
+								},
+							},
+						},
+					}
+
+				},
+			},
+			want: instanceTypeConsumptionSummary{
+				maxStreamingUnits:                    8,
+				freeStreamingUnits:                   3,
+				consumedStreamingUnits:               5,
+				ongoingScaleUpAction:                 false,
+				biggestInstanceSizeCapacityAvailable: true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "When one of the clusters that match the locator is in deprovisioning state its max units are not taken into account",
+			fields: fields{
+				locator:            newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{},
 				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
 					res := []services.KafkaStreamingUnitCountPerCluster(newTestHelperBaseKafkaStreamingUnitCountPerClusterList())
 					locator := newTestHelperBaseSupportedInstanceTypeLocator()
@@ -1198,7 +1457,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 		{
 			name: "When one of the clusters that match the locator is in cleanup state its max units are not taken into account",
 			fields: fields{
-				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				locator:            newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{},
 				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
 					res := []services.KafkaStreamingUnitCountPerCluster(newTestHelperBaseKafkaStreamingUnitCountPerClusterList())
 					locator := newTestHelperBaseSupportedInstanceTypeLocator()
@@ -1234,6 +1494,7 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 					region:           "r1",
 					instanceTypeName: "unexistinginstancetype",
 				},
+				instanceTypeConfig: &config.InstanceTypeConfig{},
 				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
 					res := []services.KafkaStreamingUnitCountPerCluster(newTestHelperBaseKafkaStreamingUnitCountPerClusterList())
 					locator := newTestHelperBaseSupportedInstanceTypeLocator()
@@ -1257,7 +1518,8 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 		{
 			name: "When the clusters are in deprovision or cleanup state, we do not consider them when evaluating for the availability of biggest instance size capacity",
 			fields: fields{
-				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+				locator:            newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{},
 				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
 					locator := newTestHelperBaseSupportedInstanceTypeLocator()
 					return services.KafkaStreamingUnitCountPerClusterList{
@@ -1292,14 +1554,55 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "When all the clusters are full, we mark thereIsAtLeastOneFreeClusterAvailable to false",
+			fields: fields{
+				locator:            newTestHelperBaseSupportedInstanceTypeLocator(),
+				instanceTypeConfig: &config.InstanceTypeConfig{},
+				kafkaStreamingUnitCountPerClusterListFactory: func() services.KafkaStreamingUnitCountPerClusterList {
+					locator := newTestHelperBaseSupportedInstanceTypeLocator()
+					return services.KafkaStreamingUnitCountPerClusterList{
+						services.KafkaStreamingUnitCountPerCluster{
+							CloudProvider: locator.provider,
+							Region:        locator.region,
+							InstanceType:  locator.instanceTypeName,
+							Count:         3,
+							MaxUnits:      3,
+							Status:        api.ClusterReady.String(),
+						},
+						services.KafkaStreamingUnitCountPerCluster{
+							CloudProvider: locator.provider,
+							Region:        locator.region,
+							InstanceType:  locator.instanceTypeName,
+							Count:         3,
+							MaxUnits:      3,
+							Status:        api.ClusterReady.String(),
+						},
+					}
+				},
+				supportedKafkaInstanceTypesConfigFactory: func() *config.SupportedKafkaInstanceTypesConfig {
+					return newTestHelperBaseSupportedKafkaInstanceTypesConfig()
+				},
+			},
+			want: instanceTypeConsumptionSummary{
+				maxStreamingUnits:                    6,
+				freeStreamingUnits:                   0,
+				consumedStreamingUnits:               6,
+				ongoingScaleUpAction:                 false,
+				biggestInstanceSizeCapacityAvailable: false,
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
+			t.Parallel()
 			summaryCalculator := instanceTypeConsumptionSummaryCalculator{
 				locator:                               tt.fields.locator,
+				instanceTypeConfig:                    tt.fields.instanceTypeConfig,
 				kafkaStreamingUnitCountPerClusterList: tt.fields.kafkaStreamingUnitCountPerClusterListFactory(),
 				supportedKafkaInstanceTypesConfig:     tt.fields.supportedKafkaInstanceTypesConfigFactory(),
 			}

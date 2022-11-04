@@ -124,9 +124,9 @@ A new data plane cluster should be created for a given instance type in the give
     if there is at least one cluster in the following states: `provisioning`,
     `provisioned`, `accepted`, `waiting_for_kas_fleetshard_operator`
  3. At least one of the two following conditions are true:
-      * No cluster in the provider's region has enough capacity to allocate the biggest instance size of the given instance type
+      * No cluster in the provider's region has enough capacity to allocate the biggest instance size of the given instance type current supported by available capacity in the region before region limits are reached
       * The free capacity (in streaming units) for the given instance type in the provider's region is smaller or equal than the defined slack
-        capacity (also in streaming units) of the given instance type. Free capacity is defined as max(total) capacity - consumed capacity. 
+        capacity (also in streaming units) of the given instance type and when a new cluster is provisioned, region limits won't be breached. Free capacity is defined as max(total) capacity - consumed capacity. 
         For the calculation of the max capacity:
         * Clusters in `deprovisioning` and `cleanup` state are excluded, as
           clusters into those states don't accept kafka instances anymore.
@@ -163,15 +163,16 @@ A data plane cluter can be removed if the following conditions happen.
 
  1. If it is empty i.e does not contain any Kafka workload of any instance type.
  2. All the following conditions are true:
-      * There is at least a cluster in the provider's region that has enough capacity to allocate
-        the biggest instance size of the instance types supported by the empty cluster
+      * There is at least a sibling cluster in the provider's region that has enough capacity to allocate
+        the biggest instance size of the instance types supported by the empty cluster. The biggest instance size is determined by the 
+        current supported by available capacity in the region before region limts are reached
       * There will be free capacity (in streaming units) for each instance type supported by the cluster in
         the provider's region that is smaller or equal than the defined slack capacity (also in streaming units) of the given instance type. 
         Free capacity is defined as max(total) capacity - consumed capacity.
         For the calculation of the max capacity:
         * Clusters in `deprovisioning` and `cleanup` state are excluded, as
           clusters into those states don't accept kafka instances anymore.
-        * Clusters that are still not `ready` to accept kafka instance are also excluded from the capacity calculation
+        * Clusters that are still not `ready` to accept kafka instance are also excluded from the capacity calculation 
           
 >NOTE: cluster in `failed` state are not counted in capacity and limit calculations.
 >NOTE: Region's limit and capacity slack are defined in the [supported cloud providers configuration](../../config/provider-configuration.yaml)
