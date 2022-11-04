@@ -48,17 +48,20 @@ loop one by one. For an example of writing a table driven test, see:
 
 ## Integration Tests
 
-Before every integration test, `RegisterIntegration()` must be invoked. This will ensure that the
+Before every integration test, `NewKafkaHelper()` must be invoked. This will ensure that the
 API server and background workers are running and that the database has been reset to a clean
-state. `RegisterIntegration()` also returns a teardown function that should be invoked at the end
+state. `NewKafkaHelper()` also returns a teardown function that should be invoked at the end
 of the test. This will stop the API server and background workers. For example:
 
 ```go
-helper, httpClient, teardown := test.RegisterIntegration(t, mockOCMServer)
+helper, httpClient, teardown := test.NewKafkaHelper(t, mockOCMServer)
 defer teardown()
 ```
 
 See [TestKafkaPost integration test](../internal/kafka/test/integration/kafkas_test.go) as an example of this.
+
+>NOTE: the `teardown` function is responsible for performing post test cleanups e.g of service accounts that are provisioned 
+for the Fleetshard authentication or Kafka canary service account. Ensure that if the integration test of a new features provision external resources, then these are properly cleanedup.
 
 Integration tests in this service can take advantage of running in an "emulated OCM API". This
 essentially means a configurable mock OCM API server can be used in place of a "real" OCM API for
