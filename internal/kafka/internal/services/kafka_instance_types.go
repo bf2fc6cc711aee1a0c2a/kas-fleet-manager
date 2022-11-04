@@ -44,9 +44,10 @@ func (t *supportedKafkaInstanceTypesService) GetSupportedKafkaInstanceTypesByReg
 		}
 
 		instanceTypeList = append(instanceTypeList, config.KafkaInstanceType{
-			Id:          k,
-			DisplayName: instanceType.DisplayName,
-			Sizes:       instanceType.Sizes,
+			Id:                     k,
+			DisplayName:            instanceType.DisplayName,
+			SupportedBillingModels: instanceType.SupportedBillingModels,
+			Sizes:                  instanceType.Sizes,
 		})
 	}
 	sort.Slice(instanceTypeList, func(i, j int) bool {

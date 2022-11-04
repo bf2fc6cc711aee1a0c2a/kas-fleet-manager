@@ -137,53 +137,99 @@ func buildProviderConfiguration(regionName string, standardLimit, developerLimit
 	}
 }
 
+var testSupportedKafkaBillingModelsStandard = []config.KafkaBillingModel{
+	config.KafkaBillingModel{
+		ID:          "standard",
+		AMSResource: "rhosak",
+		AMSProduct:  "RHOSAK",
+		AMSBillingModels: []string{
+			"standard",
+		},
+	},
+	config.KafkaBillingModel{
+		ID:          "marketplace",
+		AMSResource: "rhosak",
+		AMSProduct:  "RHOSAK",
+		AMSBillingModels: []string{
+			"marketplace",
+			"marketplace-rhm",
+			"marketplace-aws",
+		},
+	},
+	config.KafkaBillingModel{
+		ID:          "eval",
+		AMSResource: "rhosak",
+		AMSProduct:  "RHOSAKEval",
+		AMSBillingModels: []string{
+			"standard",
+		},
+	},
+}
+
+var testSupportedKafkaBillingModelsDeveloper = []config.KafkaBillingModel{
+	config.KafkaBillingModel{
+		ID:          "trial",
+		AMSResource: "rhosak",
+		AMSProduct:  "RHOSAKTrial",
+		AMSBillingModels: []string{
+			"standard",
+		},
+	},
+}
+
+var supportedKafkaSizeStandard = []config.KafkaInstanceSize{
+	{
+		Id:                          "x1",
+		IngressThroughputPerSec:     "30Mi",
+		EgressThroughputPerSec:      "30Mi",
+		TotalMaxConnections:         1000,
+		MaxDataRetentionSize:        "100Gi",
+		MaxPartitions:               1000,
+		MaxDataRetentionPeriod:      "P14D",
+		MaxConnectionAttemptsPerSec: 100,
+		QuotaConsumed:               1,
+		QuotaType:                   "rhosak",
+		CapacityConsumed:            1,
+		MaxMessageSize:              "1Mi",
+		MinInSyncReplicas:           2,
+		ReplicationFactor:           3,
+	},
+}
+
+var supportedKafkaSizeDeveloper = []config.KafkaInstanceSize{
+	{
+		Id:                          "x1",
+		IngressThroughputPerSec:     "60Mi",
+		EgressThroughputPerSec:      "60Mi",
+		TotalMaxConnections:         2000,
+		MaxDataRetentionSize:        "200Gi",
+		MaxPartitions:               2000,
+		MaxDataRetentionPeriod:      "P14D",
+		MaxConnectionAttemptsPerSec: 200,
+		QuotaConsumed:               2,
+		QuotaType:                   "rhosak",
+		CapacityConsumed:            2,
+		MaxMessageSize:              "1Mi",
+		MinInSyncReplicas:           1,
+		ReplicationFactor:           1,
+		LifespanSeconds:             &[]int{172800}[0],
+	},
+}
+
 var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig{
 	Configuration: config.SupportedKafkaInstanceTypesConfig{
 		SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
 			{
-				Id:          "standard",
-				DisplayName: "Standard",
-				Sizes: []config.KafkaInstanceSize{
-					{
-						Id:                          "x1",
-						IngressThroughputPerSec:     "30Mi",
-						EgressThroughputPerSec:      "30Mi",
-						TotalMaxConnections:         1000,
-						MaxDataRetentionSize:        "100Gi",
-						MaxPartitions:               1000,
-						MaxDataRetentionPeriod:      "P14D",
-						MaxConnectionAttemptsPerSec: 100,
-						QuotaConsumed:               1,
-						QuotaType:                   "rhosak",
-						CapacityConsumed:            1,
-						MaxMessageSize:              "1Mi",
-						MinInSyncReplicas:           2,
-						ReplicationFactor:           3,
-					},
-				},
+				Id:                     "standard",
+				DisplayName:            "Standard",
+				SupportedBillingModels: testSupportedKafkaBillingModelsStandard,
+				Sizes:                  supportedKafkaSizeStandard,
 			},
 			{
-				Id:          "developer",
-				DisplayName: "Trial",
-				Sizes: []config.KafkaInstanceSize{
-					{
-						Id:                          "x1",
-						IngressThroughputPerSec:     "60Mi",
-						EgressThroughputPerSec:      "60Mi",
-						TotalMaxConnections:         2000,
-						MaxDataRetentionSize:        "200Gi",
-						MaxPartitions:               2000,
-						MaxDataRetentionPeriod:      "P14D",
-						MaxConnectionAttemptsPerSec: 200,
-						QuotaConsumed:               2,
-						QuotaType:                   "rhosak",
-						CapacityConsumed:            2,
-						MaxMessageSize:              "1Mi",
-						MinInSyncReplicas:           1,
-						ReplicationFactor:           1,
-						LifespanSeconds:             &[]int{172800}[0],
-					},
-				},
+				Id:                     "developer",
+				DisplayName:            "Trial",
+				SupportedBillingModels: testSupportedKafkaBillingModelsDeveloper,
+				Sizes:                  supportedKafkaSizeDeveloper,
 			},
 		},
 	},
