@@ -85,6 +85,13 @@ func (s *StandaloneProvider) InstallStrimzi(clusterSpec *types.ClusterSpec) (boo
 	return true, err
 }
 
+func StrimziOperatorCommonLabels() map[string]string {
+	return map[string]string{
+		"app.kubernetes.io/component": "strimzi-bundle",
+		"app.kubernetes.io/part-of":   "managed-kafka",
+	}
+}
+
 func (s *StandaloneProvider) buildStrimziOperatorNamespace() *v1.Namespace {
 	strimziOLMConfig := s.dataplaneClusterConfig.StrimziOperatorOLMConfig
 	return &v1.Namespace{
@@ -93,7 +100,8 @@ func (s *StandaloneProvider) buildStrimziOperatorNamespace() *v1.Namespace {
 			Kind:       "Namespace",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: strimziOLMConfig.Namespace,
+			Name:   strimziOLMConfig.Namespace,
+			Labels: StrimziOperatorCommonLabels(),
 		},
 	}
 }
@@ -112,6 +120,7 @@ func (s *StandaloneProvider) buildStrimziOperatorCatalogSource() *operatorsv1alp
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strimziOperatorCatalogSourceName,
 			Namespace: strimziOLMConfig.Namespace,
+			Labels:    StrimziOperatorCommonLabels(),
 		},
 		Spec: operatorsv1alpha1.CatalogSourceSpec{
 			SourceType: operatorsv1alpha1.SourceTypeGrpc,
@@ -131,6 +140,7 @@ func (s *StandaloneProvider) buildStrimziOperatorOperatorGroup() *operatorsv1alp
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strimziOperatorOperatorGroupName,
 			Namespace: strimziOLMConfig.Namespace,
+			Labels:    StrimziOperatorCommonLabels(),
 		},
 		//Spec.TargetNamespaces intentionally not set, which means "select all namespaces"
 		Spec: operatorsv1alpha2.OperatorGroupSpec{},
@@ -147,6 +157,7 @@ func (s *StandaloneProvider) buildStrimziOperatorSubscription() *operatorsv1alph
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strimziOperatorSubscriptionName,
 			Namespace: strimziOLMConfig.Namespace,
+			Labels:    StrimziOperatorCommonLabels(),
 		},
 		Spec: &operatorsv1alpha1.SubscriptionSpec{
 			CatalogSource:          strimziOperatorCatalogSourceName,

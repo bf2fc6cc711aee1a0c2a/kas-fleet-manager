@@ -715,7 +715,8 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 				Kind:       "Namespace",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: strimziNamespace,
+				Name:   strimziNamespace,
+				Labels: clusters.StrimziOperatorCommonLabels(),
 			},
 		}, &k8sCoreV1.Namespace{
 			TypeMeta: metav1.TypeMeta{

@@ -387,7 +387,8 @@ func TestStandaloneProvider_buildStrimziOperatorNamespace(t *testing.T) {
 					Kind:       "Namespace",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "namespace-name",
+					Name:   "namespace-name",
+					Labels: StrimziOperatorCommonLabels(),
 				},
 			},
 		},
@@ -407,7 +408,8 @@ func TestStandaloneProvider_buildStrimziOperatorNamespace(t *testing.T) {
 					Kind:       "Namespace",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "another-namespace-name",
+					Name:   "another-namespace-name",
+					Labels: StrimziOperatorCommonLabels(),
 				},
 			},
 		},
@@ -454,6 +456,7 @@ func TestStandaloneProvider_buildStrimziCatalogSource(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      strimziOperatorCatalogSourceName,
 					Namespace: "namespace-name",
+					Labels:    StrimziOperatorCommonLabels(),
 				},
 				Spec: operatorsv1alpha1.CatalogSourceSpec{
 					SourceType: operatorsv1alpha1.SourceTypeGrpc,
@@ -504,6 +507,7 @@ func TestStandaloneProvider_buildStrimziOperatorGroup(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      strimziOperatorOperatorGroupName,
 					Namespace: "namespace-name",
+					Labels:    StrimziOperatorCommonLabels(),
 				},
 				Spec: operatorsv1alpha2.OperatorGroupSpec{},
 			},
@@ -527,6 +531,7 @@ func TestStandaloneProvider_buildStrimziOperatorGroup(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      strimziOperatorOperatorGroupName,
 					Namespace: "another-namespace-name",
+					Labels:    StrimziOperatorCommonLabels(),
 				},
 				Spec: operatorsv1alpha2.OperatorGroupSpec{},
 			},
@@ -576,6 +581,7 @@ func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      strimziOperatorSubscriptionName,
 					Namespace: "namespace-name",
+					Labels:    StrimziOperatorCommonLabels(),
 				},
 				Spec: &operatorsv1alpha1.SubscriptionSpec{
 					CatalogSource:          strimziOperatorCatalogSourceName,
@@ -607,6 +613,7 @@ func TestStandaloneProvider_buildStrimziOperatorSubscription(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      strimziOperatorSubscriptionName,
 					Namespace: "another-namespace-name",
+					Labels:    StrimziOperatorCommonLabels(),
 				},
 				Spec: &operatorsv1alpha1.SubscriptionSpec{
 					CatalogSource:          strimziOperatorCatalogSourceName,
