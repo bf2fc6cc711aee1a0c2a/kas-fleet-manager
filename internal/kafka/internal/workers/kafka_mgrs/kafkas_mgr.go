@@ -70,6 +70,16 @@ func (k *KafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling kafkas")
 	var encounteredErrors []error
 
+	// get all kafkas and send their statuses to prometheus
+	kafkas, err := k.kafkaService.ListAll()
+	if err != nil {
+		encounteredErrors = append(encounteredErrors, err)
+	}
+
+	for _, k := range kafkas {
+		metrics.UpdateKafkaRequestsCurrentStatusInfoMetric(constants2.KafkaStatus(k.Status), k.ID, k.ClusterID)
+	}
+
 	// record the metrics at the beginning of the reconcile loop as some of the states like "accepted"
 	// will likely gone after one loop. Record them at the beginning should give us more accurate metrics
 	statusErrors := k.setKafkaStatusCountMetric()

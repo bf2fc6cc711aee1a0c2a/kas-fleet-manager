@@ -228,6 +228,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *dbapi.KafkaRequest) 
 	}
 	// only send metrics data if the current kafka request is in "provisioning" status as this is the only case we want to report
 	shouldSendMetric, err := d.checkKafkaRequestCurrentStatus(kafka, constants2.KafkaRequestStatusProvisioning)
+
 	if err != nil {
 		return err
 	}
@@ -243,6 +244,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *dbapi.KafkaRequest) 
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants2.KafkaOperationCreate)
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationCreate)
 	}
+
 	return nil
 }
 

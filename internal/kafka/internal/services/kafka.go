@@ -79,6 +79,8 @@ type KafkaService interface {
 	// The Kafka Request in the database will be updated with a deleted_at timestamp.
 	Delete(*dbapi.KafkaRequest) *errors.ServiceError
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError)
+	// Lists all kafkas. As this returns all Kafka requests without need for authentication, this should only be used for internal purposes
+	ListAll() (dbapi.KafkaList, *errors.ServiceError)
 	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
 	// GenerateReservedManagedKafkasByClusterID returns a list of reserved managed
 	// kafkas for a given clusterID. The number of generated reserved managed
@@ -423,6 +425,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	}
 
 	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
+
 	return nil
 }
 
@@ -471,7 +474,6 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 	if err := k.Update(updatedKafkaRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update kafka request")
 	}
-
 	return nil
 }
 
@@ -720,6 +722,17 @@ func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 	metrics.IncreaseKafkaSuccessOperationsCountMetric(constants2.KafkaOperationDelete)
 
 	return nil
+}
+
+// Lists all kafkas. As this returns all Kafka requests without need for authentication, this should only be used for internal purposes
+func (k *kafkaService) ListAll() (dbapi.KafkaList, *errors.ServiceError) {
+	var kafkaRequestList dbapi.KafkaList
+	dbConn := k.connectionFactory.New()
+	if err := dbConn.Find(&kafkaRequestList).Error; err != nil {
+		return kafkaRequestList, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka requests")
+	}
+
+	return kafkaRequestList, nil
 }
 
 // List returns all Kafka requests belonging to a user.

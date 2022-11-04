@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
@@ -40,6 +41,9 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
 						return nil
 					},
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -62,6 +66,9 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
 						return nil
 					},
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -83,6 +90,9 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					},
 					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
 						return errors.GeneralError("failed to deprovision expired kafkas")
+					},
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -136,6 +146,9 @@ func TestKafkaManager_reconcileDeniedKafkaOwners(t *testing.T) {
 			name: "do not reconcile when denied accounts list is empty",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
 					DeprovisionKafkaForUsersFunc: nil, // set to nil as it should not be called
 				},
 			},
@@ -148,6 +161,9 @@ func TestKafkaManager_reconcileDeniedKafkaOwners(t *testing.T) {
 			name: "should receive error when update in deprovisioning in database returns an error",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
 					DeprovisionKafkaForUsersFunc: func(users []string) *errors.ServiceError {
 						return &errors.ServiceError{}
 					},
@@ -162,6 +178,9 @@ func TestKafkaManager_reconcileDeniedKafkaOwners(t *testing.T) {
 			name: "should not receive error when update in deprovisioning in database succeed",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
 					DeprovisionKafkaForUsersFunc: func(users []string) *errors.ServiceError {
 						return nil
 					},
@@ -200,6 +219,9 @@ func TestKafkaManager_setKafkaStatusCountMetric(t *testing.T) {
 			name: "should return an error if CountByStatus fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
 					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
 						return nil, errors.GeneralError("failed to count kafkas by status")
 					},
@@ -211,6 +233,9 @@ func TestKafkaManager_setKafkaStatusCountMetric(t *testing.T) {
 			name: "should successfully set kafka status count metrics",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
 					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
 						return []services.KafkaStatusCount{
 							{
@@ -475,6 +500,9 @@ func TestKafkaManager_calculateCapacityByRegionAndInstanceTypeForManualClusters(
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					DeprovisionKafkaForUsersFunc: nil,
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
 				},
 				dataplaneClusterConfig: config.DataplaneClusterConfig{
 					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
@@ -528,6 +556,9 @@ func TestKafkaManager_calculateCapacityByRegionAndInstanceTypeForManualClusters(
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					DeprovisionKafkaForUsersFunc: nil,
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
 				},
 				dataplaneClusterConfig: config.DataplaneClusterConfig{
 					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
@@ -595,6 +626,9 @@ func TestKafkaManager_calculateCapacityByRegionAndInstanceTypeForManualClusters(
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					DeprovisionKafkaForUsersFunc: nil,
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
 				},
 				dataplaneClusterConfig: config.DataplaneClusterConfig{
 					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
@@ -648,6 +682,9 @@ func TestKafkaManager_calculateCapacityByRegionAndInstanceTypeForManualClusters(
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					DeprovisionKafkaForUsersFunc: nil,
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
 				},
 				dataplaneClusterConfig: config.DataplaneClusterConfig{
 					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
@@ -759,6 +796,9 @@ func TestKafkaManager_calculateAvailableAndMaxCapacityForDynamicScaling(t *testi
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					DeprovisionKafkaForUsersFunc: nil,
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
 				},
 				dataplaneClusterConfig: config.DataplaneClusterConfig{
 					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
@@ -812,6 +852,9 @@ func TestKafkaManager_calculateAvailableAndMaxCapacityForDynamicScaling(t *testi
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					DeprovisionKafkaForUsersFunc: nil,
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
 				},
 				dataplaneClusterConfig: config.DataplaneClusterConfig{
 					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{

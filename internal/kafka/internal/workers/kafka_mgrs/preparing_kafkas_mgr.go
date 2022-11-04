@@ -96,7 +96,7 @@ func (k *PreparingKafkaManager) handleKafkaRequestCreationError(kafkaRequest *db
 		}
 	} else if err.IsClientErrorClass() {
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationCreate)
-		kafkaRequest.Status = string(constants2.KafkaRequestStatusFailed)
+		kafkaRequest.Status = constants2.KafkaRequestStatusFailed.String()
 		kafkaRequest.FailedReason = err.Reason
 		updateErr := k.kafkaService.Update(kafkaRequest)
 		if updateErr != nil {
