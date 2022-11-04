@@ -858,45 +858,6 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Should return an error when supported billing models not defined",
-			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
-				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
-				res := SupportedKafkaInstanceTypesConfig{
-					SupportedKafkaInstanceTypes: []KafkaInstanceType{
-						{
-							Id:          "standard",
-							DisplayName: "Standard",
-							Sizes: []KafkaInstanceSize{
-								testKafkaInstanceSizex1,
-							},
-						},
-					},
-				}
-				return res
-			},
-			wantErr: true,
-		},
-		{
-			name: "Should return an error when supported billing models is empty",
-			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
-				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
-				res := SupportedKafkaInstanceTypesConfig{
-					SupportedKafkaInstanceTypes: []KafkaInstanceType{
-						{
-							Id:          "standard",
-							DisplayName: "Standard",
-							Sizes: []KafkaInstanceSize{
-								testKafkaInstanceSizex1,
-							},
-							SupportedBillingModels: []KafkaBillingModel{},
-						},
-					},
-				}
-				return res
-			},
-			wantErr: true,
-		},
-		{
 			name: "Should return an error when there is a duplicated supported billing model id",
 			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
 				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()

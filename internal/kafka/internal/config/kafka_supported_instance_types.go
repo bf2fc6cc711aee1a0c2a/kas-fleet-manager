@@ -27,7 +27,7 @@ type KafkaInstanceType struct {
 	Id                     string              `yaml:"id"`
 	DisplayName            string              `yaml:"display_name"`
 	Sizes                  []KafkaInstanceSize `yaml:"sizes"`
-	SupportedBillingModels []KafkaBillingModel `yaml:"supported_billing_models" validate:"min=1,unique=ID,dive"`
+	SupportedBillingModels []KafkaBillingModel `yaml:"supported_billing_models" validate:"unique=ID,dive"`
 }
 
 type KafkaBillingModel struct {
