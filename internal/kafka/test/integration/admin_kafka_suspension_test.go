@@ -43,10 +43,12 @@ func TestAdminKafka_KafkaSuspension(t *testing.T) {
 			SupportedInstanceType: api.AllInstanceTypeSupport.String(),
 		},
 	}
+
 	h, publicClient, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig) {
 		d.DataPlaneClusterScalingType = config.ManualScaling
 		d.ClusterConfig = config.NewClusterConfig(clusterList)
 	})
+
 	defer teardown()
 
 	// run test only on mock mode - fleetshard sync will always be mocked so there's no point running against real env.
