@@ -38,8 +38,9 @@ type SupportedKafkaSize struct {
 	LifespanSeconds *int32 `json:"lifespan_seconds,omitempty"`
 	// Quota consumed by this Kafka instance size.
 	QuotaConsumed int32 `json:"quota_consumed,omitempty"`
-	// Quota type used by this Kafka instance size.
-	QuotaType string `json:"quota_type,omitempty"`
+	// Quota type used by this Kafka instance size. This is now deprecated, please refer to supported_billing_models at instance-type level instead.
+	// Deprecated
+	DeprecatedQuotaType string `json:"quota_type,omitempty"`
 	// Data plane cluster capacity consumed by this Kafka instance size.
 	CapacityConsumed int32 `json:"capacity_consumed,omitempty"`
 	// Maturity level of the size. Can be \"stable\" or \"preview\".

@@ -60,7 +60,7 @@ func With(attribute KafkaInstanceSizeAttribute, value string) KafkaInstanceSizeB
 		case MAX_MESSAGE_SIZE:
 			kafkaInstanceSize.MaxMessageSize = config.Quantity(value)
 		case QUOTA_TYPE:
-			kafkaInstanceSize.QuotaType = value
+			kafkaInstanceSize.DeprecatedQuotaType = value
 		case MATURITY_STATUS:
 			kafkaInstanceSize.MaturityStatus = config.MaturityStatus(value)
 		}
@@ -123,7 +123,7 @@ func BuildKafkaInstanceSize(options ...KafkaInstanceSizeBuildOption) *config.Kaf
 		MaxConnectionAttemptsPerSec: DefaultMaxConnectionAttemptsPerSec,
 		MaxMessageSize:              DefaultMaxMessageSize,
 		QuotaConsumed:               DefaultQuotaconsumed,
-		QuotaType:                   DefaultQuotaType,
+		DeprecatedQuotaType:         DefaultQuotaType,
 		CapacityConsumed:            DefaultCapacityConsumed,
 		SupportedAZModes:            DefaultSupportedAZModes,
 		MinInSyncReplicas:           DefaultMinInSyncReplicas,
