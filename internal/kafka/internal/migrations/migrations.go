@@ -85,6 +85,7 @@ var migrations = []*gormigrate.Migration{
 	addCleanupClusterExternalResourcesWorkerToLeaderLeases(),
 	addDeprovisioningClusterWorkerToLeaderLeases(),
 	addDynamicScaleDownWorkerToLeaderLeases(),
+	removeTheWronglyAutoCreatedClusterInStageEnvironmentWithID_cdhunvd8igjhbi0nmtt0(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
