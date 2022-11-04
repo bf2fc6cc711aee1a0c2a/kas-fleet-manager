@@ -3,7 +3,9 @@ package config
 import (
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/onsi/gomega"
+	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
 
 func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
@@ -28,6 +30,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 								testKafkaInstanceSizex1,
 								testKafkaInstanceSizex2,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -48,6 +51,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 								testKafkaInstanceSizex1,
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -68,6 +72,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -88,6 +93,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -108,6 +114,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -128,6 +135,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -148,6 +156,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -168,6 +177,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -188,6 +198,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -208,6 +219,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -228,6 +240,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -248,6 +261,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -268,6 +282,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -288,6 +303,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -308,6 +324,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -326,6 +343,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -339,9 +357,10 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 				res := SupportedKafkaInstanceTypesConfig{
 					SupportedKafkaInstanceTypes: []KafkaInstanceType{
 						{
-							Id:          "standard",
-							DisplayName: "Standard",
-							Sizes:       []KafkaInstanceSize{},
+							Id:                     "standard",
+							DisplayName:            "Standard",
+							Sizes:                  []KafkaInstanceSize{},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -361,6 +380,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 						{
 							Id:          "standard",
@@ -368,6 +388,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -388,6 +409,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -408,6 +430,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -428,6 +451,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -448,6 +472,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -468,6 +493,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -487,6 +513,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -507,6 +534,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -527,6 +555,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -547,6 +576,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -567,6 +597,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -587,6 +618,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -607,6 +639,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -627,6 +660,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -647,6 +681,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -667,6 +702,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -687,6 +723,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -707,6 +744,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -727,6 +765,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -747,6 +786,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -767,6 +807,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -787,6 +828,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
 						},
 					},
 				}
@@ -807,6 +849,285 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 							Sizes: []KafkaInstanceSize{
 								testKafkaInstanceSizex1,
 							},
+							SupportedBillingModels: buildTestSupportedBillingModels(),
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return an error when supported billing models not defined",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return an error when supported billing models is empty",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+							SupportedBillingModels: []KafkaBillingModel{},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return an error when there is a duplicated supported billing model id",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+							SupportedBillingModels: []KafkaBillingModel{
+								KafkaBillingModel{ID: "id1"},
+								KafkaBillingModel{ID: "id1"},
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return an error when a supported billing model AMS resource is empty",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+							SupportedBillingModels: []KafkaBillingModel{
+								KafkaBillingModel{
+									ID:               "id1",
+									AMSProduct:       string(ocm.RHOSAKProduct),
+									AMSBillingModels: []string{string(amsv1.BillingModelMarketplaceAWS)},
+									AMSResource:      "",
+								},
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return an error when a supported billing model AMS Resource is not a valid one",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+							SupportedBillingModels: []KafkaBillingModel{
+								KafkaBillingModel{
+									ID:               "id1",
+									AMSProduct:       string(ocm.RHOSAKProduct),
+									AMSBillingModels: []string{string(amsv1.BillingModelMarketplaceAWS)},
+									AMSResource:      "unexistingamsresource",
+								},
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return an error when a supported billing model AMS product is empty",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+							SupportedBillingModels: []KafkaBillingModel{
+								KafkaBillingModel{
+									ID:               "id1",
+									AMSProduct:       "",
+									AMSBillingModels: []string{string(amsv1.BillingModelMarketplaceAWS)},
+									AMSResource:      ocm.RHOSAKResourceName,
+								},
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return an error when a supported billing model AMS product is not a valid one",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+							SupportedBillingModels: []KafkaBillingModel{
+								KafkaBillingModel{
+									ID:               "id1",
+									AMSProduct:       "nonexistingamsproduct",
+									AMSBillingModels: []string{string(amsv1.BillingModelMarketplaceAWS)},
+									AMSResource:      ocm.RHOSAKResourceName,
+								},
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return an error when a supported billing model AMS billing models is undefined",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+							SupportedBillingModels: []KafkaBillingModel{
+								KafkaBillingModel{
+									ID:               "id1",
+									AMSProduct:       string(ocm.RHOSAKProduct),
+									AMSBillingModels: nil,
+									AMSResource:      ocm.RHOSAKResourceName,
+								},
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return an error when a supported billing model AMS billing models is empty",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+							SupportedBillingModels: []KafkaBillingModel{
+								KafkaBillingModel{
+									ID:               "id1",
+									AMSProduct:       string(ocm.RHOSAKProduct),
+									AMSBillingModels: []string{},
+									AMSResource:      ocm.RHOSAKResourceName,
+								},
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return an error when a supported billing model AMS billing models is invalid",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+							SupportedBillingModels: []KafkaBillingModel{
+								KafkaBillingModel{
+									ID:               "id1",
+									AMSProduct:       string(ocm.RHOSAKProduct),
+									AMSBillingModels: []string{"nonexistingbillingmodel"},
+									AMSResource:      ocm.RHOSAKResourceName,
+								},
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return an error when a supported billing model AMS billing models is duplicated",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+							SupportedBillingModels: []KafkaBillingModel{
+								KafkaBillingModel{
+									ID:               "id1",
+									AMSProduct:       string(ocm.RHOSAKProduct),
+									AMSBillingModels: []string{string(amsv1.BillingModelMarketplaceAWS), string(amsv1.BillingModelMarketplaceAWS)},
+									AMSResource:      ocm.RHOSAKResourceName,
+								},
+							},
 						},
 					},
 				}
@@ -815,6 +1136,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
 	for _, testcase := range tests {
 		tt := testcase
 
@@ -927,6 +1249,17 @@ func TestKafkaInstanceType_GetBiggestCapacityConsumedSize(t *testing.T) {
 		})
 	}
 
+}
+
+func buildTestSupportedBillingModels() []KafkaBillingModel {
+	return []KafkaBillingModel{
+		KafkaBillingModel{
+			ID:               "standard",
+			AMSResource:      ocm.RHOSAKResourceName,
+			AMSProduct:       string(ocm.RHOSAKProduct),
+			AMSBillingModels: []string{string(amsv1.BillingModelMarketplaceAWS)},
+		},
+	}
 }
 
 func buildTestStandardKafkaInstanceSize() KafkaInstanceSize {

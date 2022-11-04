@@ -24,9 +24,17 @@ func getValidMaturityStates() []MaturityStatus {
 }
 
 type KafkaInstanceType struct {
-	Id          string              `yaml:"id"`
-	DisplayName string              `yaml:"display_name"`
-	Sizes       []KafkaInstanceSize `yaml:"sizes"`
+	Id                     string              `yaml:"id"`
+	DisplayName            string              `yaml:"display_name"`
+	Sizes                  []KafkaInstanceSize `yaml:"sizes"`
+	SupportedBillingModels []KafkaBillingModel `yaml:"supported_billing_models" validate:"min=1,unique=ID,dive"`
+}
+
+type KafkaBillingModel struct {
+	ID               string   `yaml:"id" validate:"required"`
+	AMSResource      string   `yaml:"ams_resource" validate:"required,ams_resource_validator"`
+	AMSProduct       string   `yaml:"ams_product" validate:"required,ams_product_validator"`
+	AMSBillingModels []string `yaml:"ams_billing_models" validate:"min=1,unique,ams_billing_models_validator"`
 }
 
 func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(sizeId string) (*KafkaInstanceSize, error) {
@@ -36,7 +44,17 @@ func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(sizeId string) (*KafkaInst
 			return &ret, nil
 		}
 	}
-	return nil, fmt.Errorf("Kafka instance size id: '%s' not found for '%s' instance type", sizeId, kp.Id)
+	return nil, fmt.Errorf("kafka instance size id: '%s' not found for '%s' instance type", sizeId, kp.Id)
+}
+
+func (kp *KafkaInstanceType) GetKafkaSupportedBillingModelByID(kafkaBillingModelID string) (*KafkaBillingModel, error) {
+	for _, supportedBillingModel := range kp.SupportedBillingModels {
+		if supportedBillingModel.ID == kafkaBillingModelID {
+			ret := supportedBillingModel
+			return &ret, nil
+		}
+	}
+	return nil, fmt.Errorf("kafka supported billing model id: '%s' not found for '%s' instance type", kafkaBillingModelID, kp.Id)
 }
 
 // GetBiggestCapacityConsumedSize gets the Kafka instance size of the kafka
@@ -73,7 +91,7 @@ func (kp *KafkaInstanceType) HasAnInstanceSizeWithLifespan() bool {
 // - sizes cannot be an empty list and each size id must be unique
 func (kp *KafkaInstanceType) validate() error {
 	if kp.Id == "" || kp.DisplayName == "" || len(kp.Sizes) == 0 {
-		return fmt.Errorf("Kafka instance type '%s' is missing required parameters.", kp.Id)
+		return fmt.Errorf("kafka instance type '%s' is missing required parameters.", kp.Id)
 	}
 
 	if !arrays.Contains(types.ValidKafkaInstanceTypes, kp.Id) {
@@ -84,13 +102,18 @@ func (kp *KafkaInstanceType) validate() error {
 
 	for _, kafkaInstanceSize := range kp.Sizes {
 		if _, ok := existingSizes[kafkaInstanceSize.Id]; ok {
-			return fmt.Errorf("Kafka instance size '%s' for instance type '%s' was defined more than once.", kafkaInstanceSize.Id, kp.Id)
+			return fmt.Errorf("kafka instance size '%s' for instance type '%s' was defined more than once.", kafkaInstanceSize.Id, kp.Id)
 		}
 		existingSizes[kafkaInstanceSize.Id]++
 
 		if err := kafkaInstanceSize.validate(kp.Id); err != nil {
 			return err
 		}
+	}
+
+	err := validate.Struct(kp)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -126,7 +149,7 @@ func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 	if k.EgressThroughputPerSec.IsEmpty() || k.IngressThroughputPerSec.IsEmpty() ||
 		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize.IsEmpty() || k.Id == "" || k.QuotaType == "" ||
 		k.DisplayName == "" || k.MaxMessageSize.IsEmpty() || k.SupportedAZModes == nil {
-		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' is missing required parameters.", k.Id, instanceTypeId)
+		return fmt.Errorf("kafka instance size '%s' for instance type '%s' is missing required parameters.", k.Id, instanceTypeId)
 	}
 
 	egressThroughputQuantity, err := k.EgressThroughputPerSec.ToK8Quantity()
@@ -165,7 +188,7 @@ func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 	}
 
 	if k.LifespanSeconds != nil && *k.LifespanSeconds <= 0 {
-		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' specifies a lifespanSeconds seconds value less than or equals to Zero.", k.Id, instanceTypeId)
+		return fmt.Errorf("kafka instance size '%s' for instance type '%s' specifies a lifespanSeconds seconds value less than or equals to Zero.", k.Id, instanceTypeId)
 	}
 
 	maturityStatusKnown := false
@@ -185,7 +208,7 @@ func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 		k.TotalMaxConnections <= 0 || k.MaxPartitions <= 0 || k.MaxConnectionAttemptsPerSec <= 0 ||
 		k.QuotaConsumed < 1 || k.CapacityConsumed < 1 || k.MinInSyncReplicas < 1 ||
 		k.ReplicationFactor < 1 || maxMessageSize.CmpInt64(0) < 0 || len(k.SupportedAZModes) == 0 {
-		return fmt.Errorf("Kafka instance size '%s' for instance type '%s' specifies a property value less than or equals to Zero.", k.Id, instanceTypeId)
+		return fmt.Errorf("kafka instance size '%s' for instance type '%s' specifies a property value less than or equals to Zero.", k.Id, instanceTypeId)
 	}
 
 	return nil
@@ -202,7 +225,7 @@ func (s *SupportedKafkaInstanceTypesConfig) GetKafkaInstanceTypeByID(instanceTyp
 			return &ret, nil
 		}
 	}
-	return nil, fmt.Errorf("Unable to find kafka instance type for '%s'", instanceType)
+	return nil, fmt.Errorf("unable to find kafka instance type for '%s'", instanceType)
 }
 
 func (s *SupportedKafkaInstanceTypesConfig) validate() error {
@@ -210,7 +233,7 @@ func (s *SupportedKafkaInstanceTypesConfig) validate() error {
 
 	for _, KafkaInstanceType := range s.SupportedKafkaInstanceTypes {
 		if _, ok := existingInstanceTypes[KafkaInstanceType.Id]; ok {
-			return fmt.Errorf("Kafka instance type id '%s' was defined more than once.", KafkaInstanceType.Id)
+			return fmt.Errorf("kafka instance type id '%s' was defined more than once.", KafkaInstanceType.Id)
 		}
 		existingInstanceTypes[KafkaInstanceType.Id]++
 

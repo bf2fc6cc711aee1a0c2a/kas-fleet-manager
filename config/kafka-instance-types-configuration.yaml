@@ -1,10 +1,17 @@
-# This configuration defines a list of supported Kafka instance types and their available sizes for KAS Fleet Manager. 
-# Modify this file to add additional Kafka instance types and sizes or change the default values listed below.
+# This configuration defines a list of supported Kafka instance types and their associated configuration for KAS Fleet Manager.
+# Modify this file to add additional Kafka instance types or change the default values listed below.
 # 
 # The following properties must be defined for each Kafka instance type:
 #   - id: Identifier for the Kafka instance type. Each instance type name should be unique.
 #   - display_name: human readable value of an instance type
+#   - [required] supported_billing_models: a list of available kafka billing models for the instance type. Cannot be empty
 #   - sizes: A list of sizes available for this instance type (should not be an empty list)
+#
+# The following properties are available in each element in the supported_billing_models list:
+#   - [required] id: Identifier for the Kafka billing model. Must be unique among all supported_billing_models
+#   - [required] ams_resource: AMS resource to be used. Accepted values: ['rhosak']
+#   - [required] ams_product: AMS product to be used. Accepted values: ['RHOSAK', 'RHOSAKTrial', 'RHOSAKEval']
+#   - [required] ams_billing_models: List of AMS available billing models: Accepted values: ['marketplace', 'marketplace-rhm', 'marketplace-aws']
 #
 # The following properties must be defined for each size (all values must be larger than '0'):
 #   - id: The size identifier. Each size id should be unique.
@@ -24,10 +31,29 @@
 #   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
 #   - quotaType: Quota type that will be consumed when this size is selected.
 #   - capacityConsumed: Data plane cluster capacity consumed by this Kafka instance size (only used for manual scaling)
+
 ---
 supported_instance_types:
   - id: standard
     display_name: Standard
+    supported_billing_models:
+    - id: standard
+      ams_resource: rhosak
+      ams_product: RHOSAK
+      ams_billing_models:
+      - standard
+    - id: marketplace
+      ams_resource: rhosak
+      ams_product: RHOSAK
+      ams_billing_models:
+      - marketplace # legacy. Remove when we don't send it anymore
+      - marketplace-rhm
+      - marketplace-aws
+    - id: eval
+      ams_resource: rhosak
+      ams_product: RHOSAKEval
+      ams_billing_models:
+      - standard
     sizes:
     - id: x1
       display_name: "1"
@@ -67,6 +93,12 @@ supported_instance_types:
       maturityStatus: preview
   - id: developer
     display_name: Trial
+    supported_billing_models:
+    - id: trial
+      ams_resource: rhosak
+      ams_product: RHOSAKTrial
+      ams_billing_models:
+      - standard
     sizes:
     - id: x1
       display_name: "1"

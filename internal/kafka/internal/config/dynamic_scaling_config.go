@@ -4,14 +4,10 @@ import (
 	"fmt"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
-	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
 )
 
 const minNumberOfComputeNodesForClusterWideWorkload = 3
-
-// use a single instance of Validate, it caches struct info
-var validate *validator.Validate = validator.New()
 
 type DynamicScalingConfig struct {
 	filePath                                      string
