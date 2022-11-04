@@ -2075,16 +2075,9 @@ func Test_kafkaService_ListAll(t *testing.T) {
 
 			result, err := k.ListAll()
 
-			// check errors
-			if (err != nil) != tt.wantErr {
-				t.Errorf("kafkaService.List() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 
-			// compare wanted vs actual results
-			if len(result) != len(tt.want) {
-				t.Errorf("kafka.Service.List(): total number of results: got = %d want = %d", len(result), len(tt.want))
-			}
+			g.Expect(len(result)).To(gomega.Equal(len(tt.want)))
 
 			for i, got := range result {
 				g.Expect(got).To(gomega.Equal(tt.want[i]))

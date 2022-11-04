@@ -124,8 +124,8 @@ var kafkaStatusSinceCreatedMetricLabels = []string{
 	LabelClusterID,
 }
 
-// kafkaStatusSinceLastSetMetricLabels is the slice of labels to add to
-var kafkaStatusSinceLastSetMetricLabels = []string{
+// kafkaRequestsCurrentStatusInfoLabels is the slice of labels for current kafka status metrics
+var kafkaRequestsCurrentStatusInfoLabels = []string{
 	LabelStatus,
 	LabelID,
 	LabelClusterID,
@@ -482,14 +482,14 @@ func UpdateKafkaRequestsStatusSinceCreatedMetric(status constants2.KafkaStatus, 
 	kafkaStatusSinceCreatedMetric.With(labels).Set(elapsed.Seconds())
 }
 
-// create a new GaugeVec for kafkas status duration
+// create a new GaugeVec for tracking current kafka status
 var kafkaRequestsCurrentStatusInfoMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: KasFleetManager,
 		Name:      KafkaRequestsCurrentStatusInfo,
 		Help:      "metrics tracking current status of each kafka",
 	},
-	kafkaStatusSinceLastSetMetricLabels,
+	kafkaRequestsCurrentStatusInfoLabels,
 )
 
 // UpdateKafkaRequestsCurrentStatusInfoMetric

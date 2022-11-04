@@ -108,6 +108,33 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "should return an error if ListAllFunc returns an error",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
+						return []services.KafkaStatusCount{}, nil
+					},
+					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
+						return nil
+					},
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return nil, errors.GeneralError("failed to list kafkas")
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
+						return services.KafkaStreamingUnitCountPerClusterList{}, nil
+					},
+				},
+				dataplaneClusterConfig: *config.NewDataplaneClusterConfig(),
+				accessControlListConfig: &acl.AccessControlListConfig{
+					EnableDenyList: true,
+				},
+				kafkaConfig: *config.NewKafkaConfig(),
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, testcase := range tests {
