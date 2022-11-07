@@ -118,7 +118,7 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 			k := NewDeletingKafkaManager(tt.fields.kafkaService,
 				tt.fields.keycloakConfig,
 				&services.QuotaServiceFactoryMock{
-					GetQuotaServiceFunc: func(quoataType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
+					GetQuotaServiceFunc: func(quotaType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
 						return tt.fields.quotaService, nil
 					},
 				},
@@ -208,7 +208,7 @@ func TestDeletingKafkaManager_reconcileDeletingKafkas(t *testing.T) {
 			k := &DeletingKafkaManager{
 				kafkaService: tt.fields.kafkaService,
 				quotaServiceFactory: &services.QuotaServiceFactoryMock{
-					GetQuotaServiceFunc: func(quoataType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
+					GetQuotaServiceFunc: func(quotaType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
 						return tt.fields.quotaService, nil
 					},
 				},

@@ -472,10 +472,10 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 }
 func Test_DefaultQuotaServiceFactory_GetQuotaService(t *testing.T) {
 	type fields struct {
-		QuoataServiceContainer map[api.QuotaType]services.QuotaService
+		QuotaServiceContainer map[api.QuotaType]services.QuotaService
 	}
 	type args struct {
-		quoataType api.QuotaType
+		quotaType api.QuotaType
 	}
 	tests := []struct {
 		name    string
@@ -487,10 +487,10 @@ func Test_DefaultQuotaServiceFactory_GetQuotaService(t *testing.T) {
 		{
 			name: "Should return nil and error if QuotaType is invalid",
 			fields: fields{
-				QuoataServiceContainer: map[api.QuotaType]services.QuotaService{},
+				QuotaServiceContainer: map[api.QuotaType]services.QuotaService{},
 			},
 			args: args{
-				quoataType: api.UndefinedQuotaType,
+				quotaType: api.UndefinedQuotaType,
 			},
 			want:    nil,
 			wantErr: errors.GeneralError("invalid quota service type: %v", api.QuotaManagementListQuotaType),
@@ -505,7 +505,7 @@ func Test_DefaultQuotaServiceFactory_GetQuotaService(t *testing.T) {
 			factory := &DefaultQuotaServiceFactory{
 				quotaServiceContainer: map[api.QuotaType]services.QuotaService{},
 			}
-			quotaService, err := factory.GetQuotaService(tt.args.quoataType)
+			quotaService, err := factory.GetQuotaService(tt.args.quotaType)
 			g.Expect(quotaService).To(gomega.BeNil())
 			g.Expect(err).To(gomega.Equal(tt.wantErr))
 		})
