@@ -8,10 +8,26 @@ import (
 func PresentSupportedKafkaInstanceTypes(supportedInstanceType *config.KafkaInstanceType) public.SupportedKafkaInstanceType {
 	reference := PresentReference(supportedInstanceType.Id, supportedInstanceType)
 	return public.SupportedKafkaInstanceType{
-		Id:          reference.Id,
-		DisplayName: supportedInstanceType.DisplayName,
-		Sizes:       GetSupportedSizes(supportedInstanceType),
+		Id:                     reference.Id,
+		DisplayName:            supportedInstanceType.DisplayName,
+		SupportedBillingModels: GetSupportedBillingModels(supportedInstanceType),
+		Sizes:                  GetSupportedSizes(supportedInstanceType),
 	}
+}
+
+func GetSupportedBillingModels(supportedInstanceType *config.KafkaInstanceType) []public.SupportedKafkaBillingModel {
+	supportedBillingModels := make([]public.SupportedKafkaBillingModel, len(supportedInstanceType.SupportedBillingModels))
+
+	for i, bm := range supportedInstanceType.SupportedBillingModels {
+		supportedBillingModels[i] = public.SupportedKafkaBillingModel{
+			Id:               bm.ID,
+			AmsResource:      bm.AMSResource,
+			AmsProduct:       bm.AMSProduct,
+			AmsBillingModels: bm.AMSBillingModels,
+		}
+	}
+
+	return supportedBillingModels
 }
 
 func GetSupportedSizes(supportedInstanceType *config.KafkaInstanceType) []public.SupportedKafkaSize {

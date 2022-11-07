@@ -7,45 +7,6 @@ import (
 	"github.com/onsi/gomega"
 )
 
-var supportedKafkaSizeStandard = []config.KafkaInstanceSize{
-	{
-		Id:                          "x1",
-		IngressThroughputPerSec:     "30Mi",
-		EgressThroughputPerSec:      "30Mi",
-		TotalMaxConnections:         1000,
-		MaxDataRetentionSize:        "100Gi",
-		MaxPartitions:               1000,
-		MaxDataRetentionPeriod:      "P14D",
-		MaxConnectionAttemptsPerSec: 100,
-		QuotaConsumed:               1,
-		QuotaType:                   "rhosak",
-		CapacityConsumed:            1,
-		MaxMessageSize:              "1Mi",
-		MinInSyncReplicas:           2,
-		ReplicationFactor:           3,
-	},
-}
-
-var supportedKafkaSizeDeveloper = []config.KafkaInstanceSize{
-	{
-		Id:                          "x1",
-		IngressThroughputPerSec:     "60Mi",
-		EgressThroughputPerSec:      "60Mi",
-		TotalMaxConnections:         2000,
-		MaxDataRetentionSize:        "200Gi",
-		MaxPartitions:               2000,
-		MaxDataRetentionPeriod:      "P14D",
-		MaxConnectionAttemptsPerSec: 200,
-		QuotaConsumed:               2,
-		QuotaType:                   "rhosak",
-		CapacityConsumed:            2,
-		MaxMessageSize:              "1Mi",
-		MinInSyncReplicas:           1,
-		ReplicationFactor:           1,
-		LifespanSeconds:             &[]int{172800}[0],
-	},
-}
-
 func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T) {
 	type fields struct {
 		providerConfig *config.ProviderConfig
@@ -76,14 +37,16 @@ func Test_KafkaInstanceTypes_GetSupportedKafkaInstanceTypesByRegion(t *testing.T
 			wantErr: false,
 			want: []config.KafkaInstanceType{
 				{
-					Id:          "developer",
-					DisplayName: "Trial",
-					Sizes:       supportedKafkaSizeDeveloper,
+					Id:                     "developer",
+					DisplayName:            "Trial",
+					SupportedBillingModels: testSupportedKafkaBillingModelsDeveloper,
+					Sizes:                  supportedKafkaSizeDeveloper,
 				},
 				{
-					Id:          "standard",
-					DisplayName: "Standard",
-					Sizes:       supportedKafkaSizeStandard,
+					Id:                     "standard",
+					DisplayName:            "Standard",
+					SupportedBillingModels: testSupportedKafkaBillingModelsStandard,
+					Sizes:                  supportedKafkaSizeStandard,
 				},
 			},
 		},
