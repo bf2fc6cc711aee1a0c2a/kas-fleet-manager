@@ -26,6 +26,12 @@ import (
 )
 
 func TestAdminKafka_KafkaSuspension(t *testing.T) {
+
+	type metricValue struct {
+		metric kafkaconstants.KafkaStatus
+		value  string
+	}
+
 	g := gomega.NewWithT(t)
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -50,7 +56,6 @@ func TestAdminKafka_KafkaSuspension(t *testing.T) {
 		d.DataPlaneClusterScalingType = config.ManualScaling
 		d.ClusterConfig = config.NewClusterConfig(clusterList)
 	})
-
 	defer teardown()
 
 	// run test only on mock mode - fleetshard sync will always be mocked so there's no point running against real env.
@@ -64,6 +69,16 @@ func TestAdminKafka_KafkaSuspension(t *testing.T) {
 	mockKasFleetshardSync := mockKasFleetshardSyncBuilder.Build()
 	mockKasFleetshardSync.Start()
 	defer mockKasFleetshardSync.Stop()
+
+	checkMetricValues := func(metricValues ...metricValue) error {
+		for _, mv := range metricValues {
+			err := common.WaitForMetricToBePresent(h, t, metrics.KafkaRequestsStatusCount, mv.metric.String(), mv.value)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 
 	// wait for data plane cluster to become `ready`
 	cluster, checkReadyErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterList[0].ClusterId, api.ClusterReady)
@@ -117,6 +132,13 @@ func TestAdminKafka_KafkaSuspension(t *testing.T) {
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to suspend Kafka instance")
 	g.Expect(privateKafkaReq.Status).To(gomega.Equal(kafkaconstants.KafkaRequestStatusSuspending.String()))
 
+	err = checkMetricValues(
+		metricValue{metric: kafkaconstants.KafkaRequestStatusSuspending, value: "1"},
+		metricValue{metric: kafkaconstants.KafkaRequestStatusResuming, value: "0"},
+		metricValue{metric: kafkaconstants.KafkaRequestStatusReady, value: "0"},
+	)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
 	// 'suspending' Kafkas should be updated to 'suspended' by the mock fleetshard sync
 	_, err = common.WaitForKafkaToReachStatus(publicClientCtx, kafkatest.TestServices.DBFactory, publicClient, publicKafkaReq.Id, kafkaconstants.KafkaRequestStatusSuspended)
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "kafka failed to reach %q status", kafkaconstants.KafkaRequestStatusSuspended)
@@ -129,6 +151,14 @@ func TestAdminKafka_KafkaSuspension(t *testing.T) {
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to get Kafka instance from admin get endpoint")
 	g.Expect(privateKafkaReq.Status).To(gomega.Equal(kafkaconstants.KafkaRequestStatusSuspended.String()))
 
+	err = checkMetricValues(
+		metricValue{metric: kafkaconstants.KafkaRequestStatusSuspended, value: "1"},
+		metricValue{metric: kafkaconstants.KafkaRequestStatusSuspending, value: "0"},
+		metricValue{metric: kafkaconstants.KafkaRequestStatusResuming, value: "0"},
+		metricValue{metric: kafkaconstants.KafkaRequestStatusReady, value: "0"},
+	)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
 	// updating an already suspended Kafka instance with 'suspended: true' should not change its status
 	privateKafkaReq, resp, err = adminClient.DefaultApi.UpdateKafkaById(adminClientCtx, publicKafkaReq.Id, suspendKafkaRequestPayload)
 	if resp != nil {
@@ -136,6 +166,14 @@ func TestAdminKafka_KafkaSuspension(t *testing.T) {
 	}
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	g.Expect(privateKafkaReq.Status).To(gomega.Equal(kafkaconstants.KafkaRequestStatusSuspended.String()))
+
+	err = checkMetricValues(
+		metricValue{metric: kafkaconstants.KafkaRequestStatusSuspended, value: "1"},
+		metricValue{metric: kafkaconstants.KafkaRequestStatusSuspending, value: "0"},
+		metricValue{metric: kafkaconstants.KafkaRequestStatusResuming, value: "0"},
+		metricValue{metric: kafkaconstants.KafkaRequestStatusReady, value: "0"},
+	)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	// resume Kafka instance
 	// set 'suspending: false' on a 'suspended' Kafka instance: should set status to resuming
@@ -150,6 +188,13 @@ func TestAdminKafka_KafkaSuspension(t *testing.T) {
 	g.Expect(privateKafkaReq.Status).To(gomega.Equal(kafkaconstants.KafkaRequestStatusResuming.String()))
 	common.IsMetricExposedWithValue(t, metrics.KafkaRequestsCurrentStatusInfo, constants.KafkaRequestStatusResuming.String())
 
+	err = checkMetricValues(
+		metricValue{metric: kafkaconstants.KafkaRequestStatusResuming, value: "1"},
+		metricValue{metric: kafkaconstants.KafkaRequestStatusSuspending, value: "0"},
+		metricValue{metric: kafkaconstants.KafkaRequestStatusSuspended, value: "0"},
+	)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
 	// 'resuming' Kafkas should be updated to 'ready' by the mock fleetshard sync
 	_, err = common.WaitForKafkaToReachStatus(publicClientCtx, kafkatest.TestServices.DBFactory, publicClient, publicKafkaReq.Id, kafkaconstants.KafkaRequestStatusReady)
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "kafka failed to reach %q status from %q", kafkaconstants.KafkaRequestStatusReady, kafkaconstants.KafkaRequestStatusResuming)
@@ -161,4 +206,12 @@ func TestAdminKafka_KafkaSuspension(t *testing.T) {
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to get Kafka instance from admin get endpoint")
 	g.Expect(privateKafkaReq.Status).To(gomega.Equal(kafkaconstants.KafkaRequestStatusReady.String()))
 	common.IsMetricExposedWithValue(t, metrics.KafkaRequestsCurrentStatusInfo, constants.KafkaRequestStatusReady.String())
+
+	err = checkMetricValues(
+		metricValue{metric: kafkaconstants.KafkaRequestStatusReady, value: "1"},
+		metricValue{metric: kafkaconstants.KafkaRequestStatusSuspending, value: "0"},
+		metricValue{metric: kafkaconstants.KafkaRequestStatusSuspended, value: "0"},
+		metricValue{metric: kafkaconstants.KafkaRequestStatusResuming, value: "0"},
+	)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 }

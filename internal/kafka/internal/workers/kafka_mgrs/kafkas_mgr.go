@@ -26,6 +26,9 @@ var kafkaMetricsStatuses = []constants2.KafkaStatus{
 	constants2.KafkaRequestStatusDeprovision,
 	constants2.KafkaRequestStatusDeleting,
 	constants2.KafkaRequestStatusFailed,
+	constants2.KafkaRequestStatusSuspended,
+	constants2.KafkaRequestStatusSuspending,
+	constants2.KafkaRequestStatusResuming,
 }
 
 // KafkaManager represents a kafka manager that periodically reconciles kafka requests
