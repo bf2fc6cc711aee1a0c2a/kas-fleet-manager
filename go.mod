@@ -52,8 +52,8 @@ require (
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
-	gorm.io/driver/postgres v1.3.10
-	gorm.io/gorm v1.23.10
+	gorm.io/driver/postgres v1.4.5
+	gorm.io/gorm v1.24.1
 	k8s.io/api v0.24.7
 	k8s.io/apimachinery v0.24.7
 	k8s.io/client-go v0.24.7
@@ -121,7 +121,7 @@ require (
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
-	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be // indirect
+	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/net v0.1.0 // indirect
 	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/term v0.1.0 // indirect
