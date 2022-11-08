@@ -9,7 +9,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
@@ -36,14 +35,29 @@ var ClusterIdLength = 32
 
 const minimunNumberOfNodesForTheKafkaMachinePool = 3
 
-func ValidateBillingModel(kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
+func validateKafkaBillingModel(ctx context.Context, kafkaService services.KafkaService, kafkaConfig *config.KafkaConfig, kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {
-		// the billing model can only be either standard or marketplace
-		billingModel := shared.SafeString(kafkaRequestPayload.BillingModel)
-		if billingModel != "" && billingModel != string(v1.BillingModelStandard) && billingModel != string(v1.BillingModelMarketplace) {
-			return errors.InvalidBillingAccount("invalid billing model: %s, only %v and %v are allowed", billingModel,
-				v1.BillingModelStandard, v1.BillingModelMarketplace)
+		// No explicitly set kafka billing mode is allowed for now, in which case
+		// an implementation-defined default is chosen
+		if shared.StringEmpty(kafkaRequestPayload.BillingModel) {
+			return nil
 		}
+
+		instanceType, _, svcErr := getInstanceTypeAndSize(ctx, kafkaService, kafkaConfig, kafkaRequestPayload)
+		if svcErr != nil {
+			return svcErr
+		}
+
+		instanceTypeConfig, err := kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
+		if err != nil {
+			return errors.ToServiceError(err)
+		}
+
+		_, err = instanceTypeConfig.GetKafkaSupportedBillingModelByID(*kafkaRequestPayload.BillingModel)
+		if err != nil {
+			return errors.ToServiceError(err)
+		}
+
 		return nil
 	}
 }
