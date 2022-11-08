@@ -1116,9 +1116,11 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 	}
 }
 
-func Test_Validation_validateBillingModel(t *testing.T) {
+func Test_Validation_validateKafkaBillingModel(t *testing.T) {
 	type args struct {
-		kafkaRequest public.KafkaRequestPayload
+		kafkaRequestPayload public.KafkaRequestPayload
+		kafkaService        services.KafkaService
+		kafkaConfig         *config.KafkaConfig
 	}
 
 	tests := []struct {
@@ -1129,36 +1131,78 @@ func Test_Validation_validateBillingModel(t *testing.T) {
 		{
 			name: "do not throw an error when billing model is not provided",
 			arg: args{
-
-				kafkaRequest: public.KafkaRequestPayload{
+				kafkaRequestPayload: public.KafkaRequestPayload{
 					BillingModel: nil,
 				},
 			},
 			wantErr: false,
 		},
 		{
-			name: "do not throw an error when marketplace model is provided",
+			name: "succeed when the provided kafka billing model is available for the instance type in the kafka supported instances configuration",
 			arg: args{
-				kafkaRequest: public.KafkaRequestPayload{
+				kafkaRequestPayload: public.KafkaRequestPayload{
 					BillingModel: &[]string{"marketplace"}[0],
 				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "do not throw an error when standard model is provided",
-			arg: args{
-				kafkaRequest: public.KafkaRequestPayload{
-					BillingModel: &[]string{"standard"}[0],
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.STANDARD, nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								config.KafkaInstanceType{
+									Id: types.STANDARD.String(),
+									Sizes: []config.KafkaInstanceSize{
+										config.KafkaInstanceSize{
+											Id: "x1",
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										config.KafkaBillingModel{
+											ID: "marketplace",
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 			wantErr: false,
 		},
 		{
-			name: "throw an error when unknown model is provided",
+			name: "throw an error when the provided kafka billing model is not available for the instance type in the kafka supported instances configuration",
 			arg: args{
-				kafkaRequest: public.KafkaRequestPayload{
-					BillingModel: &[]string{"xyz"}[0],
+				kafkaRequestPayload: public.KafkaRequestPayload{
+					BillingModel: &[]string{"unknownbillingmodel"}[0],
+				},
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.STANDARD, nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								config.KafkaInstanceType{
+									Id: types.STANDARD.String(),
+									Sizes: []config.KafkaInstanceSize{
+										config.KafkaInstanceSize{
+											Id: "x1",
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										config.KafkaBillingModel{
+											ID: "marketplace",
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 			wantErr: true,
@@ -1170,7 +1214,7 @@ func Test_Validation_validateBillingModel(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 
-			validateFn := ValidateBillingModel(&tt.arg.kafkaRequest)
+			validateFn := validateKafkaBillingModel(context.TODO(), tt.arg.kafkaService, tt.arg.kafkaConfig, &tt.arg.kafkaRequestPayload)
 			err := validateFn()
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
