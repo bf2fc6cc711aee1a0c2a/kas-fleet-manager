@@ -28,14 +28,14 @@ func NewDefaultQuotaServiceFactory(
 	return &DefaultQuotaServiceFactory{quotaServiceContainer: quotaServiceContainer}
 }
 
-func (factory *DefaultQuotaServiceFactory) GetQuotaService(quoataType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
-	if quoataType == api.UndefinedQuotaType {
-		quoataType = api.QuotaManagementListQuotaType
+func (factory *DefaultQuotaServiceFactory) GetQuotaService(quotaType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
+	if quotaType == api.UndefinedQuotaType {
+		quotaType = api.QuotaManagementListQuotaType
 	}
 
-	quotaService, ok := factory.quotaServiceContainer[quoataType]
+	quotaService, ok := factory.quotaServiceContainer[quotaType]
 	if !ok {
-		return nil, errors.GeneralError("invalid quota service type: %v", quoataType)
+		return nil, errors.GeneralError("invalid quota service type: %v", quotaType)
 	}
 
 	return quotaService, nil
