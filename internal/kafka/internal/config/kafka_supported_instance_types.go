@@ -120,24 +120,26 @@ func (kp *KafkaInstanceType) validate() error {
 }
 
 type KafkaInstanceSize struct {
-	Id                          string         `yaml:"id"`
-	DisplayName                 string         `yaml:"display_name"`
-	IngressThroughputPerSec     Quantity       `yaml:"ingressThroughputPerSec"`
-	EgressThroughputPerSec      Quantity       `yaml:"egressThroughputPerSec"`
-	TotalMaxConnections         int            `yaml:"totalMaxConnections"`
-	MaxDataRetentionSize        Quantity       `yaml:"maxDataRetentionSize"`
-	MaxPartitions               int            `yaml:"maxPartitions"`
-	MaxDataRetentionPeriod      string         `yaml:"maxDataRetentionPeriod"`
-	MaxConnectionAttemptsPerSec int            `yaml:"maxConnectionAttemptsPerSec"`
-	MaxMessageSize              Quantity       `yaml:"maxMessageSize"`
-	QuotaConsumed               int            `yaml:"quotaConsumed"`
-	QuotaType                   string         `yaml:"quotaType"`
-	CapacityConsumed            int            `yaml:"capacityConsumed"`
-	SupportedAZModes            []string       `yaml:"supportedAZModes"`
-	MinInSyncReplicas           int            `yaml:"minInSyncReplicas"` // also abbreviated as ISR in Kafka terminology
-	ReplicationFactor           int            `yaml:"replicationFactor"` // also abbreviated as RF in Kafka terminology
-	LifespanSeconds             *int           `yaml:"lifespanSeconds"`
-	MaturityStatus              MaturityStatus `yaml:"maturityStatus"`
+	Id                          string   `yaml:"id"`
+	DisplayName                 string   `yaml:"display_name"`
+	IngressThroughputPerSec     Quantity `yaml:"ingressThroughputPerSec"`
+	EgressThroughputPerSec      Quantity `yaml:"egressThroughputPerSec"`
+	TotalMaxConnections         int      `yaml:"totalMaxConnections"`
+	MaxDataRetentionSize        Quantity `yaml:"maxDataRetentionSize"`
+	MaxPartitions               int      `yaml:"maxPartitions"`
+	MaxDataRetentionPeriod      string   `yaml:"maxDataRetentionPeriod"`
+	MaxConnectionAttemptsPerSec int      `yaml:"maxConnectionAttemptsPerSec"`
+	MaxMessageSize              Quantity `yaml:"maxMessageSize"`
+	QuotaConsumed               int      `yaml:"quotaConsumed"`
+	// DeprecatedQuotaType is deprecated. To be removed after API
+	// deprecation period.
+	DeprecatedQuotaType string         `yaml:"quotaType"`
+	CapacityConsumed    int            `yaml:"capacityConsumed"`
+	SupportedAZModes    []string       `yaml:"supportedAZModes"`
+	MinInSyncReplicas   int            `yaml:"minInSyncReplicas"` // also abbreviated as ISR in Kafka terminology
+	ReplicationFactor   int            `yaml:"replicationFactor"` // also abbreviated as RF in Kafka terminology
+	LifespanSeconds     *int           `yaml:"lifespanSeconds"`
+	MaturityStatus      MaturityStatus `yaml:"maturityStatus"`
 }
 
 // validates Kafka instance size configuration to ensure the following:
@@ -147,7 +149,7 @@ type KafkaInstanceSize struct {
 // - any int values must not be less than or equal to zero
 func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 	if k.EgressThroughputPerSec.IsEmpty() || k.IngressThroughputPerSec.IsEmpty() ||
-		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize.IsEmpty() || k.Id == "" || k.QuotaType == "" ||
+		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize.IsEmpty() || k.Id == "" || k.DeprecatedQuotaType == "" ||
 		k.DisplayName == "" || k.MaxMessageSize.IsEmpty() || k.SupportedAZModes == nil {
 		return fmt.Errorf("kafka instance size '%s' for instance type '%s' is missing required parameters.", k.Id, instanceTypeId)
 	}

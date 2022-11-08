@@ -442,7 +442,7 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			name: "Should return an error when quota type is undefined",
 			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
 				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
-				testKafkaInstanceSizex1.QuotaType = ""
+				testKafkaInstanceSizex1.DeprecatedQuotaType = ""
 				res := SupportedKafkaInstanceTypesConfig{
 					SupportedKafkaInstanceTypes: []KafkaInstanceType{
 						{
@@ -1240,9 +1240,9 @@ func buildTestStandardKafkaInstanceSize() KafkaInstanceSize {
 		SupportedAZModes: []string{
 			"multi",
 		},
-		QuotaConsumed:    1,
-		QuotaType:        "rhosak",
-		CapacityConsumed: 1,
-		MaturityStatus:   MaturityStatusStable,
+		QuotaConsumed:       1,
+		DeprecatedQuotaType: "rhosak",
+		CapacityConsumed:    1,
+		MaturityStatus:      MaturityStatusStable,
 	}
 }
