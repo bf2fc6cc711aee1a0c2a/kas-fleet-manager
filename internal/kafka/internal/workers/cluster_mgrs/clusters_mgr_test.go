@@ -2187,7 +2187,8 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				Kind:       "Namespace",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: strimziNamespace,
+				Name:   strimziNamespace,
+				Labels: clusters.StrimziOperatorCommonLabels(),
 			},
 		}, &k8sCoreV1.Namespace{
 			TypeMeta: metav1.TypeMeta{
