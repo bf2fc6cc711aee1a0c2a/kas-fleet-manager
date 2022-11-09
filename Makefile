@@ -921,7 +921,7 @@ deploy/token-refresher:
 docs/generate/mermaid:
 	@for f in $(shell ls $(DOCS_DIR)/mermaid-diagrams-source/*.mmd); do \
 		echo Generating diagram for `basename $${f}`; \
-		$(DOCKER) run -it -v $(DOCS_DIR)/mermaid-diagrams-source:/data -v $(DOCS_DIR)/images:/output minlag/mermaid-cli -i /data/`basename $${f}` -o /output/`basename $${f} .mmd`.png; \
+		$(DOCKER) run -u $(shell id -u) -it -v $(DOCS_DIR)/mermaid-diagrams-source:/data -v $(DOCS_DIR)/images:/output minlag/mermaid-cli -i /data/`basename $${f}` -o /output/`basename $${f} .mmd`.png; \
 	done
 .PHONY: docs/generate/mermaid
 
