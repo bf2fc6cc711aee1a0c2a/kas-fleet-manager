@@ -1424,7 +1424,7 @@ paths:
               type: object
           application/json:
             schema:
-              $ref: '#/components/schemas/ConnectorRequest'
+              $ref: '#/components/schemas/ConnectorAdminRequest'
         description: Data to patch the connector with
         required: true
       responses:
@@ -1970,6 +1970,12 @@ components:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/ConnectorClusterMeta'
       - $ref: '#/components/schemas/ConnectorClusterAdminView_allOf'
+    ConnectorAdminRequest:
+      properties:
+        desired_state:
+          $ref: '#/components/schemas/ConnectorDesiredState'
+      required:
+      - desired_state
     Error:
       example:
         reason: reason
@@ -2135,10 +2141,15 @@ components:
       - deleting
       - deleted
       type: string
-    ConnectorRequest:
+    ConnectorNamespaceEvalRequest:
       allOf:
+      - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
+      description: An evaluation connector namespace create request
+    ConnectorMeta:
+      allOf:
+      - $ref: '#/components/schemas/ObjectMeta'
       - $ref: '#/components/schemas/ConnectorRequestMeta'
-      - $ref: '#/components/schemas/ConnectorConfiguration'
+      - $ref: '#/components/schemas/ConnectorMeta_allOf'
     ConnectorRequestMeta:
       properties:
         name:
@@ -2168,55 +2179,6 @@ components:
       - stopped
       - deleted
       type: string
-    ConnectorConfiguration:
-      properties:
-        kafka:
-          $ref: '#/components/schemas/KafkaConnectionSettings'
-        service_account:
-          $ref: '#/components/schemas/ServiceAccount'
-        schema_registry:
-          $ref: '#/components/schemas/SchemaRegistryConnectionSettings'
-        connector:
-          type: object
-      required:
-      - connector
-      - kafka
-      - service_account
-    KafkaConnectionSettings:
-      allOf:
-      - $ref: '#/components/schemas/ServiceConnectionSettings'
-      description: Holds the configuration to connect to a Kafka Instance.
-    ServiceConnectionSettings:
-      properties:
-        id:
-          type: string
-        url:
-          type: string
-      required:
-      - id
-      - url
-    ServiceAccount:
-      properties:
-        client_id:
-          type: string
-        client_secret:
-          type: string
-      required:
-      - client_id
-      - client_secret
-    SchemaRegistryConnectionSettings:
-      allOf:
-      - $ref: '#/components/schemas/ServiceConnectionSettings'
-      description: Holds the configuration to connect to a Schem Registry Instance.
-    ConnectorNamespaceEvalRequest:
-      allOf:
-      - $ref: '#/components/schemas/ConnectorNamespaceRequestMeta'
-      description: An evaluation connector namespace create request
-    ConnectorMeta:
-      allOf:
-      - $ref: '#/components/schemas/ObjectMeta'
-      - $ref: '#/components/schemas/ConnectorRequestMeta'
-      - $ref: '#/components/schemas/ConnectorMeta_allOf'
     ConnectorStatus:
       properties:
         status:

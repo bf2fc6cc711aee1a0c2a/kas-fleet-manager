@@ -9,8 +9,7 @@
 
 package private
 
-// KafkaConnectionSettings Holds the configuration to connect to a Kafka Instance.
-type KafkaConnectionSettings struct {
-	Id  string `json:"id"`
-	Url string `json:"url"`
+// ConnectorAdminRequest struct for ConnectorAdminRequest
+type ConnectorAdminRequest struct {
+	DesiredState ConnectorDesiredState `json:"desired_state"`
 }

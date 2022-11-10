@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"io"
 	"strconv"
 	"strings"
@@ -410,7 +409,7 @@ func (h *ConnectorAdminHandler) PatchConnector(writer http.ResponseWriter, reque
 		handlers.Handle(writer, request, nil, http.StatusBadRequest)
 	}
 
-	rConnector := public.ConnectorRequest{}
+	rConnector := private.ConnectorAdminRequest{}
 	err = json.Unmarshal(body, &rConnector)
 	if err != nil {
 		handlers.Handle(writer, request, nil, http.StatusBadRequest)

@@ -786,7 +786,7 @@ paths:
               type: object
           application/json:
             schema:
-              $ref: "connector_mgmt.yaml#/components/schemas/ConnectorRequest"
+              $ref: "#/components/schemas/ConnectorAdminRequest"
         required: true
 
       responses:
@@ -1317,6 +1317,12 @@ components:
             status:
               $ref: "#/components/schemas/ConnectorClusterAdminStatus"
 
+    ConnectorAdminRequest:
+      required:
+        - desired_state
+      properties:
+        desired_state:
+          $ref: "connector_mgmt.yaml#/components/schemas/ConnectorDesiredState"
 
   securitySchemes:
     Bearer:
