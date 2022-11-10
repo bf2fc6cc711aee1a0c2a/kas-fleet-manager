@@ -67,6 +67,62 @@ func Test_AMSGetBillingModel(t *testing.T) {
 		wantBillingModel         string
 		wantInferredBillingModel string
 	}{
+		//{
+		//	name: "standard/eval instance is requested",
+		//	args: args{
+		//		request: dbapi.KafkaRequest{
+		//			Name:         "test",
+		//			SizeId:       "x1",
+		//			BillingModel: "eval",
+		//			InstanceType: "standard",
+		//		},
+		//	},
+		//	fields: fields{
+		//		ocmClient: &ocm.ClientMock{
+		//			ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+		//				ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+		//				return ca, nil
+		//			},
+		//			GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+		//				return fmt.Sprintf("fake-org-id-%s", externalId), nil
+		//			},
+		//			GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+		//				if product != string(ocm.RHOSAKProduct) {
+		//					return []*v1.QuotaCost{}, nil
+		//				}
+		//				rrbq := []*v1.RelatedResourceBuilder{
+		//					v1.NewRelatedResource().
+		//						BillingModel(string(v1.BillingModelMarketplace)).
+		//						Product(string(ocm.RHOSAKProduct)).
+		//						ResourceName(resourceName).
+		//						Cost(1),
+		//					v1.NewRelatedResource().
+		//						BillingModel(string(v1.BillingModelStandard)).
+		//						Product(string(ocm.RHOSAKProduct)).
+		//						ResourceName(resourceName).
+		//						Cost(1),
+		//				}
+		//
+		//				qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).OrganizationID(organizationID).RelatedResources(rrbq...).
+		//					CloudAccounts(
+		//						v1.NewCloudAccount().CloudProviderID("aws").CloudAccountID("1234567890"),
+		//					).
+		//					Build()
+		//				if err != nil {
+		//					panic("unexpected error")
+		//				}
+		//
+		//				return []*v1.QuotaCost{qcb}, nil
+		//			},
+		//		},
+		//		kafkaConfig: &defaultKafkaConf,
+		//	},
+		//	wantErr:                  false,
+		//	wantMatch:                true,
+		//	wantKafkaBillingModel:    "eval",
+		//	wantBillingModel:         string(v1.BillingModelStandard),
+		//	wantInferredBillingModel: string(v1.BillingModelStandard),
+		//},
 		{
 			name: "aws marketplace billing model is detected",
 			args: args{
