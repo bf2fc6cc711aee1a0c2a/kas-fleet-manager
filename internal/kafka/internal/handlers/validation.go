@@ -71,7 +71,7 @@ func ValidateBillingCloudAccountIdAndMarketplace(ctx context.Context, kafkaServi
 			return errors.NewWithCause(errors.ErrorGeneral, err, "error assigning instance type: %s", err.Error())
 		}
 
-		return kafkaService.ValidateBillingAccount(organisationId, instanceType, *kafkaRequestPayload.BillingCloudAccountId, kafkaRequestPayload.Marketplace)
+		return kafkaService.ValidateBillingAccount(organisationId, instanceType, shared.SafeString(kafkaRequestPayload.BillingModel), shared.SafeString(kafkaRequestPayload.BillingCloudAccountId), kafkaRequestPayload.Marketplace)
 	}
 }
 

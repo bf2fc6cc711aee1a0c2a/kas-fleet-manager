@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -104,4 +105,28 @@ func (c *KafkaConfig) GetKafkaInstanceSize(instanceType, sizeId string) (*KafkaI
 		return nil, err
 	}
 	return kafkaInstanceType.GetKafkaInstanceSizeByID(sizeId)
+}
+
+func (c *KafkaConfig) GetBillingModels(instanceType string) ([]KafkaBillingModel, error) {
+	kafkaInstanceType, err := c.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
+	if err != nil {
+		return nil, err
+	}
+
+	return kafkaInstanceType.SupportedBillingModels, nil
+}
+
+func (c *KafkaConfig) GetBillingModelByID(instanceType, billingModelID string) (KafkaBillingModel, error) {
+	kafkaInstanceType, err := c.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
+	if err != nil {
+		return KafkaBillingModel{}, err
+	}
+
+	idx, billingModel := arrays.FindFirst(kafkaInstanceType.SupportedBillingModels, func(x KafkaBillingModel) bool { return shared.StringEqualsIgnoreCase(x.ID, billingModelID) })
+
+	if idx == -1 {
+		return KafkaBillingModel{}, errors.New(errors.ErrorGeneral, fmt.Sprintf("unable to get billing model '%s' for instance type: '%s'", billingModelID, instanceType))
+	}
+
+	return billingModel, nil
 }

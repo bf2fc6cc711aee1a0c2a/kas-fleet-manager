@@ -16,5 +16,5 @@ type QuotaService interface {
 	// DeleteQuota deletes a reserved quota
 	DeleteQuota(subscriptionId string) *errors.ServiceError
 	// ValidateBillingAccount validates if a billing account is contained in the quota cost response
-	ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError
+	ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError
 }
