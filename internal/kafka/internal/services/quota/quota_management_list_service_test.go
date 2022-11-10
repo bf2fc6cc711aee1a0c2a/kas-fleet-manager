@@ -289,6 +289,26 @@ var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig
 			{
 				Id:          "standard",
 				DisplayName: "Standard",
+				SupportedBillingModels: []config.KafkaBillingModel{
+					{
+						ID:               "standard",
+						AMSResource:      "rhosak",
+						AMSProduct:       "RHOSAK",
+						AMSBillingModels: []string{"standard"},
+					},
+					{
+						ID:               "marketplace",
+						AMSResource:      "rhosak",
+						AMSProduct:       "RHOSAK",
+						AMSBillingModels: []string{"marketplace", "marketplace-aws", "marketplace-rhm"},
+					},
+					{
+						ID:               "eval",
+						AMSResource:      "rhosak",
+						AMSProduct:       "RHOSAKEval",
+						AMSBillingModels: []string{"standard"},
+					},
+				},
 				Sizes: []config.KafkaInstanceSize{
 					{
 						Id:                          "x1",
