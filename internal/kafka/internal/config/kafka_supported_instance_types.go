@@ -37,6 +37,14 @@ type KafkaBillingModel struct {
 	AMSBillingModels []string `yaml:"ams_billing_models" validate:"min=1,unique,ams_billing_models_validator"`
 }
 
+func (kbm *KafkaBillingModel) HasSupportForAMSBillingModel(amsBillingModel string) bool {
+	return arrays.AnyMatch(kbm.AMSBillingModels, arrays.StringEqualsIgnoreCasePredicate(amsBillingModel))
+}
+
+func (kbm *KafkaBillingModel) HasSupportForMarketplace() bool {
+	return arrays.AnyMatch(kbm.AMSBillingModels, func(amsBm string) bool { return strings.HasPrefix(amsBm, "marketplace-") })
+}
+
 func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(sizeId string) (*KafkaInstanceSize, error) {
 	for _, size := range kp.Sizes {
 		if size.Id == sizeId {
