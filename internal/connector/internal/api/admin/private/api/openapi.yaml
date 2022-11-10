@@ -1401,6 +1401,71 @@ paths:
       summary: Get a connector
       tags:
       - Connector Clusters Admin
+    patch:
+      description: Patch a connector
+      operationId: patchConnector
+      parameters:
+      - description: The id of the connector to delete
+        explode: false
+        in: path
+        name: connector_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+          application/json-patch+json:
+            schema:
+              description: A JSON Patch, RFC 6902 - https://tools.ietf.org/html/rfc6902
+              type: object
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectorAdminRequest'
+        description: Data to patch the connector with
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorAdminView'
+          description: Deleted
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Patch a connector
+      tags:
+      - Connector Clusters Admin
   /api/connector_mgmt/v1/admin/kafka_connector_clusters/{connector_cluster_id}/upgrades/operator:
     get:
       operationId: getConnectorUpgradesByOperator
@@ -1905,6 +1970,12 @@ components:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/ConnectorClusterMeta'
       - $ref: '#/components/schemas/ConnectorClusterAdminView_allOf'
+    ConnectorAdminRequest:
+      properties:
+        desired_state:
+          $ref: '#/components/schemas/ConnectorDesiredState'
+      required:
+      - desired_state
     Error:
       example:
         reason: reason

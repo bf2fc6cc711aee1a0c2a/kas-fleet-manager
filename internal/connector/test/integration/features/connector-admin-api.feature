@@ -175,4 +175,3 @@ Feature: connector admin api
     Then the response code should be 404
 
     And UNLOCK--------------------------------------------------------------
-

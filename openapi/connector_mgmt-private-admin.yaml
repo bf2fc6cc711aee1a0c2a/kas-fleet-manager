@@ -765,6 +765,65 @@ paths:
         - Bearer: [ ]
       operationId: getConnector
       summary: Get a connector
+
+    patch:
+      tags:
+        - Connector Clusters Admin
+      security:
+        - Bearer: [ ]
+      operationId: patchConnector
+      summary: Patch a connector
+      description: Patch a connector
+      requestBody:
+        description: Data to patch the connector with
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+          application/json-patch+json:
+            schema:
+              description: A JSON Patch, RFC 6902 - https://tools.ietf.org/html/rfc6902
+              type: object
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectorAdminRequest"
+        required: true
+
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectorAdminView"
+          description: Deleted
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/401Example"
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/404Example"
+          description: No matching connector exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "connector_mgmt.yaml#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "connector_mgmt.yaml#/components/examples/500Example"
+          description: Unexpected error occurred
+
     delete:
       tags:
         - Connector Clusters Admin
@@ -1258,6 +1317,12 @@ components:
             status:
               $ref: "#/components/schemas/ConnectorClusterAdminStatus"
 
+    ConnectorAdminRequest:
+      required:
+        - desired_state
+      properties:
+        desired_state:
+          $ref: "connector_mgmt.yaml#/components/schemas/ConnectorDesiredState"
 
   securitySchemes:
     Bearer:

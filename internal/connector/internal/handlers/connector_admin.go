@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"strconv"
+	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
@@ -398,6 +401,30 @@ func (h *ConnectorAdminHandler) GetConnector(writer http.ResponseWriter, request
 	}
 
 	handlers.HandleGet(writer, request, &cfg)
+}
+
+func (h *ConnectorAdminHandler) PatchConnector(writer http.ResponseWriter, request *http.Request) {
+	body, err := io.ReadAll(request.Body)
+	if err != nil {
+		handlers.Handle(writer, request, nil, http.StatusBadRequest)
+	}
+
+	rConnector := private.ConnectorAdminRequest{}
+	err = json.Unmarshal(body, &rConnector)
+	if err != nil {
+		handlers.Handle(writer, request, nil, http.StatusBadRequest)
+	}
+
+	r := io.NopCloser(strings.NewReader(fmt.Sprintf("{\"desired_state\": \"%s\"}", rConnector.DesiredState)))
+	request.Body = r
+
+	ConnectorsHandler{
+		connectorsService:     h.ConnectorsService,
+		connectorTypesService: h.ConnectorTypesService,
+		namespaceService:      h.NamespaceService,
+		authZService:          h.AuthZService,
+		connectorsConfig:      h.ConnectorsConfig,
+	}.Patch(writer, request)
 }
 
 func (h *ConnectorAdminHandler) DeleteConnector(writer http.ResponseWriter, request *http.Request) {
