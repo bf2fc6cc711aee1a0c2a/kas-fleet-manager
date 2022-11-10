@@ -55,6 +55,8 @@ const (
 	DESIRED_KAFKA_IBP_VERSION
 	ORGANISATION_ID
 	ID
+	DESIRED_KAFKA_BILLING_MODEL
+	ACTUAL_KAFKA_BILLING_MODEL
 )
 
 type KafkaAttribute int
@@ -104,6 +106,10 @@ func With(attribute KafkaRequestAttribute, value string) KafkaRequestBuildOption
 			request.OrganisationId = value
 		case ID:
 			request.Meta.ID = value
+		case DESIRED_KAFKA_BILLING_MODEL:
+			request.DesiredKafkaBillingModel = value
+		case ACTUAL_KAFKA_BILLING_MODEL:
+			request.ActualKafkaBillingModel = value
 		}
 	}
 }
