@@ -86,6 +86,7 @@ var migrations = []*gormigrate.Migration{
 	addDeprovisioningClusterWorkerToLeaderLeases(),
 	addDynamicScaleDownWorkerToLeaderLeases(),
 	removeTheWronglyAutoCreatedClusterInStageEnvironmentWithID_cdhunvd8igjhbi0nmtt0(),
+	addDesiredKafkaBillingModel(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
