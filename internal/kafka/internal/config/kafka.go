@@ -2,8 +2,6 @@ package config
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -122,11 +120,11 @@ func (c *KafkaConfig) GetBillingModelByID(instanceType, billingModelID string) (
 		return KafkaBillingModel{}, err
 	}
 
-	idx, billingModel := arrays.FindFirst(kafkaInstanceType.SupportedBillingModels, func(x KafkaBillingModel) bool { return shared.StringEqualsIgnoreCase(x.ID, billingModelID) })
+	billingModel, err := kafkaInstanceType.GetKafkaSupportedBillingModelByID(billingModelID)
 
-	if idx == -1 {
-		return KafkaBillingModel{}, errors.New(errors.ErrorGeneral, fmt.Sprintf("unable to get billing model '%s' for instance type: '%s'", billingModelID, instanceType))
+	if err != nil {
+		return KafkaBillingModel{}, err
 	}
 
-	return billingModel, nil
+	return *billingModel, nil
 }

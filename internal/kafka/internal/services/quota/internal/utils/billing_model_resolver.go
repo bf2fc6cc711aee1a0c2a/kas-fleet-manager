@@ -3,8 +3,8 @@ package utils
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
 
@@ -16,9 +16,15 @@ const (
 
 var supportedCloudProviders = []string{CloudProviderAWS, CloudProviderRHM, CloudProviderAzure}
 
+/********************************************************************************************************************
+ * This is the root of the billing resolver chain.
+ * It demands the resolution of the billing model to the defined resolvers and stops the chain as soon as one of
+ * the resolvers is able to manage the request.
+ ********************************************************************************************************************/
+
 type BillingModelResolver interface {
 	SupportRequest(kafka *dbapi.KafkaRequest) bool
-	Resolve(orgID string, kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (BillingModelDetails, error)
+	Resolve(orgID string, kafka *dbapi.KafkaRequest) (BillingModelDetails, error)
 }
 
 func NewBillingModelResolver(quotaConfigProvider AMSQuotaConfigProvider, kafkaConfig *config.KafkaConfig) BillingModelResolver {
@@ -36,9 +42,13 @@ type billingModelResolver struct {
 	KafkaConfig         *config.KafkaConfig
 }
 
-func (bmr *billingModelResolver) Resolve(orgID string, kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (BillingModelDetails, error) {
+func (bmr *billingModelResolver) Resolve(orgID string, kafka *dbapi.KafkaRequest) (BillingModelDetails, error) {
 
 	resolvers := []BillingModelResolver{
+		&kafkaBillingModelResolver{
+			quotaConfigProvider: bmr.QuotaConfigProvider,
+			kafkaConfig:         bmr.KafkaConfig,
+		},
 		&simpleBillingModelResolver{
 			quotaConfigProvider: bmr.QuotaConfigProvider,
 			kafkaConfig:         bmr.KafkaConfig,
@@ -49,10 +59,8 @@ func (bmr *billingModelResolver) Resolve(orgID string, kafka *dbapi.KafkaRequest
 		},
 	}
 
-	for _, resolver := range resolvers {
-		if resolver.SupportRequest(kafka) {
-			return resolver.Resolve(orgID, kafka, instanceType)
-		}
+	if idx, resolver := arrays.FindFirst(resolvers, func(x BillingModelResolver) bool { return x.SupportRequest(kafka) }); idx != -1 {
+		return resolver.Resolve(orgID, kafka)
 	}
 
 	return BillingModelDetails{}, errors.GeneralError("no billing model resolver found for the received kafka request")
