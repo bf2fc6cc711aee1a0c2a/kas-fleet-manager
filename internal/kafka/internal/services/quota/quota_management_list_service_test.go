@@ -328,6 +328,14 @@ var kafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesConfig
 			{
 				Id:          "developer",
 				DisplayName: "Trial",
+				SupportedBillingModels: []config.KafkaBillingModel{
+					{
+						ID:               "trial",
+						AMSResource:      "rhosak",
+						AMSProduct:       "RHOSAKTrial",
+						AMSBillingModels: []string{"standard"},
+					},
+				},
 				Sizes: []config.KafkaInstanceSize{
 					{
 						Id:                          "x1",

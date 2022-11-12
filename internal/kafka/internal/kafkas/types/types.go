@@ -15,10 +15,3 @@ var ValidKafkaInstanceTypes = []string{
 func (t KafkaInstanceType) String() string {
 	return string(t)
 }
-
-//func (t KafkaInstanceType) GetQuotaType() ocm.KafkaQuotaType {
-//	if t == STANDARD {
-//		return ocm.StandardQuota
-//	}
-//	return ocm.DeveloperQuota
-//}
