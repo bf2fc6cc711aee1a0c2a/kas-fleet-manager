@@ -48,7 +48,7 @@ compute_machine_per_cloud_provider:
         max_compute_nodes: 18
     kafka_workload_per_instance_type: 
       standard: 
-        compute_machine_type: custom-8-32768
+        compute_machine_type: custom-4-32768-ext
         compute_node_autoscaling:
           min_compute_nodes: 3
           max_compute_nodes: 18
