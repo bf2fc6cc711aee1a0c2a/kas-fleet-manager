@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
@@ -36,7 +36,7 @@ func TestAcceptedKafkaManager_Reconcile(t *testing.T) {
 			name: "Should fail if listing kafkas in the reconciler fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return nil, errors.GeneralError("fail to list kafka requests")
 					},
 				},
@@ -47,7 +47,7 @@ func TestAcceptedKafkaManager_Reconcile(t *testing.T) {
 			name: "Should not fail if listing kafkas returns an empty list",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{}, nil
 					},
 				},
@@ -58,7 +58,7 @@ func TestAcceptedKafkaManager_Reconcile(t *testing.T) {
 			name: "Should call reconcileAcceptedKafka and fail if an error is returned",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{
 							mockKafkas.BuildKafkaRequest(mockKafkas.With(mocks.CLUSTER_ID, "some-cluster-id")),
 						}, nil
@@ -76,10 +76,10 @@ func TestAcceptedKafkaManager_Reconcile(t *testing.T) {
 			name: "Should call reconcileAcceptedKafka and dont fail if an error is not returned",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{
 							mockKafkas.BuildKafkaRequest(
-								mockKafkas.With(mockKafkas.STATUS, constants2.KafkaRequestStatusAccepted.String()),
+								mockKafkas.With(mockKafkas.STATUS, constants.KafkaRequestStatusAccepted.String()),
 								mockKafkas.With(mocks.CLUSTER_ID, "some-cluster-id"),
 							),
 						}, nil
@@ -182,7 +182,7 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 				),
 			},
 			wantErr:                    false,
-			wantStatus:                 constants2.KafkaRequestStatusPreparing.String(),
+			wantStatus:                 constants.KafkaRequestStatusPreparing.String(),
 			wantStrimziOperatorVersion: mockClusters.StrimziOperatorVersion,
 			wantClusterID:              mockKafkas.DefaultClusterID,
 		},
@@ -208,7 +208,7 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 				),
 			},
 			wantErr:                    true,
-			wantStatus:                 constants2.KafkaRequestStatusPreparing.String(),
+			wantStatus:                 constants.KafkaRequestStatusPreparing.String(),
 			wantStrimziOperatorVersion: mockClusters.StrimziOperatorVersion,
 			wantClusterID:              mockKafkas.DefaultClusterID,
 		},
@@ -234,7 +234,7 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 				),
 			},
 			wantErr:                    false,
-			wantStatus:                 constants2.KafkaRequestStatusPreparing.String(),
+			wantStatus:                 constants.KafkaRequestStatusPreparing.String(),
 			wantStrimziOperatorVersion: mockClusters.StrimziOperatorVersion,
 			wantClusterID:              mockKafkas.DefaultClusterID,
 		},
@@ -281,12 +281,12 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 			},
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(
-					mockKafkas.WithCreatedAt(time.Now().Add(time.Duration(-constants2.AcceptedKafkaMaxRetryDurationWhileWaitingForStrimziVersion))),
+					mockKafkas.WithCreatedAt(time.Now().Add(time.Duration(-constants.AcceptedKafkaMaxRetryDurationWhileWaitingForStrimziVersion))),
 					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
 				),
 			},
 			wantErr:       false,
-			wantStatus:    constants2.KafkaRequestStatusFailed.String(),
+			wantStatus:    constants.KafkaRequestStatusFailed.String(),
 			wantClusterID: mockKafkas.DefaultClusterID,
 		},
 		{
@@ -307,12 +307,12 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 			},
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(
-					mockKafkas.WithCreatedAt(time.Now().Add(time.Duration(-constants2.AcceptedKafkaMaxRetryDurationWhileWaitingForStrimziVersion))),
+					mockKafkas.WithCreatedAt(time.Now().Add(time.Duration(-constants.AcceptedKafkaMaxRetryDurationWhileWaitingForStrimziVersion))),
 					mockKafkas.With(mockKafkas.CLUSTER_ID, mockKafkas.DefaultClusterID),
 				),
 			},
 			wantErr:       true,
-			wantStatus:    constants2.KafkaRequestStatusFailed.String(),
+			wantStatus:    constants.KafkaRequestStatusFailed.String(),
 			wantClusterID: mockKafkas.DefaultClusterID,
 		},
 		{
@@ -407,13 +407,13 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 			},
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(
-					mockKafkas.WithCreatedAt(time.Now().Add(time.Duration(-constants2.AcceptedKafkaMaxRetryDurationWhileWaitingForClusterAssignment))), // assume that the kafka has been in waiting for more than an hour
+					mockKafkas.WithCreatedAt(time.Now().Add(time.Duration(-constants.AcceptedKafkaMaxRetryDurationWhileWaitingForClusterAssignment))), // assume that the kafka has been in waiting for more than an hour
 					mockKafkas.With(mockKafkas.CLUSTER_ID, ""), // make it empty to ensure cluster placement is called
 				),
 			},
 			wantErr:       false,
 			wantClusterID: "",
-			wantStatus:    constants2.KafkaRequestStatusFailed.String(),
+			wantStatus:    constants.KafkaRequestStatusFailed.String(),
 		},
 		{
 			name: "should return an error when marking the Kafka as failed returns an error",
@@ -440,7 +440,7 @@ func TestAcceptedKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 			},
 			wantErr:       true,
 			wantClusterID: "",
-			wantStatus:    constants2.KafkaRequestStatusFailed.String(),
+			wantStatus:    constants.KafkaRequestStatusFailed.String(),
 		},
 	}
 

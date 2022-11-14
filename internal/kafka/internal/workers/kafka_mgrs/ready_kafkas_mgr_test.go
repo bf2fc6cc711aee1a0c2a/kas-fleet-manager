@@ -6,7 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	mockKafkas "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
@@ -48,7 +48,7 @@ func TestReadyKafkaManager_Reconcile(t *testing.T) {
 			name: "Should throw an error if listing kafkas fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return nil, errors.GeneralError("failed to list kafka requests")
 					},
 				},
@@ -60,7 +60,7 @@ func TestReadyKafkaManager_Reconcile(t *testing.T) {
 			name: "Should succeed if no kafkas are returned",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{}, nil
 					},
 				},
@@ -72,7 +72,7 @@ func TestReadyKafkaManager_Reconcile(t *testing.T) {
 			name: "Should throw an error if reconciling canary service account fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{
 							mockKafkas.BuildKafkaRequest(),
 						}, nil

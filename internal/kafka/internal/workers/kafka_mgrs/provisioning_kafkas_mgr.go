@@ -3,7 +3,7 @@ package kafka_mgrs
 import (
 	"time"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/google/uuid"
@@ -53,7 +53,7 @@ func (k *ProvisioningKafkaManager) Reconcile() []error {
 	// Kafkas in a "provisioning" state means that it is ready to be sent to the KAS Fleetshard Operator for Kafka creation in the data plane cluster.
 	// The update of the Kafka request status from 'provisioning' to another state will be handled by the KAS Fleetshard Operator.
 	// We only need to update the metrics here.
-	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants2.KafkaRequestStatusProvisioning)
+	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusProvisioning)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list provisioning kafkas"))
 	} else {
@@ -68,7 +68,7 @@ func (k *ProvisioningKafkaManager) Reconcile() []error {
 				continue
 			}
 		}
-		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 	}
 
 	return encounteredErrors

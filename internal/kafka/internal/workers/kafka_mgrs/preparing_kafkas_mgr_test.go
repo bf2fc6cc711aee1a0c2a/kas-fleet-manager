@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
@@ -28,7 +28,7 @@ func TestPreparingKafkaManager_Reconcile(t *testing.T) {
 			name: "Should fail if listing kafkas in the reconciler fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return nil, errors.GeneralError("fail to list kafka requests")
 					},
 				},
@@ -39,7 +39,7 @@ func TestPreparingKafkaManager_Reconcile(t *testing.T) {
 			name: "Should not fail if listing kafkas returns an empty list",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{}, nil
 					},
 				},
@@ -50,10 +50,10 @@ func TestPreparingKafkaManager_Reconcile(t *testing.T) {
 			name: "Should successfully call reconcilePreparingKafka and return no error",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{
 							mockKafkas.BuildKafkaRequest(
-								mockKafkas.With(mockKafkas.STATUS, constants2.KafkaRequestStatusPreparing.String()),
+								mockKafkas.With(mockKafkas.STATUS, constants.KafkaRequestStatusPreparing.String()),
 							),
 						}, nil
 					},
@@ -71,10 +71,10 @@ func TestPreparingKafkaManager_Reconcile(t *testing.T) {
 			name: "Should call reconcilePreparingKafka and fail if an error is returned",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{
 							mockKafkas.BuildKafkaRequest(
-								mockKafkas.With(mockKafkas.STATUS, constants2.KafkaRequestStatusPreparing.String()),
+								mockKafkas.With(mockKafkas.STATUS, constants.KafkaRequestStatusPreparing.String()),
 							),
 						}, nil
 					},
@@ -113,7 +113,7 @@ func TestPreparingKafkaManager_reconcilePreparingKafkas(t *testing.T) {
 		args                args
 		wantErr             bool
 		wantErrMsg          string
-		expectedKafkaStatus constants2.KafkaStatus
+		expectedKafkaStatus constants.KafkaStatus
 	}{
 		{
 			name: "Encounter a 5xx error Kafka preparation and performed the retry",
@@ -127,12 +127,12 @@ func TestPreparingKafkaManager_reconcilePreparingKafkas(t *testing.T) {
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.CreatedAt = time.Now().Add(time.Minute * time.Duration(30))
-					kafkaRequest.Status = constants2.KafkaRequestStatusPreparing.String()
+					kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
 				}),
 			},
 			wantErr:             true,
 			wantErrMsg:          "",
-			expectedKafkaStatus: constants2.KafkaRequestStatusPreparing,
+			expectedKafkaStatus: constants.KafkaRequestStatusPreparing,
 		},
 		{
 			name: "Encounter a 5xx error Kafka preparation and skipped the retry",
@@ -149,12 +149,12 @@ func TestPreparingKafkaManager_reconcilePreparingKafkas(t *testing.T) {
 			args: args{
 				kafka: mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.CreatedAt = time.Now().Add(time.Minute * time.Duration(-30))
-					kafkaRequest.Status = constants2.KafkaRequestStatusPreparing.String()
+					kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
 				}),
 			},
 			wantErr:             true,
 			wantErrMsg:          "simulate 5xx error",
-			expectedKafkaStatus: constants2.KafkaRequestStatusFailed,
+			expectedKafkaStatus: constants.KafkaRequestStatusFailed,
 		},
 		{
 			name: "Encounter a Client error (4xx) in Kafka preparation",
@@ -170,12 +170,12 @@ func TestPreparingKafkaManager_reconcilePreparingKafkas(t *testing.T) {
 			},
 			args: args{
 				mockKafkas.BuildKafkaRequest(
-					mockKafkas.With(mockKafkas.STATUS, constants2.KafkaRequestStatusPreparing.String()),
+					mockKafkas.With(mockKafkas.STATUS, constants.KafkaRequestStatusPreparing.String()),
 				),
 			},
 			wantErr:             true,
 			wantErrMsg:          "simulate a 4xx error",
-			expectedKafkaStatus: constants2.KafkaRequestStatusFailed,
+			expectedKafkaStatus: constants.KafkaRequestStatusFailed,
 		},
 		{
 			name: "Encounter an SSO Client internal error in Kafka creation and performed the retry",
@@ -218,7 +218,7 @@ func TestPreparingKafkaManager_reconcilePreparingKafkas(t *testing.T) {
 			},
 			wantErr:             true,
 			wantErrMsg:          "ErrorFailedToCreateSSOClientReason",
-			expectedKafkaStatus: constants2.KafkaRequestStatusFailed,
+			expectedKafkaStatus: constants.KafkaRequestStatusFailed,
 		},
 		{
 			name: "Successful reconcile",

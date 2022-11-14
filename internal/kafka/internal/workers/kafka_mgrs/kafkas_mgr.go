@@ -4,7 +4,7 @@ import (
 	"math"
 	"strings"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
@@ -18,17 +18,17 @@ import (
 )
 
 // we do not add "deleted" status to the list as the kafkas are soft deleted once the status is set to "deleted", so no need to count them here.
-var kafkaMetricsStatuses = []constants2.KafkaStatus{
-	constants2.KafkaRequestStatusAccepted,
-	constants2.KafkaRequestStatusPreparing,
-	constants2.KafkaRequestStatusProvisioning,
-	constants2.KafkaRequestStatusReady,
-	constants2.KafkaRequestStatusDeprovision,
-	constants2.KafkaRequestStatusDeleting,
-	constants2.KafkaRequestStatusFailed,
-	constants2.KafkaRequestStatusSuspended,
-	constants2.KafkaRequestStatusSuspending,
-	constants2.KafkaRequestStatusResuming,
+var kafkaMetricsStatuses = []constants.KafkaStatus{
+	constants.KafkaRequestStatusAccepted,
+	constants.KafkaRequestStatusPreparing,
+	constants.KafkaRequestStatusProvisioning,
+	constants.KafkaRequestStatusReady,
+	constants.KafkaRequestStatusDeprovision,
+	constants.KafkaRequestStatusDeleting,
+	constants.KafkaRequestStatusFailed,
+	constants.KafkaRequestStatusSuspended,
+	constants.KafkaRequestStatusSuspending,
+	constants.KafkaRequestStatusResuming,
 }
 
 // KafkaManager represents a kafka manager that periodically reconciles kafka requests
@@ -80,7 +80,7 @@ func (k *KafkaManager) Reconcile() []error {
 	}
 
 	for _, k := range kafkas {
-		metrics.UpdateKafkaRequestsCurrentStatusInfoMetric(constants2.KafkaStatus(k.Status), k.ID, k.ClusterID)
+		metrics.UpdateKafkaRequestsCurrentStatusInfoMetric(constants.KafkaStatus(k.Status), k.ID, k.ClusterID)
 	}
 
 	// record the metrics at the beginning of the reconcile loop as some of the states like "accepted"

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	adminprivate "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
@@ -248,7 +248,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-1"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusProvisioning.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusProvisioning.String()),
 			kafkamocks.With(kafkamocks.INSTANCE_TYPE, types.DEVELOPER.String()),
 		),
 
@@ -256,19 +256,19 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-2"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusReady.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusReady.String()),
 		),
 		kafkamocks.BuildKafkaRequest(
 			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-3"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusFailed.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusFailed.String()),
 		),
 		kafkamocks.BuildKafkaRequest(
 			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-4"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusDeprovision.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusDeprovision.String()),
 		),
 
 		// suspending related kafkas
@@ -276,19 +276,19 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-5"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusSuspended.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusSuspended.String()),
 		),
 		kafkamocks.BuildKafkaRequest(
 			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-6"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusSuspending.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusSuspending.String()),
 		),
 		kafkamocks.BuildKafkaRequest(
 			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-7"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusResuming.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusResuming.String()),
 		),
 	}
 
@@ -300,21 +300,21 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 			kafkamocks.WithDeleted(true),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-5"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusDeprovision.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusDeprovision.String()),
 		),
 		// kafka that is in a preparing state
 		kafkamocks.BuildKafkaRequest(
 			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-6"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusPreparing.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusPreparing.String()),
 		),
 		// kafka that failed during preparing
 		kafkamocks.BuildKafkaRequest(
 			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-7"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusFailed.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusFailed.String()),
 			kafkamocks.With(kafkamocks.BOOTSTRAP_SERVER_HOST, ""),
 		),
 	}
@@ -351,9 +351,9 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 			g.Expect(mk.Metadata.Annotations.Bf2OrgId).To(gomega.Equal(k.ID))
 			g.Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileType).To(gomega.Equal(k.InstanceType))
 			g.Expect(mk.Metadata.Labels.Bf2OrgKafkaInstanceProfileQuotaConsumed).To(gomega.Equal(strconv.Itoa(instanceSize.QuotaConsumed)))
-			g.Expect(mk.Metadata.Labels.Bf2OrgSuspended).To(gomega.Equal(fmt.Sprintf("%t", arrays.Contains(constants2.GetSuspendedStatuses(), k.Status))))
+			g.Expect(mk.Metadata.Labels.Bf2OrgSuspended).To(gomega.Equal(fmt.Sprintf("%t", arrays.Contains(constants.GetSuspendedStatuses(), k.Status))))
 			g.Expect(mk.Metadata.Namespace).NotTo(gomega.BeEmpty())
-			g.Expect(mk.Spec.Deleted).To(gomega.Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
+			g.Expect(mk.Spec.Deleted).To(gomega.Equal(k.Status == constants.KafkaRequestStatusDeprovision.String()))
 			g.Expect(mk.Spec.Versions.Kafka).To(gomega.Equal(k.DesiredKafkaVersion))
 			g.Expect(mk.Spec.Versions.KafkaIbp).To(gomega.Equal(k.DesiredKafkaIBPVersion))
 			g.Expect(mk.Spec.Endpoint.Tls).To(gomega.BeNil())
@@ -395,7 +395,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-1"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusProvisioning.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusProvisioning.String()),
 			kafkamocks.With(kafkamocks.STORAGE_SIZE, mocksupportedinstancetypes.DefaultMaxDataRetentionSize),
 			kafkamocks.With(kafkamocks.DESIRED_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
 			kafkamocks.With(kafkamocks.DESIRED_KAFKA_VERSION, "2.8.1"),
@@ -405,7 +405,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-2"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusReady.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusReady.String()),
 			kafkamocks.With(kafkamocks.STORAGE_SIZE, mocksupportedinstancetypes.DefaultMaxDataRetentionSize),
 			kafkamocks.With(kafkamocks.DESIRED_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
 			kafkamocks.With(kafkamocks.ACTUAL_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
@@ -418,7 +418,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-3"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusFailed.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusFailed.String()),
 			kafkamocks.With(kafkamocks.STORAGE_SIZE, mocksupportedinstancetypes.DefaultMaxDataRetentionSize),
 			kafkamocks.With(kafkamocks.DESIRED_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
 			kafkamocks.With(kafkamocks.ACTUAL_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
@@ -431,7 +431,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			kafkamocks.WithPredefinedTestValues(),
 			kafkamocks.With(kafkamocks.CLUSTER_ID, testServer.ClusterID),
 			kafkamocks.With(kafkamocks.NAME, "test-kafka-4"),
-			kafkamocks.With(kafkamocks.STATUS, constants2.KafkaRequestStatusDeprovision.String()),
+			kafkamocks.With(kafkamocks.STATUS, constants.KafkaRequestStatusDeprovision.String()),
 			kafkamocks.With(kafkamocks.STORAGE_SIZE, mocksupportedinstancetypes.DefaultMaxDataRetentionSize),
 			kafkamocks.With(kafkamocks.DESIRED_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
 			kafkamocks.With(kafkamocks.ACTUAL_STRIMZI_VERSION, "strimzi-cluster-operator.v0.24.0-0"),
@@ -563,7 +563,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 		g.Expect(sentReadyCondition).NotTo(gomega.BeEmpty())
 
 		// Test version related reported fields
-		g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusReady.String()))
+		g.Expect(c.Status).To(gomega.Equal(constants.KafkaRequestStatusReady.String()))
 		g.Expect(c.ActualKafkaVersion).To(gomega.Equal(sentUpdate.Versions.Kafka))
 		g.Expect(c.ActualKafkaIBPVersion).To(gomega.Equal(sentUpdate.Versions.KafkaIbp))
 		g.Expect(c.ActualStrimziVersion).To(gomega.Equal(sentUpdate.Versions.Strimzi))
@@ -581,7 +581,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 		if err := db.Unscoped().Where("id = ?", cid).First(c).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
-		g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusDeleting.String()))
+		g.Expect(c.Status).To(gomega.Equal(constants.KafkaRequestStatusDeleting.String()))
 	}
 
 	for _, cid := range readyClusters {
@@ -610,7 +610,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 		}
 
 		// Make sure that the kafka stays in ready state and status of strimzi upgrade is false.
-		g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusReady.String()))
+		g.Expect(c.Status).To(gomega.Equal(constants.KafkaRequestStatusReady.String()))
 		g.Expect(c.StrimziUpgrading).To(gomega.BeFalse())
 	}
 }
@@ -646,7 +646,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		ClusterID:                        testServer.ClusterID,
 		MultiAZ:                          false,
 		Name:                             mockKafkaName1,
-		Status:                           constants2.KafkaRequestStatusReady.String(),
+		Status:                           constants.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:              bootstrapServerHost,
 		CanaryServiceAccountClientID:     canaryServiceAccountClientId,
 		CanaryServiceAccountClientSecret: canaryServiceAccountClientSecret,
@@ -707,7 +707,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 		ClusterID:                        testServer.ClusterID,
 		MultiAZ:                          false,
 		Name:                             mockKafkaName1,
-		Status:                           constants2.KafkaRequestStatusReady.String(),
+		Status:                           constants.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:              bootstrapServerHost,
 		CanaryServiceAccountClientID:     canaryServiceAccountClientId,
 		CanaryServiceAccountClientSecret: canaryServiceAccountClientSecret,
@@ -770,7 +770,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		ClusterID:                        testServer.ClusterID,
 		MultiAZ:                          false,
 		Name:                             mockKafkaName1,
-		Status:                           constants2.KafkaRequestStatusReady.String(),
+		Status:                           constants.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:              bootstrapServerHost,
 		PlacementId:                      "some-placement-id",
 		DesiredKafkaVersion:              "2.7.0",
@@ -830,7 +830,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 		ClusterID:                        testServer.ClusterID,
 		MultiAZ:                          false,
 		Name:                             mockKafkaName1,
-		Status:                           constants2.KafkaRequestStatusReady.String(),
+		Status:                           constants.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:              bootstrapServerHost,
 		PlacementId:                      "some-placement-id",
 		DesiredKafkaVersion:              "2.7.0",
@@ -879,7 +879,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOauthMaximumSessionLifetime(t *t
 		ClusterID:                        testServer.ClusterID,
 		MultiAZ:                          false,
 		Name:                             "another-kafka",
-		Status:                           constants2.KafkaRequestStatusReady.String(),
+		Status:                           constants.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:              bootstrapServerHost,
 		PlacementId:                      "some-placement-id",
 		DesiredKafkaVersion:              "2.7.0",
@@ -951,7 +951,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 			ClusterID:                        testServer.ClusterID,
 			MultiAZ:                          false,
 			Name:                             mockKafkaName2,
-			Status:                           constants2.KafkaRequestStatusProvisioning.String(),
+			Status:                           constants.KafkaRequestStatusProvisioning.String(),
 			BootstrapServerHost:              bootstrapServerHost,
 			DesiredKafkaVersion:              "2.6.0",
 			DesiredKafkaIBPVersion:           "2.6",
@@ -1051,7 +1051,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutesAndAdminApiServerUrl(t 
 		if err := db.First(c, "id = ?", cid).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
-		g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusReady.String()))
+		g.Expect(c.Status).To(gomega.Equal(constants.KafkaRequestStatusReady.String()))
 		g.Expect(c.AdminApiServerURL).To(gomega.Equal(adminApiServerUrl))
 	}
 }
@@ -1082,7 +1082,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		ClusterID:              testServer.ClusterID,
 		MultiAZ:                false,
 		Name:                   mockKafkaName1,
-		Status:                 constants2.KafkaRequestStatusReady.String(),
+		Status:                 constants.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:    bootstrapServerHost,
 		PlacementId:            "some-placement-id",
 		DesiredKafkaVersion:    "2.7.0",
@@ -1146,7 +1146,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 		ClusterID:              testServer.ClusterID,
 		MultiAZ:                false,
 		Name:                   mockKafkaName1,
-		Status:                 constants2.KafkaRequestStatusReady.String(),
+		Status:                 constants.KafkaRequestStatusReady.String(),
 		BootstrapServerHost:    bootstrapServerHost,
 		DesiredKafkaVersion:    "2.7.0",
 		DesiredKafkaIBPVersion: "2.7",
@@ -1183,7 +1183,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	if err := db.First(c, "id = ?", kafkaReqID).Error; err != nil {
 		t.Errorf("failed to find kafka cluster with id %s due to error: %v", kafkaReqID, err)
 	}
-	g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusFailed.String()))
+	g.Expect(c.Status).To(gomega.Equal(constants.KafkaRequestStatusFailed.String()))
 	g.Expect(c.FailedReason).To(gomega.Equal("Kafka reported as failed from the data plane"))
 }
 
@@ -1210,7 +1210,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 		ClusterID:              testServer.ClusterID,
 		MultiAZ:                false,
 		Name:                   mockKafkaName1,
-		Status:                 constants2.KafkaRequestStatusFailed.String(),
+		Status:                 constants.KafkaRequestStatusFailed.String(),
 		BootstrapServerHost:    bootstrapServerHost,
 		DesiredKafkaVersion:    "2.7.0",
 		DesiredKafkaIBPVersion: "2.7",
@@ -1248,7 +1248,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) 
 	if err := db.First(c, "id = ?", kafkaReqID).Error; err != nil {
 		t.Errorf("failed to find kafka cluster with id %s due to error: %v", kafkaReqID, err)
 	}
-	g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusReady.String()))
+	g.Expect(c.Status).To(gomega.Equal(constants.KafkaRequestStatusReady.String()))
 	g.Expect(c.FailedReason).To(gomega.BeEmpty())
 }
 
@@ -1450,7 +1450,7 @@ func TestDataPlaneEndpoints_ReassignRejectedKafkaDueToInsufficientResources(t *t
 			Name:                   mockKafkaName1,
 			CloudProvider:          cloudProvider,
 			Region:                 region,
-			Status:                 constants2.KafkaRequestStatusProvisioning.String(),
+			Status:                 constants.KafkaRequestStatusProvisioning.String(),
 			BootstrapServerHost:    bootstrapServerHost,
 			DesiredKafkaVersion:    "2.6.0",
 			DesiredKafkaIBPVersion: "2.6",
@@ -1464,7 +1464,7 @@ func TestDataPlaneEndpoints_ReassignRejectedKafkaDueToInsufficientResources(t *t
 			Name:                   mockKafkaName2,
 			CloudProvider:          cloudProvider,
 			Region:                 region,
-			Status:                 constants2.KafkaRequestStatusProvisioning.String(),
+			Status:                 constants.KafkaRequestStatusProvisioning.String(),
 			BootstrapServerHost:    bootstrapServerHost,
 			DesiredKafkaVersion:    "2.5.0",
 			DesiredKafkaIBPVersion: "2.5",
@@ -1513,7 +1513,7 @@ func TestDataPlaneEndpoints_ReassignRejectedKafkaDueToInsufficientResources(t *t
 		c := &dbapi.KafkaRequest{}
 		err := db.First(c, "id = ?", cid).Error
 		g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to find kafka cluster with id %s due to error: %v", cid, err)
-		g.Expect(c.Status).To(gomega.Equal(constants2.KafkaRequestStatusProvisioning.String()))
+		g.Expect(c.Status).To(gomega.Equal(constants.KafkaRequestStatusProvisioning.String()))
 		g.Expect(c.ClusterID).To(gomega.BeEmpty())
 		g.Expect(c.BootstrapServerHost).To(gomega.BeEmpty())
 		g.Expect(c.DesiredKafkaVersion).To(gomega.BeEmpty())

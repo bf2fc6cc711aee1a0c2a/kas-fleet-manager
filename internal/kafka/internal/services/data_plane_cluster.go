@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
@@ -148,8 +148,8 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 
 	if cluster.Status == api.ClusterWaitingForKasFleetShardOperator {
 		metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(cluster.CreatedAt))
-		metrics.IncreaseClusterTotalOperationsCountMetric(constants2.ClusterOperationCreate)
-		metrics.IncreaseClusterSuccessOperationsCountMetric(constants2.ClusterOperationCreate)
+		metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationCreate)
+		metrics.IncreaseClusterSuccessOperationsCountMetric(constants.ClusterOperationCreate)
 		metrics.UpdateClusterStatusSinceCreatedMetric(*cluster, api.ClusterReady)
 	}
 

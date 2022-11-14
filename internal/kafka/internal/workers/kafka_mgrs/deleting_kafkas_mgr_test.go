@@ -3,7 +3,7 @@ package kafka_mgrs
 import (
 	"testing"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -32,7 +32,7 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 			name: "Should fail if listing kafkas in the reconciler fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return nil, errors.GeneralError("fail to list kafka requests")
 					},
 				},
@@ -43,7 +43,7 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 			name: "Should not fail if listing kafkas returns an empty list",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{}, nil
 					},
 				},
@@ -54,11 +54,11 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 			name: "Should call reconcileDeletingKafkas and fail if an error is returned",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{
 							mockKafkas.BuildKafkaRequest(
 								mockKafkas.WithPredefinedTestValues(),
-								mockKafkas.With(mockKafkas.STATUS, constants2.KafkaRequestStatusDeleting.String()),
+								mockKafkas.With(mockKafkas.STATUS, constants.KafkaRequestStatusDeleting.String()),
 							),
 						}, nil
 					},
@@ -81,11 +81,11 @@ func TestDeletingKafkaManager_Reconcile(t *testing.T) {
 			name: "Should call reconcileDeletingKafkas and not fail if no error is returned",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 						return []*dbapi.KafkaRequest{
 							mockKafkas.BuildKafkaRequest(
 								mockKafkas.WithPredefinedTestValues(),
-								mockKafkas.With(mockKafkas.STATUS, constants2.KafkaRequestStatusDeleting.String()),
+								mockKafkas.With(mockKafkas.STATUS, constants.KafkaRequestStatusDeleting.String()),
 							),
 							mockKafkas.BuildKafkaRequest(
 								mockKafkas.WithPredefinedTestValues(),
