@@ -456,12 +456,12 @@ func Test_AMSGetBillingModel(t *testing.T) {
 			name: "detects non-matching requested billing model (standard)",
 			args: args{
 				request: dbapi.KafkaRequest{
-					Name:                  "test",
-					SizeId:                "x1",
-					BillingCloudAccountId: "1234567890",
-					Marketplace:           "aws",
-					InstanceType:          "standard",
-					BillingModel:          "standard",
+					Name:                     "test",
+					SizeId:                   "x1",
+					BillingCloudAccountId:    "1234567890",
+					Marketplace:              "aws",
+					InstanceType:             "standard",
+					DesiredKafkaBillingModel: "standard",
 				},
 			},
 			fields: fields{
@@ -506,10 +506,10 @@ func Test_AMSGetBillingModel(t *testing.T) {
 			name: "detects non-matching requested billing model (marketplace)",
 			args: args{
 				request: dbapi.KafkaRequest{
-					Name:         "test",
-					SizeId:       "x1",
-					InstanceType: "standard",
-					BillingModel: "marketplace",
+					Name:                     "test",
+					SizeId:                   "x1",
+					InstanceType:             "standard",
+					DesiredKafkaBillingModel: "marketplace",
 				},
 			},
 			fields: fields{
@@ -559,7 +559,7 @@ func Test_AMSGetBillingModel(t *testing.T) {
 			g.Expect(billingModel).To(gomega.Equal(tt.wantBillingModel))
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 
-			match, bm := quotaService.(*amsQuotaService).billingModelMatches(billingModel, tt.args.request.BillingModel)
+			match, bm := quotaService.(*amsQuotaService).billingModelMatches(billingModel, tt.args.request.DesiredKafkaBillingModel)
 			g.Expect(match).To(gomega.Equal(tt.wantMatch))
 			g.Expect(bm).To(gomega.Equal(tt.wantInferredBillingModel))
 		})
@@ -897,17 +897,19 @@ func Test_AMSReserveQuota(t *testing.T) {
 		owner                             string
 		kafkaInstanceType                 types.KafkaInstanceType
 		kafkaRequestMarketplace           string
-		kafkaRequestBillingModel          string
+		kafkaRequestDesiredBillingModel   string
 		kafkaRequestBillingCloudAccountID string
 		kafkaRequestCloudProvider         string
 	}
 	tests := []struct {
-		name             string
-		fields           fields
-		args             args
-		want             string
-		wantErr          bool
-		wantBillingModel string
+		name                         string
+		fields                       fields
+		args                         args
+		wantSubscriptionID           string
+		wantErr                      bool
+		wantAMSBillingModel          string
+		wantDesiredKafkaBillingModel string
+		wantActualKafkaBillingModel  string
 	}{
 		{
 			name: "reserve a quota & get subscription id",
@@ -939,9 +941,11 @@ func Test_AMSReserveQuota(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantBillingModel: string(v1.BillingModelMarketplace),
-			want:             "1234",
-			wantErr:          false,
+			wantAMSBillingModel:          string(v1.BillingModelMarketplace),
+			wantSubscriptionID:           "1234",
+			wantDesiredKafkaBillingModel: "marketplace",
+			wantActualKafkaBillingModel:  "marketplace",
+			wantErr:                      false,
 		},
 		{
 			name: "when both standard and marketplace billing models are available standard is assigned as billing model",
@@ -978,9 +982,11 @@ func Test_AMSReserveQuota(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantBillingModel: string(v1.BillingModelStandard),
-			want:             "1234",
-			wantErr:          false,
+			wantAMSBillingModel:          string(v1.BillingModelStandard),
+			wantDesiredKafkaBillingModel: "standard",
+			wantActualKafkaBillingModel:  "standard",
+			wantSubscriptionID:           "1234",
+			wantErr:                      false,
 		},
 		{
 			name: "when only marketplace billing model has available resources marketplace billing model is assigned",
@@ -1017,9 +1023,11 @@ func Test_AMSReserveQuota(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantBillingModel: string(v1.BillingModelMarketplace),
-			want:             "1234",
-			wantErr:          false,
+			wantAMSBillingModel:          string(v1.BillingModelMarketplace),
+			wantDesiredKafkaBillingModel: "marketplace",
+			wantActualKafkaBillingModel:  "marketplace",
+			wantSubscriptionID:           "1234",
+			wantErr:                      false,
 		},
 		{
 			name: "when a related resource has a supported billing model with cost of 0 that billing model is allowed",
@@ -1051,9 +1059,11 @@ func Test_AMSReserveQuota(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantBillingModel: string(v1.BillingModelMarketplace),
-			want:             "1234",
-			wantErr:          false,
+			wantAMSBillingModel:          string(v1.BillingModelMarketplace),
+			wantDesiredKafkaBillingModel: "marketplace",
+			wantActualKafkaBillingModel:  "marketplace",
+			wantSubscriptionID:           "1234",
+			wantErr:                      false,
 		},
 		{
 			name: "when all matching quota_costs consumed resources are higher or equal than the allowed resources an error is returned",
@@ -1183,7 +1193,52 @@ func Test_AMSReserveQuota(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantErr: true,
+			wantErr:                      true,
+			wantDesiredKafkaBillingModel: "marketplace",
+			wantActualKafkaBillingModel:  "",
+		},
+		{
+			name: "reserving a Kafka located in AWS with marketplace aws AMS billing model is accepted",
+			args: args{
+				kafkaID:                           "12231",
+				owner:                             "testUser",
+				kafkaInstanceType:                 types.STANDARD,
+				kafkaRequestMarketplace:           "aws",
+				kafkaRequestBillingCloudAccountID: "12345",
+				kafkaRequestDesiredBillingModel:   "marketplace",
+				kafkaRequestCloudProvider:         cloudproviders.AWS.String(),
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID("1234")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
+						rrbq1 := v1.NewRelatedResource().BillingModel(string(v1.BillingModelMarketplace)).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						qcb, err := v1.NewQuotaCost().Allowed(1).Consumed(0).
+							OrganizationID(organizationID).RelatedResources(rrbq1).
+							CloudAccounts(v1.NewCloudAccount().CloudProviderID("aws").CloudAccountID("12345")).
+							Build()
+						if err != nil {
+							panic("unexpected error")
+						}
+						return []*v1.QuotaCost{qcb}, nil
+					},
+				},
+				kafkaConfig: &defaultKafkaConf,
+			},
+			wantSubscriptionID:           "1234",
+			wantAMSBillingModel:          string(v1.BillingModelMarketplaceAWS),
+			wantDesiredKafkaBillingModel: "marketplace",
+			wantActualKafkaBillingModel:  "marketplace",
+			wantErr:                      false,
 		},
 		{
 			name: "reserving a Kafka located in GCP with Red Hat marketplace AMS billing model is accepted",
@@ -1193,7 +1248,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				kafkaInstanceType:                 types.STANDARD,
 				kafkaRequestMarketplace:           "rhm",
 				kafkaRequestBillingCloudAccountID: "12345",
-				kafkaRequestBillingModel:          "marketplace",
+				kafkaRequestDesiredBillingModel:   "marketplace",
 				kafkaRequestCloudProvider:         cloudproviders.GCP.String(),
 			},
 			fields: fields{
@@ -1222,9 +1277,11 @@ func Test_AMSReserveQuota(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			want:             "1234",
-			wantBillingModel: string(v1.BillingModelMarketplace),
-			wantErr:          false,
+			wantSubscriptionID:           "1234",
+			wantAMSBillingModel:          string(v1.BillingModelMarketplace),
+			wantDesiredKafkaBillingModel: "marketplace",
+			wantActualKafkaBillingModel:  "marketplace",
+			wantErr:                      false,
 		},
 		{
 			name: "reserving a Kafka located in GCP with no explicit marketplace reserves 'marketplace' quota when the related resource has marketplace quota only",
@@ -1233,7 +1290,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				owner:                             "testUser",
 				kafkaInstanceType:                 types.STANDARD,
 				kafkaRequestBillingCloudAccountID: "12345",
-				kafkaRequestBillingModel:          "marketplace",
+				kafkaRequestDesiredBillingModel:   "marketplace",
 				kafkaRequestCloudProvider:         cloudproviders.GCP.String(),
 			},
 			fields: fields{
@@ -1262,9 +1319,11 @@ func Test_AMSReserveQuota(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			want:             "1234",
-			wantBillingModel: string(v1.BillingModelMarketplace),
-			wantErr:          false,
+			wantSubscriptionID:           "1234",
+			wantAMSBillingModel:          string(v1.BillingModelMarketplace),
+			wantDesiredKafkaBillingModel: "marketplace",
+			wantActualKafkaBillingModel:  "marketplace",
+			wantErr:                      false,
 		},
 		{
 			name: "reserving a Kafka located in GCP with no explicit marketplace nor billing model reserves standard if there is standard related resource quota",
@@ -1307,9 +1366,11 @@ func Test_AMSReserveQuota(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			want:             "1234",
-			wantBillingModel: string(v1.BillingModelStandard),
-			wantErr:          false,
+			wantSubscriptionID:           "1234",
+			wantAMSBillingModel:          string(v1.BillingModelStandard),
+			wantDesiredKafkaBillingModel: "standard",
+			wantActualKafkaBillingModel:  "standard",
+			wantErr:                      false,
 		},
 		{
 			name: "when reserving a Kafka located in GCP with a non Red Hat marketplace AMS billing model specified an error is returned",
@@ -1319,7 +1380,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				kafkaInstanceType:                 types.STANDARD,
 				kafkaRequestMarketplace:           "aws",
 				kafkaRequestBillingCloudAccountID: "12345",
-				kafkaRequestBillingModel:          "marketplace",
+				kafkaRequestDesiredBillingModel:   "marketplace",
 				kafkaRequestCloudProvider:         cloudproviders.GCP.String(),
 			},
 			fields: fields{
@@ -1348,7 +1409,9 @@ func Test_AMSReserveQuota(t *testing.T) {
 				},
 				kafkaConfig: &defaultKafkaConf,
 			},
-			wantErr: true,
+			wantErr:                      true,
+			wantDesiredKafkaBillingModel: "marketplace",
+			wantActualKafkaBillingModel:  "",
 		},
 	}
 
@@ -1362,25 +1425,28 @@ func Test_AMSReserveQuota(t *testing.T) {
 				Meta: api.Meta{
 					ID: tt.args.kafkaID,
 				},
-				CloudProvider:         tt.args.kafkaRequestCloudProvider,
-				Owner:                 tt.args.owner,
-				SizeId:                "x1",
-				InstanceType:          string(tt.args.kafkaInstanceType),
-				Marketplace:           tt.args.kafkaRequestMarketplace,
-				BillingCloudAccountId: tt.args.kafkaRequestBillingCloudAccountID,
-				BillingModel:          tt.args.kafkaRequestBillingModel,
+				CloudProvider:            tt.args.kafkaRequestCloudProvider,
+				Owner:                    tt.args.owner,
+				SizeId:                   "x1",
+				InstanceType:             string(tt.args.kafkaInstanceType),
+				Marketplace:              tt.args.kafkaRequestMarketplace,
+				BillingCloudAccountId:    tt.args.kafkaRequestBillingCloudAccountID,
+				DesiredKafkaBillingModel: tt.args.kafkaRequestDesiredBillingModel,
 			}
 			subId, err := quotaService.ReserveQuota(kafka, types.STANDARD)
+
+			g.Expect(kafka.DesiredKafkaBillingModel).To(gomega.Equal(tt.wantDesiredKafkaBillingModel))
+			g.Expect(kafka.ActualKafkaBillingModel).To(gomega.Equal(tt.wantActualKafkaBillingModel))
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
-			g.Expect(subId).To(gomega.Equal(tt.want))
-			if tt.wantBillingModel != "" {
+			g.Expect(subId).To(gomega.Equal(tt.wantSubscriptionID))
+			if tt.wantAMSBillingModel != "" {
 				ocmClientMock := tt.fields.ocmClient.(*ocm.ClientMock)
 				clusterAuthorizationCalls := ocmClientMock.ClusterAuthorizationCalls()
 				g.Expect(len(clusterAuthorizationCalls)).To(gomega.Equal(1))
 				clusterAuthorizationResources := clusterAuthorizationCalls[0].Cb.Resources()
 				g.Expect(clusterAuthorizationResources).To(gomega.HaveLen(1))
 				clusterAuthorizationResource := clusterAuthorizationResources[0]
-				g.Expect(clusterAuthorizationResource.BillingModel()).To(gomega.BeEquivalentTo(tt.wantBillingModel))
+				g.Expect(clusterAuthorizationResource.BillingModel()).To(gomega.BeEquivalentTo(tt.wantAMSBillingModel))
 			}
 		})
 	}

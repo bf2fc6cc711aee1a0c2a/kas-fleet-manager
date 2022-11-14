@@ -48,13 +48,14 @@ type KafkaRequest struct {
 	RoutesCreated bool `json:"routes_created"`
 	// Namespace is the namespace of the provisioned kafka instance.
 	// We store this in the database to ensure that old kafkas whose namespace contained "owner-<kafka-id>" information will continue to work.
-	Namespace               string `json:"namespace"`
-	ReauthenticationEnabled bool   `json:"reauthentication_enabled"`
-	RoutesCreationId        string `json:"routes_creation_id"`
-	SizeId                  string `json:"size_id"`
-	BillingCloudAccountId   string `json:"billing_cloud_account_id"`
-	Marketplace             string `json:"marketplace"`
-	BillingModel            string `json:"billing_model"`
+	Namespace                string `json:"namespace"`
+	ReauthenticationEnabled  bool   `json:"reauthentication_enabled"`
+	RoutesCreationId         string `json:"routes_creation_id"`
+	SizeId                   string `json:"size_id"`
+	BillingCloudAccountId    string `json:"billing_cloud_account_id"`
+	Marketplace              string `json:"marketplace"`
+	ActualKafkaBillingModel  string `json:"actual_kafka_billing_model"`
+	DesiredKafkaBillingModel string `json:"desired_kafka_billing_model"`
 }
 
 type KafkaList []*KafkaRequest

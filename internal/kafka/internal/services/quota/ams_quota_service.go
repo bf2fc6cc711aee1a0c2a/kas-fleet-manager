@@ -357,11 +357,12 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		return "", errors.InsufficientQuotaError("Error getting billing model: No available billing model found")
 	}
 
-	bmMatched, matchedBillingModel := q.billingModelMatches(bm, kafka.BillingModel)
+	bmMatched, matchedBillingModel := q.billingModelMatches(bm, kafka.DesiredKafkaBillingModel)
 	if !bmMatched {
-		return "", errors.InvalidBillingAccount("requested billing model does not match assigned. requested: %s, assigned: %s", kafka.BillingModel, bm)
+		return "", errors.InvalidBillingAccount("requested billing model does not match assigned. requested: %s, assigned: %s", kafka.DesiredKafkaBillingModel, bm)
 	}
-	kafka.BillingModel = matchedBillingModel
+	// TODO find a better place to update it as it is a side-effect in nested code
+	kafka.DesiredKafkaBillingModel = matchedBillingModel
 
 	// For Kafka requests to be provisioned on GCP currently the only supported
 	// AMS billing models are standard or Red Hat Marketplace ("marketplace").
@@ -402,6 +403,9 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 	if !resp.Allowed() {
 		return "", errors.InsufficientQuotaError("Insufficient Quota")
 	}
+
+	// TODO find a better place to update it as it is a side-effect in nested code
+	kafka.ActualKafkaBillingModel = matchedBillingModel
 
 	return resp.Subscription().ID(), nil
 }

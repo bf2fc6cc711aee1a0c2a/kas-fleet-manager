@@ -77,6 +77,23 @@ func TestConvertKafkaRequest(t *testing.T) {
 				mock.WithReauthenticationEnabled(reauthEnabled),
 			),
 		},
+		{
+			name: "should convert and return kafka request from empty db kafka request with desired billing model",
+			args: args{
+				kafkaRequestPayload: *mock.BuildKafkaRequestPayload(func(payload *public.KafkaRequestPayload) {
+					billingModelStr := "mybillingmodel"
+					payload.BillingModel = &billingModelStr
+				}),
+				dbKafkaRequests: []*dbapi.KafkaRequest{},
+			},
+			want: mock.BuildKafkaRequest(
+				mock.With(mock.REGION, mock.DefaultKafkaRequestRegion),
+				mock.With(mock.CLOUD_PROVIDER, mock.DefaultKafkaRequestProvider),
+				mock.With(mock.NAME, mock.DefaultKafkaRequestName),
+				mock.WithReauthenticationEnabled(reauthEnabled),
+				mock.With(mock.DESIRED_KAFKA_BILLING_MODEL, "mybillingmodel"),
+			),
+		},
 	}
 
 	for _, testcase := range tests {
@@ -120,6 +137,8 @@ func TestPresentKafkaRequest(t *testing.T) {
 					mock.With(mock.FAILED_REASON, failedReason),
 					mock.With(mock.ACTUAL_KAFKA_VERSION, version),
 					mock.With(mock.STORAGE_SIZE, kafkaStorageSize),
+					mock.With(mock.DESIRED_KAFKA_BILLING_MODEL, "mydesiredkafkabillingmodel"),
+					mock.With(mock.ACTUAL_KAFKA_BILLING_MODEL, "myactualkafkabillingmodel"),
 				),
 			},
 			want: *mock.BuildPublicKafkaRequest(func(kafkaRequest *public.KafkaRequest) {
@@ -147,6 +166,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.MaxDataRetentionSize = public.SupportedKafkaSizeBytesValueItem{
 					Bytes: dataRetentionSizeBytes,
 				}
+				kafkaRequest.BillingModel = "myactualkafkabillingmodel"
 			}),
 			config: config.KafkaConfig{
 				SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
