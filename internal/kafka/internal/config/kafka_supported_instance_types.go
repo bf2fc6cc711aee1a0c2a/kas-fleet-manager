@@ -91,7 +91,7 @@ func (kp *KafkaInstanceType) HasAnInstanceSizeWithLifespan() bool {
 // - sizes cannot be an empty list and each size id must be unique
 func (kp *KafkaInstanceType) validate() error {
 	if kp.Id == "" || kp.DisplayName == "" || len(kp.Sizes) == 0 {
-		return fmt.Errorf("kafka instance type '%s' is missing required parameters.", kp.Id)
+		return fmt.Errorf("kafka instance type '%s' is missing required parameters", kp.Id)
 	}
 
 	if !arrays.Contains(types.ValidKafkaInstanceTypes, kp.Id) {
@@ -102,7 +102,7 @@ func (kp *KafkaInstanceType) validate() error {
 
 	for _, kafkaInstanceSize := range kp.Sizes {
 		if _, ok := existingSizes[kafkaInstanceSize.Id]; ok {
-			return fmt.Errorf("kafka instance size '%s' for instance type '%s' was defined more than once.", kafkaInstanceSize.Id, kp.Id)
+			return fmt.Errorf("kafka instance size '%s' for instance type '%s' was defined more than once", kafkaInstanceSize.Id, kp.Id)
 		}
 		existingSizes[kafkaInstanceSize.Id]++
 
@@ -151,7 +151,7 @@ func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 	if k.EgressThroughputPerSec.IsEmpty() || k.IngressThroughputPerSec.IsEmpty() ||
 		k.MaxDataRetentionPeriod == "" || k.MaxDataRetentionSize.IsEmpty() || k.Id == "" || k.DeprecatedQuotaType == "" ||
 		k.DisplayName == "" || k.MaxMessageSize.IsEmpty() || k.SupportedAZModes == nil {
-		return fmt.Errorf("kafka instance size '%s' for instance type '%s' is missing required parameters.", k.Id, instanceTypeId)
+		return fmt.Errorf("kafka instance size '%s' for instance type '%s' is missing required parameters", k.Id, instanceTypeId)
 	}
 
 	egressThroughputQuantity, err := k.EgressThroughputPerSec.ToK8Quantity()
@@ -190,7 +190,7 @@ func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 	}
 
 	if k.LifespanSeconds != nil && *k.LifespanSeconds <= 0 {
-		return fmt.Errorf("kafka instance size '%s' for instance type '%s' specifies a lifespanSeconds seconds value less than or equals to Zero.", k.Id, instanceTypeId)
+		return fmt.Errorf("kafka instance size '%s' for instance type '%s' specifies a lifespanSeconds seconds value less than or equals to Zero", k.Id, instanceTypeId)
 	}
 
 	maturityStatusKnown := false
@@ -210,7 +210,7 @@ func (k *KafkaInstanceSize) validate(instanceTypeId string) error {
 		k.TotalMaxConnections <= 0 || k.MaxPartitions <= 0 || k.MaxConnectionAttemptsPerSec <= 0 ||
 		k.QuotaConsumed < 1 || k.CapacityConsumed < 1 || k.MinInSyncReplicas < 1 ||
 		k.ReplicationFactor < 1 || maxMessageSize.CmpInt64(0) < 0 || len(k.SupportedAZModes) == 0 {
-		return fmt.Errorf("kafka instance size '%s' for instance type '%s' specifies a property value less than or equals to Zero.", k.Id, instanceTypeId)
+		return fmt.Errorf("kafka instance size '%s' for instance type '%s' specifies a property value less than or equals to Zero", k.Id, instanceTypeId)
 	}
 
 	return nil
@@ -235,7 +235,7 @@ func (s *SupportedKafkaInstanceTypesConfig) validate() error {
 
 	for _, KafkaInstanceType := range s.SupportedKafkaInstanceTypes {
 		if _, ok := existingInstanceTypes[KafkaInstanceType.Id]; ok {
-			return fmt.Errorf("kafka instance type id '%s' was defined more than once.", KafkaInstanceType.Id)
+			return fmt.Errorf("kafka instance type id '%s' was defined more than once", KafkaInstanceType.Id)
 		}
 		existingInstanceTypes[KafkaInstanceType.Id]++
 
