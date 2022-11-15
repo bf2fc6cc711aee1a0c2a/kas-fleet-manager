@@ -125,14 +125,14 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 func (d *dataPlaneKafkaService) processReservedKafkaDeployment(ks *dbapi.DataPlaneKafkaStatus, prewarmingStatusInfo reservedManagedKafkaStatusCountPerInstanceType, log logger.UHCLogger, clusterID string) {
 	parsedID := strings.Split(ks.KafkaClusterId, "-")
 	if len(parsedID) < 4 {
-		log.Error(fmt.Errorf("The reserved %q ID does not follow the format 'reserved-kafka-<instance-type>-<number>'", ks.KafkaClusterId))
+		log.Error(fmt.Errorf("the reserved %q ID does not follow the format 'reserved-kafka-<instance-type>-<number>'", ks.KafkaClusterId))
 		return
 	}
 
 	instanceType := parsedID[2]
 	_, ok := prewarmingStatusInfo[api.ClusterInstanceTypeSupport(instanceType)]
 	if !ok {
-		log.Error(fmt.Errorf("The reserved %q ID is not supported in the cluster with cluster_id %q", ks.KafkaClusterId, clusterID))
+		log.Error(fmt.Errorf("the reserved %q ID is not supported in the cluster with cluster_id %q", ks.KafkaClusterId, clusterID))
 		return
 	}
 
