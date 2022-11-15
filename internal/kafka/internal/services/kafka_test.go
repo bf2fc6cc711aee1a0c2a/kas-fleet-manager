@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/route53"
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -2138,7 +2138,7 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 		clusterService    ClusterService
 	}
 	type args struct {
-		status constants2.KafkaStatus
+		status constants.KafkaStatus
 	}
 	tests := []struct {
 		name    string
@@ -2204,7 +2204,7 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 	}
 	type args struct {
 		id     string
-		status constants2.KafkaStatus
+		status constants.KafkaStatus
 	}
 	tests := []struct {
 		name         string
@@ -2237,13 +2237,13 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE id = $1`).
 					WithArgs(testID).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-						kafkaRequest.Status = constants2.KafkaRequestStatusDeprovision.String()
+						kafkaRequest.Status = constants.KafkaRequestStatusDeprovision.String()
 					})))
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			args: args{
 				id:     testID,
-				status: constants2.KafkaRequestStatusPreparing,
+				status: constants.KafkaRequestStatusPreparing,
 			},
 		},
 		{
@@ -2259,13 +2259,13 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE id = $1`).
 					WithArgs(testID).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-						kafkaRequest.Status = constants2.KafkaRequestStatusDeprovision.String()
+						kafkaRequest.Status = constants.KafkaRequestStatusDeprovision.String()
 					})))
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			args: args{
 				id:     testID,
-				status: constants2.KafkaRequestStatusDeleting,
+				status: constants.KafkaRequestStatusDeleting,
 			},
 		},
 		{
@@ -2279,7 +2279,7 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE id = $1`).
 					WithArgs(testID).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-						kafkaRequest.Status = constants2.KafkaRequestStatusPreparing.String()
+						kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
 					})))
 				mocket.Catcher.NewMock().WithQuery(`UPDATE "kafka_requests" SET "status"=$1`)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -2572,7 +2572,7 @@ func Test_KafkaService_CountByStatus(t *testing.T) {
 		connectionFactory *db.ConnectionFactory
 	}
 	type args struct {
-		status []constants2.KafkaStatus
+		status []constants.KafkaStatus
 	}
 	tests := []struct {
 		name      string
@@ -2586,7 +2586,7 @@ func Test_KafkaService_CountByStatus(t *testing.T) {
 			name:   "should return the counts of Kafkas in different status",
 			fields: fields{connectionFactory: db.NewMockConnectionFactory(nil)},
 			args: args{
-				status: []constants2.KafkaStatus{constants2.KafkaRequestStatusAccepted, constants2.KafkaRequestStatusReady, constants2.KafkaRequestStatusProvisioning},
+				status: []constants.KafkaStatus{constants.KafkaRequestStatusAccepted, constants.KafkaRequestStatusReady, constants.KafkaRequestStatusProvisioning},
 			},
 			wantErr: false,
 			setupFunc: func() {
@@ -2603,18 +2603,18 @@ func Test_KafkaService_CountByStatus(t *testing.T) {
 				mocket.Catcher.Reset().
 					NewMock().
 					WithQuery(`SELECT status as Status, count(1) as Count FROM "kafka_requests" WHERE status in ($1,$2,$3)`).
-					WithArgs(constants2.KafkaRequestStatusAccepted.String(), constants2.KafkaRequestStatusReady.String(), constants2.KafkaRequestStatusProvisioning.String()).
+					WithArgs(constants.KafkaRequestStatusAccepted.String(), constants.KafkaRequestStatusReady.String(), constants.KafkaRequestStatusProvisioning.String()).
 					WithReply(counters)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			want: []KafkaStatusCount{{
-				Status: constants2.KafkaRequestStatusAccepted,
+				Status: constants.KafkaRequestStatusAccepted,
 				Count:  2,
 			}, {
-				Status: constants2.KafkaRequestStatusReady,
+				Status: constants.KafkaRequestStatusReady,
 				Count:  1,
 			}, {
-				Status: constants2.KafkaRequestStatusProvisioning,
+				Status: constants.KafkaRequestStatusProvisioning,
 				Count:  0,
 			}},
 		},
@@ -2622,7 +2622,7 @@ func Test_KafkaService_CountByStatus(t *testing.T) {
 			name:   "should return error",
 			fields: fields{connectionFactory: db.NewMockConnectionFactory(nil)},
 			args: args{
-				status: []constants2.KafkaStatus{constants2.KafkaRequestStatusAccepted, constants2.KafkaRequestStatusReady},
+				status: []constants.KafkaStatus{constants.KafkaRequestStatusAccepted, constants.KafkaRequestStatusReady},
 			},
 			wantErr: true,
 			setupFunc: func() {

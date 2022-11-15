@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -76,20 +76,20 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 							return &dbapi.KafkaRequest{
 								ClusterID:     "test-cluster-id",
-								Status:        constants2.KafkaRequestStatusProvisioning.String(),
+								Status:        constants.KafkaRequestStatusProvisioning.String(),
 								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
 								RoutesCreated: true,
 							}, nil
 						},
 						UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-							if kafkaRequest.Status == string(constants2.KafkaRequestStatusFailed) {
+							if kafkaRequest.Status == string(constants.KafkaRequestStatusFailed) {
 								if strings.Contains(kafkaRequest.FailedReason, secretError) {
 									return errors.GeneralError("Test failure error. Expected FailedReason is empty")
 								}
 								c["failed"]++
-							} else if kafkaRequest.Status == string(constants2.KafkaRequestStatusReady) {
+							} else if kafkaRequest.Status == string(constants.KafkaRequestStatusReady) {
 								c["ready"]++
-							} else if kafkaRequest.Status == string(constants2.KafkaRequestStatusDeleting) {
+							} else if kafkaRequest.Status == string(constants.KafkaRequestStatusDeleting) {
 								c["deleting"]++
 							} else {
 								c["rejected"]++
@@ -104,12 +104,12 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 							}
 							return nil
 						},
-						UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
-							if status == constants2.KafkaRequestStatusReady {
+						UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+							if status == constants.KafkaRequestStatusReady {
 								c["ready"]++
-							} else if status == constants2.KafkaRequestStatusDeleting {
+							} else if status == constants.KafkaRequestStatusDeleting {
 								c["deleting"]++
-							} else if status == constants2.KafkaRequestStatusFailed {
+							} else if status == constants.KafkaRequestStatusFailed {
 								c["failed"]++
 							}
 							return true, nil
@@ -210,7 +210,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 							return &dbapi.KafkaRequest{
 								ClusterID:           "test-cluster-id",
-								Status:              constants2.KafkaRequestStatusProvisioning.String(),
+								Status:              constants.KafkaRequestStatusProvisioning.String(),
 								BootstrapServerHost: bootstrapServer,
 								RoutesCreated:       routesCreated,
 							}, nil
@@ -222,11 +222,11 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 							} else {
 								routesCreated = true
 							}
-							if kafkaRequest.Status == string(constants2.KafkaRequestStatusReady) {
+							if kafkaRequest.Status == string(constants.KafkaRequestStatusReady) {
 								c["ready"]++
-							} else if kafkaRequest.Status == string(constants2.KafkaRequestStatusDeleting) {
+							} else if kafkaRequest.Status == string(constants.KafkaRequestStatusDeleting) {
 								c["deleting"]++
-							} else if kafkaRequest.Status == string(constants2.KafkaRequestStatusFailed) {
+							} else if kafkaRequest.Status == string(constants.KafkaRequestStatusFailed) {
 								c["failed"]++
 							}
 							return nil
@@ -239,12 +239,12 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 							}
 							return nil
 						},
-						UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
-							if status == constants2.KafkaRequestStatusReady {
+						UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+							if status == constants.KafkaRequestStatusReady {
 								c["ready"]++
-							} else if status == constants2.KafkaRequestStatusDeleting {
+							} else if status == constants.KafkaRequestStatusDeleting {
 								c["deleting"]++
-							} else if status == constants2.KafkaRequestStatusFailed {
+							} else if status == constants.KafkaRequestStatusFailed {
 								c["failed"]++
 							}
 							return true, nil
@@ -345,21 +345,21 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 							return &dbapi.KafkaRequest{
 								ClusterID:     "test-cluster-id",
-								Status:        constants2.KafkaRequestStatusProvisioning.String(),
+								Status:        constants.KafkaRequestStatusProvisioning.String(),
 								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
 								RoutesCreated: true,
 								FailedReason:  nonSecretKafkaStatus,
 							}, nil
 						},
 						UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-							if kafkaRequest.Status == string(constants2.KafkaRequestStatusFailed) {
+							if kafkaRequest.Status == string(constants.KafkaRequestStatusFailed) {
 								if !strings.Contains(kafkaRequest.FailedReason, nonSecretKafkaStatus) {
 									return errors.GeneralError("Test failure error. Expected FailedReason is empty")
 								}
 								c["failed"]++
-							} else if kafkaRequest.Status == string(constants2.KafkaRequestStatusReady) {
+							} else if kafkaRequest.Status == string(constants.KafkaRequestStatusReady) {
 								c["ready"]++
-							} else if kafkaRequest.Status == string(constants2.KafkaRequestStatusDeleting) {
+							} else if kafkaRequest.Status == string(constants.KafkaRequestStatusDeleting) {
 								c["deleting"]++
 							} else {
 								c["rejected"]++
@@ -374,12 +374,12 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 							}
 							return nil
 						},
-						UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
-							if status == constants2.KafkaRequestStatusReady {
+						UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+							if status == constants.KafkaRequestStatusReady {
 								c["ready"]++
-							} else if status == constants2.KafkaRequestStatusDeleting {
+							} else if status == constants.KafkaRequestStatusDeleting {
 								c["deleting"]++
-							} else if status == constants2.KafkaRequestStatusFailed {
+							} else if status == constants.KafkaRequestStatusFailed {
 								c["failed"]++
 							}
 							return true, nil
@@ -426,13 +426,13 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 							return &dbapi.KafkaRequest{
 								ClusterID:     "test-cluster-id",
-								Status:        constants2.KafkaRequestStatusSuspending.String(),
+								Status:        constants.KafkaRequestStatusSuspending.String(),
 								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
 								RoutesCreated: true,
 							}, nil
 						},
-						UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
-							if status == constants2.KafkaRequestStatusSuspended {
+						UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+							if status == constants.KafkaRequestStatusSuspended {
 								c["suspended"]++
 							}
 							return true, nil
@@ -523,7 +523,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 							return &dbapi.KafkaRequest{
 								ClusterID:     "test-cluster-id",
-								Status:        constants2.KafkaRequestStatusResuming.String(),
+								Status:        constants.KafkaRequestStatusResuming.String(),
 								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
 								RoutesCreated: true,
 							}, nil
@@ -537,7 +537,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 							return nil
 						},
 						UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-							if kafkaRequest.Status == string(constants2.KafkaRequestStatusFailed) {
+							if kafkaRequest.Status == string(constants.KafkaRequestStatusFailed) {
 								if arrays.StringEmptyPredicate(kafkaRequest.FailedReason) {
 									return errors.GeneralError("Test failure error. FailedReason should not be empty")
 								}
@@ -631,7 +631,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 							return &dbapi.KafkaRequest{
 								ClusterID:     "test-cluster-id",
-								Status:        constants2.KafkaRequestStatusSuspended.String(),
+								Status:        constants.KafkaRequestStatusSuspended.String(),
 								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
 								RoutesCreated: true,
 							}, nil
@@ -762,7 +762,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 						return &dbapi.KafkaRequest{
 							ClusterID:             "test-cluster-id",
-							Status:                constants2.KafkaRequestStatusProvisioning.String(),
+							Status:                constants.KafkaRequestStatusProvisioning.String(),
 							Routes:                []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
 							RoutesCreated:         true,
 							ActualKafkaVersion:    "kafka-original-ver-0",
@@ -779,7 +779,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 						v.kafkaIBPUpgrading = kafkaRequest.KafkaIBPUpgrading
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
@@ -824,7 +824,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 						return &dbapi.KafkaRequest{
 							ClusterID:             "test-cluster-id",
-							Status:                constants2.KafkaRequestStatusProvisioning.String(),
+							Status:                constants.KafkaRequestStatusProvisioning.String(),
 							Routes:                []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
 							RoutesCreated:         true,
 							ActualKafkaVersion:    "kafka-1",
@@ -844,7 +844,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 						v.kafkaIBPUpgrading = kafkaRequest.KafkaIBPUpgrading
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
@@ -888,7 +888,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 						return &dbapi.KafkaRequest{
 							ClusterID:     "test-cluster-id",
-							Status:        constants2.KafkaRequestStatusProvisioning.String(),
+							Status:        constants.KafkaRequestStatusProvisioning.String(),
 							Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
 							RoutesCreated: true,
 						}, nil
@@ -902,7 +902,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 						v.kafkaIBPUpgrading = kafkaRequest.KafkaIBPUpgrading
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
@@ -947,7 +947,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 						return &dbapi.KafkaRequest{
 							ClusterID:     "test-cluster-id",
-							Status:        constants2.KafkaRequestStatusProvisioning.String(),
+							Status:        constants.KafkaRequestStatusProvisioning.String(),
 							Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
 							RoutesCreated: true,
 						}, nil
@@ -961,7 +961,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 						v.kafkaIBPUpgrading = kafkaRequest.KafkaIBPUpgrading
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return true, nil
 					},
 					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {

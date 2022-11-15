@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	mockClusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
@@ -30,7 +30,7 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 			name: "Should throw an error if listing kafkas fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
 						return nil, svcErrors.GeneralError("failed to list kafka requests")
 					},
 				},
@@ -49,11 +49,11 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
 						return []*dbapi.KafkaRequest{
 							mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 								kafkaRequest.ClusterID = ""
-								kafkaRequest.Status = constants2.KafkaRequestStatusProvisioning.String()
+								kafkaRequest.Status = constants.KafkaRequestStatusProvisioning.String()
 							}),
 						}, nil
 					},
@@ -71,7 +71,7 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 			name: "Should not throw an error if listing kafkas returns an empty list",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
 						return []*dbapi.KafkaRequest{}, nil
 					},
 				},
@@ -90,11 +90,11 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
 						return []*dbapi.KafkaRequest{
 							mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 								kafkaRequest.ClusterID = ""
-								kafkaRequest.Status = constants2.KafkaRequestStatusProvisioning.String()
+								kafkaRequest.Status = constants.KafkaRequestStatusProvisioning.String()
 							}),
 						}, nil
 					},

@@ -3,11 +3,11 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"strings"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
@@ -209,7 +209,7 @@ func (c clusterService) UpdateStatus(cluster api.Cluster, status api.ClusterStat
 	}
 
 	if status == api.ClusterReady || status == api.ClusterFailed {
-		metrics.IncreaseClusterTotalOperationsCountMetric(constants2.ClusterOperationCreate)
+		metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationCreate)
 	}
 
 	dbConn := c.connectionFactory.New()
@@ -227,7 +227,7 @@ func (c clusterService) UpdateStatus(cluster api.Cluster, status api.ClusterStat
 	}
 
 	if status == api.ClusterReady {
-		metrics.IncreaseClusterSuccessOperationsCountMetric(constants2.ClusterOperationCreate)
+		metrics.IncreaseClusterSuccessOperationsCountMetric(constants.ClusterOperationCreate)
 	}
 
 	return nil
@@ -334,14 +334,14 @@ func (c clusterService) GetClientId(clusterId string) (string, error) {
 
 func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceError {
 	dbConn := c.connectionFactory.New()
-	metrics.IncreaseClusterTotalOperationsCountMetric(constants2.ClusterOperationDelete)
+	metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationDelete)
 
 	if err := dbConn.Delete(&api.Cluster{}, api.Cluster{ClusterID: clusterID}).Error; err != nil {
 		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "Unable to delete cluster with cluster_id %s", clusterID)
 	}
 
 	glog.Infof("Cluster %s deleted successful", clusterID)
-	metrics.IncreaseClusterSuccessOperationsCountMetric(constants2.ClusterOperationDelete)
+	metrics.IncreaseClusterSuccessOperationsCountMetric(constants.ClusterOperationDelete)
 	return nil
 }
 
@@ -354,7 +354,7 @@ func (c clusterService) FindNonEmptyClusterById(clusterID string) (*api.Cluster,
 		ClusterID: clusterID,
 	}
 
-	subQuery := dbConn.Select("cluster_id").Where("status != ? AND cluster_id = ?", constants2.KafkaRequestStatusDeleting, clusterID).Model(dbapi.KafkaRequest{})
+	subQuery := dbConn.Select("cluster_id").Where("status != ? AND cluster_id = ?", constants.KafkaRequestStatusDeleting, clusterID).Model(dbapi.KafkaRequest{})
 	if err := dbConn.Where(clusterDetails).Where("cluster_id IN (?)", subQuery).First(cluster).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -499,11 +499,11 @@ func (c clusterService) UpdateMultiClusterStatus(clusterIds []string, status api
 
 	for rows := dbConn.RowsAffected; rows > 0; rows-- {
 		if status == api.ClusterFailed {
-			metrics.IncreaseClusterTotalOperationsCountMetric(constants2.ClusterOperationCreate)
+			metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationCreate)
 		}
 		if status == api.ClusterReady {
-			metrics.IncreaseClusterTotalOperationsCountMetric(constants2.ClusterOperationCreate)
-			metrics.IncreaseClusterSuccessOperationsCountMetric(constants2.ClusterOperationCreate)
+			metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationCreate)
+			metrics.IncreaseClusterSuccessOperationsCountMetric(constants.ClusterOperationCreate)
 		}
 	}
 
