@@ -121,7 +121,7 @@ func (s *scanner) Peek() (bool, *Token) {
 
 func (s *scanner) Token() *Token {
 	if s.pos < 0 || s.pos >= len(s.tokens) {
-		panic(errors.Errorf("Invalid scanner Position %d", s.pos))
+		panic(errors.Errorf("invalid scanner position %d", s.pos))
 	}
 	ret := s.tokens[s.pos]
 	return &ret

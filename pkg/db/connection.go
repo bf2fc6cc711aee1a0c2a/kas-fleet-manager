@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/golang/glog"
 	_ "github.com/lib/pq"
 	mocket "github.com/selvatico/go-mocket"
@@ -34,7 +35,7 @@ func NewConnectionFactory(config *DatabaseConfig) (*ConnectionFactory, func()) {
 		db, err = gorm.Open(postgres.Open(config.ConnectionString()), gormConfig)
 	} else {
 		// TODO what other dialects do we support?
-		panic(fmt.Sprintf("Unsupported DB dialect: %s", config.Dialect))
+		panic(fmt.Sprintf("unsupported DB dialect: %s", config.Dialect))
 	}
 	if err != nil {
 		panic(fmt.Sprintf(
@@ -47,7 +48,7 @@ func NewConnectionFactory(config *DatabaseConfig) (*ConnectionFactory, func()) {
 	}
 	sqlDB, sqlDBErr := db.DB()
 	if sqlDBErr != nil {
-		panic(fmt.Errorf("Unexpected connection error: %s", sqlDBErr))
+		panic(fmt.Errorf("unexpected connection error: %s", sqlDBErr))
 	}
 
 	sqlDB.SetMaxOpenConns(config.MaxOpenConnections)

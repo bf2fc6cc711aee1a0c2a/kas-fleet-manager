@@ -1,9 +1,10 @@
 package services
 
 import (
+	"strings"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"gorm.io/gorm"
-	"strings"
 )
 
 // Field names suspected to contain personally identifiable information
@@ -26,7 +27,7 @@ func HandleGetError(resourceType, field string, value interface{}, err error) *e
 	if IsRecordNotFoundError(err) {
 		return errors.NotFound("%s with %s='%v' not found", resourceType, field, value)
 	}
-	return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find %s with %s='%v'", resourceType, field, value)
+	return errors.NewWithCause(errors.ErrorGeneral, err, "unable to find %s with %s='%v'", resourceType, field, value)
 }
 
 func HandleGoneError(resourceType, field string, value interface{}) *errors.ServiceError {
@@ -47,7 +48,7 @@ func HandleDeleteError(resourceType string, field string, value interface{}, err
 			break
 		}
 	}
-	return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to delete %s with %s='%v'", resourceType, field, value)
+	return errors.NewWithCause(errors.ErrorGeneral, err, "unable to delete %s with %s='%v'", resourceType, field, value)
 }
 
 func IsRecordNotFoundError(err error) bool {
@@ -56,14 +57,14 @@ func IsRecordNotFoundError(err error) bool {
 
 func HandleCreateError(resourceType string, err error) *errors.ServiceError {
 	if strings.Contains(err.Error(), "violates unique constraint") {
-		return errors.Conflict("This %s already exists", resourceType)
+		return errors.Conflict("this %s already exists", resourceType)
 	}
-	return errors.GeneralError("Unable to create %s: %s", resourceType, err.Error())
+	return errors.GeneralError("unable to create %s: %s", resourceType, err.Error())
 }
 
 func HandleUpdateError(resourceType string, err error) *errors.ServiceError {
 	if strings.Contains(err.Error(), "violates unique constraint") {
-		return errors.Conflict("Changes to %s conflict with existing records", resourceType)
+		return errors.Conflict("changes to %s conflict with existing records", resourceType)
 	}
-	return errors.GeneralError("Unable to update %s: %s", resourceType, err.Error())
+	return errors.GeneralError("unable to update %s: %s", resourceType, err.Error())
 }

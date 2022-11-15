@@ -512,7 +512,7 @@ func Test_KafkaHandler_Create(t *testing.T) {
 						return dbapi.KafkaList{}, &api.PagingMeta{}, nil
 					},
 					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
-						return types.KafkaInstanceType("invalid"), errors.GeneralError("Unsupported plan provided")
+						return types.KafkaInstanceType("invalid"), errors.GeneralError("unsupported plan provided")
 					},
 				},
 				providerConfig: &supportedProviders,

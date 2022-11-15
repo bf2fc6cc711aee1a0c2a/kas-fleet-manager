@@ -84,12 +84,12 @@ func Test_StateMachine_InvalidPaths(t *testing.T) {
 		{
 			name:  "Invalid path - DONE",
 			path:  []string{"NEW", "ASSIGNED", "IN PROGRESS", "DONE"},
-			error: "Unexpected Token `DONE`",
+			error: "unexpected token `DONE`",
 		},
 		{
 			name:  "Invalid path - ASSIGNED",
 			path:  []string{"NEW", "ASSIGNED", "IN PROGRESS", "WAITING FOR REVIEW", "ASSIGNED"},
-			error: "Unexpected Token `ASSIGNED`",
+			error: "unexpected token `ASSIGNED`",
 		},
 		{
 			name:  "Invalid path - END STATE NOT REACHED",

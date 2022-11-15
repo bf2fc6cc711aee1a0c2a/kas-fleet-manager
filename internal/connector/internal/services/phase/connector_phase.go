@@ -80,7 +80,7 @@ func (c *ConnectorFSM) Perform(operation ConnectorOperation) (bool, *errors.Serv
 		case fsm.NoTransitionError:
 			return false, nil
 		default:
-			return false, errors.BadRequest("Cannot perform Connector operation [%s] in Namespace phase [%s] because %s",
+			return false, errors.BadRequest("cannot perform Connector operation [%s] in Namespace phase [%s] because %s",
 				operation, c.namespacePhase, err)
 		}
 	}

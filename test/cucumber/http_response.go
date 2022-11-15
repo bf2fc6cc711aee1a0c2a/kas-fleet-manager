@@ -116,7 +116,7 @@ func (s *TestScenario) theResponseShouldMatchText(expected string) error {
 			ToDate:   "",
 			Context:  1,
 		})
-		return fmt.Errorf("actual does not match expected, diff:\n%s\n", diff)
+		return fmt.Errorf("actual does not match expected, diff:\n%s", diff)
 	}
 	return nil
 }

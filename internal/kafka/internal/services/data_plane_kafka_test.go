@@ -54,7 +54,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				clusterId: "test-cluster-id",
 				status:    []*dbapi.DataPlaneKafkaStatus{},
 			},
-			want: errors.BadRequest("Cluster id test-cluster-id not found"),
+			want: errors.BadRequest("cluster id test-cluster-id not found"),
 			expectCounters: map[string]int{
 				"ready":     0,
 				"failed":    0,
@@ -84,7 +84,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 							if kafkaRequest.Status == string(constants.KafkaRequestStatusFailed) {
 								if strings.Contains(kafkaRequest.FailedReason, secretError) {
-									return errors.GeneralError("Test failure error. Expected FailedReason is empty")
+									return errors.GeneralError("test failure error. Expected FailedReason is empty")
 								}
 								c["failed"]++
 							} else if kafkaRequest.Status == string(constants.KafkaRequestStatusReady) {
@@ -354,7 +354,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 							if kafkaRequest.Status == string(constants.KafkaRequestStatusFailed) {
 								if !strings.Contains(kafkaRequest.FailedReason, nonSecretKafkaStatus) {
-									return errors.GeneralError("Test failure error. Expected FailedReason is empty")
+									return errors.GeneralError("test failure error. Expected FailedReason is empty")
 								}
 								c["failed"]++
 							} else if kafkaRequest.Status == string(constants.KafkaRequestStatusReady) {

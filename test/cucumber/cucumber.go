@@ -120,7 +120,7 @@ func (s *TestScenario) JsonMustMatch(actual, expected string, expand bool) error
 	var actualParsed interface{}
 	err := json.Unmarshal([]byte(actual), &actualParsed)
 	if err != nil {
-		return fmt.Errorf("error parsing actual json: %v\njson was:\n%s\n", err, actual)
+		return fmt.Errorf("error parsing actual json: %v\njson was:\n%s", err, actual)
 	}
 
 	var expectedParsed interface{}
@@ -133,7 +133,7 @@ func (s *TestScenario) JsonMustMatch(actual, expected string, expand bool) error
 	}
 
 	if err := json.Unmarshal([]byte(expanded), &expectedParsed); err != nil {
-		return fmt.Errorf("error parsing expected json: %v\njson was:\n%s\n", err, expanded)
+		return fmt.Errorf("error parsing expected json: %v\njson was:\n%s", err, expanded)
 	}
 
 	if !reflect.DeepEqual(expectedParsed, actualParsed) {
@@ -149,7 +149,7 @@ func (s *TestScenario) JsonMustMatch(actual, expected string, expand bool) error
 			ToDate:   "",
 			Context:  1,
 		})
-		return fmt.Errorf("actual does not match expected, diff:\n%s\n", diff)
+		return fmt.Errorf("actual does not match expected, diff:\n%s", diff)
 	}
 
 	return nil
@@ -193,7 +193,7 @@ func (s *TestScenario) Expand(value string, skippedVars []string) (result string
 					// handle int64 returned as float in json
 					return strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", next), "0"), ".")
 				case nil:
-					rerr = fmt.Errorf("field ${%s} not found in json response:\n%s\n", name, string(session.RespBytes))
+					rerr = fmt.Errorf("field ${%s} not found in json response:\n%s", name, string(session.RespBytes))
 					return ""
 				case error:
 					rerr = fmt.Errorf("failed to evaluate selection: %s: %v", name, next)
@@ -202,7 +202,7 @@ func (s *TestScenario) Expand(value string, skippedVars []string) (result string
 					return fmt.Sprintf("%s", next)
 				}
 			} else {
-				rerr = fmt.Errorf("field ${%s} not found in json response:\n%s\n", name, string(session.RespBytes))
+				rerr = fmt.Errorf("field ${%s} not found in json response:\n%s", name, string(session.RespBytes))
 				return ""
 			}
 		}
@@ -242,7 +242,7 @@ type TestSession struct {
 func (s *TestSession) RespJson() (interface{}, error) {
 	if s.respJson == nil {
 		if err := json.Unmarshal(s.RespBytes, &s.respJson); err != nil {
-			return nil, fmt.Errorf("error parsing json response: %v\nbody: %s\n", err, string(s.RespBytes))
+			return nil, fmt.Errorf("error parsing json response: %v\nbody: %s", err, string(s.RespBytes))
 		}
 
 		if s.Debug {

@@ -1,6 +1,11 @@
 package handlers
 
 import (
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
@@ -11,10 +16,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -52,7 +53,7 @@ func (h metricsHandler) FederateMetrics(w http.ResponseWriter, r *http.Request) 
 		if err.Code == errors.ErrorNotFound {
 			shared.HandleError(r, w, err)
 		} else {
-			glog.Errorf("error getting metrics: %v", err)
+			glog.Errorf("Error getting metrics: %v", err)
 			sentry.CaptureException(err)
 			shared.HandleError(r, w, &errors.ServiceError{
 				Code:     err.Code,

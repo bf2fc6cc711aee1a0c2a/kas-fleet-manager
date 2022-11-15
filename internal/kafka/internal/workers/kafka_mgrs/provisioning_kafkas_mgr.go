@@ -76,7 +76,7 @@ func (k *ProvisioningKafkaManager) Reconcile() []error {
 func (k *ProvisioningKafkaManager) reassignProvisioningKafka(kafka *dbapi.KafkaRequest) error {
 	cluster, e := k.clusterPlacementStrategy.FindCluster(kafka)
 	if e != nil || cluster == nil {
-		return errors.Errorf("Region %s cannot accept instance type: %s at this moment for kafka %s", kafka.Region, kafka.InstanceType, kafka.ID)
+		return errors.Errorf("region %s cannot accept instance type: %s at this moment for kafka %s", kafka.Region, kafka.InstanceType, kafka.ID)
 	}
 
 	kafka.ClusterID = cluster.ClusterID
@@ -110,7 +110,7 @@ func (k *ProvisioningKafkaManager) reassignProvisioningKafka(kafka *dbapi.KafkaR
 
 	updateErr := k.kafkaService.Update(kafka)
 	if updateErr != nil {
-		return errors.Errorf("Failed to update kafka %s in provisioning state", kafka.ID)
+		return errors.Errorf("failed to update kafka %s in provisioning state", kafka.ID)
 	}
 	return nil
 }

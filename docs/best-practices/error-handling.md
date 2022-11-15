@@ -114,3 +114,21 @@ if err := somefunc(); err != nil {
 err := someFunc();
 glog.Error(err)
 ```
+
+### Error messages should start wih lowercase and not end with punctuation 
+
+Exceptions can be made for abbreviations, function names that start with a capital letter, etc.
+
+#### Do
+
+```
+// example
+err := errors.GeneralError("unable to do something")
+```
+
+#### Don't
+
+```
+// example
+err := errors.GeneralError("Unable to do something.")
+```

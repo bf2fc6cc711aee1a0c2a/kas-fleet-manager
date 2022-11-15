@@ -2,13 +2,14 @@ package signalbus
 
 import (
 	"fmt"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 	"github.com/lib/pq"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 var _ SignalBus = &PgSignalBus{} // type check the interface is implemented.

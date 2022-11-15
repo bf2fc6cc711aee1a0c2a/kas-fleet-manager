@@ -69,7 +69,7 @@ func Test_ListSupportedKafkaInstanceTypes(t *testing.T) {
 			fields: fields{
 				supportedKafkaInstanceTypesService: &services.SupportedKafkaInstanceTypesServiceMock{
 					GetSupportedKafkaInstanceTypesByRegionFunc: func(providerId, regionId string) ([]config.KafkaInstanceType, *errors.ServiceError) {
-						return nil, errors.InstanceTypeNotSupported("instance type not supported")
+						return nil, errors.InstanceTypeNotSupported("instance Type not supported")
 					},
 				},
 			},

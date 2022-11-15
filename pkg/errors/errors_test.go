@@ -17,7 +17,7 @@ var (
 	e                   = ServiceError{}
 	testCause           = "failed to do something"
 	testError           = New(http.StatusBadRequest, testCause)
-	errorWithCause      = NewWithCause(ErrorBadRequest, testError, "Unable to list kafka requests: %s", testError.Error())
+	errorWithCause      = NewWithCause(ErrorBadRequest, testError, "unable to list kafka requests: %s", testError.Error())
 	genericErrorMessage = "something went wrong"
 )
 
@@ -129,7 +129,7 @@ func (e *errorWithoutStackTrace) Error() string {
 	return "Error"
 }
 func Test_NewWithCause(t *testing.T) {
-	internalServerCause := "Unspecified error"
+	internalServerCause := "unspecified error"
 	type args struct {
 		code   ServiceErrorCode
 		cause  error
@@ -145,7 +145,7 @@ func Test_NewWithCause(t *testing.T) {
 			args: args{
 				reason: internalServerCause,
 			},
-			want: &ServiceError{ErrorGeneral, "Unspecified error", http.StatusInternalServerError, nil},
+			want: &ServiceError{ErrorGeneral, "unspecified error", http.StatusInternalServerError, nil},
 		},
 		{
 			name: "should return a service error if the cause is not nil",
@@ -153,7 +153,7 @@ func Test_NewWithCause(t *testing.T) {
 				reason: internalServerCause,
 				cause:  GeneralError(genericErrorMessage),
 			},
-			want: &ServiceError{ErrorGeneral, "Unspecified error", http.StatusInternalServerError, GeneralError("")},
+			want: &ServiceError{ErrorGeneral, "unspecified error", http.StatusInternalServerError, GeneralError("")},
 		},
 		{
 			name: "should return a service error where there is no stack trace",
@@ -161,7 +161,7 @@ func Test_NewWithCause(t *testing.T) {
 				reason: internalServerCause,
 				cause:  &errorWithoutStackTrace{},
 			},
-			want: &ServiceError{ErrorGeneral, "Unspecified error", http.StatusInternalServerError, errors.WithStack(&errorWithoutStackTrace{})},
+			want: &ServiceError{ErrorGeneral, "unspecified error", http.StatusInternalServerError, errors.WithStack(&errorWithoutStackTrace{})},
 		},
 	}
 
@@ -194,9 +194,9 @@ func Test_FailedToCreateSSOClient(t *testing.T) {
 		{
 			name: "should return new ErrorFailedToCreateSSOClient error",
 			args: args{
-				reason: "Failed to create kafka client in the mas sso",
+				reason: "failed to create kafka client in the mas sso",
 			},
-			want: New(ErrorFailedToCreateSSOClient, "Failed to create kafka client in the mas sso"),
+			want: New(ErrorFailedToCreateSSOClient, "failed to create kafka client in the mas sso"),
 		},
 	}
 
@@ -222,9 +222,9 @@ func Test_FailedToGetSSOClientSecret(t *testing.T) {
 		{
 			name: "should return new ErrorFailedToGetSSOClientSecret error",
 			args: args{
-				reason: "Failed to get kafka client secret from the mas sso",
+				reason: "failed to get kafka client secret from the mas sso",
 			},
-			want: New(ErrorFailedToGetSSOClientSecret, "Failed to get kafka client secret from the mas sso"),
+			want: New(ErrorFailedToGetSSOClientSecret, "failed to get kafka client secret from the mas sso"),
 		},
 	}
 
@@ -250,9 +250,9 @@ func Test_FailedToGetSSOClient(t *testing.T) {
 		{
 			name: "should return new ErrorFailedToGetSSOClient error",
 			args: args{
-				reason: "Failed to get kafka client from the mas sso",
+				reason: "failed to get kafka client from the mas sso",
 			},
-			want: New(ErrorFailedToGetSSOClient, "Failed to get kafka client from the mas sso"),
+			want: New(ErrorFailedToGetSSOClient, "failed to get kafka client from the mas sso"),
 		},
 	}
 
@@ -278,9 +278,9 @@ func Test_FailedToDeleteSSOClient(t *testing.T) {
 		{
 			name: "should return new ErrorFailedToDeleteSSOClient error",
 			args: args{
-				reason: "Failed to delete kafka client from the mas sso",
+				reason: "failed to delete kafka client from the mas sso",
 			},
-			want: New(ErrorFailedToDeleteSSOClient, "Failed to delete kafka client from the mas sso"),
+			want: New(ErrorFailedToDeleteSSOClient, "failed to delete kafka client from the mas sso"),
 		},
 	}
 
@@ -306,9 +306,9 @@ func Test_FailedToCreateServiceAccount(t *testing.T) {
 		{
 			name: "should return new ErrorFailedToCreateServiceAccount error",
 			args: args{
-				reason: "Failed to create service account",
+				reason: "failed to create service account",
 			},
-			want: New(ErrorFailedToCreateServiceAccount, "Failed to create service account"),
+			want: New(ErrorFailedToCreateServiceAccount, "failed to create service account"),
 		},
 	}
 
@@ -334,9 +334,9 @@ func Test_FailedToDeleteServiceAccount(t *testing.T) {
 		{
 			name: "should return new ErrorFailedToDeleteServiceAccount error",
 			args: args{
-				reason: "Failed to delete service account",
+				reason: "failed to delete service account",
 			},
-			want: New(ErrorFailedToDeleteServiceAccount, "Failed to delete service account"),
+			want: New(ErrorFailedToDeleteServiceAccount, "failed to delete service account"),
 		},
 	}
 
@@ -362,9 +362,9 @@ func Test_MaxLimitForServiceAccountReached(t *testing.T) {
 		{
 			name: "should return new ErrorMaxLimitForServiceAccountsReached error",
 			args: args{
-				reason: "Max limit for the service account creation has reached",
+				reason: "max limit for the service account creation has reached",
 			},
-			want: New(ErrorMaxLimitForServiceAccountsReached, "Max limit for the service account creation has reached"),
+			want: New(ErrorMaxLimitForServiceAccountsReached, "max limit for the service account creation has reached"),
 		},
 	}
 
@@ -390,9 +390,9 @@ func Test_FailedToGetServiceAccount(t *testing.T) {
 		{
 			name: "should return new ErrorFailedToGetServiceAccount error",
 			args: args{
-				reason: "Failed to get service account",
+				reason: "failed to get service account",
 			},
-			want: New(ErrorFailedToGetServiceAccount, "Failed to get service account"),
+			want: New(ErrorFailedToGetServiceAccount, "failed to get service account"),
 		},
 	}
 
@@ -418,9 +418,9 @@ func Test_ServiceAccountNotFound(t *testing.T) {
 		{
 			name: "should return new ErrorServiceAccountNotFound error",
 			args: args{
-				reason: "Failed to find service account",
+				reason: "failed to find service account",
 			},
-			want: New(ErrorServiceAccountNotFound, "Failed to find service account"),
+			want: New(ErrorServiceAccountNotFound, "failed to find service account"),
 		},
 	}
 
@@ -446,9 +446,9 @@ func Test_RegionNotSupported(t *testing.T) {
 		{
 			name: "should return new ErrorRegionNotSupported error",
 			args: args{
-				reason: "Region not supported",
+				reason: "region not supported",
 			},
-			want: New(ErrorRegionNotSupported, "Region not supported"),
+			want: New(ErrorRegionNotSupported, "region not supported"),
 		},
 	}
 
@@ -502,9 +502,9 @@ func Test_ProviderNotSupported(t *testing.T) {
 		{
 			name: "should return new ErrorProviderNotSupported error",
 			args: args{
-				reason: "Provider not supported",
+				reason: "provider not supported",
 			},
-			want: New(ErrorProviderNotSupported, "Provider not supported"),
+			want: New(ErrorProviderNotSupported, "provider not supported"),
 		},
 	}
 
@@ -530,9 +530,9 @@ func Test_InstancePlanNotSupported(t *testing.T) {
 		{
 			name: "should return new ErrorInstancePlanNotSupported error",
 			args: args{
-				reason: "Instance plan not supported",
+				reason: "instance plan not supported",
 			},
-			want: New(ErrorInstancePlanNotSupported, "Instance plan not supported"),
+			want: New(ErrorInstancePlanNotSupported, "instance plan not supported"),
 		},
 	}
 
@@ -558,9 +558,9 @@ func Test_MalformedKafkaClusterName(t *testing.T) {
 		{
 			name: "should return new ErrorMalformedKafkaClusterName error",
 			args: args{
-				reason: "Kafka cluster name is invalid",
+				reason: "kafka cluster name is invalid",
 			},
-			want: New(ErrorMalformedKafkaClusterName, "Kafka cluster name is invalid"),
+			want: New(ErrorMalformedKafkaClusterName, "kafka cluster name is invalid"),
 		},
 	}
 
@@ -586,9 +586,9 @@ func Test_MalformedServiceAccountName(t *testing.T) {
 		{
 			name: "should return new ErrorMalformedServiceAccountName error",
 			args: args{
-				reason: "Service account name is invalid",
+				reason: "service account name is invalid",
 			},
-			want: New(ErrorMalformedServiceAccountName, "Service account name is invalid"),
+			want: New(ErrorMalformedServiceAccountName, "service account name is invalid"),
 		},
 	}
 
@@ -614,9 +614,9 @@ func Test_MalformedServiceAccountDesc(t *testing.T) {
 		{
 			name: "should return new ErrorMalformedServiceAccountDesc error",
 			args: args{
-				reason: "Service account desc is invalid",
+				reason: "service account desc is invalid",
 			},
-			want: New(ErrorMalformedServiceAccountDesc, "Service account desc is invalid"),
+			want: New(ErrorMalformedServiceAccountDesc, "service account desc is invalid"),
 		},
 	}
 
@@ -642,9 +642,9 @@ func Test_MalformedServiceAccountId(t *testing.T) {
 		{
 			name: "should return new ErrorMalformedServiceAccountId error",
 			args: args{
-				reason: "Service account id is invalid",
+				reason: "service account id is invalid",
 			},
-			want: New(ErrorMalformedServiceAccountId, "Service account id is invalid"),
+			want: New(ErrorMalformedServiceAccountId, "service account id is invalid"),
 		},
 	}
 
@@ -691,9 +691,9 @@ func Test_MinimumFieldLengthNotReached(t *testing.T) {
 		{
 			name: "should return new ErrorMinimumFieldLength error",
 			args: args{
-				reason: "Minimum field length not reached",
+				reason: "minimum field length not reached",
 			},
-			want: New(ErrorMinimumFieldLength, "Minimum field length not reached"),
+			want: New(ErrorMinimumFieldLength, "minimum field length not reached"),
 		},
 	}
 
@@ -719,9 +719,9 @@ func Test_MaximumFieldLengthExceeded(t *testing.T) {
 		{
 			name: "should return new MaximumFieldLength error",
 			args: args{
-				reason: "Maximum field length has been depassed",
+				reason: "maximum field length has been depassed",
 			},
-			want: New(ErrorMaximumFieldLength, "Maximum field length has been depassed"),
+			want: New(ErrorMaximumFieldLength, "maximum field length has been depassed"),
 		},
 	}
 
@@ -768,9 +768,9 @@ func Test_FailedToParseQueryParms(t *testing.T) {
 		{
 			name: "should return new BadRequest error",
 			args: args{
-				reason: "Bad request",
+				reason: "bad request",
 			},
-			want: New(ErrorBadRequest, "Bad request"),
+			want: New(ErrorBadRequest, "bad request"),
 		},
 	}
 
@@ -896,9 +896,9 @@ func Test_TermsNotAccepted(t *testing.T) {
 		{
 			name: "should return new ErrorTermsNotAccepted error",
 			args: args{
-				reason: "Required terms have not been accepted",
+				reason: "required terms have not been accepted",
 			},
-			want: New(ErrorTermsNotAccepted, "Required terms have not been accepted"),
+			want: New(ErrorTermsNotAccepted, "required terms have not been accepted"),
 		},
 	}
 
@@ -924,9 +924,9 @@ func Test_Unauthenticated(t *testing.T) {
 		{
 			name: "should return new ErrorUnauthenticated error",
 			args: args{
-				reason: "Account authentication could not be verified",
+				reason: "account authentication could not be verified",
 			},
-			want: New(ErrorUnauthenticated, "Account authentication could not be verified"),
+			want: New(ErrorUnauthenticated, "account authentication could not be verified"),
 		},
 	}
 
@@ -952,9 +952,9 @@ func Test_Maintenance(t *testing.T) {
 		{
 			name: "should return new ErrorServiceIsUnderMaintenance error",
 			args: args{
-				reason: "Unable to perform this action, as the service is currently under maintenance",
+				reason: "unable to perform this action, as the service is currently under maintenance",
 			},
-			want: New(ErrorServiceIsUnderMaintenance, "Unable to perform this action, as the service is currently under maintenance"),
+			want: New(ErrorServiceIsUnderMaintenance, "unable to perform this action, as the service is currently under maintenance"),
 		},
 	}
 
@@ -980,9 +980,9 @@ func Test_MaximumAllowedInstanceReached(t *testing.T) {
 		{
 			name: "should return new ErrorMaxAllowedInstanceReached error",
 			args: args{
-				reason: "Forbidden to create more instances than the maximum allowed",
+				reason: "forbidden to create more instances than the maximum allowed",
 			},
-			want: New(ErrorMaxAllowedInstanceReached, "Forbidden to create more instances than the maximum allowed"),
+			want: New(ErrorMaxAllowedInstanceReached, "forbidden to create more instances than the maximum allowed"),
 		},
 	}
 
@@ -1008,9 +1008,9 @@ func Test_TooManyKafkaInstancesReached(t *testing.T) {
 		{
 			name: "should return new ErrorTooManyKafkaInstancesReached error",
 			args: args{
-				reason: "The maximum number of allowed kafka instances has been reached",
+				reason: "the maximum number of allowed kafka instances has been reached",
 			},
-			want: New(ErrorTooManyKafkaInstancesReached, "The maximum number of allowed kafka instances has been reached"),
+			want: New(ErrorTooManyKafkaInstancesReached, "the maximum number of allowed kafka instances has been reached"),
 		},
 	}
 
@@ -1036,9 +1036,9 @@ func Test_Validation(t *testing.T) {
 		{
 			name: "should return new ErrorValidation error",
 			args: args{
-				reason: "General validation failure",
+				reason: "general validation failure",
 			},
-			want: New(ErrorValidation, "General validation failure"),
+			want: New(ErrorValidation, "general validation failure"),
 		},
 	}
 
@@ -1064,9 +1064,9 @@ func Test_MalformedRequest(t *testing.T) {
 		{
 			name: "should return new ErrorMalformedRequest error",
 			args: args{
-				reason: "Unable to read request body",
+				reason: "unable to read request body",
 			},
-			want: New(ErrorMalformedRequest, "Unable to read request body"),
+			want: New(ErrorMalformedRequest, "unable to read request body"),
 		},
 	}
 

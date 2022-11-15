@@ -45,7 +45,7 @@ func (c *ClusterFSM) Perform(operation ClusterOperation) (bool, *errors.ServiceE
 		case fsm.NoTransitionError:
 			return false, nil
 		default:
-			return false, errors.BadRequest("Cannot perform Cluster operation [%s] because %s",
+			return false, errors.BadRequest("cannot perform Cluster operation [%s] because %s",
 				operation, err)
 		}
 	}

@@ -1711,7 +1711,7 @@ Feature: connector agent API
       "id": "9",
       "kind": "Error",
       "operation_id": "${response.operation_id}",
-      "reason": "Unable to update Connector namespace: KAFKAS-MGMT-21: invalid namespace phase update from ready to deleted, or namespace not empty"
+      "reason": "unable to update Connector namespace: KAFKAS-MGMT-21: invalid namespace phase update from ready to deleted, or namespace not empty"
     }
     """
 
@@ -1751,7 +1751,7 @@ Feature: connector agent API
       "id": "9",
       "kind": "Error",
       "operation_id": "${response.operation_id}",
-      "reason": "Unable to update Connector namespace: KAFKAS-MGMT-21: invalid namespace phase update from ready to deleted, or namespace not empty"
+      "reason": "unable to update Connector namespace: KAFKAS-MGMT-21: invalid namespace phase update from ready to deleted, or namespace not empty"
     }
     """
 
@@ -2137,7 +2137,7 @@ Feature: connector agent API
       "id": "9",
       "kind": "Error",
       "operation_id": "${response.operation_id}",
-      "reason": "CONNECTOR-MGMT-9: Unable to update Connector namespace: CONNECTOR-MGMT-7: Connector namespace with id='invalid_namespace_id' not found"
+      "reason": "CONNECTOR-MGMT-9: unable to update Connector namespace: CONNECTOR-MGMT-7: Connector namespace with id='invalid_namespace_id' not found"
     }
     """
 

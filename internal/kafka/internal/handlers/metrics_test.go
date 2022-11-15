@@ -87,7 +87,7 @@ func Test_metricsHandler_FederateMetrics(t *testing.T) {
 			fields: fields{
 				service: &services.ObservatoriumServiceMock{
 					GetMetricsByKafkaIdFunc: func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *errors.ServiceError) {
-						return "", errors.GeneralError("Failed to get metrics by kafka Id")
+						return "", errors.GeneralError("failed to get metrics by kafka Id")
 					},
 				},
 			},
@@ -101,7 +101,7 @@ func Test_metricsHandler_FederateMetrics(t *testing.T) {
 			fields: fields{
 				service: &services.ObservatoriumServiceMock{
 					GetMetricsByKafkaIdFunc: func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *errors.ServiceError) {
-						return "", errors.New(errors.ErrorNotFound, "Failed to get metrics by kafka Id")
+						return "", errors.New(errors.ErrorNotFound, "failed to get metrics by kafka Id")
 					},
 				},
 			},
@@ -164,7 +164,7 @@ func Test_metricsHandler_GetMetricsByRangeQuery(t *testing.T) {
 			fields: fields{
 				service: &services.ObservatoriumServiceMock{
 					GetMetricsByKafkaIdFunc: func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *errors.ServiceError) {
-						return "", errors.New(errors.ErrorNotFound, "Failed to get metrics by kafka Id")
+						return "", errors.New(errors.ErrorNotFound, "failed to get metrics by kafka Id")
 					},
 				},
 			},
@@ -229,7 +229,7 @@ func Test_metricsHandler_GetMetricsByInstantQuery(t *testing.T) {
 			fields: fields{
 				service: &services.ObservatoriumServiceMock{
 					GetMetricsByKafkaIdFunc: func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *errors.ServiceError) {
-						return "", errors.New(errors.ErrorNotFound, "Failed to get metrics by kafka Id")
+						return "", errors.New(errors.ErrorNotFound, "failed to get metrics by kafka Id")
 					},
 				},
 			},

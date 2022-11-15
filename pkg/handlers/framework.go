@@ -73,7 +73,7 @@ func Handle(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, httpStat
 		//err = json.Unmarshal(bytes, &cfg.MarshalInto)
 
 		if err != nil {
-			errorHandler(r, w, cfg, errors.MalformedRequest("Invalid request format: %s", err))
+			errorHandler(r, w, cfg, errors.MalformedRequest("invalid request format: %s", err))
 			return
 		}
 	}

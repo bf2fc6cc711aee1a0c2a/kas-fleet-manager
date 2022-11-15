@@ -52,7 +52,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 
 	openAPIDefinitions, err := shared.LoadOpenAPISpecFromYAML(openapicontents.ConnectorMgmtOpenAPIYAMLBytes())
 	if err != nil {
-		return errors.Wrap(err, "Can't load OpenAPI specification")
+		return errors.Wrap(err, "can't load OpenAPI specification")
 	}
 
 	//  /api/connector_mgmt

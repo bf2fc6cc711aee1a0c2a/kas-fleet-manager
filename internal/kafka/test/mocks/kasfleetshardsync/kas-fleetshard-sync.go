@@ -44,7 +44,7 @@ var defaultUpdateDataplaneClusterStatusFunc mockKasFleetshardSyncUpdateDataPlane
 		Status: api.ClusterWaitingForKasFleetShardOperator,
 	})
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve a list of clusters in a '%s' state: %s", api.ClusterWaitingForKasFleetShardOperator, err)
+		return fmt.Errorf("unable to retrieve a list of clusters in a '%s' state: %s", api.ClusterWaitingForKasFleetShardOperator, err)
 	}
 
 	for _, cluster := range clusters {
@@ -90,7 +90,7 @@ var defaultUpdateKafkaStatusFunc mockKasFleetshardSyncupdateKafkaClusterStatusFu
 		Status: api.ClusterReady,
 	})
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve a list of clusters in a '%s' state: %s", api.ClusterReady, err)
+		return fmt.Errorf("unable to retrieve a list of clusters in a '%s' state: %s", api.ClusterReady, err)
 	}
 
 	dataplaneClusters = append(dataplaneClusters, readyDataplaneClusters...)
@@ -99,7 +99,7 @@ var defaultUpdateKafkaStatusFunc mockKasFleetshardSyncupdateKafkaClusterStatusFu
 		Status: api.ClusterFull,
 	})
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve a list of clusters in a '%s' state: %s", api.ClusterFull, err)
+		return fmt.Errorf("unable to retrieve a list of clusters in a '%s' state: %s", api.ClusterFull, err)
 	}
 
 	dataplaneClusters = append(dataplaneClusters, fullDataplaneClusters...)

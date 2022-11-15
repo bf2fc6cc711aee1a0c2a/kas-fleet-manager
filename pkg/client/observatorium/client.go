@@ -180,8 +180,8 @@ func (c *Client) QueryRawRange(query string, bounds pV1.Range) Metric {
 
 	m, ok := values.(pModel.Matrix)
 	if !ok {
-		logger.Logger.Errorf("Prometheus client got data of type %T, but expected model.Matrix", values)
-		return Metric{Err: errors.Errorf("Prometheus client got data of type %T, but expected model.Matrix", values)}
+		logger.Logger.Errorf("prometheus client got data of type %T, but expected model.Matrix", values)
+		return Metric{Err: errors.Errorf("prometheus client got data of type %T, but expected model.Matrix", values)}
 
 	}
 	return Metric{Matrix: m}
@@ -199,8 +199,8 @@ func (c *Client) QueryRaw(query string) Metric {
 
 	v, ok := values.(pModel.Vector)
 	if !ok {
-		logger.Logger.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)
-		return Metric{Err: errors.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)}
+		logger.Logger.Errorf("prometheus client got data of type %T, but expected model.Vector", values)
+		return Metric{Err: errors.Errorf("prometheus client got data of type %T, but expected model.Vector", values)}
 	}
 	return Metric{Vector: v}
 

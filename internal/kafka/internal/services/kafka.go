@@ -184,7 +184,7 @@ func (k *kafkaService) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaReq
 }
 
 func (k *kafkaService) capacityAvailableForRegionAndInstanceType(instTypeRegCapacity *int, kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
-	errMessage := fmt.Sprintf("Failed to check kafka capacity for region '%s' and instance type '%s'", kafkaRequest.Region, kafkaRequest.InstanceType)
+	errMessage := fmt.Sprintf("failed to check kafka capacity for region '%s' and instance type '%s'", kafkaRequest.Region, kafkaRequest.InstanceType)
 
 	dbConn := k.connectionFactory.New()
 
@@ -370,22 +370,22 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 		return err
 	}
 	if !hasCapacity {
-		errorMsg := fmt.Sprintf("Capacity exhausted in '%s' region for '%s' instance type", kafkaRequest.Region, kafkaRequest.InstanceType)
+		errorMsg := fmt.Sprintf("capacity exhausted in '%s' region for '%s' instance type", kafkaRequest.Region, kafkaRequest.InstanceType)
 		logger.Logger.Warningf(errorMsg)
-		return errors.TooManyKafkaInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType))
+		return errors.TooManyKafkaInstancesReached(fmt.Sprintf("region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType))
 	}
 
 	if !k.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		cluster, e := k.clusterPlacementStrategy.FindCluster(kafkaRequest)
 		if e != nil || cluster == nil {
-			msg := fmt.Sprintf("No available cluster found for Kafka instance type '%s' in region '%s'", kafkaRequest.InstanceType, kafkaRequest.Region)
+			msg := fmt.Sprintf("no available cluster found for Kafka instance type '%s' in region '%s'", kafkaRequest.InstanceType, kafkaRequest.Region)
 			if e != nil {
 				logger.Logger.Error(fmt.Errorf("%s:%w", msg, e))
 			} else {
 				logger.Logger.Infof(msg)
 			}
 
-			return errors.TooManyKafkaInstancesReached(fmt.Sprintf("Region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType))
+			return errors.TooManyKafkaInstancesReached(fmt.Sprintf("region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType))
 		}
 
 		kafkaRequest.ClusterID = cluster.ClusterID
@@ -597,7 +597,7 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 
 	err := dbConn.Error
 	if err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to deprovision kafka requests for users")
+		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to deprovision kafka requests for users")
 	}
 
 	if dbConn.RowsAffected >= 1 {
@@ -771,7 +771,7 @@ func (k *kafkaService) List(ctx context.Context, listArgs *services.ListArgument
 	if len(listArgs.Search) > 0 {
 		searchDbQuery, err := coreServices.NewQueryParser().Parse(listArgs.Search)
 		if err != nil {
-			return kafkaRequestList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list kafka requests: %s", err.Error())
+			return kafkaRequestList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "unable to list kafka requests: %s", err.Error())
 		}
 		dbConn = dbConn.Where(searchDbQuery.Query, searchDbQuery.Values...)
 	}
@@ -797,7 +797,7 @@ func (k *kafkaService) List(ctx context.Context, listArgs *services.ListArgument
 
 	// execute query
 	if err := dbConn.Find(&kafkaRequestList).Error; err != nil {
-		return kafkaRequestList, pagingMeta, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to list kafka requests")
+		return kafkaRequestList, pagingMeta, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka requests")
 	}
 
 	return kafkaRequestList, pagingMeta, nil
@@ -878,7 +878,7 @@ func (k *kafkaService) Update(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 		Where("status not IN (?)", kafkaDeletionStatuses) // ignore updates of kafka under deletion
 
 	if err := dbConn.Updates(kafkaRequest).Error; err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update kafka")
+		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update kafka")
 	}
 
 	return nil
@@ -890,7 +890,7 @@ func (k *kafkaService) Updates(kafkaRequest *dbapi.KafkaRequest, fields map[stri
 		Where("status not IN (?)", kafkaDeletionStatuses) // ignore updates of kafka under deletion
 
 	if err := dbConn.Updates(fields).Error; err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update kafka")
+		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update kafka")
 	}
 
 	return nil
@@ -898,7 +898,7 @@ func (k *kafkaService) Updates(kafkaRequest *dbapi.KafkaRequest, fields map[stri
 
 func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 	if !auth.GetIsAdminFromContext(ctx) {
-		return errors.New(errors.ErrorUnauthenticated, "User not authenticated")
+		return errors.New(errors.ErrorUnauthenticated, "user not authenticated")
 	}
 
 	// only updated specified columns to avoid changing other columns e.g Status
@@ -914,7 +914,7 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 		Model(kafkaRequest)
 
 	if err := dbConn.Updates(updatableFields).Error; err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update kafka")
+		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update kafka")
 	}
 
 	return nil
@@ -938,7 +938,7 @@ func (k *kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bo
 	}
 
 	if err := dbConn.Model(&dbapi.KafkaRequest{Meta: api.Meta{ID: id}}).Update("status", status).Error; err != nil {
-		return true, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update kafka status")
+		return true, errors.NewWithCause(errors.ErrorGeneral, err, "failed to update kafka status")
 	}
 
 	return true, nil
@@ -964,12 +964,12 @@ func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest,
 
 	awsClient, err := k.awsClientFactory.NewClient(awsConfig, route53Region)
 	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create aws client")
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to create aws client")
 	}
 
 	changeRecordsOutput, err := awsClient.ChangeResourceRecordSets(k.kafkaConfig.KafkaDomainName, domainRecordBatch)
 	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create domain record sets")
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to create domain record sets")
 	}
 
 	return changeRecordsOutput, nil
@@ -988,12 +988,12 @@ func (k *kafkaService) GetCNAMERecordStatus(kafkaRequest *dbapi.KafkaRequest) (*
 
 	awsClient, err := k.awsClientFactory.NewClient(awsConfig, route53Region)
 	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create aws client")
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to create aws client")
 	}
 
 	changeOutput, err := awsClient.GetChange(kafkaRequest.RoutesCreationId)
 	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to CNAME record status")
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to CNAME record status")
 	}
 
 	return &CNameRecordStatus{
@@ -1011,7 +1011,7 @@ func (k *kafkaService) CountByStatus(status []constants.KafkaStatus) ([]KafkaSta
 	dbConn := k.connectionFactory.New()
 	var results []KafkaStatusCount
 	if err := dbConn.Model(&dbapi.KafkaRequest{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count kafkas")
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafkas")
 	}
 
 	// if there is no count returned for a status from the above query because there is no kafkas in such a status,

@@ -20,11 +20,11 @@ func NewServeCommand(env *environments.Env) *cobra.Command {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			err := env.CreateServices()
 			if err != nil {
-				glog.Fatalf("unable to initialize environment: %s", err.Error())
+				glog.Fatalf("Unable to initialize environment: %s", err.Error())
 			}
 			info, e := buildinformation.GetBuildInfo()
 			if e != nil {
-				glog.Fatalf("unable to retrieve buildinfo: %s.", e.Error())
+				glog.Fatalf("Unable to retrieve buildinfo: %s.", e.Error())
 			}
 			glog.Infof("GoVersion: %q. Commit time: %q. Architecture: %q. Operating System: %q. VCS Type: %q. CommitSha: %q.", info.GetGoVersion(), info.GetVCSTime(), info.GetArchitecture(), info.GetOperatingSystem(), info.GetVCSType(), info.GetCommitSHA())
 		},

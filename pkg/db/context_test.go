@@ -255,7 +255,7 @@ func Test_FromContext(t *testing.T) {
 				ctx: c,
 			},
 			args: args{
-				err: errors.GeneralError("Could not retrieve transaction from context"),
+				err: errors.GeneralError("could not retrieve transaction from context"),
 			},
 			want:    nil,
 			wantErr: true,

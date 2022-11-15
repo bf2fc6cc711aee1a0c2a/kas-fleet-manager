@@ -291,7 +291,7 @@ func TestCachedCloudProviderRegions(t *testing.T) {
 	}
 
 	cloudProviderRegions, err := test.TestServices.CloudProvidersService.GetCachedCloudProvidersWithRegions()
-	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error:  %v", err)
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "error:  %v", err)
 
 	for _, regions := range cloudProviderRegions {
 		// regions.ID == "baremetal" | "libvirt" | "openstack" | "vsphere" have empty region list
@@ -334,7 +334,7 @@ func TestListCloudProviders(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers: %v", err)
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "error occurred when attempting to list cloud providers: %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 	g.Expect(cloudProviderList.Items).NotTo(gomega.BeEmpty(), "Expected cloud providers list")
 
@@ -354,7 +354,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 
 	ocmServer, err := setupOcmServerWithMockRegionsResp()
 	if err != nil {
-		t.Errorf("Failed to set mock ocm region list response")
+		t.Errorf("failed to set mock ocm region list response")
 	}
 	defer ocmServer.Close()
 
@@ -441,7 +441,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 	if resp1 != nil {
 		resp1.Body.Close()
 	}
-	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "error occurred when attempting to list cloud providers regions:  %v", err)
 	g.Expect(resp1.StatusCode).To(gomega.Equal(http.StatusOK))
 	g.Expect(cloudProviderRegionsList.Items).NotTo(gomega.BeEmpty(), "Expected aws cloud provider regions to return a non-empty list")
 
@@ -480,7 +480,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 	if resp1 != nil {
 		resp1.Body.Close()
 	}
-	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "error occurred when attempting to list cloud providers regions:  %v", err)
 	g.Expect(resp1.StatusCode).To(gomega.Equal(http.StatusOK))
 	g.Expect(cloudProviderRegionsList.Items).NotTo(gomega.BeEmpty(), "Expected aws cloud provider regions to return a non-empty list")
 
@@ -505,7 +505,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 		gcpResp.Body.Close()
 	}
 
-	g.Expect(gcpErr).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list gcp cloud providers regions:  %v", gcpErr)
+	g.Expect(gcpErr).NotTo(gomega.HaveOccurred(), "error occurred when attempting to list gcp cloud providers regions:  %v", gcpErr)
 	g.Expect(gcpResp.StatusCode).To(gomega.Equal(http.StatusOK))
 	g.Expect(gcpCloudProviderRegions.Items).NotTo(gomega.BeEmpty(), "Expected gcp cloud provider regions to return a non-empty list")
 
@@ -519,7 +519,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 	if respFromWrongID != nil {
 		respFromWrongID.Body.Close()
 	}
-	g.Expect(errFromWrongId).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", errFromWrongId)
+	g.Expect(errFromWrongId).NotTo(gomega.HaveOccurred(), "error occurred when attempting to list cloud providers regions:  %v", errFromWrongId)
 	g.Expect(respFromWrongID.StatusCode).To(gomega.Equal(http.StatusOK))
 	g.Expect(wrongCloudProviderList.Items).To(gomega.BeEmpty(), "Expected cloud providers regions list empty")
 }

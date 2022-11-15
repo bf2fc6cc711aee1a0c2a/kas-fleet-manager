@@ -755,7 +755,7 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 			}
 			if err != nil && tt.wantErrMsg != "" {
 				if !strings.Contains(err.Error(), tt.wantErrMsg) {
-					t.Errorf("Bad error message received: '%s'. Expecting to contain %s", err.Error(), tt.wantErrMsg)
+					t.Errorf("bad error message received: '%s'. Expecting to contain %s", err.Error(), tt.wantErrMsg)
 				}
 			}
 		})
@@ -3848,7 +3848,7 @@ func Test_kafkaService_VerifyAndUpdateKafkaAdmin(t *testing.T) {
 			args: args{
 				ctx: auth.SetIsAdminContext(context.TODO(), false),
 			},
-			want: errors.New(errors.ErrorUnauthenticated, "User not authenticated"),
+			want: errors.New(errors.ErrorUnauthenticated, "user not authenticated"),
 			setupFunc: func() {
 				mocket.Catcher.Reset()
 			},
@@ -3929,7 +3929,7 @@ func Test_kafkaService_GetCNAMERecordStatus(t *testing.T) {
 				awsConfig: awsConfig,
 				awsClientFactory: aws.NewMockClientFactory(&aws.AWSClientMock{
 					GetChangeFunc: func(changeId string) (*route53.GetChangeOutput, error) {
-						return nil, errors.GeneralError("Unable to CNAME record status")
+						return nil, errors.GeneralError("unable to CNAME record status")
 					},
 				}),
 			},

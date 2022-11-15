@@ -57,7 +57,7 @@ func (r Region) getLimitSetForInstanceTypeInRegion(t string) (*int, *errs.Servic
 	if it, found := r.SupportedInstanceTypes[t]; found {
 		return it.Limit, nil
 	}
-	return nil, errs.InstanceTypeNotSupported(fmt.Sprintf("Instance type: %s is not supported", t))
+	return nil, errs.InstanceTypeNotSupported(fmt.Sprintf("instance type: %s is not supported", t))
 }
 
 func (r Region) Validate(dataplaneClusterConfig *DataplaneClusterConfig) error {
@@ -77,7 +77,7 @@ func (r Region) Validate(dataplaneClusterConfig *DataplaneClusterConfig) error {
 		}
 
 		if regionInstanceType.Limit != nil && regionInstanceType.MinAvailableCapacitySlackStreamingUnits > *regionInstanceType.Limit {
-			return fmt.Errorf("Configured kafka minimum available capacity slack '%d' for instance type '%s' in region '%s' cannot be bigger than its region limit '%v'", regionInstanceType.MinAvailableCapacitySlackStreamingUnits, regionInstanceTypeName, r.Name, *regionInstanceType.Limit)
+			return fmt.Errorf("configured kafka minimum available capacity slack '%d' for instance type '%s' in region '%s' cannot be bigger than its region limit '%v'", regionInstanceType.MinAvailableCapacitySlackStreamingUnits, regionInstanceTypeName, r.Name, *regionInstanceType.Limit)
 		}
 
 		// validate instance type limits with the data plane cluster configuration when manual scaling is enabled
@@ -211,7 +211,7 @@ func (provider Provider) Validate(dataplaneClusterConfig *DataplaneClusterConfig
 	cloudProviderID := cloudproviders.ParseCloudProviderID(provider.Name)
 	cloudProviderIsKnown := knownCloudProviders.Contains(cloudProviderID)
 	if !cloudProviderIsKnown {
-		return fmt.Errorf("Cloud Provider '%s' is not a recognized Cloud Provider", cloudProviderID)
+		return fmt.Errorf("cloud Provider '%s' is not a recognized Cloud Provider", cloudProviderID)
 	}
 
 	// verify that machine type configuration are there during dynamic scaling mode

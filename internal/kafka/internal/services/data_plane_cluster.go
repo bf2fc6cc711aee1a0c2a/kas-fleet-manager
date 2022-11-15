@@ -48,7 +48,7 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 	}
 	if cluster == nil {
 		// 404 is used for authenticated requests. So to distinguish the errors, we use 400 here
-		return nil, errors.BadRequest("Cluster agent with ID '%s' not found", clusterID)
+		return nil, errors.BadRequest("cluster agent with ID '%s' not found", clusterID)
 	}
 
 	dynamicCapacityInfo := map[string]api.DynamicCapacityInfo{}
@@ -74,7 +74,7 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 	}
 	if cluster == nil {
 		// 404 is used for authenticated requests. So to distinguish the errors, we use 400 here
-		return errors.BadRequest("Cluster agent with ID '%s' not found", clusterID)
+		return errors.BadRequest("cluster agent with ID '%s' not found", clusterID)
 	}
 
 	if !d.clusterCanProcessStatusReports(cluster) {

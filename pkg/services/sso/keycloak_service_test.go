@@ -1419,7 +1419,7 @@ func Test_masService_CreateServiceAccount(t *testing.T) {
 				ctx: context.Background(),
 			},
 			want:    nil,
-			wantErr: errors.MaxLimitForServiceAccountReached("Max allowed number:0 of service accounts for user in org: has reached"),
+			wantErr: errors.MaxLimitForServiceAccountReached("max allowed number:0 of service accounts for user in org: has reached"),
 		},
 	}
 

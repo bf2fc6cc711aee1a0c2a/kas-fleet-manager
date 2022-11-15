@@ -27,7 +27,7 @@ func transactionMiddleware(db *ConnectionFactory, next http.Handler) http.Handle
 		ctx, err := db.NewContext(r.Context())
 		if err != nil {
 			ulog := logger.NewUHCLogger(ctx)
-			ulog.Error(errors.Wrap(err, "Could not create transaction"))
+			ulog.Error(errors.Wrap(err, "could not create transaction"))
 			// use default error to avoid exposing internals to users
 			err := serviceError.GeneralError("")
 			operationID := logger.GetOperationID(ctx)

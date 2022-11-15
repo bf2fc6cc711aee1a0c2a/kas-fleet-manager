@@ -92,7 +92,7 @@ func (k *connectorClusterService) CleanupDeployments() *errors.ServiceError {
 		Scan(&results).Error
 
 	if err != nil {
-		return errors.GeneralError("Unable to list connector deployment who's connectors have been deleted: %s", err)
+		return errors.GeneralError("unable to list connector deployment who's connectors have been deleted: %s", err)
 	}
 
 	for _, result := range results {
@@ -102,14 +102,14 @@ func (k *connectorClusterService) CleanupDeployments() *errors.ServiceError {
 				ID: result.DeploymentID,
 			},
 		}).Error; err != nil {
-			return errors.GeneralError("Unable to delete connector deployment status who's connectors have been deleted: %s", err)
+			return errors.GeneralError("unable to delete connector deployment status who's connectors have been deleted: %s", err)
 		}
 		if err := dbConn.Delete(&dbapi.ConnectorDeployment{
 			Model: db.Model{
 				ID: result.DeploymentID,
 			},
 		}).Error; err != nil {
-			return errors.GeneralError("Unable to delete connector deployment who's connectors have been deleted: %s", err)
+			return errors.GeneralError("unable to delete connector deployment who's connectors have been deleted: %s", err)
 		}
 	}
 
@@ -221,7 +221,7 @@ func GetValidClusterColumns() []string {
 // List returns all connector clusters visible to the user within the requested paging window.
 func (k *connectorClusterService) List(ctx context.Context, listArgs *services.ListArguments) (dbapi.ConnectorClusterList, *api.PagingMeta, *errors.ServiceError) {
 	if err := listArgs.Validate(GetValidClusterColumns()); err != nil {
-		return nil, nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list connector cluster requests: %s", err.Error())
+		return nil, nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "unable to list connector cluster requests: %s", err.Error())
 	}
 	var resourceList dbapi.ConnectorClusterList
 	dbConn := k.connectionFactory.New()
@@ -248,7 +248,7 @@ func (k *connectorClusterService) List(ctx context.Context, listArgs *services.L
 		queryParser := coreServices.NewQueryParser(GetValidClusterColumns()...)
 		searchDbQuery, err := queryParser.Parse(listArgs.Search)
 		if err != nil {
-			return resourceList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector cluster requests: %s", err.Error())
+			return resourceList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "unable to list connector cluster requests: %s", err.Error())
 		}
 		dbConn = dbConn.Where(strings.ReplaceAll(searchDbQuery.Query, "state", "status_phase"), searchDbQuery.Values...)
 	}
@@ -433,7 +433,7 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 		queryParser := coreServices.NewQueryParserWithColumnPrefix("connector_deployments", GetValidDeploymentColumns()...)
 		searchDbQuery, err := queryParser.Parse(listArgs.Search)
 		if err != nil {
-			return resourceList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector deployments requests: %s", err.Error())
+			return resourceList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "unable to list connector deployments requests: %s", err.Error())
 		}
 		dbConn = dbConn.Where(searchDbQuery.Query, searchDbQuery.Values...)
 	}
@@ -640,7 +640,7 @@ func (k *connectorClusterService) UpgradeConnectorsByOperator(ctx context.Contex
 	for cid, upgrade := range reqConnectors {
 		availableUpgrade, ok := availableConnectors[cid]
 		if !ok {
-			errorList = append(errorList, errors.Conflict("Operator upgrade not available for connector %s", cid))
+			errorList = append(errorList, errors.Conflict("operator upgrade not available for connector %s", cid))
 		}
 
 		// make sure other bits match
@@ -651,7 +651,7 @@ func (k *connectorClusterService) UpgradeConnectorsByOperator(ctx context.Contex
 		upgrade.Operator.Available.Version = availableUpgrade.Operator.Available.Version
 
 		if !reflect.DeepEqual(upgrade, availableUpgrade) {
-			errorList = append(errorList, errors.Conflict("Operator upgrade is outdated for connector %s", cid))
+			errorList = append(errorList, errors.Conflict("operator upgrade is outdated for connector %s", cid))
 		}
 	}
 	if len(errorList) != 0 {

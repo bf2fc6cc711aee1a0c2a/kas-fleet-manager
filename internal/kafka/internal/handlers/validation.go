@@ -104,44 +104,44 @@ func validateVersionsCompatibility(h *adminKafkaHandler, kafkaRequest *dbapi.Kaf
 
 		cluster, err := h.clusterService.FindClusterByID(kafkaRequest.ClusterID)
 		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find cluster associated with kafka request: %s", kafkaRequest.ID)
+			return errors.NewWithCause(errors.ErrorGeneral, err, "unable to find cluster associated with kafka request: %s", kafkaRequest.ID)
 		}
 		if cluster == nil {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to get cluster for kafka %s", kafkaRequest.ID))
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("unable to get cluster for kafka %s", kafkaRequest.ID))
 		}
 
 		if kafkaVersionAvailable, err := h.clusterService.IsStrimziKafkaVersionAvailableInCluster(cluster, desiredStrimziVersion, desiredKafkaVersion, desiredKafkaIBPVersion); err != nil {
 			return errors.Validation(err.Error())
 		} else if !kafkaVersionAvailable {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with kafka version: %s", kafkaRequest.ID, desiredKafkaVersion))
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("unable to update kafka: %s with kafka version: %s", kafkaRequest.ID, desiredKafkaVersion))
 		}
 
 		if strimziVersionReady, err := h.clusterService.CheckStrimziVersionReady(cluster, desiredStrimziVersion); err != nil {
 			return errors.Validation(err.Error())
 		} else if !strimziVersionReady {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with strimzi version: %s", kafkaRequest.ID, desiredStrimziVersion))
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("unable to update kafka: %s with strimzi version: %s", kafkaRequest.ID, desiredStrimziVersion))
 		}
 
 		currentIBPVersion, _ := arrays.FirstNonEmpty(kafkaRequest.ActualKafkaIBPVersion, desiredKafkaIBPVersion)
 
 		if vCompOldNewIbp, err := api.CompareBuildAwareSemanticVersions(currentIBPVersion, desiredKafkaIBPVersion); err != nil {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare actual ibp version: %s with desired ibp version: %s", currentIBPVersion, desiredKafkaIBPVersion))
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("unable to compare actual ibp version: %s with desired ibp version: %s", currentIBPVersion, desiredKafkaIBPVersion))
 		} else if vCompOldNewIbp > 0 {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s ibp version: %s to a lower version: %s", kafkaRequest.ID, desiredKafkaIBPVersion, currentIBPVersion))
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("unable to downgrade kafka: %s ibp version: %s to a lower version: %s", kafkaRequest.ID, desiredKafkaIBPVersion, currentIBPVersion))
 		}
 
 		if vCompIbpKafka, err := api.CompareBuildAwareSemanticVersions(desiredKafkaIBPVersion, desiredKafkaVersion); err != nil {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare kafka ibp version: %s with kafka version: %s", desiredKafkaIBPVersion, desiredKafkaVersion))
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("unable to compare kafka ibp version: %s with kafka version: %s", desiredKafkaIBPVersion, desiredKafkaVersion))
 		} else if vCompIbpKafka > 0 {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s ibp version: %s with kafka version: %s", kafkaRequest.ID, desiredKafkaIBPVersion, desiredKafkaVersion))
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("unable to update kafka: %s ibp version: %s with kafka version: %s", kafkaRequest.ID, desiredKafkaIBPVersion, desiredKafkaVersion))
 		}
 
 		currentKafkaVersion, _ := arrays.FirstNonEmpty(kafkaRequest.ActualKafkaVersion, desiredKafkaVersion)
 
 		if vCompKafka, err := api.CompareSemanticVersionsMajorAndMinor(currentKafkaVersion, desiredKafkaVersion); err != nil {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to compare desired kafka version: %s with actual kafka version: %s", desiredKafkaVersion, currentKafkaVersion))
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("unable to compare desired kafka version: %s with actual kafka version: %s", desiredKafkaVersion, currentKafkaVersion))
 		} else if vCompKafka > 0 {
-			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to downgrade kafka: %s version: %s to the following kafka version: %s", kafkaRequest.ID, currentKafkaVersion, desiredKafkaVersion))
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("unable to downgrade kafka: %s version: %s to the following kafka version: %s", kafkaRequest.ID, currentKafkaVersion, desiredKafkaVersion))
 		}
 
 		return nil
@@ -225,22 +225,22 @@ func getInstanceTypeAndSize(ctx context.Context, kafkaService services.KafkaServ
 		plan := config.Plan(kafkaRequestPayload.Plan)
 		instTypeFromPlan, err := plan.GetInstanceType()
 		if err != nil || instTypeFromPlan != string(instanceType) {
-			return "", "", errors.New(errors.ErrorBadRequest, fmt.Sprintf("Unable to detect instance type in plan provided: '%s'", kafkaRequestPayload.Plan))
+			return "", "", errors.New(errors.ErrorBadRequest, fmt.Sprintf("unable to detect instance type in plan provided: '%s'", kafkaRequestPayload.Plan))
 		}
 		size, err := plan.GetSizeID()
 		if err != nil {
-			return "", "", errors.New(errors.ErrorBadRequest, fmt.Sprintf("Unable to detect instance size in plan provided: '%s'", kafkaRequestPayload.Plan))
+			return "", "", errors.New(errors.ErrorBadRequest, fmt.Sprintf("unable to detect instance size in plan provided: '%s'", kafkaRequestPayload.Plan))
 		}
 		_, err = kafkaConfig.GetKafkaInstanceSize(instTypeFromPlan, size)
 
 		if err != nil {
-			return "", "", errors.InstancePlanNotSupported("Unsupported plan provided: '%s'", kafkaRequestPayload.Plan)
+			return "", "", errors.InstancePlanNotSupported("unsupported plan provided: '%s'", kafkaRequestPayload.Plan)
 		}
 		return instanceType.String(), size, nil
 	} else {
 		rSize, err := kafkaConfig.GetFirstAvailableSize(instanceType.String())
 		if err != nil {
-			return "", "", errors.InstanceTypeNotSupported("Unsupported kafka instance type: '%s' provided", instanceType.String())
+			return "", "", errors.InstanceTypeNotSupported("unsupported kafka instance type: '%s' provided", instanceType.String())
 		}
 		return instanceType.String(), rSize.Id, nil
 	}
@@ -285,7 +285,7 @@ func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService author
 		// only Kafka owner or organisation admin is allowed to perform the action
 		isOwner := (isOrgAdmin || kafkaRequest.Owner == username) && kafkaRequest.OrganisationId == orgId
 		if !isOwner {
-			return errors.New(errors.ErrorUnauthorized, "User not authorized to perform this action")
+			return errors.New(errors.ErrorUnauthorized, "user not authorized to perform this action")
 		}
 
 		if kafkaUpdateReq.Owner != nil {
@@ -296,10 +296,10 @@ func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService author
 
 			userValid, err := authService.CheckUserValid(*kafkaUpdateReq.Owner, orgId)
 			if err != nil {
-				return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to update kafka request owner")
+				return errors.NewWithCause(errors.ErrorGeneral, err, "unable to update kafka request owner")
 			}
 			if !userValid {
-				return errors.NewWithCause(errors.ErrorBadRequest, err, "User %s does not belong in your organization", *kafkaUpdateReq.Owner)
+				return errors.NewWithCause(errors.ErrorBadRequest, err, "user %s does not belong in your organization", *kafkaUpdateReq.Owner)
 			}
 		}
 
@@ -356,15 +356,15 @@ func ValidateKafkaStorageSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *
 		if stringSet(&storageSize) {
 			currentSize, err := resource.ParseQuantity(kafkaRequest.KafkaStorageSize)
 			if err != nil {
-				return errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current storage size: '%s'", kafkaRequest.KafkaStorageSize)
+				return errors.FieldValidationError("failed to update Kafka Request. Unable to parse current storage size: '%s'", kafkaRequest.KafkaStorageSize)
 			}
 			requestedSize, err := resource.ParseQuantity(storageSize)
 			if err != nil {
-				return errors.FieldValidationError("Failed to update Kafka Request. Unable to parse current requested size: '%s'", storageSize)
+				return errors.FieldValidationError("failed to update Kafka Request. Unable to parse current requested size: '%s'", storageSize)
 			}
 			currSize, _ := currentSize.AsInt64()
 			if requestedSize.CmpInt64(currSize) < 0 {
-				return errors.FieldValidationError("Failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", storageSize, kafkaRequest.KafkaStorageSize)
+				return errors.FieldValidationError("failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", storageSize, kafkaRequest.KafkaStorageSize)
 			}
 		}
 		return nil

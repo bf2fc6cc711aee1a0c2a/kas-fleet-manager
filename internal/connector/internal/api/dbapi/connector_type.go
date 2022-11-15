@@ -125,7 +125,7 @@ func (ct *ConnectorType) SetLabels(labels []string) {
 func (ct *ConnectorType) JsonSchemaAsMap() (map[string]interface{}, *errors.ServiceError) {
 	schema, err := ct.JsonSchema.Object()
 	if err != nil {
-		return schema, errors.GeneralError("Failed to convert json schema for connector type %q: %v", ct.ID, err)
+		return schema, errors.GeneralError("failed to convert json schema for connector type %q: %v", ct.ID, err)
 	}
 	return schema, nil
 }

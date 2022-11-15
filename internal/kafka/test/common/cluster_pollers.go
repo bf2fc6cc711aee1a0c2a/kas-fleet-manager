@@ -2,11 +2,12 @@ package common
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/pkg/errors"
-	"time"
 )
 
 const (
@@ -107,13 +108,13 @@ func WaitForClusterStatus(db *db.ConnectionFactory, clusterService *services.Clu
 				if currentStatus == api.ClusterFailed.String() {
 					// grab the logs
 					if foundCluster, err = (*clusterService).CheckClusterStatus(foundCluster); err != nil {
-						details = fmt.Sprintf("Error getting details: %s", err.Error())
+						details = fmt.Sprintf("error getting details: %s", err.Error())
 					} else {
 						details = cluster.StatusDetails
 					}
 				}
 
-				return false, errors.Errorf("Waiting for cluster '%s' to reach status '%s' but reached status '%s' instead. Details: %s", clusterId, desiredStatus.String(), foundCluster.Status.String(), details)
+				return false, errors.Errorf("waiting for cluster '%s' to reach status '%s' but reached status '%s' instead. Details: %s", clusterId, desiredStatus.String(), foundCluster.Status.String(), details)
 			}
 
 			return foundCluster.Status.CompareTo(desiredStatus) >= 0, nil

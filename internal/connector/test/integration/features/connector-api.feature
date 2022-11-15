@@ -1977,7 +1977,7 @@ Feature: create a connector
             "href": "/api/connector_mgmt/v1/errors/429",
             "id": "429",
             "kind": "Error",
-            "reason": "Too Many requests"
+            "reason": "Too many requests"
           },
           {
             "code": "CONNECTOR-MGMT-1000",

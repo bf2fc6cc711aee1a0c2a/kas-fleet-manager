@@ -96,7 +96,7 @@ func (poller *poller) Poll() error {
 			if errs >= maxErrors {
 				return finished, e
 			}
-			poller.outputFunction("Error ocurred when polling (will be ignored): %+v", e)
+			poller.outputFunction("error ocurred when polling (will be ignored): %+v", e)
 		}
 		return finished, nil
 	})
@@ -120,7 +120,7 @@ func (poller *poller) dumpDB() {
 		// query the resource
 		var results []map[string]interface{}
 		if err := poller.db.Table(key).Find(&results, value.filter).Error; err != nil {
-			poller.outputFunction("Error dumping the database: %+v - %s", err, key)
+			poller.outputFunction("error dumping the database: %+v - %s", err, key)
 		} else {
 			if len(results) > 0 {
 				var columns []string

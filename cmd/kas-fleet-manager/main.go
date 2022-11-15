@@ -26,7 +26,7 @@ func main() {
 		kafka.ConfigProviders(),
 	)
 	if err != nil {
-		glog.Fatalf("error initializing: %v", err)
+		glog.Fatalf("Error initializing: %v", err)
 	}
 	defer env.Cleanup()
 
@@ -44,7 +44,7 @@ func main() {
 		rootCmd.AddCommand(subcommands...)
 
 		if err := rootCmd.Execute(); err != nil {
-			glog.Fatalf("error running command: %v", err)
+			glog.Fatalf("Error running command: %v", err)
 		}
 
 	})

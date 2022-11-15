@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
@@ -174,11 +175,11 @@ func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	if c.ProviderType == api.ClusterProviderStandalone {
 		if c.ClusterDNS == "" {
-			return errors.Errorf("Standalone cluster with id %s does not have the cluster dns field provided", c.ClusterId)
+			return errors.Errorf("standalone cluster with id %s does not have the cluster dns field provided", c.ClusterId)
 		}
 
 		if c.Name == "" {
-			return errors.Errorf("Standalone cluster with id %s does not have the name field provided", c.ClusterId)
+			return errors.Errorf("standalone cluster with id %s does not have the name field provided", c.ClusterId)
 		}
 
 		if c.Status == api.ClusterAccepted {
@@ -437,7 +438,7 @@ func (c *DataplaneClusterConfig) readKubeconfig() error {
 	_, err := os.Stat(c.Kubeconfig)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return errors.Errorf("The kubeconfig file %s does not exist", c.Kubeconfig)
+			return errors.Errorf("the kubeconfig file %s does not exist", c.Kubeconfig)
 		}
 		return err
 	}

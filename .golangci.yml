@@ -13,6 +13,7 @@ linters:
     - bodyclose
     - exportloopref
     - forbidigo
+    - stylecheck
 linters-settings:
   forbidigo:
     forbid:
@@ -20,3 +21,5 @@ linters-settings:
       # When having table-driven tests it should be instantiated in each subtest.
       # See https://pkg.go.dev/github.com/onsi/gomega#NewWithT for an example
       - 'RegisterTestingT(# RegisterTestingT is deprecated. Use https://pkg.go.dev/github.com/onsi/gomega#NewWithT instead)?'
+  stylecheck:
+    checks: ["ST1005"]

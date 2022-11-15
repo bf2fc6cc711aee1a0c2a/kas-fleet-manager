@@ -93,7 +93,7 @@ func NewAPIServer(options ServerOptions) *ApiServer {
 
 	var err error
 	mainHandler, err = builder.Next(mainHandler).Build()
-	check(err, "Unable to create authentication handler", options.SentryConfig.Timeout)
+	check(err, "unable to create authentication handler", options.SentryConfig.Timeout)
 
 	mainHandler = gorillahandlers.CORS(
 		gorillahandlers.AllowedMethods([]string{
@@ -130,8 +130,8 @@ func (s *ApiServer) Serve(listener net.Listener) {
 		// Check https cert and key path path
 		if s.serverConfig.HTTPSCertFile == "" || s.serverConfig.HTTPSKeyFile == "" {
 			check(
-				fmt.Errorf("Unspecified required --https-cert-file, --https-key-file"),
-				"Can't start https server",
+				fmt.Errorf("unspecified required --https-cert-file, --https-key-file"),
+				"can't start https server",
 				s.sentryTimeout,
 			)
 		}

@@ -80,7 +80,7 @@ func ValidateServiceAccountClientId(value *string, field string, ssoProvider str
 func ValidateMaxLength(value *string, field string, maxVal *int) Validate {
 	return func() *errors.ServiceError {
 		if maxVal != nil && len(*value) > *maxVal {
-			return errors.MaximumFieldLengthExceeded("%s is not valid. Maximum length %d is required", field, *maxVal)
+			return errors.MaximumFieldLengthExceeded("%s is not valid, maximum length %d is required", field, *maxVal)
 		}
 		return nil
 	}
@@ -106,7 +106,7 @@ func ValidateLength(value *string, field string, min int, maxVal *int) Validate 
 func ValidateMinLength(value *string, field string, min int) Validate {
 	return func() *errors.ServiceError {
 		if value == nil || len(*value) < min {
-			return errors.MinimumFieldLengthNotReached("%s is not valid. Minimum length %d is required.", field, min)
+			return errors.MinimumFieldLengthNotReached("%s is not valid, minimum length %d is required", field, min)
 		}
 		return nil
 	}

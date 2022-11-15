@@ -292,7 +292,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
-			wantErr: errors.GeneralError(fmt.Sprintf("Failed to check kafka capacity for instance type '%s'", types.DEVELOPER.String())),
+			wantErr: errors.GeneralError(fmt.Sprintf("failed to check kafka capacity for instance type '%s'", types.DEVELOPER.String())),
 		},
 		{
 			name: "return an error when user in an organisation cannot create any more instances after exceeding allowed organisation limits",
@@ -321,7 +321,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			},
 			wantErr: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
-				Reason:   "Organization 'org-id' has reached a maximum number of 1 allowed streaming units.",
+				Reason:   "organization 'org-id' has reached a maximum number of 1 allowed streaming units",
 				Code:     5,
 			},
 			args: args{
@@ -355,7 +355,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 					WithReply(nil)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
-			wantErr: errors.InsufficientQuotaError("Insufficient Quota"),
+			wantErr: errors.InsufficientQuotaError("Insufficient quota"),
 		},
 		{
 			name: "return an error when user is not allowed in their org and they cannot create any more instances developer instances after exceeding default allowed user limits",
@@ -389,7 +389,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			},
 			wantErr: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
-				Reason:   "User 'username' has reached a maximum number of 1 allowed streaming units.",
+				Reason:   "user 'username' has reached a maximum number of 1 allowed streaming units",
 				Code:     5,
 			},
 			args: args{

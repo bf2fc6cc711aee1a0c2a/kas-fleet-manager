@@ -2,9 +2,10 @@ package state_machine
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"regexp"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // ParsedToken - Structure sent to the callback everytime a new ParsedToken is parsed
@@ -76,7 +77,7 @@ func (s *State) Move(value string) (*State, error) {
 		}
 	}
 
-	return nil, errors.Errorf("Unexpected Token `%s`", value)
+	return nil, errors.Errorf("unexpected token `%s`", value)
 }
 
 // Eof - this function must be called when the whole string has been parsed to check if the current state is a valid eof state

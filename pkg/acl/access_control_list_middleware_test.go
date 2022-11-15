@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 		kafka.ConfigProviders(),
 	)
 	if err != nil {
-		glog.Fatalf("error initializing: %v", err)
+		glog.Fatalf("Error initializing: %v", err)
 	}
 	env.MustResolveAll(&serverConfig)
 	os.Exit(m.Run())

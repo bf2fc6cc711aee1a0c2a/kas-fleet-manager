@@ -85,7 +85,7 @@ func Test_HandleGetError(t *testing.T) {
 				value:        "sample-id",
 				err:          cause,
 			},
-			want: serviceError.NewWithCause(serviceError.ErrorGeneral, cause, "Unable to find %s with id='sample-id'", resourceType),
+			want: serviceError.NewWithCause(serviceError.ErrorGeneral, cause, "unable to find %s with id='sample-id'", resourceType),
 		},
 		{
 			name: "Handler should return a not found error if record was not found in the database",
@@ -136,7 +136,7 @@ func Test_handleCreateError(t *testing.T) {
 				resourceType: resourceType,
 				err:          gorm.ErrInvalidField,
 			},
-			want: errors.GeneralError("Unable to create %s: %s", resourceType, gorm.ErrInvalidField.Error()),
+			want: errors.GeneralError("unable to create %s: %s", resourceType, gorm.ErrInvalidField.Error()),
 		},
 		{
 			name: "Handler should return a conflict error if creation error is due to violating unique constraints",
@@ -144,7 +144,7 @@ func Test_handleCreateError(t *testing.T) {
 				resourceType: resourceType,
 				err:          fmt.Errorf("transaction violates unique constraints"),
 			},
-			want: errors.Conflict("This %s already exists", resourceType),
+			want: errors.Conflict("this %s already exists", resourceType),
 		},
 	}
 	for _, testcase := range tests {
@@ -174,7 +174,7 @@ func Test_handleUpdateError(t *testing.T) {
 				resourceType: resourceType,
 				err:          gorm.ErrInvalidData,
 			},
-			want: errors.GeneralError("Unable to update %s: %s", resourceType, gorm.ErrInvalidData.Error()),
+			want: errors.GeneralError("unable to update %s: %s", resourceType, gorm.ErrInvalidData.Error()),
 		},
 		{
 			name: "Handler should return a conflict error if update error is due to violating unique constraints",
@@ -182,7 +182,7 @@ func Test_handleUpdateError(t *testing.T) {
 				resourceType: resourceType,
 				err:          fmt.Errorf("transaction violates unique constraints"),
 			},
-			want: errors.Conflict("Changes to %s conflict with existing records", resourceType),
+			want: errors.Conflict("changes to %s conflict with existing records", resourceType),
 		},
 	}
 	for _, testcase := range tests {

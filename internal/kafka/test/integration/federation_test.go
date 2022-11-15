@@ -32,10 +32,10 @@ func TestFederation_GetFederatedMetrics(t *testing.T) {
 
 	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+		t.Fatalf("failed to retrieve cluster details: %v", getClusterErr)
 	}
 	if clusterID == "" {
-		panic("No cluster found")
+		panic("no cluster found")
 	}
 
 	// create kafka
@@ -76,7 +76,7 @@ func TestFederation_GetFederatedMetrics(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to call federation endpoint:  %v", err)
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "error occurred when attempting to call federation endpoint:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 	g.Expect(federatedMetrics).NotTo(gomega.BeEmpty())
 }
@@ -99,10 +99,10 @@ func TestFederation_GetFederatedMetricsUsingMasSsoToken(t *testing.T) {
 
 	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+		t.Fatalf("failed to retrieve cluster details: %v", getClusterErr)
 	}
 	if clusterID == "" {
-		panic("No cluster found")
+		panic("no cluster found")
 	}
 
 	// create kafka
@@ -153,7 +153,7 @@ func TestFederation_GetFederatedMetricsUsingMasSsoToken(t *testing.T) {
 	if resp != nil {
 		resp.Body.Close()
 	}
-	g.Expect(err).NotTo(gomega.HaveOccurred(), "Error occurred when attempting to call federation endpoint:  %v", err)
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "error occurred when attempting to call federation endpoint:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 	g.Expect(federatedMetrics).NotTo(gomega.BeEmpty())
 }
