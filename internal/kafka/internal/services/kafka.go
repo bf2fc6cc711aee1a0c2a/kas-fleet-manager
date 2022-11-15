@@ -291,11 +291,11 @@ func (k *kafkaService) AssignInstanceType(owner string, organisationId string) (
 			continue
 		}
 		for _, bm := range instanceType.SupportedBillingModels {
-			hasRhosakQuota, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(owner, organisationId, types.KafkaInstanceType(instanceType.Id), bm)
+			hasQuota, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(owner, organisationId, types.KafkaInstanceType(instanceType.Id), bm)
 			if err != nil {
 				return "", err
 			}
-			if hasRhosakQuota {
+			if hasQuota {
 				return types.KafkaInstanceType(instanceType.Id), nil
 			}
 		}

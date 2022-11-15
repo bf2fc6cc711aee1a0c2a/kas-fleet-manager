@@ -6,45 +6,52 @@
 # The structure of registered service accounts is:
 #       - username: is the account of the user. The username must be unique
 #       - max_allowed_instances: is the maximum number of instances of a given instance_type/billing_model pair this user can create.
-#         This value is used if `allowed` field (inside `billing_model`) is 0 or omitted.
+#         This value is used if `max_allowed_instances` field (inside `billing_model`) is 0 or omitted.
 #         Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
-#       - granted_quota: the configuration of the quota granted to the user. The configuration is defined as follows:
-#         - instance_type_id: the id of the instance type for which we are configuring the quota
-#         - billing_models: the list of billing models that we are going to configure. This is defined as follows:
-#           - id: the id of the billing model we are going to configure
-#           - allowed: the number of instances of this type the user can create
-#           - expiration: after how many days the instance will expire (it will be suspended). Defaults to 0 (unlimited)
-#           - grace_period: after how many days after being suspended, the instance will be deleted. Defaults to 0 (unlimited)
+#       - granted_quota: the configuration of the quota granted to the user.
+#         If granted_quota is empty or is not defined, it will default to an array containing quota for `standard` instance.
+#         The configuration is defined as follows:
+#         - instance_type_id: the id of the instance type for which we are configuring the quota. This must match the IDs used in the KFM
+#           `supported_instance_types` configuration.
+#         - kafka_billing_models: the list of billing models that we are going to configure.
+#           If `kafka_billing_models` is empty or is not defined, the default value will be used (a list containing only the "standard" billing model)
+#           The set of accepted billing models, depends on the KafkaBillingModel configuration.
+#           The content of this field is defined as follows:
+#           - id: the id of the billing model we are going to configure. The set of valid IDs here is the set of the KafkaBillingModel IDs
+#             available in the 'supported_billing_models' set per instance type in the 'supported_instance_types' configuration.
+#           - max_allowed_instances: the number of instances of this type the user can create
+#           - expiration_days: after how many days the instance will expire (it will be suspended). Defaults to 0 (unlimited)
+#           - grace_period_days: when in suspended status, defines after how many days the instance will be deleted. Defaults to 0 (unlimited)
 registered_service_accounts:
   - username: testuser1@example.com
     max_allowed_instances: 3
     granted_quota:
       - instance_type_id: standard
-        billing_models:
+        kafka_billing_models:
           - id: standard
   - username: testuser2@example.com
     max_allowed_instances: 2
     granted_quota:
       - instance_type_id: standard
-        billing_models:
+        kafka_billing_models:
           - id: standard
   - username: testuser3@example.com
     max_allowed_instances: 2
     granted_quota:
       - instance_type_id: standard
-        billing_models:
+        kafka_billing_models:
           - id: standard
   - username: testuser4@example.com
     max_allowed_instances: 2
     granted_quota:
       - instance_type_id: standard
-        billing_models:
+        kafka_billing_models:
           - id: standard
   - username: testuser5@example.com
     max_allowed_instances: 2
     granted_quota:
       - instance_type_id: standard
-        billing_models:
+        kafka_billing_models:
           - id: standard
 
 # A list of registered users per organisation (see structure below). The list current contains known organisations - add yours if it is missing.
@@ -52,17 +59,19 @@ registered_service_accounts:
 # - "id": is the organisation id
 # - "any_user": "any_user": Controls whether to allow all users to create standard kafka instances with this organisation if "registered_users" list is empty.
 # - max_allowed_instances: is the maximum number of instances of a given instance_type/billing_model pair this user can create.
-#   This value is used if `allowed` field (inside `billing_model`) is 0 or omitted.
+#   This value is used if `max_allowed_instances` field (inside `billing_model`) is 0 or omitted.
 #   Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
 # - granted_quota: the configuration of the quota granted to the user. The configuration is defined as follows:
 #   - instance_type_id: the id of the instance type for which we are configuring the quota
-#   - billing_models: the list of billing models that we are going to configure. This is defined as follows:
-#     - id: the id of the billing model we are going to configure
-#     - allowed: the number of instances of this type the user can create
-#     - expiration: after how many days the instance will expire (it will be suspended). Defaults to 0 (unlimited)
-#     - grace_period: after how many days after being suspended, the instance will be deleted. Defaults to 0 (unlimited)
-# - "registered_users": A list of registered users for this organisation. If empty, no one is registered unless "any_user" is set to true.
-#      - username: is the account of the user. The username must be unique within the organisation and across organisations.
+#   - kafka_billing_models: the list of billing models that we are going to configure.
+#     If `kafka_billing_models` is empty or is not defined, the default value will be used (a list containing only the "standard" billing model)
+#     The set of accepted billing models, depends on the KafkaBillingModel configuration.
+#     The content of this field is defined as follows:
+#     - id: the id of the billing model we are going to configure. The set of valid IDs here is the set of the KafkaBillingModel IDs
+#       available in the 'supported_billing_models' set per instance type in the 'supported_instance_types' configuration.
+#     - max_allowed_instances: the number of instances of this type the user can create
+#     - expiration_days: after how many days the instance will expire (it will be suspended). Defaults to 0 (unlimited)
+#     - grace_period_days: when in suspended status, defines after how many days the instance will be deleted. Defaults to 0 (unlimited)
 registered_users_per_organisation:
     # The Control Plane team
   - id: 13640203
@@ -71,9 +80,9 @@ registered_users_per_organisation:
     registered_users: []
     granted_quota:
       - instance_type_id: standard
-        billing_models:
+        kafka_billing_models:
           - id: standard
-            allowed: 5
+            max_allowed_instances: 5
     # The App SRE team
   - id: 12147054
     any_user: true
@@ -81,9 +90,9 @@ registered_users_per_organisation:
     registered_users: []
     granted_quota:
       - instance_type_id: standard
-        billing_models:
+        kafka_billing_models:
           - id: standard
-            allowed: 1
+            max_allowed_instances: 1
     # The Kafka Instances team
   - id: 13639843
     any_user: true
@@ -91,9 +100,9 @@ registered_users_per_organisation:
     registered_users: []
     granted_quota:
       - instance_type_id: standard
-        billing_models:
+        kafka_billing_models:
           - id: standard
-            allowed: 1
+            max_allowed_instances: 1
     # The MK Security team
   - id: 13785172
     any_user: true
@@ -101,9 +110,9 @@ registered_users_per_organisation:
     registered_users: []
     granted_quota:
       - instance_type_id: standard
-        billing_models:
+        kafka_billing_models:
           - id: standard
-            allowed: 1
+            max_allowed_instances: 1
     # The Running the Service team
   - id: 13645369
     any_user: true
@@ -111,6 +120,6 @@ registered_users_per_organisation:
     registered_users: []
     granted_quota:
       - instance_type_id: standard
-        billing_models:
+        kafka_billing_models:
           - id: standard
-            allowed: 3
+            max_allowed_instances: 3

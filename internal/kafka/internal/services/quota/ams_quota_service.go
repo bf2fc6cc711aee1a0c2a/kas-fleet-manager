@@ -192,7 +192,7 @@ func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, e
 //   - Contains at least one AMS RelatedResources whose billing model is one
 //     of the supported Billing Models specified in
 //     supportedAMSRelatedResourceBillingModels
-//   - Has an "Allowed" value greater than 0
+//   - Has a "MaxAllowedInstances" value greater than 0
 //
 // An error is returned if the given organizationID has a QuotaCost
 // with an unsupported billing model and there are no supported billing models

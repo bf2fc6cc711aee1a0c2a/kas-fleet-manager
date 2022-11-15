@@ -6,31 +6,29 @@ import (
 )
 
 var defaultBillingModel = BillingModel{
-	ID:          "STANDARD",
-	Expiration:  0, // no expiration
-	GracePeriod: 0, // no grace period
+	Id:              "standard",
+	ExpirationDays:  0, // no expiration
+	GracePeriodDays: 0, // no grace period
 }
 
 var defaultBillingModels = []BillingModel{defaultBillingModel}
 
 type Quota struct {
-	InstanceTypeID string           `yaml:"instance_type_id"`
-	BillingModels  BillingModelList `yaml:"billing_models,omitempty"`
+	InstanceTypeID     string           `yaml:"instance_type_id"`
+	KafkaBillingModels BillingModelList `yaml:"kafka_billing_models,omitempty"`
 }
 
-func (quota *Quota) GetBillingModels() BillingModelList {
-	if len(quota.BillingModels) == 0 {
-		ret := defaultBillingModel
-		ret.Allowed = 0 // if 0, defaults to the MaxAllowedInstances
+func (quota *Quota) GetKafkaBillingModels() BillingModelList {
+	if len(quota.KafkaBillingModels) == 0 {
 		return defaultBillingModels
 	}
 
-	return quota.BillingModels
+	return quota.KafkaBillingModels
 }
 
-func (quota *Quota) GetBillingModelByID(billingModelID string) (BillingModel, bool) {
+func (quota *Quota) GetKafkaBillingModelByID(billingModelId string) (BillingModel, bool) {
 
-	if idx, bm := arrays.FindFirst(quota.GetBillingModels(), func(bm BillingModel) bool { return shared.StringEqualsIgnoreCase(bm.ID, billingModelID) }); idx != -1 {
+	if idx, bm := arrays.FindFirst(quota.GetKafkaBillingModels(), func(bm BillingModel) bool { return shared.StringEqualsIgnoreCase(bm.Id, billingModelId) }); idx != -1 {
 		return bm, true
 	}
 

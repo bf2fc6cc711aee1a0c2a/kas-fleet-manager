@@ -28,14 +28,14 @@ type QuotaManagementListService struct {
 
 var _ services.QuotaService = &QuotaManagementListService{}
 
-// don't validate billing accounts when using the quota list
+// ValidateBillingAccount - don't validate billing accounts when using the quota list
 func (q QuotaManagementListService) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
 	return nil
 }
 
+// CheckIfQuotaIsDefinedForInstanceType - returns if there is any quota configuration for the given instanceType/billingAccount pair (either organization or service account)
 func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(username string, organisationId string, instanceType types.KafkaInstanceType, kafkaBillingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 	orgId := organisationId
-	var org quota_management.Organisation
 	var account quota_management.Account
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetById(orgId)
 	userIsRegistered := false
@@ -48,12 +48,12 @@ func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(usernam
 	}
 
 	// if the user is registered, check that he has quota defined for the desired instance type
-	if userIsRegistered && org.HasQuotaFor(instanceType.String(), kafkaBillingModel.ID) {
+	if userIsRegistered && org.HasQuotaConfigurationFor(instanceType.String(), kafkaBillingModel.ID) {
 		return true, nil
 	}
 
 	// if the serviceAccount is registered, check that he has quota defined for the desired instance type
-	if serviceAccountIsRegistered && account.HasQuotaFor(instanceType.String(), kafkaBillingModel.ID) {
+	if serviceAccountIsRegistered && account.HasQuotaConfigurationFor(instanceType.String(), kafkaBillingModel.ID) {
 		return true, nil
 	}
 
@@ -65,8 +65,18 @@ func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(usernam
 	return false, nil
 }
 
+// ReserveQuota - tries to reserve the quota for the received kafka request
 func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
+	billingModelID, err := q.detectBillingModel(kafka)
+	if err != nil {
+		return "", err
+	}
+	// TODO: find a better place to set this instead of this side effect
+	kafka.DesiredKafkaBillingModel = billingModelID
+
 	if !q.quotaManagementList.EnableInstanceLimitControl {
+		// TODO: find a better place to set this instead of this side effect
+		kafka.ActualKafkaBillingModel = kafka.DesiredKafkaBillingModel
 		return "", nil
 	}
 
@@ -78,13 +88,13 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest) (str
 	filterByOrg := false
 	if orgFound && org.IsUserRegistered(username) {
 		quotaManagementListItem = org
-		message = fmt.Sprintf("Organization '%s' has reached a maximum number of %d allowed streaming units.", orgId, org.GetMaxAllowedInstances(kafka.InstanceType, kafka.DesiredKafkaBillingModel))
+		message = fmt.Sprintf("organization '%s' has reached a maximum number of %d allowed streaming units", orgId, org.GetMaxAllowedInstances(kafka.InstanceType, kafka.DesiredKafkaBillingModel))
 		filterByOrg = true
 	} else {
 		user, userFound := q.quotaManagementList.QuotaList.ServiceAccounts.GetByUsername(username)
 		if userFound {
 			quotaManagementListItem = user
-			message = fmt.Sprintf("User '%s' has reached a maximum number of %d allowed streaming units.", username, user.GetMaxAllowedInstances(kafka.InstanceType, kafka.DesiredKafkaBillingModel))
+			message = fmt.Sprintf("user '%s' has reached a maximum number of %d allowed streaming units", username, user.GetMaxAllowedInstances(kafka.InstanceType, kafka.DesiredKafkaBillingModel))
 		}
 	}
 
@@ -92,18 +102,10 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest) (str
 	var totalInstanceCount int
 
 	var kafkas []*dbapi.KafkaRequest
-
-	billingModelID, err := q.detectBillingModel(kafka)
-	if err != nil {
-		return "", err
-	}
-	// TODO: find a better place to set this instead of this side effect
-	kafka.DesiredKafkaBillingModel = billingModelID
-
 	dbConn := q.connectionFactory.New().
 		Model(&dbapi.KafkaRequest{}).
 		Where("instance_type = ?", kafka.InstanceType).
-		Where("actual_kafka_billing_model = ?", kafka.DesiredKafkaBillingModel)
+		Where("actual_kafka_billing_model = ? or desired_kafka_billing_model = ?", kafka.DesiredKafkaBillingModel, kafka.DesiredKafkaBillingModel)
 
 	if kafka.InstanceType != types.DEVELOPER.String() && filterByOrg {
 		dbConn = dbConn.Where("organisation_id = ?", orgId)
@@ -130,6 +132,7 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest) (str
 			return "", errors.NewWithCause(errors.ErrorGeneral, e, "error reserving quota")
 		}
 		if quotaManagementListItem.IsInstanceCountWithinLimit(kafka.InstanceType, billingModelID, totalInstanceCount+kafkaInstanceSize.CapacityConsumed) {
+			// TODO: find a better place to set this
 			kafka.ActualKafkaBillingModel = kafka.DesiredKafkaBillingModel
 			return "", nil
 		} else {
@@ -141,6 +144,7 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest) (str
 		if totalInstanceCount >= quota_management.GetDefaultMaxAllowedInstances() {
 			return "", errors.MaximumAllowedInstanceReached(message)
 		}
+		// TODO: find a better place to set this
 		kafka.ActualKafkaBillingModel = kafka.DesiredKafkaBillingModel
 		return "", nil
 	}
@@ -148,6 +152,14 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest) (str
 	return "", errors.InsufficientQuotaError("Insufficient quota")
 }
 
+// detectBillingModel - tries to detect the billing model. The flow is as follows:
+// 1) If the user specified a 'desired' billing model, that billing model will be returned
+// 2) If there is quota for the received organisation, this quota definition is used
+// 3) If there is no quota defined for the received organisation, checks if there is quota defined for the received user (service account)
+// 4) If both 2 & 3 fails, returns an error
+// 5) Check that a quota configuration exists for the received instance type
+// 6) If a quota configuration exists for the received instance type with billing model `STANDARD`, `STANDARD` billing model will be returned
+// 7) if [6] fails, return the first defined billing model
 func (q QuotaManagementListService) detectBillingModel(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 	if kafka.DesiredKafkaBillingModel != "" {
 		return kafka.DesiredKafkaBillingModel, nil
@@ -184,13 +196,13 @@ func (q QuotaManagementListService) detectBillingModel(kafka *dbapi.KafkaRequest
 	}
 
 	// check if the user has quota for STANDARD/STANDARD
-	if bm, ok := quota.GetBillingModelByID(defaultBillingModel); ok {
-		return bm.ID, nil
+	if bm, ok := quota.GetKafkaBillingModelByID(defaultBillingModel); ok {
+		return bm.Id, nil
 	}
 
 	// The user has no quota defined for standard: returning the first available billing model
 	// GetBillingModel always returns at least one element, so we can safely reference element
-	return quota.GetBillingModels()[0].ID, nil
+	return quota.GetKafkaBillingModels()[0].Id, nil
 }
 
 func (q QuotaManagementListService) DeleteQuota(SubscriptionId string) *errors.ServiceError {

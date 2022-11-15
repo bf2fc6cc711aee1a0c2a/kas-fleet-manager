@@ -138,9 +138,9 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 								GrantedQuota: []quota_management.Quota{
 									{
 										InstanceTypeID: "standard",
-										BillingModels: []quota_management.BillingModel{
+										KafkaBillingModels: []quota_management.BillingModel{
 											{
-												ID: "EVAL",
+												Id: "EVAL",
 											},
 										},
 									},
@@ -221,9 +221,9 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 								GrantedQuota: []quota_management.Quota{
 									{
 										InstanceTypeID: "standard",
-										BillingModels: []quota_management.BillingModel{
+										KafkaBillingModels: []quota_management.BillingModel{
 											{
-												ID: "EVAL",
+												Id: "EVAL",
 											},
 										},
 									},
@@ -437,8 +437,8 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND actual_kafka_billing_model = $2 AND (organisation_id = $3) AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs(types.STANDARD.String(), "standard", "org-id").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND (actual_kafka_billing_model = $2 or desired_kafka_billing_model = $3) AND (organisation_id = $4) AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.STANDARD.String(), "standard", "standard", "org-id").
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -473,8 +473,8 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND actual_kafka_billing_model = $2 AND owner = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs(types.DEVELOPER.String(), "standard", "username").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND (actual_kafka_billing_model = $2 or desired_kafka_billing_model = $3) AND owner = $4 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.DEVELOPER.String(), "standard", "standard", "username").
 					WithReply(nil)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -500,8 +500,8 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND actual_kafka_billing_model = $2 AND owner = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs(types.DEVELOPER.String(), "standard", "username").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND (actual_kafka_billing_model = $2 or desired_kafka_billing_model = $3) AND owner = $4 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.DEVELOPER.String(), "standard", "standard", "username").
 					WithReply(converters.ConvertKafkaRequest(
 						buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 							kafkaRequest.Owner = "username"
@@ -540,8 +540,8 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND actual_kafka_billing_model = $2 AND (organisation_id = $3) AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs(types.STANDARD.String(), "standard", "org-id").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND (actual_kafka_billing_model = $2 or desired_kafka_billing_model = $3) AND (organisation_id = $4) AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.STANDARD.String(), "standard", "standard", "org-id").
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -561,8 +561,8 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND actual_kafka_billing_model = $2 AND owner = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs(types.DEVELOPER.String(), "standard", "username").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type = $1 AND (actual_kafka_billing_model = $2 or desired_kafka_billing_model = $3) AND owner = $4 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs(types.DEVELOPER.String(), "standard", "standard", "username").
 					WithReply(nil)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -584,11 +584,10 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList, &defaultKafkaConf)
 			quotaService, _ := factory.GetQuotaService(api.QuotaManagementListQuotaType)
 			kafka := &dbapi.KafkaRequest{
-				Owner:                    "username",
-				OrganisationId:           "org-id",
-				SizeId:                   "x1",
-				InstanceType:             tt.args.instanceType.String(),
-				DesiredKafkaBillingModel: "standard",
+				Owner:          "username",
+				OrganisationId: "org-id",
+				SizeId:         "x1",
+				InstanceType:   tt.args.instanceType.String(),
 			}
 			_, err := quotaService.ReserveQuota(kafka)
 			g.Expect(tt.wantErr).To(gomega.Equal(err))

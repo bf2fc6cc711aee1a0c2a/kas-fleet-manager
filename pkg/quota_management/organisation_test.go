@@ -112,10 +112,10 @@ func Test_GetMaxAllowedInstances(t *testing.T) {
 				org.GrantedQuota = []Quota{
 					{
 						InstanceTypeID: "standard",
-						BillingModels: []BillingModel{
+						KafkaBillingModels: []BillingModel{
 							{
-								ID:      "standard",
-								Allowed: 8,
+								Id:                  "standard",
+								MaxAllowedInstances: 8,
 							},
 						},
 					},
@@ -137,10 +137,10 @@ func Test_GetMaxAllowedInstances(t *testing.T) {
 				org.GrantedQuota = []Quota{
 					{
 						InstanceTypeID: "standard",
-						BillingModels: []BillingModel{
+						KafkaBillingModels: []BillingModel{
 							{
-								ID:      "standard",
-								Allowed: 8,
+								Id:                  "standard",
+								MaxAllowedInstances: 8,
 							},
 						},
 					},
@@ -162,10 +162,10 @@ func Test_GetMaxAllowedInstances(t *testing.T) {
 				org.GrantedQuota = []Quota{
 					{
 						InstanceTypeID: "standard",
-						BillingModels: []BillingModel{
+						KafkaBillingModels: []BillingModel{
 							{
-								ID:      "standard",
-								Allowed: 8,
+								Id:                  "standard",
+								MaxAllowedInstances: 8,
 							},
 						},
 					},
@@ -220,8 +220,8 @@ func Test_GetGrantedQuota(t *testing.T) {
 			}(),
 			want: []Quota{
 				{
-					InstanceTypeID: "eval",
-					BillingModels:  nil,
+					InstanceTypeID:     "eval",
+					KafkaBillingModels: nil,
 				},
 			},
 		},
@@ -328,10 +328,10 @@ func Test_HasQuotaFor(t *testing.T) {
 				org.MaxAllowedInstances = 5
 				org.GrantedQuota = []Quota{{
 					InstanceTypeID: "eval",
-					BillingModels: []BillingModel{
+					KafkaBillingModels: []BillingModel{
 						{
-							ID:      "eval",
-							Allowed: 5,
+							Id:                  "eval",
+							MaxAllowedInstances: 5,
 						},
 					},
 				}}
@@ -351,7 +351,7 @@ func Test_HasQuotaFor(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			g.Expect(tt.org.HasQuotaFor(tt.args.instanceType, tt.args.billingModel)).To(gomega.Equal(tt.want))
+			g.Expect(tt.org.HasQuotaConfigurationFor(tt.args.instanceType, tt.args.billingModel)).To(gomega.Equal(tt.want))
 		})
 	}
 }

@@ -1,7 +1,6 @@
 package quota_management
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 )
 
@@ -18,55 +17,37 @@ func (account Account) IsInstanceCountWithinLimit(instanceTypeID string, billing
 }
 
 func (account Account) GetMaxAllowedInstances(instanceTypeID string, billingModelID string) int {
-	bm, ok := account.getBillingModel(instanceTypeID, billingModelID)
+	bm, ok := getBillingModel(account.GetGrantedQuota(), instanceTypeID, billingModelID)
 
 	if !ok {
 		return 0
 	}
 
-	if bm.Allowed <= 0 {
-		if account.MaxAllowedInstances <= 0 {
-			return MaxAllowedInstances
-		}
+	if bm.MaxAllowedInstances > 0 {
+		return bm.MaxAllowedInstances
+	}
+
+	if account.MaxAllowedInstances > 0 {
 		return account.MaxAllowedInstances
 	}
 
-	return bm.Allowed
+	return MaxAllowedInstances
 }
 
 func (account Account) GetGrantedQuota() QuotaList {
 	if len(account.GrantedQuota) == 0 {
-		return defaultQuotaList
+		return defaultGrantedQuota
 	}
 	return account.GrantedQuota
 }
 
-func (account Account) getBillingModel(instanceTypeId string, billingModelID string) (BillingModel, bool) {
-	grantedQuota := account.GetGrantedQuota()
-
-	idx, instanceType := arrays.FindFirst(grantedQuota, func(x Quota) bool { return shared.StringEqualsIgnoreCase(x.InstanceTypeID, instanceTypeId) })
-	if idx != -1 {
-		idx, bm := arrays.FindFirst(instanceType.GetBillingModels(), func(bm BillingModel) bool { return shared.StringEqualsIgnoreCase(bm.ID, billingModelID) })
-		if idx != -1 {
-			return bm, true
-		}
-	}
-	return BillingModel{}, false
-}
-
-func (account Account) HasQuotaFor(instanceTypeId string, billingModelID string) bool {
-	_, ok := account.getBillingModel(instanceTypeId, billingModelID)
-	return ok
+func (account Account) HasQuotaConfigurationFor(instanceTypeId string, billingModelID string) bool {
+	return hasQuotaConfigurationFor(account.GetGrantedQuota(), instanceTypeId, billingModelID)
 }
 
 type AccountList []Account
 
 func (allowedAccounts AccountList) GetByUsername(username string) (Account, bool) {
-	for _, user := range allowedAccounts {
-		if username == user.Username {
-			return user, true
-		}
-	}
-
-	return Account{}, false
+	idx, account := arrays.FindFirst(allowedAccounts, func(a Account) bool { return username == a.Username })
+	return account, idx != -1
 }
