@@ -1160,6 +1160,12 @@ components:
     # Connector Cluster
     #
 
+    ConnectorResourceAnnotations:
+      description: Name-value string annotations for resource
+      type: object
+      additionalProperties:
+        type: "string"
+
     ConnectorClusterState:
       type: string
       enum:
@@ -1168,9 +1174,12 @@ components:
         - deleting
 
     ConnectorClusterRequestMeta:
+      type: object
       properties:
         name:
           type: string
+        annotations:
+          $ref: "#/components/schemas/ConnectorResourceAnnotations"
 
     ConnectorClusterRequest:
       description: "Schema for the request to update a data plane cluster's name"
@@ -1259,6 +1268,7 @@ components:
           type: object
 
     ConnectorRequestMeta:
+      type: object
       required:
         - name
         - connector_type_id
@@ -1275,6 +1285,9 @@ components:
           $ref: "#/components/schemas/Channel"
         desired_state:
           $ref: "#/components/schemas/ConnectorDesiredState"
+        annotations:
+          $ref: "#/components/schemas/ConnectorResourceAnnotations"
+
 
     ConnectorRequest:
       allOf:
@@ -1353,12 +1366,14 @@ components:
               type: array
               items:
                 type: string
+            annotations:
+              $ref: "#/components/schemas/ConnectorResourceAnnotations"
             featured_rank:
               description: Ranking for featured connectors
               type: integer
               format: int32
             capabilities:
-              description: The capabilities supported by the conenctor
+              description: The capabilities supported by the connector
               type: array
               items:
                 type: string
@@ -1412,9 +1427,7 @@ components:
           pattern: "^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$"
           description: Namespace name must match pattern `^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$`, or it may be empty to be auto-generated.
         annotations:
-          type: object
-          additionalProperties:
-            type: "string"
+          $ref: "#/components/schemas/ConnectorResourceAnnotations"
 
     ConnectorNamespaceQuota:
       type: object
@@ -1689,6 +1702,8 @@ components:
         icon_href: "/api/connector_mgmt/v1/kafka_connector_types/log_sink.png"
         labels:
           - sink
+        annotations:
+          - "connector_mgmt.bf2.org/name": value
         capabilities:
           - data_shape
           - processors
