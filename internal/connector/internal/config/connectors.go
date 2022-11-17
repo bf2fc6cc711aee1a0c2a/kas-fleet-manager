@@ -83,7 +83,7 @@ func (c *ConnectorsConfig) ReadFiles() error {
 		for id := range connectorMetadata {
 			ids = append(ids, id)
 		}
-		return fmt.Errorf("Found %d unrecognized connector metadata with ids: %s", remainingIds, ids)
+		return fmt.Errorf("found %d unrecognized connector metadata with ids: %s", remainingIds, ids)
 	}
 
 	glog.Infof("loaded %d connector types", len(c.CatalogEntries))
@@ -164,7 +164,7 @@ func (c *ConnectorsConfig) readConnectorCatalog(connectorMetadata map[string]Con
 				entry.ConnectorType.Labels = meta.Labels
 				// TODO annotations
 			} else {
-				return fmt.Errorf("Missing metadata for connector %s", id)
+				return fmt.Errorf("missing metadata for connector %s", id)
 			}
 
 			// compute checksum for catalog entry to look for updates

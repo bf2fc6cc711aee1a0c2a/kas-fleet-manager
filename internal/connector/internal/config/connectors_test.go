@@ -91,7 +91,7 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 				ConnectorMetadataDirs: []string{"./internal/connector/test/missing-connector-metadata"},
 				ConnectorCatalogDirs:  []string{"./internal/connector/test/integration/connector-catalog"}},
 			wantErr: true,
-			err:     "^error listing connector catalogs in .+/internal/connector/test/integration/connector-catalog: Missing metadata for connector aws-sqs-source-v1alpha1$",
+			err:     "^error listing connector catalogs in .+/internal/connector/test/integration/connector-catalog: missing metadata for connector aws-sqs-source-v1alpha1$",
 		},
 		{
 			name: "bad metadata directory",
@@ -118,7 +118,7 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 				ConnectorMetadataDirs: []string{"./internal/connector/test/unknown-connector-metadata"},
 				ConnectorCatalogDirs:  []string{"./internal/connector/test/integration/connector-catalog"}},
 			wantErr:       true,
-			err:           "^Found 1 unrecognized connector metadata with ids: \\[unknown\\]$",
+			err:           "^found 1 unrecognized connector metadata with ids: \\[unknown\\]$",
 			connectorsIDs: []string{"log_sink_0.1", "aws-sqs-source-v1alpha1"},
 		},
 	}
