@@ -11,8 +11,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/files"
 
-	gherrors "github.com/pkg/errors"
-
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
@@ -72,18 +70,20 @@ func (c *ConnectorsConfig) ReadFiles() error {
 		return err
 	}
 
-	c.CatalogEntries, err = c.readConnectorCatalog(connectorMetadata)
+	// read catalogs and merge metadata, removing entries from the map
+	err = c.readConnectorCatalog(connectorMetadata)
 	if err != nil {
 		return err
 	}
 
+	// check if there are any unused metadata entries left
 	remainingIds := len(connectorMetadata)
 	if remainingIds > 0 {
 		ids := make([]string, 0, remainingIds)
 		for id := range connectorMetadata {
 			ids = append(ids, id)
 		}
-		return gherrors.Errorf("Found %d unrecognized connector metadata with ids: %s", remainingIds, ids)
+		return fmt.Errorf("Found %d unrecognized connector metadata with ids: %s", remainingIds, ids)
 	}
 
 	glog.Infof("loaded %d connector types", len(c.CatalogEntries))
@@ -111,7 +111,7 @@ func (c *ConnectorsConfig) readConnectorMetadata() (connectorMetadata map[string
 			var metas []ConnectorMetadata
 			err = shared.ReadYamlFile(path, &metas)
 			if err != nil {
-				return gherrors.Errorf("error reading connector metadata from %s: %s", path, err)
+				return fmt.Errorf("error reading connector metadata from %s: %s", path, err)
 			}
 			for _, m := range metas {
 				connectorMetadata[m.ConnectorTypeId] = m
@@ -121,14 +121,14 @@ func (c *ConnectorsConfig) readConnectorMetadata() (connectorMetadata map[string
 		})
 
 		if err != nil {
-			return nil, gherrors.Errorf("error listing connector metadata in %s: %s", metaDir, err)
+			return nil, fmt.Errorf("error listing connector metadata in %s: %s", metaDir, err)
 		}
 	}
 
 	return
 }
 
-func (c *ConnectorsConfig) readConnectorCatalog(connectorMetadata map[string]ConnectorMetadata) (values []ConnectorCatalogEntry, err error) {
+func (c *ConnectorsConfig) readConnectorCatalog(connectorMetadata map[string]ConnectorMetadata) (err error) {
 	typesLoaded := map[string]string{}
 	for _, dir := range c.ConnectorCatalogDirs {
 		dir = shared.BuildFullFilePath(dir)
@@ -148,13 +148,13 @@ func (c *ConnectorsConfig) readConnectorCatalog(connectorMetadata map[string]Con
 			// Read the file
 			buf, err := os.ReadFile(path)
 			if err != nil {
-				return gherrors.Errorf("error reading catalog file %s: %s", path, err)
+				return fmt.Errorf("error reading catalog file %s: %s", path, err)
 			}
 
 			entry := ConnectorCatalogEntry{}
 			err = json.Unmarshal(buf, &entry)
 			if err != nil {
-				return gherrors.Errorf("error unmarshaling catalog file %s: %s", path, err)
+				return fmt.Errorf("error unmarshaling catalog file %s: %s", path, err)
 			}
 
 			// set catalog metadata from metadata config read earlier
@@ -164,13 +164,13 @@ func (c *ConnectorsConfig) readConnectorCatalog(connectorMetadata map[string]Con
 				entry.ConnectorType.Labels = meta.Labels
 				// TODO annotations
 			} else {
-				return gherrors.Errorf("Missing metadata for connector %s", id)
+				return fmt.Errorf("Missing metadata for connector %s", id)
 			}
 
 			// compute checksum for catalog entry to look for updates
 			sum, err := checksum(entry)
 			if err != nil {
-				return gherrors.Errorf("error computing checksum for catalog file %s: %s", path, err)
+				return fmt.Errorf("error computing checksum for catalog file %s: %s", path, err)
 			}
 
 			// when walking directories with symlink such as what kubernetes does when mounting
@@ -208,7 +208,7 @@ func (c *ConnectorsConfig) readConnectorCatalog(connectorMetadata map[string]Con
 			c.CatalogChecksums[id] = sum
 			typesLoaded[id] = path
 
-			values = append(values, entry)
+			c.CatalogEntries = append(c.CatalogEntries, entry)
 
 			glog.Infof("loaded connector %s from file %s", id, path)
 
@@ -216,21 +216,20 @@ func (c *ConnectorsConfig) readConnectorCatalog(connectorMetadata map[string]Con
 		})
 
 		if err != nil {
-			err = gherrors.Errorf("error listing connector catalogs in %s: %s", dir, err)
-			return nil, err
+			return fmt.Errorf("error listing connector catalogs in %s: %s", dir, err)
 		}
 	}
 
 	// remove all processed metadata entries
-	for _, entry := range values {
+	for _, entry := range c.CatalogEntries {
 		delete(connectorMetadata, entry.ConnectorType.Id)
 	}
 
-	sort.Slice(values, func(i, j int) bool {
-		return values[i].ConnectorType.Id < values[j].ConnectorType.Id
+	sort.Slice(c.CatalogEntries, func(i, j int) bool {
+		return c.CatalogEntries[i].ConnectorType.Id < c.CatalogEntries[j].ConnectorType.Id
 	})
 
-	return values, nil
+	return nil
 }
 
 func checksum(spec interface{}) (string, error) {
