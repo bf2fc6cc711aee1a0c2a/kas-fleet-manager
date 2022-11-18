@@ -60,7 +60,15 @@ Feature: create a connector
         "items": [
           {
             "count": 1,
-            "label": "featured"
+            "label": "category-featured"
+          },
+          {
+            "count": 1,
+            "label": "category-amazon"
+          },
+          {
+            "count": 1,
+            "label": "category-streaming-and-messaging"
           },
           {
             "count": 1,
@@ -83,7 +91,7 @@ Feature: create a connector
         "items": [
           {
             "count": 0,
-            "label": "featured"
+            "label": "category-featured"
           },
           {
             "count": 1,
@@ -102,11 +110,42 @@ Feature: create a connector
         "items": [
           {
             "count": 1,
-            "label": "featured"
+            "label": "category-featured"
+          },
+          {
+            "count": 1,
+            "label": "category-amazon"
+          },
+          {
+            "count": 1,
+            "label": "category-streaming-and-messaging"
           },
           {
             "count": 1,
             "label": "source"
+          }
+        ]
+      }
+      """
+
+    # check search param
+    When I GET path "/v1/kafka_connector_types/labels?search=label+like+category-%25"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "count": 1,
+            "label": "category-featured"
+          },
+          {
+            "count": 1,
+            "label": "category-amazon"
+          },
+          {
+            "count": 1,
+            "label": "category-streaming-and-messaging"
           }
         ]
       }
@@ -132,7 +171,9 @@ Feature: create a connector
             "id": "aws-sqs-source-v1alpha1",
             "kind": "ConnectorType",
             "labels": [
-              "source"
+              "source",
+              "category-streaming-and-messaging",
+              "category-amazon"
             ],
             "capabilities": [
               "processors"
@@ -779,7 +820,9 @@ Feature: create a connector
              "id": "aws-sqs-source-v1alpha1",
              "kind": "ConnectorType",
              "labels": [
-               "source"
+               "source",
+               "category-streaming-and-messaging",
+               "category-amazon"
              ],
              "capabilities": [
               "processors"

@@ -233,20 +233,22 @@ func (cts *connectorTypesService) ListLabels(listArgs *services.ListArguments) (
 		return nil, errors.ToServiceError(result.Error)
 	}
 
-	// add "featured" label with count of types with non-zero featured_rank
+	// add "category-featured" label with count of types with non-zero featured_rank
 	var count int32
-	result = dbConn2.Model(&dbapi.ConnectorType{}).
-		Select("count(distinct id)").
-		Joins("JOIN connector_type_labels labels on labels.connector_type_id = connector_types.id").
-		Group("id").
-		Where("featured_rank <> 0").
+	result = cts.connectionFactory.New().Select("count(id) as count").Table("(?) as types",
+		dbConn2.Model(&dbapi.ConnectorType{}).
+			Select("distinct id").
+			Joins("JOIN connector_type_labels labels on labels.connector_type_id = connector_types.id").
+			Where("featured_rank <> 0").
+			Group("id")).
+		Limit(1).
 		Find(&count)
 	if result.Error != nil {
 		return nil, errors.ToServiceError(result.Error)
 	}
 
-	// append "featured" label to the front of the list
-	resourceList = append([]*dbapi.ConnectorTypeLabelCount{{Label: "featured", Count: count}}, resourceList...)
+	// append "category-featured" label to the front of the list
+	resourceList = append([]*dbapi.ConnectorTypeLabelCount{{Label: "category-featured", Count: count}}, resourceList...)
 	return resourceList, nil
 }
 
