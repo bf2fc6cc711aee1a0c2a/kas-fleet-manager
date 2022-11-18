@@ -28,6 +28,7 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 		ConnectorNamespaceLifecycleAPI      bool
 		ConnectorEnableUnassignedConnectors bool
 		ConnectorCatalogDirs                []string
+		ConnectorMetadataDirs               []string
 		CatalogEntries                      []ConnectorCatalogEntry
 		CatalogChecksums                    map[string]string
 	}
@@ -41,42 +42,84 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 		{
 			name: "valid catalog",
 			fields: fields{
-				CatalogChecksums:     make(map[string]string),
-				ConnectorCatalogDirs: []string{"./internal/connector/test/integration/connector-catalog"}},
+				CatalogChecksums:      make(map[string]string),
+				ConnectorMetadataDirs: []string{"./internal/connector/test/integration/connector-metadata"},
+				ConnectorCatalogDirs:  []string{"./internal/connector/test/integration/connector-catalog"}},
 			wantErr:       false,
 			connectorsIDs: []string{"log_sink_0.1", "aws-sqs-source-v1alpha1"},
 		},
 		{
 			name: "valid catalog walk with symlink",
 			fields: fields{
-				CatalogChecksums:     make(map[string]string),
-				ConnectorCatalogDirs: []string{tmpCatalog}},
+				CatalogChecksums:      make(map[string]string),
+				ConnectorMetadataDirs: []string{"./internal/connector/test/integration/connector-metadata"},
+				ConnectorCatalogDirs:  []string{tmpCatalog}},
 			wantErr:       false,
 			connectorsIDs: []string{"log_sink_0.1", "aws-sqs-source-v1alpha1"},
 		},
 		{
 			name: "valid catalog walk",
 			fields: fields{
-				CatalogChecksums:     make(map[string]string),
-				ConnectorCatalogDirs: []string{"./internal/connector/test/integration/connector-catalog-root"}},
+				CatalogChecksums:      make(map[string]string),
+				ConnectorMetadataDirs: []string{"./internal/connector/test/integration/connector-metadata"},
+				ConnectorCatalogDirs:  []string{"./internal/connector/test/integration/connector-catalog-root"}},
 			wantErr:       false,
 			connectorsIDs: []string{"log_sink_0.1", "aws-sqs-source-v1alpha1"},
 		},
 		{
 			name: "bad catalog directory",
 			fields: fields{
-				CatalogChecksums:     make(map[string]string),
-				ConnectorCatalogDirs: []string{"./bad-catalog-directory"}},
+				CatalogChecksums:      make(map[string]string),
+				ConnectorMetadataDirs: []string{"./internal/connector/test/integration/connector-metadata"},
+				ConnectorCatalogDirs:  []string{"./bad-catalog-directory"}},
 			wantErr: true,
 			err:     "^error listing connector catalogs in .+/bad-catalog-directory: lstat .+/bad-catalog-directory: no such file or directory$",
 		},
 		{
 			name: "bad catalog file",
 			fields: fields{
-				CatalogChecksums:     make(map[string]string),
-				ConnectorCatalogDirs: []string{"./internal/connector/test/bad-connector-catalog"}},
+				CatalogChecksums:      make(map[string]string),
+				ConnectorMetadataDirs: []string{"./internal/connector/test/integration/connector-metadata"},
+				ConnectorCatalogDirs:  []string{"./internal/connector/test/bad-connector-catalog"}},
 			wantErr: true,
 			err:     ".*error unmarshaling catalog file .+/internal/connector/test/bad-connector-catalog/bad-connector-type.json: invalid character 'b' looking for beginning of value$",
+		},
+		{
+			name: "missing metadata",
+			fields: fields{
+				CatalogChecksums:      make(map[string]string),
+				ConnectorMetadataDirs: []string{"./internal/connector/test/missing-connector-metadata"},
+				ConnectorCatalogDirs:  []string{"./internal/connector/test/integration/connector-catalog"}},
+			wantErr: true,
+			err:     "^error listing connector catalogs in .+/internal/connector/test/integration/connector-catalog: missing metadata for connector aws-sqs-source-v1alpha1$",
+		},
+		{
+			name: "bad metadata directory",
+			fields: fields{
+				CatalogChecksums:      make(map[string]string),
+				ConnectorMetadataDirs: []string{"./bad-metadata-directory"},
+				ConnectorCatalogDirs:  []string{"./bad-catalog-directory"}},
+			wantErr: true,
+			err:     "^error listing connector metadata in .+/bad-metadata-directory: lstat .+/bad-metadata-directory: no such file or directory$",
+		},
+		{
+			name: "bad metadata file",
+			fields: fields{
+				CatalogChecksums:      make(map[string]string),
+				ConnectorMetadataDirs: []string{"./internal/connector/test/bad-connector-metadata"},
+				ConnectorCatalogDirs:  []string{"./internal/connector/test/bad-connector-catalog"}},
+			wantErr: true,
+			err:     "^error listing connector metadata in .+/internal/connector/test/bad-connector-metadata: error reading connector metadata from .+/internal/connector/test/bad-connector-metadata/bad-connector-metadata.yaml: yaml: unmarshal errors:\\n\\s*line 1: cannot unmarshal !!str `bad-con...` into \\[\\]config.ConnectorMetadata$",
+		},
+		{
+			name: "unknown metadata",
+			fields: fields{
+				CatalogChecksums:      make(map[string]string),
+				ConnectorMetadataDirs: []string{"./internal/connector/test/unknown-connector-metadata"},
+				ConnectorCatalogDirs:  []string{"./internal/connector/test/integration/connector-catalog"}},
+			wantErr:       true,
+			err:           "^found 1 unrecognized connector metadata with ids: \\[unknown\\]$",
+			connectorsIDs: []string{"log_sink_0.1", "aws-sqs-source-v1alpha1"},
 		},
 	}
 	for _, testcase := range tests {
@@ -88,6 +131,7 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 				ConnectorEvalOrganizations:          tt.fields.ConnectorEvalOrganizations,
 				ConnectorNamespaceLifecycleAPI:      tt.fields.ConnectorNamespaceLifecycleAPI,
 				ConnectorEnableUnassignedConnectors: tt.fields.ConnectorEnableUnassignedConnectors,
+				ConnectorMetadataDirs:               tt.fields.ConnectorMetadataDirs,
 				ConnectorCatalogDirs:                tt.fields.ConnectorCatalogDirs,
 				CatalogEntries:                      tt.fields.CatalogEntries,
 				CatalogChecksums:                    tt.fields.CatalogChecksums,
