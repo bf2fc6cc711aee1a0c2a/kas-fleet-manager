@@ -103,18 +103,7 @@ var migrations = []*gormigrate.Migration{
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
-	// We need to disable SQL Prepared Statements when performing Kafka DB
-	// migrations due to caching issues with them in gorm that end up causing
-	// errors. It seems the reasons for the issues might be a potential bug in
-	// gorm, as when using previous gorm versions (v1.21.7) the issues didn't
-	// happen.
-	// A GitHub issue has been opened to the gorm project
-	// reporting this: https://github.com/go-gorm/gorm/issues/5737
-	// If it is confirmed to be an issue and gorm project fixes it we should
-	// update this code accordingly when the fix is applied.
-	dbConfigWithDisabledPreparedStatements := dbConfig.DeepCopy()
-	dbConfigWithDisabledPreparedStatements.EnablePreparedStatements = false
-	return db.NewMigration(dbConfigWithDisabledPreparedStatements, &gormigrate.Options{
+	return db.NewMigration(dbConfig, &gormigrate.Options{
 		TableName:      "migrations",
 		IDColumnName:   "id",
 		IDColumnSize:   255,
