@@ -2,7 +2,7 @@
 # A list of metadata to provide labels and annotations for Connectors.
 # The structure of metadata is:
 #     - connector-type-id: is the connector's type id and MUST match the type id in connector catalog
-#       featured-rank: an integer rank as string for sorting featured connectors
+#       featured-rank: an integer rank for sorting featured connectors
 #       labels: connector labels, used for Connector categories
 #       annotations: connector annotations, used for system properties such as pricing tiers
 - id: log_sink_0.1
