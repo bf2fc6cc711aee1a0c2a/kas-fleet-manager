@@ -60,7 +60,7 @@ supported_instance_types:
       display_name: "1"
       ingressThroughputPerSec: "50Mi"
       egressThroughputPerSec: "100Mi"
-      totalMaxConnections: 3000
+      totalMaxConnections: 9000
       maxConnectionAttemptsPerSec: 100
       maxDataRetentionSize: "1000Gi"
       maxDataRetentionPeriod: "P14D"
@@ -78,7 +78,7 @@ supported_instance_types:
       display_name: "2"
       ingressThroughputPerSec: "100Mi"
       egressThroughputPerSec: "200Mi"
-      totalMaxConnections: 6000
+      totalMaxConnections: 18000
       maxDataRetentionSize: "2000Gi"
       maxPartitions: 3000
       maxMessageSize: "1Mi"
