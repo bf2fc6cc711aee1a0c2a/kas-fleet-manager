@@ -78,6 +78,8 @@ type ClusterService interface {
 	FindStreamingUnitCountByClusterAndInstanceType() (KafkaStreamingUnitCountPerClusterList, error)
 }
 
+var _ ClusterService = &clusterService{}
+
 type clusterService struct {
 	connectionFactory *db.ConnectionFactory
 	providerFactory   clusters.ProviderFactory
