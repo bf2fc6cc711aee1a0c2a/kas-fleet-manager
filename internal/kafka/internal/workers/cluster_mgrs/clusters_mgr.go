@@ -619,7 +619,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	}
 
 	glog.Infoln("reconciling manual cluster configurations")
-	allClusterIds, err := c.ClusterService.ListAllClusterIds()
+	allClusterIds, err := c.ClusterService.ListAllClusterIDs()
 	if err != nil {
 		return []error{errors.Wrapf(err, "failed to retrieve cluster ids from clusters")}
 	}

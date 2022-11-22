@@ -50,8 +50,8 @@ type ClusterService interface {
 	// or are being deprovisioned from it i.e kafka that are not in deleting state.
 	// NOTE. Kafka in "failed" are included as well since it is not a terminal status at the moment.
 	FindNonEmptyClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
-	// ListAllClusterIds returns all the valid cluster ids in array
-	ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError)
+	// ListAllClusterIDs returns all the valid cluster ids in array
+	ListAllClusterIDs() ([]api.Cluster, *apiErrors.ServiceError)
 	// FindAllClusters return all the valid clusters in array
 	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, error)
 	// FindKafkaInstanceCount returns the kafka instance counts associated with the list of clusters. If the list is empty, it will list all clusterIds that have Kafka instances assigned.
@@ -367,7 +367,7 @@ func (c clusterService) FindNonEmptyClusterByID(clusterID string) (*api.Cluster,
 	return cluster, nil
 }
 
-func (c clusterService) ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError) {
+func (c clusterService) ListAllClusterIDs() ([]api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
 
 	var res []api.Cluster
