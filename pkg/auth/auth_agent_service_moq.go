@@ -17,8 +17,8 @@ var _ AuthAgentService = &AuthAgentServiceMock{}
 //
 //		// make and configure a mocked AuthAgentService
 //		mockedAuthAgentService := &AuthAgentServiceMock{
-//			GetClientIdFunc: func(clusterId string) (string, error) {
-//				panic("mock out the GetClientId method")
+//			GetClientIDFunc: func(clusterID string) (string, error) {
+//				panic("mock out the GetClientID method")
 //			},
 //		}
 //
@@ -27,48 +27,48 @@ var _ AuthAgentService = &AuthAgentServiceMock{}
 //
 //	}
 type AuthAgentServiceMock struct {
-	// GetClientIdFunc mocks the GetClientId method.
-	GetClientIdFunc func(clusterId string) (string, error)
+	// GetClientIDFunc mocks the GetClientID method.
+	GetClientIDFunc func(clusterID string) (string, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// GetClientId holds details about calls to the GetClientId method.
-		GetClientId []struct {
-			// ClusterId is the clusterId argument value.
-			ClusterId string
+		// GetClientID holds details about calls to the GetClientID method.
+		GetClientID []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
 		}
 	}
-	lockGetClientId sync.RWMutex
+	lockGetClientID sync.RWMutex
 }
 
-// GetClientId calls GetClientIdFunc.
-func (mock *AuthAgentServiceMock) GetClientId(clusterId string) (string, error) {
-	if mock.GetClientIdFunc == nil {
-		panic("AuthAgentServiceMock.GetClientIdFunc: method is nil but AuthAgentService.GetClientId was just called")
+// GetClientID calls GetClientIDFunc.
+func (mock *AuthAgentServiceMock) GetClientID(clusterID string) (string, error) {
+	if mock.GetClientIDFunc == nil {
+		panic("AuthAgentServiceMock.GetClientIDFunc: method is nil but AuthAgentService.GetClientID was just called")
 	}
 	callInfo := struct {
-		ClusterId string
+		ClusterID string
 	}{
-		ClusterId: clusterId,
+		ClusterID: clusterID,
 	}
-	mock.lockGetClientId.Lock()
-	mock.calls.GetClientId = append(mock.calls.GetClientId, callInfo)
-	mock.lockGetClientId.Unlock()
-	return mock.GetClientIdFunc(clusterId)
+	mock.lockGetClientID.Lock()
+	mock.calls.GetClientID = append(mock.calls.GetClientID, callInfo)
+	mock.lockGetClientID.Unlock()
+	return mock.GetClientIDFunc(clusterID)
 }
 
-// GetClientIdCalls gets all the calls that were made to GetClientId.
+// GetClientIDCalls gets all the calls that were made to GetClientID.
 // Check the length with:
 //
-//	len(mockedAuthAgentService.GetClientIdCalls())
-func (mock *AuthAgentServiceMock) GetClientIdCalls() []struct {
-	ClusterId string
+//	len(mockedAuthAgentService.GetClientIDCalls())
+func (mock *AuthAgentServiceMock) GetClientIDCalls() []struct {
+	ClusterID string
 } {
 	var calls []struct {
-		ClusterId string
+		ClusterID string
 	}
-	mock.lockGetClientId.RLock()
-	calls = mock.calls.GetClientId
-	mock.lockGetClientId.RUnlock()
+	mock.lockGetClientID.RLock()
+	calls = mock.calls.GetClientID
+	mock.lockGetClientID.RUnlock()
 	return calls
 }

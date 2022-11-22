@@ -355,7 +355,7 @@ func (k *connectorClusterService) GetConnectorClusterStatus(ctx context.Context,
 	return resource.Status, nil
 }
 
-func (k *connectorClusterService) GetClientId(clusterID string) (string, error) {
+func (k *connectorClusterService) GetClientID(clusterID string) (string, error) {
 	dbConn := k.connectionFactory.New()
 	var resource dbapi.ConnectorCluster
 	dbConn = dbConn.Unscoped().Select("client_id").Where("id = ?", clusterID)

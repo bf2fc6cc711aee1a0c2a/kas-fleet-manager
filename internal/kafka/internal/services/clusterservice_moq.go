@@ -63,8 +63,8 @@ var _ ClusterService = &ClusterServiceMock{}
 //			FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (KafkaStreamingUnitCountPerClusterList, error) {
 //				panic("mock out the FindStreamingUnitCountByClusterAndInstanceType method")
 //			},
-//			GetClientIdFunc: func(clusterId string) (string, error) {
-//				panic("mock out the GetClientId method")
+//			GetClientIDFunc: func(clusterID string) (string, error) {
+//				panic("mock out the GetClientID method")
 //			},
 //			GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 //				panic("mock out the GetClusterDNS method")
@@ -151,8 +151,8 @@ type ClusterServiceMock struct {
 	// FindStreamingUnitCountByClusterAndInstanceTypeFunc mocks the FindStreamingUnitCountByClusterAndInstanceType method.
 	FindStreamingUnitCountByClusterAndInstanceTypeFunc func() (KafkaStreamingUnitCountPerClusterList, error)
 
-	// GetClientIdFunc mocks the GetClientId method.
-	GetClientIdFunc func(clusterId string) (string, error)
+	// GetClientIDFunc mocks the GetClientID method.
+	GetClientIDFunc func(clusterID string) (string, error)
 
 	// GetClusterDNSFunc mocks the GetClusterDNS method.
 	GetClusterDNSFunc func(clusterID string) (string, *apiErrors.ServiceError)
@@ -266,10 +266,10 @@ type ClusterServiceMock struct {
 		// FindStreamingUnitCountByClusterAndInstanceType holds details about calls to the FindStreamingUnitCountByClusterAndInstanceType method.
 		FindStreamingUnitCountByClusterAndInstanceType []struct {
 		}
-		// GetClientId holds details about calls to the GetClientId method.
-		GetClientId []struct {
-			// ClusterId is the clusterId argument value.
-			ClusterId string
+		// GetClientID holds details about calls to the GetClientID method.
+		GetClientID []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
 		}
 		// GetClusterDNS holds details about calls to the GetClusterDNS method.
 		GetClusterDNS []struct {
@@ -360,7 +360,7 @@ type ClusterServiceMock struct {
 	lockFindKafkaInstanceCount                         sync.RWMutex
 	lockFindNonEmptyClusterById                        sync.RWMutex
 	lockFindStreamingUnitCountByClusterAndInstanceType sync.RWMutex
-	lockGetClientId                                    sync.RWMutex
+	lockGetClientID                                    sync.RWMutex
 	lockGetClusterDNS                                  sync.RWMutex
 	lockGetExternalID                                  sync.RWMutex
 	lockInstallClusterLogging                          sync.RWMutex
@@ -830,35 +830,35 @@ func (mock *ClusterServiceMock) FindStreamingUnitCountByClusterAndInstanceTypeCa
 	return calls
 }
 
-// GetClientId calls GetClientIdFunc.
-func (mock *ClusterServiceMock) GetClientId(clusterId string) (string, error) {
-	if mock.GetClientIdFunc == nil {
-		panic("ClusterServiceMock.GetClientIdFunc: method is nil but ClusterService.GetClientId was just called")
+// GetClientID calls GetClientIDFunc.
+func (mock *ClusterServiceMock) GetClientID(clusterID string) (string, error) {
+	if mock.GetClientIDFunc == nil {
+		panic("ClusterServiceMock.GetClientIDFunc: method is nil but ClusterService.GetClientID was just called")
 	}
 	callInfo := struct {
-		ClusterId string
+		ClusterID string
 	}{
-		ClusterId: clusterId,
+		ClusterID: clusterID,
 	}
-	mock.lockGetClientId.Lock()
-	mock.calls.GetClientId = append(mock.calls.GetClientId, callInfo)
-	mock.lockGetClientId.Unlock()
-	return mock.GetClientIdFunc(clusterId)
+	mock.lockGetClientID.Lock()
+	mock.calls.GetClientID = append(mock.calls.GetClientID, callInfo)
+	mock.lockGetClientID.Unlock()
+	return mock.GetClientIDFunc(clusterID)
 }
 
-// GetClientIdCalls gets all the calls that were made to GetClientId.
+// GetClientIDCalls gets all the calls that were made to GetClientID.
 // Check the length with:
 //
-//	len(mockedClusterService.GetClientIdCalls())
-func (mock *ClusterServiceMock) GetClientIdCalls() []struct {
-	ClusterId string
+//	len(mockedClusterService.GetClientIDCalls())
+func (mock *ClusterServiceMock) GetClientIDCalls() []struct {
+	ClusterID string
 } {
 	var calls []struct {
-		ClusterId string
+		ClusterID string
 	}
-	mock.lockGetClientId.RLock()
-	calls = mock.calls.GetClientId
-	mock.lockGetClientId.RUnlock()
+	mock.lockGetClientID.RLock()
+	calls = mock.calls.GetClientID
+	mock.lockGetClientID.RUnlock()
 	return calls
 }
 

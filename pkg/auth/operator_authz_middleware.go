@@ -28,7 +28,7 @@ func checkClusterId(clusterIdVar string, authAgentService AuthAgentService) mux.
 				return
 			}
 
-			savedClientId, err := authAgentService.GetClientId(clusterId)
+			savedClientId, err := authAgentService.GetClientID(clusterId)
 			if err != nil {
 				glog.Errorf("Unable to get clientID for cluster with ID '%s': %v", clusterId, err)
 				shared.HandleError(request, writer, errors.GeneralError("unable to get clientID for cluster with ID '%s'", clusterId))

@@ -40,7 +40,7 @@ type ClusterService interface {
 	// If the cluster has not been found nil is returned. If there has been an issue
 	// finding the cluster an error is set
 	FindClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
-	GetClientId(clusterId string) (string, error)
+	GetClientID(clusterID string) (string, error)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError)
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
 	// DeleteByClusterID will delete the cluster from the database
@@ -77,6 +77,8 @@ type ClusterService interface {
 	// Kafkas that are in deleting state won't be included in the count as they no longer consume resources in the data plane cluster.
 	FindStreamingUnitCountByClusterAndInstanceType() (KafkaStreamingUnitCountPerClusterList, error)
 }
+
+var _ ClusterService = &clusterService{}
 
 type clusterService struct {
 	connectionFactory *db.ConnectionFactory
@@ -321,8 +323,8 @@ func (c clusterService) FindClusterByID(clusterID string) (*api.Cluster, *apiErr
 	return cluster, nil
 }
 
-func (c clusterService) GetClientId(clusterId string) (string, error) {
-	if cluster, err := c.FindClusterByID(clusterId); err != nil {
+func (c clusterService) GetClientID(clusterID string) (string, error) {
+	if cluster, err := c.FindClusterByID(clusterID); err != nil {
 		return "", err
 	} else {
 		if cluster == nil {
