@@ -73,7 +73,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				},
 				kafkaService: func(c map[string]int) KafkaService {
 					return &KafkaServiceMock{
-						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 							return &dbapi.KafkaRequest{
 								ClusterID:     "test-cluster-id",
 								Status:        constants.KafkaRequestStatusProvisioning.String(),
@@ -207,7 +207,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						},
 					}
 					return &KafkaServiceMock{
-						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 							return &dbapi.KafkaRequest{
 								ClusterID:           "test-cluster-id",
 								Status:              constants.KafkaRequestStatusProvisioning.String(),
@@ -342,7 +342,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				},
 				kafkaService: func(c map[string]int) KafkaService {
 					return &KafkaServiceMock{
-						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 							return &dbapi.KafkaRequest{
 								ClusterID:     "test-cluster-id",
 								Status:        constants.KafkaRequestStatusProvisioning.String(),
@@ -423,7 +423,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				},
 				kafkaService: func(c map[string]int) KafkaService {
 					return &KafkaServiceMock{
-						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 							return &dbapi.KafkaRequest{
 								ClusterID:     "test-cluster-id",
 								Status:        constants.KafkaRequestStatusSuspending.String(),
@@ -520,7 +520,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				},
 				kafkaService: func(c map[string]int) KafkaService {
 					return &KafkaServiceMock{
-						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 							return &dbapi.KafkaRequest{
 								ClusterID:     "test-cluster-id",
 								Status:        constants.KafkaRequestStatusResuming.String(),
@@ -628,7 +628,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				},
 				kafkaService: func(c map[string]int) KafkaService {
 					return &KafkaServiceMock{
-						GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 							return &dbapi.KafkaRequest{
 								ClusterID:     "test-cluster-id",
 								Status:        constants.KafkaRequestStatusSuspended.String(),
@@ -759,7 +759,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 			},
 			kafkaService: func(v *versions) KafkaService {
 				return &KafkaServiceMock{
-					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+					GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 						return &dbapi.KafkaRequest{
 							ClusterID:             "test-cluster-id",
 							Status:                constants.KafkaRequestStatusProvisioning.String(),
@@ -821,7 +821,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 			},
 			kafkaService: func(v *versions) KafkaService {
 				return &KafkaServiceMock{
-					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+					GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 						return &dbapi.KafkaRequest{
 							ClusterID:             "test-cluster-id",
 							Status:                constants.KafkaRequestStatusProvisioning.String(),
@@ -885,7 +885,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 			},
 			kafkaService: func(v *versions) KafkaService {
 				return &KafkaServiceMock{
-					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+					GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 						return &dbapi.KafkaRequest{
 							ClusterID:     "test-cluster-id",
 							Status:        constants.KafkaRequestStatusProvisioning.String(),
@@ -944,7 +944,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 			},
 			kafkaService: func(v *versions) KafkaService {
 				return &KafkaServiceMock{
-					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+					GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 						return &dbapi.KafkaRequest{
 							ClusterID:     "test-cluster-id",
 							Status:        constants.KafkaRequestStatusProvisioning.String(),

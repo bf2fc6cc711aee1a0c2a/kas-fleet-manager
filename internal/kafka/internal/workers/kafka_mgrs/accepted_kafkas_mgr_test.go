@@ -87,7 +87,7 @@ func TestAcceptedKafkaManager_Reconcile(t *testing.T) {
 					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+					GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 						return &dbapi.KafkaRequest{}, nil
 					},
 				},

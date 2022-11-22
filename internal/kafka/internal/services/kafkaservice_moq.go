@@ -56,8 +56,8 @@ var _ KafkaService = &KafkaServiceMock{}
 //			GetAvailableSizesInRegionFunc: func(criteria *FindClusterCriteria) ([]string, *apiErrors.ServiceError) {
 //				panic("mock out the GetAvailableSizesInRegion method")
 //			},
-//			GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *apiErrors.ServiceError) {
-//				panic("mock out the GetById method")
+//			GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *apiErrors.ServiceError) {
+//				panic("mock out the GetByID method")
 //			},
 //			GetCNAMERecordStatusFunc: func(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error) {
 //				panic("mock out the GetCNAMERecordStatus method")
@@ -144,8 +144,8 @@ type KafkaServiceMock struct {
 	// GetAvailableSizesInRegionFunc mocks the GetAvailableSizesInRegion method.
 	GetAvailableSizesInRegionFunc func(criteria *FindClusterCriteria) ([]string, *apiErrors.ServiceError)
 
-	// GetByIdFunc mocks the GetById method.
-	GetByIdFunc func(id string) (*dbapi.KafkaRequest, *apiErrors.ServiceError)
+	// GetByIDFunc mocks the GetByID method.
+	GetByIDFunc func(id string) (*dbapi.KafkaRequest, *apiErrors.ServiceError)
 
 	// GetCNAMERecordStatusFunc mocks the GetCNAMERecordStatus method.
 	GetCNAMERecordStatusFunc func(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error)
@@ -251,8 +251,8 @@ type KafkaServiceMock struct {
 			// Criteria is the criteria argument value.
 			Criteria *FindClusterCriteria
 		}
-		// GetById holds details about calls to the GetById method.
-		GetById []struct {
+		// GetByID holds details about calls to the GetByID method.
+		GetByID []struct {
 			// ID is the id argument value.
 			ID string
 		}
@@ -357,7 +357,7 @@ type KafkaServiceMock struct {
 	lockGenerateReservedManagedKafkasByClusterID sync.RWMutex
 	lockGet                                      sync.RWMutex
 	lockGetAvailableSizesInRegion                sync.RWMutex
-	lockGetById                                  sync.RWMutex
+	lockGetByID                                  sync.RWMutex
 	lockGetCNAMERecordStatus                     sync.RWMutex
 	lockGetManagedKafkaByClusterID               sync.RWMutex
 	lockHasAvailableCapacityInRegion             sync.RWMutex
@@ -703,35 +703,35 @@ func (mock *KafkaServiceMock) GetAvailableSizesInRegionCalls() []struct {
 	return calls
 }
 
-// GetById calls GetByIdFunc.
-func (mock *KafkaServiceMock) GetById(id string) (*dbapi.KafkaRequest, *apiErrors.ServiceError) {
-	if mock.GetByIdFunc == nil {
-		panic("KafkaServiceMock.GetByIdFunc: method is nil but KafkaService.GetById was just called")
+// GetByID calls GetByIDFunc.
+func (mock *KafkaServiceMock) GetByID(id string) (*dbapi.KafkaRequest, *apiErrors.ServiceError) {
+	if mock.GetByIDFunc == nil {
+		panic("KafkaServiceMock.GetByIDFunc: method is nil but KafkaService.GetByID was just called")
 	}
 	callInfo := struct {
 		ID string
 	}{
 		ID: id,
 	}
-	mock.lockGetById.Lock()
-	mock.calls.GetById = append(mock.calls.GetById, callInfo)
-	mock.lockGetById.Unlock()
-	return mock.GetByIdFunc(id)
+	mock.lockGetByID.Lock()
+	mock.calls.GetByID = append(mock.calls.GetByID, callInfo)
+	mock.lockGetByID.Unlock()
+	return mock.GetByIDFunc(id)
 }
 
-// GetByIdCalls gets all the calls that were made to GetById.
+// GetByIDCalls gets all the calls that were made to GetByID.
 // Check the length with:
 //
-//	len(mockedKafkaService.GetByIdCalls())
-func (mock *KafkaServiceMock) GetByIdCalls() []struct {
+//	len(mockedKafkaService.GetByIDCalls())
+func (mock *KafkaServiceMock) GetByIDCalls() []struct {
 	ID string
 } {
 	var calls []struct {
 		ID string
 	}
-	mock.lockGetById.RLock()
-	calls = mock.calls.GetById
-	mock.lockGetById.RUnlock()
+	mock.lockGetByID.RLock()
+	calls = mock.calls.GetByID
+	mock.lockGetByID.RUnlock()
 	return calls
 }
 
