@@ -142,7 +142,7 @@ func (d *dataPlaneKafkaService) processReservedKafkaDeployment(ks *dbapi.DataPla
 
 // processRealKafkaDeployment process real kafka instances and updates their status and stores other info coming data plane
 func (d *dataPlaneKafkaService) processRealKafkaDeployment(ks *dbapi.DataPlaneKafkaStatus, cluster *api.Cluster, log logger.UHCLogger) {
-	kafka, getErr := d.kafkaService.GetById(ks.KafkaClusterId)
+	kafka, getErr := d.kafkaService.GetByID(ks.KafkaClusterId)
 	if getErr != nil {
 		glog.Error(errors.Wrapf(getErr, "failed to get kafka request by kafka ID %q", ks.KafkaClusterId))
 		return
@@ -416,7 +416,7 @@ func (d *dataPlaneKafkaService) unassignKafkaFromDataplaneCluster(kafka *dbapi.K
 
 func (d *dataPlaneKafkaService) checkKafkaRequestCurrentStatus(kafka *dbapi.KafkaRequest, status constants.KafkaStatus) (bool, *serviceError.ServiceError) {
 	matchStatus := false
-	if currentInstance, err := d.kafkaService.GetById(kafka.ID); err != nil {
+	if currentInstance, err := d.kafkaService.GetByID(kafka.ID); err != nil {
 		return matchStatus, err
 	} else if currentInstance.Status == status.String() {
 		matchStatus = true

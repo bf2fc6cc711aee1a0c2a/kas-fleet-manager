@@ -366,7 +366,7 @@ func Test_kafkaService_Get(t *testing.T) {
 	}
 }
 
-func Test_kafkaService_GetById(t *testing.T) {
+func Test_kafkaService_GetByID(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
@@ -436,7 +436,7 @@ func Test_kafkaService_GetById(t *testing.T) {
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
-			got, err := k.GetById(tt.args.id)
+			got, err := k.GetByID(tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
 				return

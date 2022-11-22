@@ -71,9 +71,9 @@ type KafkaService interface {
 	// Get method will retrieve the kafkaRequest instance that the give ctx has access to from the database.
 	// This should be used when you want to make sure the result is filtered based on the request context.
 	Get(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError)
-	// GetById method will retrieve the KafkaRequest instance from the database without checking any permissions.
+	// GetByID method will retrieve the KafkaRequest instance from the database without checking any permissions.
 	// You should only use this if you are sure permission check is not required.
-	GetById(id string) (*dbapi.KafkaRequest, *errors.ServiceError)
+	GetByID(id string) (*dbapi.KafkaRequest, *errors.ServiceError)
 	// Delete cleans up all dependencies for a Kafka request and soft deletes the Kafka Request record from the database.
 	// The Kafka Request in the database will be updated with a deleted_at timestamp.
 	Delete(*dbapi.KafkaRequest) *errors.ServiceError
@@ -532,7 +532,7 @@ func (k *kafkaService) Get(ctx context.Context, id string) (*dbapi.KafkaRequest,
 	return &kafkaRequest, nil
 }
 
-func (k *kafkaService) GetById(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+func (k *kafkaService) GetByID(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("id is undefined")
 	}
@@ -923,7 +923,7 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 func (k *kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 
-	if kafka, err := k.GetById(id); err != nil {
+	if kafka, err := k.GetByID(id); err != nil {
 		return true, errors.NewWithCause(errors.ErrorGeneral, err, "failed to update status")
 	} else {
 		// only allow to change the status to "deleting" if the cluster is already in "deprovision" status
