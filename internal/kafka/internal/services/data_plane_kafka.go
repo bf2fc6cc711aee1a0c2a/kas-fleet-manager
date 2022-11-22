@@ -76,7 +76,7 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 	}
 	if cluster == nil {
 		// 404 is used for authenticated requests. So to distinguish the errors, we use 400 here
-		return serviceError.BadRequest("cluster id %s not found", clusterID)
+		return serviceError.BadRequest("clusterID %q not found", clusterID)
 	}
 
 	prewarmingStatusInfo := reservedManagedKafkaStatusCountPerInstanceType{}
@@ -125,14 +125,14 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 func (d *dataPlaneKafkaService) processReservedKafkaDeployment(ks *dbapi.DataPlaneKafkaStatus, prewarmingStatusInfo reservedManagedKafkaStatusCountPerInstanceType, log logger.UHCLogger, clusterID string) {
 	parsedID := strings.Split(ks.KafkaClusterId, "-")
 	if len(parsedID) < 4 {
-		log.Error(fmt.Errorf("the reserved %q ID does not follow the format 'reserved-kafka-<instance-type>-<number>'", ks.KafkaClusterId))
+		log.Error(fmt.Errorf("the reserved kafka %q ID does not follow the format 'reserved-kafka-<instance-type>-<number>'", ks.KafkaClusterId))
 		return
 	}
 
 	instanceType := parsedID[2]
 	_, ok := prewarmingStatusInfo[api.ClusterInstanceTypeSupport(instanceType)]
 	if !ok {
-		log.Error(fmt.Errorf("the reserved %q ID is not supported in the cluster with cluster_id %q", ks.KafkaClusterId, clusterID))
+		log.Error(fmt.Errorf("the reserved kafka %q ID is not supported in the cluster with ClusterID %q", ks.KafkaClusterId, clusterID))
 		return
 	}
 
@@ -144,11 +144,11 @@ func (d *dataPlaneKafkaService) processReservedKafkaDeployment(ks *dbapi.DataPla
 func (d *dataPlaneKafkaService) processRealKafkaDeployment(ks *dbapi.DataPlaneKafkaStatus, cluster *api.Cluster, log logger.UHCLogger) {
 	kafka, getErr := d.kafkaService.GetById(ks.KafkaClusterId)
 	if getErr != nil {
-		glog.Error(errors.Wrapf(getErr, "failed to get kafka cluster by id %s", ks.KafkaClusterId))
+		glog.Error(errors.Wrapf(getErr, "failed to get kafka request by kafka ID %q", ks.KafkaClusterId))
 		return
 	}
 	if kafka.ClusterID != cluster.ClusterID {
-		log.Warningf("clusterId for kafka cluster %s does not match clusterId. kafka clusterId = %s :: clusterId = %s", kafka.ID, kafka.ClusterID, cluster.ClusterID)
+		log.Warningf("kafka with ID %q does not match cluster's ClusterID. kafka ClusterID = %q, cluster's ClusterID = %q", kafka.ID, kafka.ClusterID, cluster.ClusterID)
 		return
 	}
 
@@ -205,26 +205,26 @@ func (d *dataPlaneKafkaService) processRealKafkaDeployment(ks *dbapi.DataPlaneKa
 			_, e = d.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusSuspended)
 		}
 	case statusUnknown:
-		log.Infof("kafka cluster %s status is unknown", ks.KafkaClusterId)
+		log.Infof("kafka %q status is unknown", ks.KafkaClusterId)
 	default:
-		log.V(5).Infof("kafka cluster %s is still installing", ks.KafkaClusterId)
+		log.V(5).Infof("kafka %q is still installing", ks.KafkaClusterId)
 	}
 	if e != nil {
-		log.Error(errors.Wrapf(e, "Error updating kafka %s status", ks.KafkaClusterId))
+		log.Error(errors.Wrapf(e, "Error updating kafka %q status", ks.KafkaClusterId))
 	}
 
 	e = d.setKafkaRequestVersionFields(kafka, ks)
 	if e != nil {
-		log.Error(errors.Wrapf(e, "Error updating kafka '%s' version fields", ks.KafkaClusterId))
+		log.Error(errors.Wrapf(e, "Error updating kafka '%q' version fields", ks.KafkaClusterId))
 	}
 }
 
 func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *dbapi.KafkaRequest) *serviceError.ServiceError {
 	if !kafka.RoutesCreated {
-		logger.Logger.V(10).Infof("routes for kafka %s are not created", kafka.ID)
+		logger.Logger.V(10).Infof("routes for kafka %q are not created", kafka.ID)
 		return nil
 	} else {
-		logger.Logger.Infof("routes for kafka %s are created", kafka.ID)
+		logger.Logger.Infof("routes for kafka %q are created", kafka.ID)
 	}
 	// only send metrics data if the current kafka request is in "provisioning" status as this is the only case we want to report
 	shouldSendMetric, err := d.checkKafkaRequestCurrentStatus(kafka, constants.KafkaRequestStatusProvisioning)
@@ -235,7 +235,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *dbapi.KafkaRequest) 
 
 	err = d.kafkaService.Updates(kafka, map[string]interface{}{"admin_api_server_url": kafka.AdminApiServerURL, "failed_reason": "", "status": constants.KafkaRequestStatusReady.String()})
 	if err != nil {
-		return serviceError.NewWithCause(err.Code, err, "failed to update kafka cluster %s", kafka.ID)
+		return serviceError.NewWithCause(err.Code, err, "failed to update kafka %q", kafka.ID)
 	}
 
 	if shouldSendMetric {
@@ -252,21 +252,21 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 	needsUpdate := false
 	prevActualKafkaVersion := kafka.ActualKafkaVersion
 	if status.KafkaVersion != "" && status.KafkaVersion != kafka.ActualKafkaVersion {
-		logger.Logger.Infof("Updating Kafka version for Kafka ID '%s' from '%s' to '%s'", kafka.ID, prevActualKafkaVersion, status.KafkaVersion)
+		logger.Logger.Infof("Updating Kafka version for Kafka ID %q from %q to %q", kafka.ID, prevActualKafkaVersion, status.KafkaVersion)
 		kafka.ActualKafkaVersion = status.KafkaVersion
 		needsUpdate = true
 	}
 
 	prevActualKafkaIBPVersion := kafka.ActualKafkaIBPVersion
 	if status.KafkaIBPVersion != "" && status.KafkaIBPVersion != kafka.ActualKafkaIBPVersion {
-		logger.Logger.Infof("Updating Kafka IBP version for Kafka ID '%s' from '%s' to '%s'", kafka.ID, prevActualKafkaIBPVersion, status.KafkaIBPVersion)
+		logger.Logger.Infof("Updating Kafka IBP version for Kafka ID %q from %q to %q", kafka.ID, prevActualKafkaIBPVersion, status.KafkaIBPVersion)
 		kafka.ActualKafkaIBPVersion = status.KafkaIBPVersion
 		needsUpdate = true
 	}
 
 	prevActualStrimziVersion := kafka.ActualStrimziVersion
 	if status.StrimziVersion != "" && status.StrimziVersion != kafka.ActualStrimziVersion {
-		logger.Logger.Infof("Updating Strimzi version for Kafka ID '%s' from '%s' to '%s'", kafka.ID, prevActualStrimziVersion, status.StrimziVersion)
+		logger.Logger.Infof("Updating Strimzi version for Kafka ID %q from %q to %q", kafka.ID, prevActualStrimziVersion, status.StrimziVersion)
 		kafka.ActualStrimziVersion = status.StrimziVersion
 		needsUpdate = true
 	}
@@ -278,12 +278,12 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 		prevStrimziUpgrading := kafka.StrimziUpgrading
 		strimziUpdatingReasonIsSet := readyCondition.Reason == strimziUpdating
 		if strimziUpdatingReasonIsSet && !prevStrimziUpgrading {
-			logger.Logger.Infof("Strimzi version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevStrimziUpgrading, strimziUpdatingReasonIsSet)
+			logger.Logger.Infof("Strimzi version for Kafka ID %q upgrade state changed from %t to %t", kafka.ID, prevStrimziUpgrading, strimziUpdatingReasonIsSet)
 			kafka.StrimziUpgrading = true
 			needsUpdate = true
 		}
 		if !strimziUpdatingReasonIsSet && prevStrimziUpgrading {
-			logger.Logger.Infof("Strimzi version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevStrimziUpgrading, strimziUpdatingReasonIsSet)
+			logger.Logger.Infof("Strimzi version for Kafka ID %q upgrade state changed from %t to %t", kafka.ID, prevStrimziUpgrading, strimziUpdatingReasonIsSet)
 			kafka.StrimziUpgrading = false
 			needsUpdate = true
 		}
@@ -291,12 +291,12 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 		prevKafkaUpgrading := kafka.KafkaUpgrading
 		kafkaUpdatingReasonIsSet := readyCondition.Reason == kafkaUpdating
 		if kafkaUpdatingReasonIsSet && !prevKafkaUpgrading {
-			logger.Logger.Infof("Kafka version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevKafkaUpgrading, kafkaUpdatingReasonIsSet)
+			logger.Logger.Infof("Kafka version for Kafka ID %q upgrade state changed from %t to %t", kafka.ID, prevKafkaUpgrading, kafkaUpdatingReasonIsSet)
 			kafka.KafkaUpgrading = true
 			needsUpdate = true
 		}
 		if !kafkaUpdatingReasonIsSet && prevKafkaUpgrading {
-			logger.Logger.Infof("Kafka version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevKafkaUpgrading, kafkaUpdatingReasonIsSet)
+			logger.Logger.Infof("Kafka version for Kafka ID %q upgrade state changed from %t to %t", kafka.ID, prevKafkaUpgrading, kafkaUpdatingReasonIsSet)
 			kafka.KafkaUpgrading = false
 			needsUpdate = true
 		}
@@ -304,12 +304,12 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 		prevKafkaIBPUpgrading := kafka.KafkaIBPUpgrading
 		kafkaIBPUpdatingReasonIsSet := readyCondition.Reason == kafkaIBPUpdating
 		if kafkaIBPUpdatingReasonIsSet && !prevKafkaIBPUpgrading {
-			logger.Logger.Infof("Kafka IBP version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevKafkaIBPUpgrading, kafkaIBPUpdatingReasonIsSet)
+			logger.Logger.Infof("Kafka IBP version for Kafka ID %q upgrade state changed from %t to %t", kafka.ID, prevKafkaIBPUpgrading, kafkaIBPUpdatingReasonIsSet)
 			kafka.KafkaIBPUpgrading = true
 			needsUpdate = true
 		}
 		if !kafkaIBPUpdatingReasonIsSet && prevKafkaIBPUpgrading {
-			logger.Logger.Infof("Kafka IBP version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevKafkaIBPUpgrading, kafkaIBPUpdatingReasonIsSet)
+			logger.Logger.Infof("Kafka IBP version for Kafka ID %q upgrade state changed from %t to %t", kafka.ID, prevKafkaIBPUpgrading, kafkaIBPUpdatingReasonIsSet)
 			kafka.KafkaIBPUpgrading = false
 			needsUpdate = true
 		}
@@ -327,7 +327,7 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 		}
 
 		if err := d.kafkaService.Updates(kafka, versionFields); err != nil {
-			return serviceError.NewWithCause(err.Code, err, "failed to update actual version fields for kafka cluster %s", kafka.ID)
+			return serviceError.NewWithCause(err.Code, err, "failed to update actual version fields for kafka %q", kafka.ID)
 		}
 	}
 
@@ -340,7 +340,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *dbapi.KafkaRequest,
 		return nil
 	}
 
-	logger.Logger.Errorf("Kafka status for Kafka ID '%s' in ClusterID '%s' reported as failed by KAS Fleet Shard Operator: '%s'", kafka.ID, kafka.ClusterID, errMessage)
+	logger.Logger.Errorf("Kafka status for Kafka ID %q in ClusterID %q reported as failed by KAS Fleet Shard Operator: %q", kafka.ID, kafka.ClusterID, errMessage)
 
 	// only send metrics data if the current kafka request is in "provisioning" status as this is the only case we want to report
 	shouldSendMetric, err := d.checkKafkaRequestCurrentStatus(kafka, constants.KafkaRequestStatusProvisioning)
@@ -352,7 +352,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *dbapi.KafkaRequest,
 	kafka.FailedReason = "Kafka reported as failed from the data plane"
 	err = d.kafkaService.Update(kafka)
 	if err != nil {
-		return serviceError.NewWithCause(err.Code, err, "failed to update kafka cluster to %s status for kafka cluster %s", constants.KafkaRequestStatusFailed, kafka.ID)
+		return serviceError.NewWithCause(err.Code, err, "failed to update kafka cluster to %q status for kafka %q", constants.KafkaRequestStatusFailed, kafka.ID)
 	}
 	if shouldSendMetric {
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
@@ -366,7 +366,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterDeleting(kafka *dbapi.KafkaReques
 	// If the Kafka cluster is deleted from the data plane cluster, we will make it as "deleting" in db and the reconcilier will ensure it is cleaned up properly
 	if ok, updateErr := d.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusDeleting); ok {
 		if updateErr != nil {
-			return serviceError.NewWithCause(updateErr.Code, updateErr, "failed to update status %s for kafka cluster %s", constants.KafkaRequestStatusDeleting, kafka.ID)
+			return serviceError.NewWithCause(updateErr.Code, updateErr, "failed to update status %q for kafka %q", constants.KafkaRequestStatusDeleting, kafka.ID)
 		} else {
 			metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusDeleting, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		}
@@ -386,7 +386,7 @@ func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *dbapi.KafkaRequest) 
 		}
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 	} else {
-		logger.Logger.Infof("kafka cluster %s is rejected and current status is %s", kafka.ID, kafka.Status)
+		logger.Logger.Infof("kafka %q is rejected and current status is %q", kafka.ID, kafka.Status)
 	}
 
 	return nil
@@ -395,7 +395,7 @@ func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *dbapi.KafkaRequest) 
 // unassigns a Kafka instance from a data plane cluster. This is only done for Kafka instances in a 'provisioning' state.
 func (d *dataPlaneKafkaService) unassignKafkaFromDataplaneCluster(kafka *dbapi.KafkaRequest) *serviceError.ServiceError {
 	if kafka.Status == constants.KafkaRequestStatusProvisioning.String() {
-		logger.Logger.Infof("kafka %s is being unassigned from cluster %s", kafka.ID, kafka.ClusterID)
+		logger.Logger.Infof("kafka %q is being unassigned from clusterID %q", kafka.ID, kafka.ClusterID)
 		if err := d.kafkaService.Updates(kafka, map[string]interface{}{
 			"cluster_id":                "",
 			"bootstrap_server_host":     "",
@@ -403,12 +403,12 @@ func (d *dataPlaneKafkaService) unassignKafkaFromDataplaneCluster(kafka *dbapi.K
 			"desired_kafka_version":     "",
 			"desired_kafka_ibp_version": "",
 		}); err != nil {
-			return serviceError.NewWithCause(err.Code, err, "failed to reset fields for kafka cluster %s", kafka.ID)
+			return serviceError.NewWithCause(err.Code, err, "failed to reset fields for kafka %q", kafka.ID)
 		}
 
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 	} else {
-		logger.Logger.Infof("kafka cluster %s is rejected and current status is %s", kafka.ID, kafka.Status)
+		logger.Logger.Infof("kafka %q is rejected and current status is %q", kafka.ID, kafka.Status)
 	}
 
 	return nil
@@ -427,19 +427,19 @@ func (d *dataPlaneKafkaService) checkKafkaRequestCurrentStatus(kafka *dbapi.Kafk
 // stores routes reported by data plane to the database if not already persisted
 func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, kafkaStatus *dbapi.DataPlaneKafkaStatus, cluster *api.Cluster) *serviceError.ServiceError {
 	if kafka.Routes != nil {
-		logger.Logger.V(10).Infof("skip persisting routes for Kafka %s as they are already stored", kafka.ID)
+		logger.Logger.V(10).Infof("skip persisting routes for Kafka %q as they are already stored", kafka.ID)
 		return nil
 	}
 
 	if len(kafkaStatus.Routes) < 1 {
-		logger.Logger.V(10).Infof("skip persisting routes for Kafka %s as they are not available", kafka.ID)
+		logger.Logger.V(10).Infof("skip persisting routes for Kafka %q as they are not available", kafka.ID)
 		return nil
 	}
 
-	logger.Logger.Infof("store routes information for kafka %s", kafka.ID)
+	logger.Logger.Infof("store routes information for kafka %q", kafka.ID)
 	clusterDNS, err := d.clusterService.GetClusterDNS(cluster.ClusterID)
 	if err != nil {
-		return serviceError.NewWithCause(err.Code, err, "failed to get DNS entry for cluster %s", cluster.ClusterID)
+		return serviceError.NewWithCause(err.Code, err, "failed to get DNS entry for ClusterID %q", cluster.ClusterID)
 	}
 
 	routesInRequest := kafkaStatus.Routes
@@ -452,11 +452,11 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 	}
 
 	if err := kafka.SetRoutes(routes); err != nil {
-		return serviceError.NewWithCause(serviceError.ErrorGeneral, err, "failed to set routes for kafka %s", kafka.ID)
+		return serviceError.NewWithCause(serviceError.ErrorGeneral, err, "failed to set routes for kafka %q", kafka.ID)
 	}
 
 	if err := d.kafkaService.Update(kafka); err != nil {
-		return serviceError.NewWithCause(err.Code, err, "failed to update routes for kafka cluster %s", kafka.ID)
+		return serviceError.NewWithCause(err.Code, err, "failed to update routes for kafka %q", kafka.ID)
 	}
 
 	return nil
@@ -512,7 +512,7 @@ func (d *dataPlaneKafkaService) buildKafkaRoutes(routesInRequest []dbapi.DataPla
 			}
 			routes = append(routes, router)
 		} else {
-			return nil, errors.Errorf("router domain is not valid. router = %s, expected domain = %s", r.Router, clusterDNS)
+			return nil, errors.Errorf("router domain is not valid. router = %q, expected domain = %q", r.Router, clusterDNS)
 		}
 	}
 	return routes, nil

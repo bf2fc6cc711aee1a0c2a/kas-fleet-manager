@@ -54,7 +54,7 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				clusterId: "test-cluster-id",
 				status:    []*dbapi.DataPlaneKafkaStatus{},
 			},
-			want: errors.BadRequest("cluster id test-cluster-id not found"),
+			want: errors.BadRequest("clusterID \"test-cluster-id\" not found"),
 			expectCounters: map[string]int{
 				"ready":     0,
 				"failed":    0,
@@ -1207,7 +1207,7 @@ func Test_dataPlaneKafkaService_unassignKafkaFromDataplaneCluster(t *testing.T) 
 					ClusterID: "test-cluster-id",
 				},
 			},
-			want: errors.NewWithCause(errors.ErrorGeneral, errors.GeneralError("test"), "failed to reset fields for kafka cluster "),
+			want: errors.NewWithCause(errors.ErrorGeneral, errors.GeneralError("test"), "failed to reset fields for kafka \"\""),
 		},
 	}
 
