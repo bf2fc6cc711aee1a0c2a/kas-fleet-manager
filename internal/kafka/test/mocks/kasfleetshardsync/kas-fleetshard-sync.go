@@ -249,7 +249,7 @@ func NewAuthenticatedContextForDataPlaneCluster(h *coreTest.Helper, clusterID st
 		"iss": keycloakConfig.SSOProviderRealm().ValidIssuerURI,
 	}
 
-	clientId, err := clusterService.GetClientId(clusterID)
+	clientId, err := clusterService.GetClientID(clusterID)
 	if err != nil {
 		return nil, err
 	}

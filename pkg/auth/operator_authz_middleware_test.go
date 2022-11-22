@@ -28,7 +28,7 @@ func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 			},
 			clusterId: "12345",
 			authAgentService: &AuthAgentServiceMock{
-				GetClientIdFunc: func(clusterId string) (string, error) {
+				GetClientIDFunc: func(clusterId string) (string, error) {
 					if clusterId == "12345" {
 						return "kas-fleetshard-agent-12345", nil
 					}
@@ -46,7 +46,7 @@ func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 			},
 			clusterId: "invalidid",
 			authAgentService: &AuthAgentServiceMock{
-				GetClientIdFunc: func(clusterId string) (string, error) {
+				GetClientIDFunc: func(clusterId string) (string, error) {
 					if clusterId == "12345" {
 						return "kas-fleetshard-agent-12345", nil
 					}
@@ -56,7 +56,7 @@ func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 			want: http.StatusNotFound,
 		},
 		{
-			name: "should return StatusInternalServerError when error returned from GetClientId",
+			name: "should return StatusInternalServerError when error returned from GetClientID",
 			token: &jwt.Token{
 				Claims: jwt.MapClaims{
 					"clientId": "kas-fleetshard-agent-12345",
@@ -64,7 +64,7 @@ func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 			},
 			clusterId: "invalidid",
 			authAgentService: &AuthAgentServiceMock{
-				GetClientIdFunc: func(clusterId string) (string, error) {
+				GetClientIDFunc: func(clusterId string) (string, error) {
 					return "", errors.GeneralError("")
 				},
 			},

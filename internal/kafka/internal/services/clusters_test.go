@@ -2242,7 +2242,7 @@ func Test_clusterService_GetExternalID(t *testing.T) {
 	}
 }
 
-func Test_clusterService_GetClientId(t *testing.T) {
+func Test_clusterService_GetClientID(t *testing.T) {
 	type fields struct {
 		connectionFactory      *db.ConnectionFactory
 		clusterProviderFactory clusters.ProviderFactory
@@ -2311,7 +2311,7 @@ func Test_clusterService_GetClientId(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 				providerFactory:   tt.fields.clusterProviderFactory,
 			}
-			got, err := c.GetClientId(tt.args.clusterId)
+			got, err := c.GetClientID(tt.args.clusterId)
 			g.Expect(got).To(gomega.Equal(tt.want))
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
