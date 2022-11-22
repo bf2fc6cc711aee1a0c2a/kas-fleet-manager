@@ -57,8 +57,8 @@ var _ ClusterService = &ClusterServiceMock{}
 //			FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]ResKafkaInstanceCount, error) {
 //				panic("mock out the FindKafkaInstanceCount method")
 //			},
-//			FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
-//				panic("mock out the FindNonEmptyClusterById method")
+//			FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+//				panic("mock out the FindNonEmptyClusterByID method")
 //			},
 //			FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (KafkaStreamingUnitCountPerClusterList, error) {
 //				panic("mock out the FindStreamingUnitCountByClusterAndInstanceType method")
@@ -145,8 +145,8 @@ type ClusterServiceMock struct {
 	// FindKafkaInstanceCountFunc mocks the FindKafkaInstanceCount method.
 	FindKafkaInstanceCountFunc func(clusterIDs []string) ([]ResKafkaInstanceCount, error)
 
-	// FindNonEmptyClusterByIdFunc mocks the FindNonEmptyClusterById method.
-	FindNonEmptyClusterByIdFunc func(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
+	// FindNonEmptyClusterByIDFunc mocks the FindNonEmptyClusterByID method.
+	FindNonEmptyClusterByIDFunc func(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
 
 	// FindStreamingUnitCountByClusterAndInstanceTypeFunc mocks the FindStreamingUnitCountByClusterAndInstanceType method.
 	FindStreamingUnitCountByClusterAndInstanceTypeFunc func() (KafkaStreamingUnitCountPerClusterList, error)
@@ -258,8 +258,8 @@ type ClusterServiceMock struct {
 			// ClusterIDs is the clusterIDs argument value.
 			ClusterIDs []string
 		}
-		// FindNonEmptyClusterById holds details about calls to the FindNonEmptyClusterById method.
-		FindNonEmptyClusterById []struct {
+		// FindNonEmptyClusterByID holds details about calls to the FindNonEmptyClusterByID method.
+		FindNonEmptyClusterByID []struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
@@ -358,7 +358,7 @@ type ClusterServiceMock struct {
 	lockFindCluster                                    sync.RWMutex
 	lockFindClusterByID                                sync.RWMutex
 	lockFindKafkaInstanceCount                         sync.RWMutex
-	lockFindNonEmptyClusterById                        sync.RWMutex
+	lockFindNonEmptyClusterByID                        sync.RWMutex
 	lockFindStreamingUnitCountByClusterAndInstanceType sync.RWMutex
 	lockGetClientID                                    sync.RWMutex
 	lockGetClusterDNS                                  sync.RWMutex
@@ -771,35 +771,35 @@ func (mock *ClusterServiceMock) FindKafkaInstanceCountCalls() []struct {
 	return calls
 }
 
-// FindNonEmptyClusterById calls FindNonEmptyClusterByIdFunc.
-func (mock *ClusterServiceMock) FindNonEmptyClusterById(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
-	if mock.FindNonEmptyClusterByIdFunc == nil {
-		panic("ClusterServiceMock.FindNonEmptyClusterByIdFunc: method is nil but ClusterService.FindNonEmptyClusterById was just called")
+// FindNonEmptyClusterByID calls FindNonEmptyClusterByIDFunc.
+func (mock *ClusterServiceMock) FindNonEmptyClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+	if mock.FindNonEmptyClusterByIDFunc == nil {
+		panic("ClusterServiceMock.FindNonEmptyClusterByIDFunc: method is nil but ClusterService.FindNonEmptyClusterByID was just called")
 	}
 	callInfo := struct {
 		ClusterID string
 	}{
 		ClusterID: clusterID,
 	}
-	mock.lockFindNonEmptyClusterById.Lock()
-	mock.calls.FindNonEmptyClusterById = append(mock.calls.FindNonEmptyClusterById, callInfo)
-	mock.lockFindNonEmptyClusterById.Unlock()
-	return mock.FindNonEmptyClusterByIdFunc(clusterID)
+	mock.lockFindNonEmptyClusterByID.Lock()
+	mock.calls.FindNonEmptyClusterByID = append(mock.calls.FindNonEmptyClusterByID, callInfo)
+	mock.lockFindNonEmptyClusterByID.Unlock()
+	return mock.FindNonEmptyClusterByIDFunc(clusterID)
 }
 
-// FindNonEmptyClusterByIdCalls gets all the calls that were made to FindNonEmptyClusterById.
+// FindNonEmptyClusterByIDCalls gets all the calls that were made to FindNonEmptyClusterByID.
 // Check the length with:
 //
-//	len(mockedClusterService.FindNonEmptyClusterByIdCalls())
-func (mock *ClusterServiceMock) FindNonEmptyClusterByIdCalls() []struct {
+//	len(mockedClusterService.FindNonEmptyClusterByIDCalls())
+func (mock *ClusterServiceMock) FindNonEmptyClusterByIDCalls() []struct {
 	ClusterID string
 } {
 	var calls []struct {
 		ClusterID string
 	}
-	mock.lockFindNonEmptyClusterById.RLock()
-	calls = mock.calls.FindNonEmptyClusterById
-	mock.lockFindNonEmptyClusterById.RUnlock()
+	mock.lockFindNonEmptyClusterByID.RLock()
+	calls = mock.calls.FindNonEmptyClusterByID
+	mock.lockFindNonEmptyClusterByID.RUnlock()
 	return calls
 }
 

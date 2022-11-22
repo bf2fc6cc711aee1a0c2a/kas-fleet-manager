@@ -27,7 +27,7 @@ func TestDeprovisioningClustersManager_reconcileDeprovisioningCluster(t *testing
 			name: "should receive error when FindCluster to retrieve sibling cluster returns error",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+					FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 						return nil, apiErrors.GeneralError("failed to remove cluster")
 					},
 					UpdateStatusFunc: nil, // set to nil as it should not be called
@@ -39,7 +39,7 @@ func TestDeprovisioningClustersManager_reconcileDeprovisioningCluster(t *testing
 			name: "should update the status back to ready when the cluster is not empty",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+					FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 						return &api.Cluster{}, nil // cluster is not empty its status will be brought back to ready
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -53,7 +53,7 @@ func TestDeprovisioningClustersManager_reconcileDeprovisioningCluster(t *testing
 			name: "receives an error when delete OCM cluster fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+					FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 						return nil, nil
 					},
 					UpdateStatusFunc: nil,
@@ -68,7 +68,7 @@ func TestDeprovisioningClustersManager_reconcileDeprovisioningCluster(t *testing
 			name: "successful deletion of an OSD cluster when auto configuration is enabled",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+					FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 						return nil, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -88,7 +88,7 @@ func TestDeprovisioningClustersManager_reconcileDeprovisioningCluster(t *testing
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return fmt.Errorf("Some errors")
 					},
-					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+					FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 						return &api.Cluster{}, nil // cluster is not empty its status will be brought back to ready
 					},
 					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
@@ -105,7 +105,7 @@ func TestDeprovisioningClustersManager_reconcileDeprovisioningCluster(t *testing
 					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
-					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+					FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 						return nil, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -167,7 +167,7 @@ func TestDeprovisioningClustersManager_processDeprovisioningClusters(t *testing.
 							deprovisionCluster,
 						}, nil
 					},
-					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+					FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 						return nil, nil
 					},
 					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
@@ -187,7 +187,7 @@ func TestDeprovisioningClustersManager_processDeprovisioningClusters(t *testing.
 							deprovisionCluster,
 						}, nil
 					},
-					FindNonEmptyClusterByIdFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+					FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 						return nil, nil
 					},
 					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {

@@ -45,11 +45,11 @@ type ClusterService interface {
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
 	// DeleteByClusterID will delete the cluster from the database
 	DeleteByClusterID(clusterID string) *apiErrors.ServiceError
-	// FindNonEmptyClusterById returns a cluster if it present and it is not empty.
+	// FindNonEmptyClusterByID returns a cluster if it present and it is not empty.
 	// Cluster emptiness is determined by checking whether the cluster contains Kafkas that have been provisioned, are being provisioned on it,
 	// or are being deprovisioned from it i.e kafka that are not in deleting state.
 	// NOTE. Kafka in "failed" are included as well since it is not a terminal status at the moment.
-	FindNonEmptyClusterById(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
+	FindNonEmptyClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
 	// ListAllClusterIds returns all the valid cluster ids in array
 	ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError)
 	// FindAllClusters return all the valid clusters in array
@@ -347,7 +347,7 @@ func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceEr
 	return nil
 }
 
-func (c clusterService) FindNonEmptyClusterById(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+func (c clusterService) FindNonEmptyClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
 
 	var cluster *api.Cluster = &api.Cluster{}
