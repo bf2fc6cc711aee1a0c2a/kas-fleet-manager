@@ -86,7 +86,7 @@ func (m *DeprovisioningClustersManager) processDeprovisioningClusters() error {
 }
 
 func (m *DeprovisioningClustersManager) reconcileDeprovisioningCluster(cluster *api.Cluster) error {
-	nonEmptyCluster, findClusterErr := m.clusterService.FindNonEmptyClusterById(cluster.ClusterID)
+	nonEmptyCluster, findClusterErr := m.clusterService.FindNonEmptyClusterByID(cluster.ClusterID)
 
 	if findClusterErr != nil {
 		return findClusterErr

@@ -942,7 +942,7 @@ func Test_DeleteByClusterId(t *testing.T) {
 	}
 }
 
-func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
+func Test_Cluster_FindNonEmptyClusterByID(t *testing.T) {
 	now := time.Now()
 
 	type fields struct {
@@ -1016,7 +1016,7 @@ func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
 			k := &clusterService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
-			got, err := k.FindNonEmptyClusterById(tt.args.clusterId)
+			got, err := k.FindNonEmptyClusterByID(tt.args.clusterId)
 			g.Expect(got).To(gomega.Equal(tt.want))
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
