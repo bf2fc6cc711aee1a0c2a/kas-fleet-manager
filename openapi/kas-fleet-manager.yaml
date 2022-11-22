@@ -936,16 +936,22 @@ components:
         properties:
           reason:
             type: string
+            description: "Human-readable description of the error. Intended for human consumption"
           operation_id:
             type: string
+            description: "Relatively unique operation ID of the request associated to the error"
           id:
             type: string
+            description: "The unique and immutable identifier of the resource"
           kind:
             type: string
+            description: "The kind of the resource"
           href:
             type: string
+            description: "The absolute path of the resource"
           code:
             type: string
+            description: "Code of the error"
     ErrorList:
       allOf:
         - $ref: "#/components/schemas/List"
