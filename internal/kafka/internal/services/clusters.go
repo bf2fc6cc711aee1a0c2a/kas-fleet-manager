@@ -54,11 +54,11 @@ type ClusterService interface {
 	ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError)
 	// FindAllClusters return all the valid clusters in array
 	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, error)
-	// FindKafkaInstanceCount returns the kafka instance counts associated with the list of clusters. If the list is empty, it will list all clusterIds that have Kafka instances assigned.
+	// FindKafkaInstanceCount returns the kafka instance counts associated with the list of clusters. If the list is empty, it will list all clusterIDs that have Kafka instances assigned.
 	// Kafkas that are in deleting state won't be included in the count as they no longer consume resources in the data plane cluster.
 	FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, error)
 	// UpdateMultiClusterStatus updates a list of clusters' status to a status
-	UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
+	UpdateMultiClusterStatus(clusterIDs []string, status api.ClusterStatus) *apiErrors.ServiceError
 	// CountByStatus returns the count of clusters for each given status in the database
 	CountByStatus([]api.ClusterStatus) ([]ClusterStatusCount, *apiErrors.ServiceError)
 	CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
@@ -479,24 +479,24 @@ func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cl
 	return cluster, nil
 }
 
-func (c clusterService) UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
+func (c clusterService) UpdateMultiClusterStatus(clusterIDs []string, status api.ClusterStatus) *apiErrors.ServiceError {
 	if status.String() == "" {
 		return apiErrors.Validation("status is undefined")
 	}
-	if len(clusterIds) == 0 {
+	if len(clusterIDs) == 0 {
 		return apiErrors.Validation("ids is empty")
 	}
 
 	dbConn := c.connectionFactory.New().
 		Model(&api.Cluster{}).
-		Where("cluster_id in (?)", clusterIds)
+		Where("cluster_id in (?)", clusterIDs)
 
 	if status == api.ClusterDeprovisioning {
 		dbConn = dbConn.Where("status != ?", api.ClusterCleanup.String())
 	}
 
 	if err := dbConn.Update("status", status).Error; err != nil {
-		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update status: %s", clusterIds)
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update status: %s", clusterIDs)
 	}
 
 	for rows := dbConn.RowsAffected; rows > 0; rows-- {

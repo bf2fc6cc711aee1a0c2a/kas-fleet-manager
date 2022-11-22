@@ -2603,7 +2603,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
-					UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
+					UpdateMultiClusterStatusFunc: func(clusterIDs []string, status api.ClusterStatus) *apiErrors.ServiceError {
 						return nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
@@ -2629,7 +2629,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
-					UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
+					UpdateMultiClusterStatusFunc: func(clusterIDs []string, status api.ClusterStatus) *apiErrors.ServiceError {
 						return apiErrors.GeneralError("failed to update multi cluster status")
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
@@ -2688,7 +2688,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
-					UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
+					UpdateMultiClusterStatusFunc: func(clusterIDs []string, status api.ClusterStatus) *apiErrors.ServiceError {
 						return nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
