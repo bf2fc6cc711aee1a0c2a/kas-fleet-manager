@@ -2574,7 +2574,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			name: "Successfully applies manually configured Cluster without deprovisioning clusters",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+					ListAllClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{{ClusterID: "test02"}}, nil
 					},
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
@@ -2597,7 +2597,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			name: "Successfully applies manually configured Cluster with deprovisioning clusters",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+					ListAllClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{{ClusterID: "test02"}}, nil
 					},
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
@@ -2623,7 +2623,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			name: "Should fail if UpdateMultiClusterStatus fails on clusters to deprovision",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+					ListAllClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{{ClusterID: "test02"}}, nil
 					},
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
@@ -2649,7 +2649,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			name: "Should fail if RegisterClusterJob fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+					ListAllClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{{ClusterID: "test02"}}, nil
 					},
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
@@ -2664,7 +2664,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			name: "Should fail if FindKafkaInstanceCount fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+					ListAllClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{{ClusterID: "test02"}}, nil
 					},
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
@@ -2682,7 +2682,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			name: "Failed to apply manually configured Cluster",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+					ListAllClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 						return nil, &apiErrors.ServiceError{}
 					},
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {

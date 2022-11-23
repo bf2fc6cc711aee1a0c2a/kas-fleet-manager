@@ -1023,7 +1023,7 @@ func Test_Cluster_FindNonEmptyClusterByID(t *testing.T) {
 	}
 }
 
-func Test_clusterService_ListAllClusterIds(t *testing.T) {
+func Test_clusterService_ListAllClusterIDs(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
@@ -1077,9 +1077,9 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 			c := clusterService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
-			got, err := c.ListAllClusterIds()
+			got, err := c.ListAllClusterIDs()
 			if err != nil && err != tt.wantErr {
-				t.Errorf("ListAllClusterIds() err = %v, want %v", err, tt.wantErr)
+				t.Errorf("ListAllClusterIDs() err = %v, want %v", err, tt.wantErr)
 				return
 			}
 			g.Expect(got).To(gomega.Equal(tt.want))
