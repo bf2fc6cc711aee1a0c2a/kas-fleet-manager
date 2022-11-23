@@ -96,7 +96,7 @@ var _ ClusterService = &ClusterServiceMock{}
 //			UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 //				panic("mock out the Update method")
 //			},
-//			UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
+//			UpdateMultiClusterStatusFunc: func(clusterIDs []string, status api.ClusterStatus) *apiErrors.ServiceError {
 //				panic("mock out the UpdateMultiClusterStatus method")
 //			},
 //			UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -185,7 +185,7 @@ type ClusterServiceMock struct {
 	UpdateFunc func(cluster api.Cluster) *apiErrors.ServiceError
 
 	// UpdateMultiClusterStatusFunc mocks the UpdateMultiClusterStatus method.
-	UpdateMultiClusterStatusFunc func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
+	UpdateMultiClusterStatusFunc func(clusterIDs []string, status api.ClusterStatus) *apiErrors.ServiceError
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(cluster api.Cluster, status api.ClusterStatus) error
@@ -333,8 +333,8 @@ type ClusterServiceMock struct {
 		}
 		// UpdateMultiClusterStatus holds details about calls to the UpdateMultiClusterStatus method.
 		UpdateMultiClusterStatus []struct {
-			// ClusterIds is the clusterIds argument value.
-			ClusterIds []string
+			// ClusterIDs is the clusterIDs argument value.
+			ClusterIDs []string
 			// Status is the status argument value.
 			Status api.ClusterStatus
 		}
@@ -1202,21 +1202,21 @@ func (mock *ClusterServiceMock) UpdateCalls() []struct {
 }
 
 // UpdateMultiClusterStatus calls UpdateMultiClusterStatusFunc.
-func (mock *ClusterServiceMock) UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
+func (mock *ClusterServiceMock) UpdateMultiClusterStatus(clusterIDs []string, status api.ClusterStatus) *apiErrors.ServiceError {
 	if mock.UpdateMultiClusterStatusFunc == nil {
 		panic("ClusterServiceMock.UpdateMultiClusterStatusFunc: method is nil but ClusterService.UpdateMultiClusterStatus was just called")
 	}
 	callInfo := struct {
-		ClusterIds []string
+		ClusterIDs []string
 		Status     api.ClusterStatus
 	}{
-		ClusterIds: clusterIds,
+		ClusterIDs: clusterIDs,
 		Status:     status,
 	}
 	mock.lockUpdateMultiClusterStatus.Lock()
 	mock.calls.UpdateMultiClusterStatus = append(mock.calls.UpdateMultiClusterStatus, callInfo)
 	mock.lockUpdateMultiClusterStatus.Unlock()
-	return mock.UpdateMultiClusterStatusFunc(clusterIds, status)
+	return mock.UpdateMultiClusterStatusFunc(clusterIDs, status)
 }
 
 // UpdateMultiClusterStatusCalls gets all the calls that were made to UpdateMultiClusterStatus.
@@ -1224,11 +1224,11 @@ func (mock *ClusterServiceMock) UpdateMultiClusterStatus(clusterIds []string, st
 //
 //	len(mockedClusterService.UpdateMultiClusterStatusCalls())
 func (mock *ClusterServiceMock) UpdateMultiClusterStatusCalls() []struct {
-	ClusterIds []string
+	ClusterIDs []string
 	Status     api.ClusterStatus
 } {
 	var calls []struct {
-		ClusterIds []string
+		ClusterIDs []string
 		Status     api.ClusterStatus
 	}
 	mock.lockUpdateMultiClusterStatus.RLock()
