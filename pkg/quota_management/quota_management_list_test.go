@@ -299,7 +299,7 @@ func Test_AllowedAccount_IsInstanceCountWithinLimit(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			ok := tt.item.IsInstanceCountWithinLimit(tt.count)
+			ok := tt.item.IsInstanceCountWithinLimit("standard", "standard", tt.count)
 			g.Expect(ok).To(gomega.Equal(tt.want))
 		})
 	}
@@ -329,7 +329,7 @@ func Test_AllowedAccount_GetMaxAllowedInstances(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			ok := tt.allowedAccount.GetMaxAllowedInstances()
+			ok := tt.allowedAccount.GetMaxAllowedInstances("standard", "standard")
 			g.Expect(ok).To(gomega.Equal(tt.want))
 		})
 	}

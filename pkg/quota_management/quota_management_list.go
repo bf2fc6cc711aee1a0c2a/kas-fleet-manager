@@ -9,9 +9,9 @@ func GetDefaultMaxAllowedInstances() int {
 
 type QuotaManagementListItem interface {
 	// IsInstanceCountWithinLimit returns true if the given count is within limits
-	IsInstanceCountWithinLimit(count int) bool
+	IsInstanceCountWithinLimit(instanceTypeID string, billingModelID string, count int) bool
 	// GetMaxAllowedInstances returns maximum number of allowed instances.
-	GetMaxAllowedInstances() int
+	GetMaxAllowedInstances(instanceTypeID string, billingModelID string) int
 }
 
 type RegisteredUsersListConfiguration struct {

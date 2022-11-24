@@ -873,15 +873,17 @@ func Test_AMSCheckQuota(t *testing.T) {
 				OrganisationId: "test",
 			}
 
-			sq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, types.STANDARD)
+			// FIXME when implementing support for KAFKA BILLING MODEL
+			sq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, types.STANDARD, config.KafkaBillingModel{})
 			g.Expect(err).ToNot(gomega.HaveOccurred())
-			eq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, types.DEVELOPER)
+			// FIXME when implementing support for KAFKA BILLING MODEL
+			eq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, types.DEVELOPER, config.KafkaBillingModel{})
 			g.Expect(err).ToNot(gomega.HaveOccurred())
 			g.Expect(sq).To(gomega.Equal(tt.args.hasStandardQuota))
 			fmt.Printf("eq is %v\n", eq)
 			g.Expect(eq).To(gomega.Equal(tt.args.hasDeveloperQuota))
 
-			_, err = quotaService.ReserveQuota(kafka, tt.args.kafkaInstanceType)
+			_, err = quotaService.ReserveQuota(kafka)
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
@@ -1433,7 +1435,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				BillingCloudAccountId:    tt.args.kafkaRequestBillingCloudAccountID,
 				DesiredKafkaBillingModel: tt.args.kafkaRequestDesiredBillingModel,
 			}
-			subId, err := quotaService.ReserveQuota(kafka, types.STANDARD)
+			subId, err := quotaService.ReserveQuota(kafka)
 
 			g.Expect(kafka.DesiredKafkaBillingModel).To(gomega.Equal(tt.wantDesiredKafkaBillingModel))
 			g.Expect(kafka.ActualKafkaBillingModel).To(gomega.Equal(tt.wantActualKafkaBillingModel))
@@ -1684,7 +1686,9 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 			g := gomega.NewWithT(t)
 			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.ocmClient, nil, nil, &defaultKafkaConf)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
-			res, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(tt.args.kafkaRequest.Owner, tt.args.kafkaRequest.OrganisationId, tt.args.kafkaInstanceType)
+
+			// FIXME: fix when implementing support for KAFKA BILLING MODELS
+			res, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(tt.args.kafkaRequest.Owner, tt.args.kafkaRequest.OrganisationId, tt.args.kafkaInstanceType, config.KafkaBillingModel{})
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			g.Expect(res).To(gomega.Equal(tt.want))
 		})

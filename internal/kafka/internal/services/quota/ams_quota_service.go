@@ -2,6 +2,7 @@ package quota
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
@@ -17,6 +18,8 @@ type amsQuotaService struct {
 	amsClient   ocm.AMSClient
 	kafkaConfig *config.KafkaConfig
 }
+
+var _ services.QuotaService = &amsQuotaService{}
 
 const (
 	CloudProviderAWS   = "aws"
@@ -167,7 +170,9 @@ func (q amsQuotaService) ValidateBillingAccount(organisationId string, instanceT
 	return nil
 }
 
-func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+// TODO: added the `billing model` parameter to the QuotaService interface when adding KafkaBillingModel support to the QUOTA-LIST
+// The parameter is currently unused for AMSQuota management: will be used in a subsequent PR when KafkaBillingModel support will be added.
+func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType, kafkaBillingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
 	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(externalId)
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("error checking quota: failed to get organization with external id %v", externalId))
@@ -187,7 +192,7 @@ func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, e
 //   - Contains at least one AMS RelatedResources whose billing model is one
 //     of the supported Billing Models specified in
 //     supportedAMSRelatedResourceBillingModels
-//   - Has an "Allowed" value greater than 0
+//   - Has a "MaxAllowedInstances" value greater than 0
 //
 // An error is returned if the given organizationID has a QuotaCost
 // with an unsupported billing model and there are no supported billing models
@@ -338,7 +343,8 @@ func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest, instanceType
 	return "", errors.InsufficientQuotaError("no matching marketplace quota found for product %s", instanceType.GetQuotaType().GetProduct())
 }
 
-func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
+	instanceType := types.KafkaInstanceType(kafka.InstanceType)
 	kafkaId := kafka.ID
 
 	rr := q.newBaseQuotaReservedResourceBuilder(kafka)
