@@ -29,7 +29,14 @@ type ConnectorCluster struct {
 	Name           string
 	ClientId       string
 	ClientSecret   string
-	Status         ConnectorClusterStatus `gorm:"embedded;embeddedPrefix:status_"`
+	Annotations    []ConnectorClusterAnnotation `gorm:"foreignKey:ConnectorClusterID;references:ID"`
+	Status         ConnectorClusterStatus       `gorm:"embedded;embeddedPrefix:status_"`
+}
+
+type ConnectorClusterAnnotation struct {
+	ConnectorClusterID string `gorm:"primaryKey;index"`
+	Key                string `gorm:"primaryKey;not null"`
+	Value              string `gorm:"not null"`
 }
 
 type ConnectorClusterPlatform struct {

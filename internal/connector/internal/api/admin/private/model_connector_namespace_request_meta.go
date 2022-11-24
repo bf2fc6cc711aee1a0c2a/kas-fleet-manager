@@ -12,6 +12,7 @@ package private
 // ConnectorNamespaceRequestMeta struct for ConnectorNamespaceRequestMeta
 type ConnectorNamespaceRequestMeta struct {
 	// Namespace name must match pattern `^(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?$`, or it may be empty to be auto-generated.
-	Name        string            `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
+	// Name-value string annotations for resource
 	Annotations map[string]string `json:"annotations,omitempty"`
 }

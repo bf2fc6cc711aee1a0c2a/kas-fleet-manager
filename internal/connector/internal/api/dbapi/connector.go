@@ -53,7 +53,8 @@ type Connector struct {
 	Name           string
 	Owner          string
 	OrganisationId string
-	Version        int64 `gorm:"type:bigserial;index:"`
+	Version        int64                 `gorm:"type:bigserial;index:"`
+	Annotations    []ConnectorAnnotation `gorm:"foreignKey:ConnectorID;references:ID"`
 
 	ConnectorTypeId string
 	ConnectorSpec   api.JSON `gorm:"type:jsonb"`
@@ -64,6 +65,12 @@ type Connector struct {
 	ServiceAccount  ServiceAccount                   `gorm:"embedded;embeddedPrefix:service_account_"`
 
 	Status ConnectorStatus `gorm:"foreignKey:ID"`
+}
+
+type ConnectorAnnotation struct {
+	ConnectorID string `gorm:"primaryKey;index"`
+	Key         string `gorm:"primaryKey;not null"`
+	Value       string `gorm:"not null"`
 }
 
 type ConnectorStatus struct {

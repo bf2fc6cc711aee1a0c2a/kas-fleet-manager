@@ -791,6 +791,11 @@ components:
         href:
           type: string
       type: object
+    ConnectorResourceAnnotations:
+      additionalProperties:
+        type: string
+      description: Name-value string annotations for resource
+      type: object
     ServiceAccount:
       properties:
         client_id:
@@ -890,6 +895,7 @@ components:
         annotations:
           additionalProperties:
             type: string
+          description: Name-value string annotations for resource
           type: object
       type: object
     ConnectorNamespaceQuota:
@@ -973,6 +979,11 @@ components:
           type: integer
         resolved_secrets:
           type: boolean
+        annotations:
+          additionalProperties:
+            type: string
+          description: Name-value string annotations for resource
+          type: object
       required:
       - created_at
       - resolved_secrets

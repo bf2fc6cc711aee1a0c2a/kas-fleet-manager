@@ -15,12 +15,14 @@ import (
 
 // ConnectorClusterAdminView struct for ConnectorClusterAdminView
 type ConnectorClusterAdminView struct {
-	Id         string                      `json:"id,omitempty"`
-	Kind       string                      `json:"kind,omitempty"`
-	Href       string                      `json:"href,omitempty"`
-	Owner      string                      `json:"owner,omitempty"`
-	CreatedAt  time.Time                   `json:"created_at,omitempty"`
-	ModifiedAt time.Time                   `json:"modified_at,omitempty"`
-	Name       string                      `json:"name,omitempty"`
-	Status     ConnectorClusterAdminStatus `json:"status,omitempty"`
+	Id         string    `json:"id,omitempty"`
+	Kind       string    `json:"kind,omitempty"`
+	Href       string    `json:"href,omitempty"`
+	Owner      string    `json:"owner,omitempty"`
+	CreatedAt  time.Time `json:"created_at,omitempty"`
+	ModifiedAt time.Time `json:"modified_at,omitempty"`
+	Name       string    `json:"name,omitempty"`
+	// Name-value string annotations for resource
+	Annotations map[string]string           `json:"annotations,omitempty"`
+	Status      ConnectorClusterAdminStatus `json:"status,omitempty"`
 }

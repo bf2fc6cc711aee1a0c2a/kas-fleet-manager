@@ -13,4 +13,6 @@ package public
 // ConnectorClusterRequest Schema for the request to update a data plane cluster's name
 type ConnectorClusterRequest struct {
 	Name string `json:"name,omitempty"`
+	// Name-value string annotations for resource
+	Annotations map[string]string `json:"annotations,omitempty"`
 }

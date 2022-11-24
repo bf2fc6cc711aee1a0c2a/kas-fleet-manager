@@ -13,4 +13,6 @@ package public
 // ConnectorClusterRequestMeta struct for ConnectorClusterRequestMeta
 type ConnectorClusterRequestMeta struct {
 	Name string `json:"name,omitempty"`
+	// Name-value string annotations for resource
+	Annotations map[string]string `json:"annotations,omitempty"`
 }

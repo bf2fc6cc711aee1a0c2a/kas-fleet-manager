@@ -2071,7 +2071,13 @@ components:
         annotations:
           additionalProperties:
             type: string
+          description: Name-value string annotations for resource
           type: object
+      type: object
+    ConnectorResourceAnnotations:
+      additionalProperties:
+        type: string
+      description: Name-value string annotations for resource
       type: object
     ConnectorNamespaceQuota:
       properties:
@@ -2162,11 +2168,17 @@ components:
           $ref: '#/components/schemas/Channel'
         desired_state:
           $ref: '#/components/schemas/ConnectorDesiredState'
+        annotations:
+          additionalProperties:
+            type: string
+          description: Name-value string annotations for resource
+          type: object
       required:
       - connector_type_id
       - desired_state
       - name
       - namespace_id
+      type: object
     Channel:
       default: stable
       enum:
@@ -2258,6 +2270,12 @@ components:
       properties:
         name:
           type: string
+        annotations:
+          additionalProperties:
+            type: string
+          description: Name-value string annotations for resource
+          type: object
+      type: object
     ConnectorAvailableOperatorUpgradeList_allOf:
       properties:
         items:
@@ -2292,6 +2310,11 @@ components:
           type: integer
         resolved_secrets:
           type: boolean
+        annotations:
+          additionalProperties:
+            type: string
+          description: Name-value string annotations for resource
+          type: object
       required:
       - created_at
       - resolved_secrets
@@ -2425,12 +2448,17 @@ components:
           items:
             type: string
           type: array
+        annotations:
+          additionalProperties:
+            type: string
+          description: Name-value string annotations for resource
+          type: object
         featured_rank:
           description: Ranking for featured connectors
           format: int32
           type: integer
         capabilities:
-          description: The capabilities supported by the conenctor
+          description: The capabilities supported by the connector
           items:
             type: string
           type: array
