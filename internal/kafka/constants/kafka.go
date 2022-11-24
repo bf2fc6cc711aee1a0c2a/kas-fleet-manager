@@ -108,6 +108,21 @@ func GetUpdateableStatuses() []string {
 	}
 }
 
+func GetAllStatuses() []string {
+	return []string{
+		KafkaRequestStatusAccepted.String(),
+		KafkaRequestStatusPreparing.String(),
+		KafkaRequestStatusProvisioning.String(),
+		KafkaRequestStatusResuming.String(),
+		KafkaRequestStatusReady.String(),
+		KafkaRequestStatusDeprovision.String(),
+		KafkaRequestStatusDeleting.String(),
+		KafkaRequestStatusSuspending.String(),
+		KafkaRequestStatusSuspended.String(),
+		KafkaRequestStatusFailed.String(),
+	}
+}
+
 func GetSuspendedStatuses() []string {
 	return []string{KafkaRequestStatusSuspending.String(), KafkaRequestStatusSuspended.String()}
 }
