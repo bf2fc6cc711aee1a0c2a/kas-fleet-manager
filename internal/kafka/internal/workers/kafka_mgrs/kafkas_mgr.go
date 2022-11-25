@@ -80,7 +80,13 @@ func (k *KafkaManager) Reconcile() []error {
 	}
 
 	for _, k := range kafkas {
-		metrics.UpdateKafkaRequestsCurrentStatusInfoMetric(constants.KafkaStatus(k.Status), k.ID, k.ClusterID)
+		for _, s := range kafkaMetricsStatuses {
+			if k.Status == s.String() {
+				metrics.UpdateKafkaRequestsCurrentStatusInfoMetric(constants.KafkaStatus(k.Status), k.ID, k.ClusterID, 1.0)
+			} else {
+				metrics.UpdateKafkaRequestsCurrentStatusInfoMetric(constants.KafkaStatus(s), k.ID, k.ClusterID, 0.0)
+			}
+		}
 	}
 
 	// record the metrics at the beginning of the reconcile loop as some of the states like "accepted"

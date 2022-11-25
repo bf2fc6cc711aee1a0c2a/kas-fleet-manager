@@ -493,13 +493,13 @@ var kafkaRequestsCurrentStatusInfoMetric = prometheus.NewGaugeVec(
 )
 
 // UpdateKafkaRequestsCurrentStatusInfoMetric
-func UpdateKafkaRequestsCurrentStatusInfoMetric(status constants.KafkaStatus, kafkaId string, clusterId string) {
+func UpdateKafkaRequestsCurrentStatusInfoMetric(status constants.KafkaStatus, kafkaId string, clusterId string, value float64) {
 	labels := prometheus.Labels{
 		LabelStatus:    string(status),
 		LabelID:        kafkaId,
 		LabelClusterID: clusterId,
 	}
-	kafkaRequestsCurrentStatusInfoMetric.With(labels).Set(1.0)
+	kafkaRequestsCurrentStatusInfoMetric.With(labels).Set(value)
 }
 
 // UpdateKafkaRequestsStatusCountMetric
