@@ -11,10 +11,16 @@ package private
 
 // Error struct for Error
 type Error struct {
-	Reason      string `json:"reason"`
+	// Human-readable description of the error. Intended for human consumption
+	Reason string `json:"reason"`
+	// Relatively unique operation ID of the request associated to the error
 	OperationId string `json:"operation_id,omitempty"`
-	Id          string `json:"id"`
-	Kind        string `json:"kind"`
-	Href        string `json:"href"`
-	Code        string `json:"code"`
+	// The unique and immutable identifier of the resource
+	Id string `json:"id"`
+	// The kind of the resource
+	Kind string `json:"kind"`
+	// The absolute path of the resource
+	Href string `json:"href"`
+	// Code of the error
+	Code string `json:"code"`
 }
