@@ -603,7 +603,7 @@ func (h *ConnectorAdminHandler) GetConnectorType(writer http.ResponseWriter, req
 
 	cfg := handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.Validation("connector_type_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorNamespaceIdLength)),
+			handlers.Validation("connector_type_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			entry, err := h.ConnectorTypesService.GetCatalogEntry(id)
