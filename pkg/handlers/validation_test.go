@@ -433,7 +433,7 @@ func TestValidateLength(t *testing.T) {
 	}
 }
 
-func Test_ValidatQueryParam(t *testing.T) {
+func Test_ValidateQueryParam(t *testing.T) {
 	intParseableField := "int-test"
 	notParseableField := "test"
 	validQueryParam := url.Values{}
@@ -482,7 +482,7 @@ func Test_ValidatQueryParam(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			err := handlers.ValidatQueryParam(tt.args.queryParams, tt.args.field)()
+			err := handlers.ValidateQueryParam(tt.args.queryParams, tt.args.field)()
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if err != nil {
 				g.Expect(err.Code).To(gomega.Equal(tt.expectedErrCode))
