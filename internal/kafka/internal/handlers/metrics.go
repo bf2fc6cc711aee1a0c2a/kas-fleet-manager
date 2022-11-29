@@ -81,8 +81,8 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 	query := r.URL.Query()
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidatQueryParam(query, "duration"),
-			handlers.ValidatQueryParam(query, "interval"),
+			handlers.ValidateQueryParam(query, "duration"),
+			handlers.ValidateQueryParam(query, "interval"),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			ctx := r.Context()

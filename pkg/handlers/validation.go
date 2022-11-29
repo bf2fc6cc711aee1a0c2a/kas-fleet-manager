@@ -112,7 +112,7 @@ func ValidateMinLength(value *string, field string, min int) Validate {
 	}
 }
 
-func ValidatQueryParam(queryParams url.Values, field string) Validate {
+func ValidateQueryParam(queryParams url.Values, field string) Validate {
 
 	return func() *errors.ServiceError {
 		fieldValue := queryParams.Get(field)
