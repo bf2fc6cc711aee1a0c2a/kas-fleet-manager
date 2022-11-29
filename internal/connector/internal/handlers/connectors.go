@@ -85,16 +85,17 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			validateConnectorRequest(h.connectorTypesService, &resource),
 			handlers.Validation("namespace_id", &resource.NamespaceId,
 				handlers.MaxLen(maxConnectorNamespaceIdLength), user.AuthorizedNamespaceUser(errors.ErrorBadRequest), user.ValidateNamespaceConnectorQuota()),
+			validateCreateAnnotations(resource.Annotations),
 		},
 
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			convResource, err := presenters.ConvertConnectorRequest(resource)
+			newID := api.NewID()
+			convResource, err := presenters.ConvertConnectorRequest(newID, resource)
 			if err != nil {
 				return nil, err
 			}
 
-			convResource.ID = api.NewID()
 			convResource.Owner = user.UserId()
 			convResource.OrganisationId = user.OrgId()
 
@@ -201,6 +202,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			// over the fields that they are allowed to modify..
 			resource.Name = patch.Name
 			resource.Connector = patch.Connector
+			resource.Annotations = patch.Annotations
 			resource.Kafka = patch.Kafka
 			resource.ServiceAccount = patch.ServiceAccount
 			resource.SchemaRegistry = patch.SchemaRegistry
@@ -227,6 +229,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
 				handlers.Validation("service_account.client_id", &resource.ServiceAccount.ClientId, handlers.MinLen(1)),
 				handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
+				validatePatchAnnotations(resource.Annotations, originalResource.Annotations),
 				validateConnector(h.connectorTypesService, &resource),
 			}
 

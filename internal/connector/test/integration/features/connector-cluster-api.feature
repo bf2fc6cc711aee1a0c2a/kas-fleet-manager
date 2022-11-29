@@ -27,6 +27,9 @@ Feature: create a connector
         "name": "New Cluster",
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
+        "annotations": {
+          "connector_mgmt.bf2.org/organisation-id": "13640203"
+        },
         "status": {
           "state": "disconnected"
         }

@@ -119,8 +119,19 @@ func (k *connectorClusterService) CleanupDeployments() *errors.ServiceError {
 // Create creates a connector cluster in the database
 func (k *connectorClusterService) Create(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Save(resource).Error; err != nil {
-		return services.HandleCreateError("Connector", err)
+	if err := dbConn.Transaction(func(tx *gorm.DB) error {
+		// NOTE: directly calling Create on cluster fails due to some issue in Gorm,
+		// hence this TX to save cluster and annotations in separate Gorm calls
+		if err := tx.Omit("Annotations").Create(resource).Error; err != nil {
+			return err
+		}
+		// save annotations
+		if err := tx.Create(resource.Annotations).Error; err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return services.HandleCreateError("Connector cluster", err)
 	}
 
 	// create a default namespace for the new cluster

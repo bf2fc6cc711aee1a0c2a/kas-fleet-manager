@@ -58,16 +58,13 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 		Validate: []handlers.Validate{
 			handlers.Validation("name", &resource.Name, handlers.WithDefault("New Cluster"),
 				handlers.MinLen(1), handlers.MaxLen(100)),
+			validateCreateAnnotations(resource.Annotations),
 			user.AuthorizedOrgAdmin(),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			convResource := presenters.ConvertConnectorClusterRequest(resource)
-
-			convResource.ID = api.NewID()
-			convResource.Owner = user.UserId()
-			convResource.OrganisationId = user.OrgId()
-			convResource.Status.Phase = dbapi.ConnectorClusterPhaseDisconnected
+			newID := api.NewID()
+			convResource := presenters.ConvertConnectorClusterRequest(newID, resource, user.UserId(), user.OrgId())
 
 			acc, err := h.Keycloak.RegisterConnectorFleetshardOperatorServiceAccount(convResource.ID)
 			if err != nil {
@@ -133,8 +130,16 @@ func (h *ConnectorClusterHandler) Update(w http.ResponseWriter, r *http.Request)
 				return nil, err
 			}
 
+			// validate patched annotations
+			existingAnnotations := presenters.PresentClusterAnnotations(existing.Annotations)
+			err = validatePatchAnnotations(resource.Annotations, existingAnnotations)()
+			if err != nil {
+				return nil, err
+			}
+
 			// Copy over the fields that support being updated...
 			existing.Name = resource.Name
+			existing.Annotations = presenters.ConvertClusterAnnotations(connectorClusterId, resource.Annotations)
 
 			return nil, h.Service.Update(ctx, &existing)
 		},
