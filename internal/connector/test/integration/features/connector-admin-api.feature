@@ -140,6 +140,9 @@ Feature: connector admin api
         "created_at": "${response.created_at}",
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640240"
+        },
         "status": {
           "state": "disconnected",
           "platform": {}
@@ -159,6 +162,9 @@ Feature: connector admin api
         "created_at": "${response.created_at}",
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640241"
+        },
         "status": {
           "state": "disconnected",
           "platform": {}

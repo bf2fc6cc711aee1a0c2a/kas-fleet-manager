@@ -11,6 +11,7 @@ Feature: create a connector
     Given a user named "Evil Bob"
     Given a user named "Jim"
     Given a user named "Tommy"
+    Given I store orgid for "Jim" as ${jim_org_id}
 
   Scenario: check that the connector types have been reconciled
     Given I am logged in as "Gary"
@@ -175,6 +176,9 @@ Feature: create a connector
               "category-streaming-and-messaging",
               "category-amazon"
             ],
+            "annotations": {
+              "cos.bf2.org/pricing-tier": "premium"
+            },
             "capabilities": [
               "processors"
             ],
@@ -414,6 +418,9 @@ Feature: create a connector
             "labels": [
               "sink"
             ],
+            "annotations": {
+              "cos.bf2.org/pricing-tier": "free"
+            },
             "capabilities": [
               "processors"
             ],
@@ -624,6 +631,9 @@ Feature: create a connector
             "labels": [
               "sink"
             ],
+            "annotations": {
+              "cos.bf2.org/pricing-tier": "free"
+            },
             "capabilities": [
               "processors"
             ],
@@ -824,6 +834,9 @@ Feature: create a connector
                "category-streaming-and-messaging",
                "category-amazon"
              ],
+             "annotations": {
+               "cos.bf2.org/pricing-tier": "premium"
+             },
              "capabilities": [
               "processors"
             ],
@@ -1079,6 +1092,9 @@ Feature: create a connector
              "labels": [
                "sink"
              ],
+             "annotations": {
+               "cos.bf2.org/pricing-tier": "free"
+             },
              "capabilities": [
               "processors"
             ],
@@ -1432,6 +1448,9 @@ Feature: create a connector
             "resource_version": ${response.items[0].resource_version},
             "modified_at": "${response.items[0].modified_at}",
             "desired_state": "ready",
+            "annotations": {
+              "cos.bf2.org/organisation-id": "13640203"
+            },
             "status": {
               "state": "assigning"
             }
@@ -1473,6 +1492,9 @@ Feature: create a connector
             "client_id": "myclient"
           },
           "connector_type_id": "aws-sqs-source-v1alpha1",
+          "annotations": {
+            "cos.bf2.org/organisation-id": "13640203"
+          },
           "channel": "stable",
           "connector": {
               "aws_queue_name_or_arn": "test",
@@ -2108,6 +2130,9 @@ Feature: create a connector
               "id": "myregistry",
               "url": "registry.hostname"
             },
+            "annotations": {
+              "cos.bf2.org/organisation-id": "${jim_org_id}"
+            },
             "status": {
               "state": "bad-connector-type"
             }
@@ -2149,6 +2174,9 @@ Feature: create a connector
           "schema_registry": {
             "id": "myregistry",
             "url": "registry.hostname"
+          },
+          "annotations": {
+            "cos.bf2.org/organisation-id": "${jim_org_id}"
           },
           "status": {
             "state": "bad-connector-type"

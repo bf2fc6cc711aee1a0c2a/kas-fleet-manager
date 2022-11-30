@@ -28,7 +28,7 @@ Feature: create a connector
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
         "annotations": {
-          "connector_mgmt.bf2.org/organisation-id": "13640203"
+          "cos.bf2.org/organisation-id": "13640203"
         },
         "status": {
           "state": "disconnected"
@@ -60,6 +60,9 @@ Feature: create a connector
         "created_at": "${response.created_at}",
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640203"
+        },
         "status": {
           "state": "disconnected"
         }
@@ -71,7 +74,11 @@ Feature: create a connector
     When I PUT path "/v1/kafka_connector_clusters/${cluster_id}" with json body:
       """
       {
-        "name": "My Cluster Name"
+        "name": "My Cluster Name",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640203",
+          "test/key": "test-value"
+        }
       }
       """
     Then the response code should be 204
@@ -89,6 +96,10 @@ Feature: create a connector
         "created_at": "${response.created_at}",
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640203",
+          "test/key": "test-value"
+        },
         "status": {
           "state": "disconnected"
         }

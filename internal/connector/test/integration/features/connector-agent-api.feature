@@ -152,7 +152,7 @@ Feature: connector agent API
     {
       "kind": "ConnectorNamespaceDeployment",
       "href": "/api/connector_mgmt/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}",
-      "annotations": { "connector_mgmt.bf2.org/profile": "default-profile" },
+      "annotations": { "cos.bf2.org/profile": "default-profile" },
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "id": "${connector_namespace_id}",
@@ -184,7 +184,7 @@ Feature: connector agent API
     {
       "kind": "ConnectorNamespace",
       "href": "/api/connector_mgmt/v1/kafka_connector_namespaces/${connector_namespace_id}",
-      "annotations": { "connector_mgmt.bf2.org/profile": "default-profile" },
+      "annotations": { "cos.bf2.org/profile": "default-profile" },
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
       "id": "${connector_namespace_id}",
@@ -870,6 +870,9 @@ Feature: connector agent API
         "resource_version": ${response.resource_version},
         "channel": "stable",
         "desired_state": "ready",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "20000000"
+        },
         "status": {
           "state": "updating"
         }
@@ -995,6 +998,9 @@ Feature: connector agent API
         "modified_at": "${response.modified_at}",
         "name": "${response.name}",
         "owner": "${response.owner}",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "20000000"
+        },
         "status": {
           "state": "${response.status.state}",
           "conditions": [{ "status": "True", "type": "Ready" }],
@@ -1123,7 +1129,7 @@ Feature: connector agent API
     """
     {
       "annotations": {
-          "connector_mgmt.bf2.org/profile": "default-profile"
+          "cos.bf2.org/profile": "default-profile"
       },
       "cluster_id": "${connector_cluster_id}",
       "created_at": "${response.created_at}",
@@ -1187,6 +1193,9 @@ Feature: connector agent API
       "channel":"stable",
       "desired_state":"ready",
       "resource_version":${response.resource_version},
+      "annotations": {
+        "cos.bf2.org/organisation-id": "20000000"
+      },
       "status":{
         "state":"updating"
       }
@@ -1602,7 +1611,7 @@ Feature: connector agent API
     {
       "cluster_id": "${connector_cluster_id}",
       "kind": "organisation",
-      "annotations": { "connector_mgmt.bf2.org/profile": "default-profile" }
+      "annotations": { "cos.bf2.org/profile": "default-profile" }
     }
     """
     Then the response code should be 201
