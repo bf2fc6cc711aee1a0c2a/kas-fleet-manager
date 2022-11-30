@@ -317,10 +317,7 @@ func PresentPrivateConnectorNamespace(namespace *dbapi.ConnectorNamespace, quota
 }
 
 func PresentNamespaceAnnotations(annotations []dbapi.ConnectorNamespaceAnnotation) map[string]string {
-	if len(annotations) == 0 {
-		return nil
-	}
-	res := make(map[string]string)
+	res := make(map[string]string, len(annotations))
 	for _, ann := range annotations {
 		res[ann.Key] = ann.Value
 	}

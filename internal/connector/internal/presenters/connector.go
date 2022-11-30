@@ -129,10 +129,7 @@ func PresentConnectorAdminView(from *dbapi.ConnectorWithConditions) (admin.Conne
 }
 
 func PresentConnectorAnnotations(annotations []dbapi.ConnectorAnnotation) map[string]string {
-	if len(annotations) == 0 {
-		return nil
-	}
-	res := make(map[string]string)
+	res := make(map[string]string, len(annotations))
 	for _, ann := range annotations {
 		res[ann.Key] = ann.Value
 	}
