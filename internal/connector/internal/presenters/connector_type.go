@@ -97,10 +97,7 @@ func PresentConnectorType(from *dbapi.ConnectorType) (*public.ConnectorType, err
 }
 
 func PresentTypeAnnotations(annotations []dbapi.ConnectorTypeAnnotation) map[string]string {
-	if len(annotations) == 0 {
-		return nil
-	}
-	res := make(map[string]string)
+	res := make(map[string]string, len(annotations))
 	for _, ann := range annotations {
 		res[ann.Key] = ann.Value
 	}

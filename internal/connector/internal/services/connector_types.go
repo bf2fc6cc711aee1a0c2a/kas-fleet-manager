@@ -8,6 +8,7 @@ package services
 
 import (
 	"database/sql"
+	"gorm.io/gorm/clause"
 	"strings"
 
 	"gorm.io/gorm"
@@ -76,6 +77,9 @@ func (cts *connectorTypesService) Create(resource *dbapi.ConnectorType) *errors.
 
 	} else {
 		// remove old associations first
+		if err := dbConn.Where("connector_type_id = ?", tid).Delete(&dbapi.ConnectorTypeAnnotation{}).Error; err != nil {
+			return errors.GeneralError("failed to remove connector type annotations %q: %v", tid, err)
+		}
 		if err := dbConn.Where("connector_type_id = ?", tid).Delete(&dbapi.ConnectorTypeLabel{}).Error; err != nil {
 			return errors.GeneralError("failed to remove connector type labels %q: %v", tid, err)
 		}
@@ -94,7 +98,7 @@ func (cts *connectorTypesService) Create(resource *dbapi.ConnectorType) *errors.
 
 	// read it back.... to get the updated version...
 	if err := dbConn.Where("id = ?", tid).
-		Preload("Channels").Preload("Labels").Preload("Capabilities").
+		Preload(clause.Associations).
 		First(&resource).Error; err != nil {
 		return services.HandleGetError("Connector", "id", tid, err)
 	}
@@ -111,6 +115,7 @@ func (cts *connectorTypesService) Get(id string) (*dbapi.ConnectorType, *errors.
 	dbConn := cts.connectionFactory.New()
 
 	if err := dbConn.Unscoped().
+		Preload("Annotations").
 		Preload("Channels").
 		Preload("Labels").
 		Preload("Capabilities").
@@ -181,6 +186,7 @@ func (cts *connectorTypesService) List(listArgs *services.ListArguments) (dbapi.
 
 	// execute query
 	result := dbConn.
+		Preload("Annotations").
 		Preload("Channels").
 		Preload("Labels").
 		Preload("Capabilities").
@@ -241,7 +247,6 @@ func (cts *connectorTypesService) ListLabels(listArgs *services.ListArguments) (
 			Joins("JOIN connector_type_labels labels on labels.connector_type_id = connector_types.id").
 			Where("featured_rank <> 0").
 			Group("id")).
-		Limit(1).
 		Find(&count)
 	if result.Error != nil {
 		return nil, errors.ToServiceError(result.Error)
