@@ -6,14 +6,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 )
 
-func ConvertConnectorClusterRequest(id string, from public.ConnectorClusterRequest, userID, orgID string) dbapi.ConnectorCluster {
-	// add org id system annotation to request
-	if from.Annotations == nil {
-		from.Annotations = make(map[string]string)
-	}
-	from.Annotations[dbapi.ConnectorClusterOrgIdAnnotation] = orgID
-
-	return dbapi.ConnectorCluster{
+func ConvertConnectorClusterRequest(id string, from public.ConnectorClusterRequest, userID, orgID string) *dbapi.ConnectorCluster {
+	return &dbapi.ConnectorCluster{
 		Model: db.Model{
 			ID: id,
 		},

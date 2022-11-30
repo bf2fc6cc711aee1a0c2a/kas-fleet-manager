@@ -91,6 +91,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Action: func() (interface{}, *errors.ServiceError) {
 
 			newID := api.NewID()
+			addSystemAnnotations(&resource.Annotations, user)
 			convResource, err := presenters.ConvertConnectorRequest(newID, resource)
 			if err != nil {
 				return nil, err

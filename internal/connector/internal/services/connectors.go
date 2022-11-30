@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"gorm.io/gorm/clause"
 	"regexp"
 	"strings"
 
@@ -67,7 +68,7 @@ func (k *connectorsService) Create(ctx context.Context, resource *dbapi.Connecto
 	//}
 
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Save(resource).Error; err != nil {
+	if err := dbConn.Create(resource).Error; err != nil {
 		return errors.GeneralError("failed to create connector: %v", err)
 	}
 
@@ -92,12 +93,9 @@ func (k *connectorsService) Create(ctx context.Context, resource *dbapi.Connecto
 
 // Get gets a connector by id from the database
 func (k *connectorsService) Get(ctx context.Context, id string) (*dbapi.ConnectorWithConditions, *errors.ServiceError) {
-	if id == "" {
-		return nil, errors.Validation("connector id is undefined")
-	}
-
 	dbConn := k.connectionFactory.New()
 	var resource dbapi.ConnectorWithConditions
+
 	dbConn = selectConnectorWithConditions(dbConn, false)
 	dbConn = dbConn.Where("connectors.id = ?", id)
 
@@ -112,8 +110,6 @@ func (k *connectorsService) Get(ctx context.Context, id string) (*dbapi.Connecto
 			return nil, err
 		}
 	}
-
-	dbConn = dbConn.Limit(1)
 
 	if err := dbConn.Unscoped().First(&resource).Error; err != nil {
 		return nil, services.HandleGetError("Connector", "id", id, err)
@@ -304,7 +300,9 @@ func selectConnectorWithConditions(dbConn *gorm.DB, joinedStatus bool) *gorm.DB 
 	if !joinedStatus {
 		dbConn = dbConn.Joins("Status")
 	}
-	return dbConn.Model(&dbapi.Connector{}).Select("connectors.*, connector_deployment_statuses.conditions").
+	return dbConn.Model(&dbapi.ConnectorWithConditions{}).Table("connectors").
+		Select("connectors.*, connector_deployment_statuses.conditions").
+		Preload(clause.Associations).
 		Joins("left join connector_deployments on connector_deployments.connector_id = connectors.id " +
 			"and connector_deployments.deleted_at IS NULL").
 		Joins("left join connector_deployment_statuses on connector_deployment_statuses.id = connector_deployments.id " +

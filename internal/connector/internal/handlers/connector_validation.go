@@ -75,7 +75,7 @@ func validateCreateAnnotations(annotations map[string]string) handlers.Validate 
 	}
 }
 
-// validateAnnotations returns an error for invalid k8s annotations, or use reserved domains
+// validateAnnotations returns an error for invalid k8s annotations, or reserved domains
 func validateAnnotations(annotations map[string]string) *errors.ServiceError {
 	for k, v := range annotations {
 		errs := validation.IsQualifiedName(k)

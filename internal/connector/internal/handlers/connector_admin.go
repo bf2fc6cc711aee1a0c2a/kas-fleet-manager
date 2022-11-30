@@ -81,7 +81,7 @@ func (h *ConnectorAdminHandler) ListConnectorClusters(w http.ResponseWriter, r *
 
 			resourceList.Items = make([]private.ConnectorClusterAdminView, len(resources))
 			for i, resource := range resources {
-				resourceList.Items[i] = presenters.PresentPrivateConnectorCluster(resource)
+				resourceList.Items[i] = presenters.PresentPrivateConnectorCluster(&resource)
 			}
 
 			return resourceList, nil

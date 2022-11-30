@@ -20,7 +20,7 @@ func ConvertClusterAnnotations(id string, annotations map[string]string) []dbapi
 	return res
 }
 
-func PresentConnectorCluster(from dbapi.ConnectorCluster) public.ConnectorCluster {
+func PresentConnectorCluster(from *dbapi.ConnectorCluster) public.ConnectorCluster {
 	reference := PresentReference(from.ID, from)
 	return public.ConnectorCluster{
 		Id:          reference.Id,
@@ -38,17 +38,14 @@ func PresentConnectorCluster(from dbapi.ConnectorCluster) public.ConnectorCluste
 }
 
 func PresentClusterAnnotations(annotations []dbapi.ConnectorClusterAnnotation) map[string]string {
-	if len(annotations) == 0 {
-		return nil
-	}
-	res := make(map[string]string)
+	res := make(map[string]string, len(annotations))
 	for _, ann := range annotations {
 		res[ann.Key] = ann.Value
 	}
 	return res
 }
 
-func PresentPrivateConnectorCluster(from dbapi.ConnectorCluster) private.ConnectorClusterAdminView {
+func PresentPrivateConnectorCluster(from *dbapi.ConnectorCluster) private.ConnectorClusterAdminView {
 	reference := PresentReference(from.ID, from)
 	return private.ConnectorClusterAdminView{
 		Id:          reference.Id,
