@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"gorm.io/gorm/clause"
 	"reflect"
 	"strings"
 
@@ -176,17 +177,11 @@ func (k *connectorClusterService) Get(ctx context.Context, id string) (*dbapi.Co
 		},
 	}
 
-	if err := dbConn.Unscoped().First(resource).Error; err != nil {
+	if err := dbConn.Unscoped().Preload(clause.Associations).First(resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector cluster", "id", id, err)
 	}
 	if resource.DeletedAt.Valid {
 		return resource, services.HandleGoneError("Connector cluster", "id", id)
-	}
-	// TODO figure out why gorm doesn't preload cluster annotations using dbConn.Preload("Annotations")
-	// it's possibly because of the nested embedded status association
-	if err := dbConn.Where("connector_cluster_id = ?", id).Order("Key").
-		Find(&resource.Annotations).Error; err != nil {
-		return resource, services.HandleGetError("Connector cluster", "id", id, err)
 	}
 	return resource, nil
 }
@@ -294,7 +289,7 @@ func (k *connectorClusterService) List(ctx context.Context, listArgs *services.L
 	}
 
 	// execute query
-	if err := dbConn.Preload("Annotations").Find(&resourceList).Error; err != nil {
+	if err := dbConn.Preload(clause.Associations).Find(&resourceList).Error; err != nil {
 		return resourceList, pagingMeta, services.HandleGetError(`Connector cluster`, `query`, listArgs.Search, err)
 	}
 

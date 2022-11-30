@@ -42,9 +42,10 @@ type ConnectorClusterAnnotation struct {
 }
 
 type ConnectorClusterPlatform struct {
-	ID      string
-	Type    string
-	Version string
+	// renamed struct field to PlatformID to avoid gorm Preload conflict
+	PlatformID string `gorm:"column:id"`
+	Type       string
+	Version    string
 }
 
 type ConnectorClusterStatus struct {

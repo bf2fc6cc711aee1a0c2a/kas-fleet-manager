@@ -115,10 +115,7 @@ func (cts *connectorTypesService) Get(id string) (*dbapi.ConnectorType, *errors.
 	dbConn := cts.connectionFactory.New()
 
 	if err := dbConn.Unscoped().
-		Preload("Annotations").
-		Preload("Channels").
-		Preload("Labels").
-		Preload("Capabilities").
+		Preload(clause.Associations).
 		Where("connector_types.id = ?", id).
 		First(&resource).Error; err != nil {
 		return nil, services.HandleGetError(`Connector type`, `id`, id, err)
@@ -186,10 +183,7 @@ func (cts *connectorTypesService) List(listArgs *services.ListArguments) (dbapi.
 
 	// execute query
 	result := dbConn.
-		Preload("Annotations").
-		Preload("Channels").
-		Preload("Labels").
-		Preload("Capabilities").
+		Preload(clause.Associations).
 		Find(&resourceList)
 	if result.Error != nil {
 		return nil, nil, errors.ToServiceError(result.Error)

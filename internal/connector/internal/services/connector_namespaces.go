@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"gorm.io/gorm/clause"
 	"math/rand"
 	"strings"
 	"time"
@@ -131,7 +132,7 @@ func (k *connectorNamespaceService) Create(ctx context.Context, request *dbapi.C
 	}
 
 	// reload namespace to get version
-	if err := dbConn.Preload("Annotations").Preload("TenantUser").Preload("TenantOrganisation").
+	if err := dbConn.Preload(clause.Associations).
 		First(request, "id = ?", request.ID).Error; err != nil {
 		return services.HandleGetError("Connector namespace", "id", request.ID, err)
 	}
@@ -181,7 +182,7 @@ func (k *connectorNamespaceService) Get(ctx context.Context, namespaceID string)
 			ID: namespaceID,
 		},
 	}
-	if err := dbConn.Preload("Annotations").Preload("TenantUser").Preload("TenantOrganisation").
+	if err := dbConn.Preload(clause.Associations).
 		Unscoped().First(result).Error; err != nil {
 		return nil, services.HandleGetError("Connector namespace", "id", namespaceID, err)
 	}
@@ -290,7 +291,7 @@ func (k *connectorNamespaceService) List(ctx context.Context, clusterIDs []strin
 	}
 
 	// execute query
-	if err := dbConn.Preload("Annotations").Preload("TenantUser").Preload("TenantOrganisation").
+	if err := dbConn.Preload(clause.Associations).
 		Find(&resourceList).Error; err != nil {
 		return nil, nil, errors.GeneralError("failed to get connector namespaces: %v", err)
 	}
