@@ -387,7 +387,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 	defer testServer.TearDown()
 
 	biggerStorageUpdateRequest := adminprivate.KafkaUpdateRequest{
-		DeprecatedKafkaStorageSize: "70Gi",
+		MaxDataRetentionSize: "70Gi",
 	}
 
 	var testKafkas = []*dbapi.KafkaRequest{
@@ -449,7 +449,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 		return
 	}
 
-	// updating KafkaStorageSize, so that later it can be validated against "PrivateClient.AgentClustersApi.GetKafkas()"
+	// updating MaxDataRetentionSize, so that later it can be validated against "PrivateClient.AgentClustersApi.GetKafkas()"
 	adminCtx := NewAuthenticatedContextForAdminEndpoints(testServer.Helper, []string{testFullRole})
 	client := test.NewAdminPrivateAPIClient(testServer.Helper)
 	for _, kafka := range testKafkas {
@@ -458,9 +458,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkas(t *testing.T) {
 			resp.Body.Close()
 		}
 		g.Expect(err).To(gomega.BeNil())
-		g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(biggerStorageUpdateRequest.DeprecatedKafkaStorageSize))
-
-		dataRetentionSizeQuantity := config.Quantity(biggerStorageUpdateRequest.DeprecatedKafkaStorageSize)
+		dataRetentionSizeQuantity := config.Quantity(biggerStorageUpdateRequest.MaxDataRetentionSize)
 		dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
 		g.Expect(convErr).ToNot(gomega.HaveOccurred())
 		g.Expect(result.MaxDataRetentionSize.Bytes).To(gomega.Equal(dataRetentionSizeBytes))

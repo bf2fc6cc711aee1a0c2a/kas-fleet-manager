@@ -433,7 +433,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:     "2.7",
 							DesiredKafkaVersion:    "2.7",
 							DesiredStrimziVersion:  "2.7",
-							KafkaStorageSize:       "100",
+							MaxDataRetentionSize:   "100",
 						}, nil
 					},
 					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
@@ -480,7 +480,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:     "2.7",
 							DesiredKafkaVersion:    "2.7",
 							DesiredStrimziVersion:  "2.7",
-							KafkaStorageSize:       "100",
+							MaxDataRetentionSize:   "100",
 						}, nil
 					},
 					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
@@ -528,7 +528,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:     "2.8",
 							DesiredKafkaVersion:    "2.8",
 							DesiredStrimziVersion:  "2.8",
-							KafkaStorageSize:       "100",
+							MaxDataRetentionSize:   "100",
 						}, nil
 					},
 					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
@@ -576,7 +576,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:     "2.8",
 							DesiredKafkaVersion:    "2.8",
 							DesiredStrimziVersion:  "2.8",
-							KafkaStorageSize:       "100",
+							MaxDataRetentionSize:   "100",
 						}, nil
 					},
 					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
@@ -623,7 +623,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:     "2.8",
 							DesiredKafkaVersion:    "2.8",
 							DesiredStrimziVersion:  "2.8",
-							KafkaStorageSize:       "100",
+							MaxDataRetentionSize:   "100",
 						}, nil
 					},
 					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
@@ -671,7 +671,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:     "2.8",
 							DesiredKafkaVersion:    "2.8",
 							DesiredStrimziVersion:  "2.8",
-							KafkaStorageSize:       "100",
+							MaxDataRetentionSize:   "100",
 						}, nil
 					},
 					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
@@ -718,7 +718,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:     "2.8",
 							DesiredKafkaVersion:    "2.8",
 							DesiredStrimziVersion:  "2.8",
-							KafkaStorageSize:       "100",
+							MaxDataRetentionSize:   "100",
 						}, nil
 					},
 					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
@@ -766,7 +766,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:     "2.7",
 							DesiredKafkaVersion:    "2.7",
 							DesiredStrimziVersion:  "2.7",
-							KafkaStorageSize:       "100",
+							MaxDataRetentionSize:   "100",
 						}, nil
 					},
 					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
@@ -814,7 +814,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:     "2.8",
 							DesiredKafkaVersion:    "2.8",
 							DesiredStrimziVersion:  "2.8",
-							KafkaStorageSize:       "100",
+							MaxDataRetentionSize:   "100",
 						}, nil
 					},
 					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
@@ -862,7 +862,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:     "2.8",
 							DesiredKafkaVersion:    "2.8",
 							DesiredStrimziVersion:  "2.8",
-							KafkaStorageSize:       "100",
+							MaxDataRetentionSize:   "100",
 						}, nil
 					},
 					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
@@ -910,7 +910,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:     "2.8",
 							DesiredKafkaVersion:    "2.8",
 							DesiredStrimziVersion:  "2.8",
-							KafkaStorageSize:       "100",
+							MaxDataRetentionSize:   "100",
 						}, nil
 					},
 					VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
@@ -976,7 +976,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:      "2.8",
 							DesiredKafkaVersion:     "2.8",
 							DesiredStrimziVersion:   "2.8",
-							KafkaStorageSize:        "100",
+							MaxDataRetentionSize:    "100",
 							ActualKafkaBillingModel: "mybillingmodel",
 							ExpiresAt:               sql.NullTime{Time: time.Now().Add(48 * time.Hour), Valid: true},
 						}, nil
@@ -1044,7 +1044,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:      "2.8",
 							DesiredKafkaVersion:     "2.8",
 							DesiredStrimziVersion:   "2.8",
-							KafkaStorageSize:        "100",
+							MaxDataRetentionSize:    "100",
 							ActualKafkaBillingModel: "mybillingmodel",
 						}, nil
 					},
@@ -1111,7 +1111,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 							ActualKafkaVersion:      "2.8",
 							DesiredKafkaVersion:     "2.8",
 							DesiredStrimziVersion:   "2.8",
-							KafkaStorageSize:        "100",
+							MaxDataRetentionSize:    "100",
 							ActualKafkaBillingModel: "mybillingmodel",
 							ExpiresAt:               sql.NullTime{Time: time.Now().Add(240 * time.Hour), Valid: true}, //expires 10 days from now
 						}, nil

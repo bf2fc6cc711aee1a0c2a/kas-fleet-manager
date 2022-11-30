@@ -339,7 +339,6 @@ components:
         kafka_ibp_version: kafka_ibp_version
         max_data_retention_size: max_data_retention_size
         kafka_version: kafka_version
-        kafka_storage_size: kafka_storage_size
         suspended: true
       properties:
         strimzi_version:
@@ -347,11 +346,6 @@ components:
         kafka_version:
           type: string
         kafka_ibp_version:
-          type: string
-        kafka_storage_size:
-          deprecated: true
-          description: Maximum data storage available to this Kafka. This is now deprecated,
-            please use max_data_retention_size instead
           type: string
         max_data_retention_size:
           description: Maximum data storage available to this Kafka
@@ -481,11 +475,6 @@ components:
           type: boolean
         kafka_ibp_upgrading:
           type: boolean
-        kafka_storage_size:
-          deprecated: true
-          description: Maximum data storage available to this Kafka. This is now deprecated,
-            please use max_data_retention_size instead.
-          type: string
         organisation_id:
           type: string
         subscription_id:

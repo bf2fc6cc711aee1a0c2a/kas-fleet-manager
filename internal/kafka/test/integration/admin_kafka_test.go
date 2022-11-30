@@ -493,11 +493,10 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					StrimziVersion:             " ",
-					KafkaVersion:               " ",
-					KafkaIbpVersion:            " ",
-					DeprecatedKafkaStorageSize: " ",
-					MaxDataRetentionSize:       " ",
+					StrimziVersion:       " ",
+					KafkaVersion:         " ",
+					KafkaIbpVersion:      " ",
+					MaxDataRetentionSize: " ",
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
@@ -534,7 +533,6 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal(allFieldsUpdateRequest.KafkaVersion))
 				g.Expect(result.DesiredKafkaIbpVersion).To(gomega.Equal(allFieldsUpdateRequest.KafkaIbpVersion))
 				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal(allFieldsUpdateRequest.StrimziVersion))
-				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(allFieldsUpdateRequest.MaxDataRetentionSize))
 				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
 
 				dataRetentionSizeQuantity := config.Quantity(allFieldsUpdateRequest.MaxDataRetentionSize)
@@ -904,114 +902,6 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal("strimzi-cluster-operator.v0.26.0-0"))
 			},
 		},
-		// Storage update tests - using kafka_storage_size (to be removed once kafka_storage_size has been removed)
-		{
-			name: "should succeed when attempting to update to the same storage size using kafka_storage_size field",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
-				},
-				kafkaID: sampleKafkaID1,
-				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					// current storage size for this kafka was updated to this size by
-					// 'should succeed when upgrading all possible values' test case
-					DeprecatedKafkaStorageSize: allFieldsUpdateRequest.MaxDataRetentionSize,
-				},
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).ToNot(gomega.HaveOccurred())
-				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(allFieldsUpdateRequest.MaxDataRetentionSize))
-
-				dataRetentionSizeQuantity := config.Quantity(allFieldsUpdateRequest.MaxDataRetentionSize)
-				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
-				g.Expect(convErr).ToNot(gomega.HaveOccurred())
-				g.Expect(result.MaxDataRetentionSize.Bytes).To(gomega.Equal(dataRetentionSizeBytes))
-			},
-		},
-		{
-			name: "should fail when attempting to update to smaller storage size using kafka_storage_size_field",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
-				},
-				kafkaID: sampleKafkaID1,
-				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					DeprecatedKafkaStorageSize: smallerStorageSize,
-				},
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).NotTo(gomega.BeNil())
-			},
-		},
-		{
-			name: "should fail when attempting to update to smaller storage size in different format using kafka_storage_size field",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
-				},
-				kafkaID: sampleKafkaID1,
-				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					DeprecatedKafkaStorageSize: smallerStorageSizeDifferentFormat,
-				},
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).NotTo(gomega.BeNil())
-			},
-		},
-		{
-			name: "should fail when attempting to update to smaller storage size in the wrong format using kafka_storage_size_field",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
-				},
-				kafkaID: sampleKafkaID1,
-				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					DeprecatedKafkaStorageSize: wrongFormatStorageSize,
-				},
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).NotTo(gomega.BeNil())
-			},
-		},
-		{
-			name: "should succeed when updating to bigger storage size using kafka_storage_size field",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
-				},
-				kafkaID: sampleKafkaID1,
-				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					DeprecatedKafkaStorageSize: biggerStorageSizeDifferentFormat,
-				},
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).NotTo(gomega.HaveOccurred())
-				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
-				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(biggerStorageSizeDifferentFormat))
-
-				dataRetentionSizeQuantity := config.Quantity(biggerStorageSizeDifferentFormat)
-				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
-				g.Expect(convErr).ToNot(gomega.HaveOccurred())
-				g.Expect(result.MaxDataRetentionSize.Bytes).To(gomega.Equal(dataRetentionSizeBytes))
-			},
-		},
-		{
-			name: "should fail when attempting to update storage size to a random string using kafka_storage_size field",
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
-				},
-				kafkaID: sampleKafkaID1,
-				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					DeprecatedKafkaStorageSize: randomStringStorageSize,
-				},
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).NotTo(gomega.BeNil())
-			},
-		},
 		// Storage update tests - using max_data_retention_size
 		{
 			name: "should succeed when attempting to update to the same storage size using max_data_retention_size field",
@@ -1027,7 +917,6 @@ func TestAdminKafka_Update(t *testing.T) {
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				g.Expect(err).ToNot(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(initialStorageSize))
 
 				dataRetentionSizeQuantity := config.Quantity(initialStorageSize)
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
@@ -1058,7 +947,7 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					DeprecatedKafkaStorageSize: smallerStorageSizeDifferentFormat,
+					MaxDataRetentionSize: smallerStorageSizeDifferentFormat,
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
@@ -1095,7 +984,6 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID2))
-				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(biggerStorageSizeDifferentFormat))
 
 				dataRetentionSizeQuantity := config.Quantity(biggerStorageSizeDifferentFormat)
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
@@ -1156,15 +1044,13 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID1,
 				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
-					DeprecatedKafkaStorageSize: "1000Gi",
-					MaxDataRetentionSize:       "100Gi",
+					MaxDataRetentionSize: "100Gi",
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
-				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal("100Gi"))
 
 				dataRetentionSizeQuantity := config.Quantity("100Gi")
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
@@ -1303,7 +1189,6 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(suspendingKafkaID))
-				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(muchBiggerStorageSizeDifferentFormat))
 				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusSuspending.String()))
 			},
 		},
@@ -1446,7 +1331,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
 		ActualKafkaIBPVersion:  "2.7.0",
 		DesiredKafkaIBPVersion: "2.7.0",
-		KafkaStorageSize:       initialStorageSize,
+		MaxDataRetentionSize:   initialStorageSize,
 	}
 
 	kafka2 := &dbapi.KafkaRequest{
@@ -1470,7 +1355,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		KafkaIBPUpgrading:      true,
 		KafkaUpgrading:         true,
 		StrimziUpgrading:       true,
-		KafkaStorageSize:       initialStorageSize,
+		MaxDataRetentionSize:   initialStorageSize,
 	}
 
 	kafka3 := &dbapi.KafkaRequest{
@@ -1492,7 +1377,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		ActualKafkaIBPVersion:  "2.8.1",
 		DesiredKafkaIBPVersion: "2.8.1",
 		KafkaIBPUpgrading:      true,
-		KafkaStorageSize:       "random",
+		MaxDataRetentionSize:   "random",
 	}
 
 	kafka4 := &dbapi.KafkaRequest{
@@ -1536,7 +1421,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
 		ActualKafkaIBPVersion:  "2.7.0",
 		DesiredKafkaIBPVersion: "2.7.0",
-		KafkaStorageSize:       initialStorageSize,
+		MaxDataRetentionSize:   initialStorageSize,
 	}
 
 	suspendingKafka := &dbapi.KafkaRequest{
@@ -1557,7 +1442,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
 		ActualKafkaIBPVersion:  "2.7.0",
 		DesiredKafkaIBPVersion: "2.7.0",
-		KafkaStorageSize:       initialStorageSize,
+		MaxDataRetentionSize:   initialStorageSize,
 	}
 
 	deprovisionKafka := &dbapi.KafkaRequest{
@@ -1578,7 +1463,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
 		ActualKafkaIBPVersion:  "2.7.0",
 		DesiredKafkaIBPVersion: "2.7.0",
-		KafkaStorageSize:       initialStorageSize,
+		MaxDataRetentionSize:   initialStorageSize,
 	}
 
 	deletingKafka := &dbapi.KafkaRequest{
@@ -1599,7 +1484,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
 		ActualKafkaIBPVersion:  "2.7.0",
 		DesiredKafkaIBPVersion: "2.7.0",
-		KafkaStorageSize:       initialStorageSize,
+		MaxDataRetentionSize:   initialStorageSize,
 	}
 
 	sampleKafkaForUpdateForAllFields := &dbapi.KafkaRequest{
@@ -1620,7 +1505,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
 		ActualKafkaIBPVersion:  "2.7.0",
 		DesiredKafkaIBPVersion: "2.7.0",
-		KafkaStorageSize:       initialStorageSize,
+		MaxDataRetentionSize:   initialStorageSize,
 	}
 
 	evalKafkaWithExpirationDate := &dbapi.KafkaRequest{
@@ -1641,7 +1526,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		DesiredStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
 		ActualKafkaIBPVersion:   "2.7.0",
 		DesiredKafkaIBPVersion:  "2.7.0",
-		KafkaStorageSize:        initialStorageSize,
+		MaxDataRetentionSize:    initialStorageSize,
 		ExpiresAt:               sql.NullTime{Time: time.Now().Add(48 * time.Hour), Valid: true},
 		InstanceType:            "standard",
 		ActualKafkaBillingModel: "eval",
@@ -1665,7 +1550,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		DesiredStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
 		ActualKafkaIBPVersion:   "2.7.0",
 		DesiredKafkaIBPVersion:  "2.7.0",
-		KafkaStorageSize:        initialStorageSize,
+		MaxDataRetentionSize:    initialStorageSize,
 		ExpiresAt:               sql.NullTime{Time: time.Now().Add(240 * time.Hour), Valid: true}, // expire 10 days from now
 		InstanceType:            "standard",
 		ActualKafkaBillingModel: "eval",
@@ -1689,7 +1574,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		DesiredStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
 		ActualKafkaIBPVersion:   "2.7.0",
 		DesiredKafkaIBPVersion:  "2.7.0",
-		KafkaStorageSize:        initialStorageSize,
+		MaxDataRetentionSize:    initialStorageSize,
 		InstanceType:            "standard",
 		ActualKafkaBillingModel: "eval",
 	}
@@ -1712,7 +1597,7 @@ func TestAdminKafka_Update(t *testing.T) {
 		DesiredStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
 		ActualKafkaIBPVersion:   "2.7.0",
 		DesiredKafkaIBPVersion:  "2.7.0",
-		KafkaStorageSize:        initialStorageSize,
+		MaxDataRetentionSize:    initialStorageSize,
 		ExpiresAt:               sql.NullTime{Time: time.Now().Add(48 * time.Hour), Valid: true},
 		InstanceType:            "developer",
 		ActualKafkaBillingModel: "standard",

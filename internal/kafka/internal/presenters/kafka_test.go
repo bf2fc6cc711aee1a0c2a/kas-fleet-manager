@@ -139,7 +139,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 	failedReason := ""
 	version := "2.8.0"
 	reauthEnabled := true
-	kafkaStorageSize := "1000Gi"
+	MaxDataRetentionSize := "1000Gi"
 
 	clusterID := mocks.DefaultClusterID
 
@@ -161,7 +161,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 					mocks.With(mocks.BOOTSTRAP_SERVER_HOST, bootstrapServer),
 					mocks.With(mocks.FAILED_REASON, failedReason),
 					mocks.With(mocks.ACTUAL_KAFKA_VERSION, version),
-					mocks.With(mocks.STORAGE_SIZE, kafkaStorageSize),
+					mocks.With(mocks.STORAGE_SIZE, MaxDataRetentionSize),
 					mocks.With(mocks.DESIRED_KAFKA_BILLING_MODEL, "mydesiredkafkabillingmodel"),
 					mocks.With(mocks.ACTUAL_KAFKA_BILLING_MODEL, "myactualkafkabillingmodel"),
 					mocks.WithCreatedAt(nowTime),
@@ -173,7 +173,6 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.BootstrapServerHost = setBootstrapServerHost(bootstrapServer)
 				kafkaRequest.FailedReason = failedReason
 				kafkaRequest.InstanceType = mocks.DefaultInstanceType
-				kafkaRequest.DeprecatedKafkaStorageSize = kafkaStorageSize
 				kafkaRequest.BrowserUrl = "//dashboard"
 				kafkaRequest.SizeId = defaultInstanceSize.Id
 				kafkaRequest.DeprecatedIngressThroughputPerSec = defaultInstanceSize.IngressThroughputPerSec.String()
@@ -187,9 +186,9 @@ func TestPresentKafkaRequest(t *testing.T) {
 				expireTime := kafkaRequest.CreatedAt.Add(time.Duration(*defaultInstanceSize.LifespanSeconds) * time.Second)
 				kafkaRequest.ExpiresAt = &expireTime
 
-				dataRetentionSizeQuantity := config.Quantity(kafkaStorageSize)
+				dataRetentionSizeQuantity := config.Quantity(MaxDataRetentionSize)
 				dataRetentionSizeBytes, err := dataRetentionSizeQuantity.ToInt64()
-				g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to convert kafka data retention size '%s' to bytes", kafkaStorageSize)
+				g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to convert kafka data retention size '%s' to bytes", MaxDataRetentionSize)
 
 				kafkaRequest.MaxDataRetentionSize = public.SupportedKafkaSizeBytesValueItem{
 					Bytes: dataRetentionSizeBytes,
@@ -220,7 +219,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 					mocks.With(mocks.BOOTSTRAP_SERVER_HOST, bootstrapServer),
 					mocks.With(mocks.FAILED_REASON, failedReason),
 					mocks.With(mocks.ACTUAL_KAFKA_VERSION, version),
-					mocks.With(mocks.STORAGE_SIZE, kafkaStorageSize),
+					mocks.With(mocks.STORAGE_SIZE, MaxDataRetentionSize),
 					mocks.With(mocks.DESIRED_KAFKA_BILLING_MODEL, constants.BillingModelEnterprise.String()),
 					mocks.With(mocks.ACTUAL_KAFKA_BILLING_MODEL, constants.BillingModelEnterprise.String()),
 					mocks.WithCreatedAt(nowTime),
@@ -232,7 +231,6 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.BootstrapServerHost = setBootstrapServerHost(bootstrapServer)
 				kafkaRequest.FailedReason = failedReason
 				kafkaRequest.InstanceType = mocks.DefaultInstanceType
-				kafkaRequest.DeprecatedKafkaStorageSize = kafkaStorageSize
 				kafkaRequest.BrowserUrl = "//dashboard"
 				kafkaRequest.SizeId = defaultInstanceSize.Id
 				kafkaRequest.DeprecatedIngressThroughputPerSec = defaultInstanceSize.IngressThroughputPerSec.String()
@@ -246,9 +244,9 @@ func TestPresentKafkaRequest(t *testing.T) {
 				expireTime := kafkaRequest.CreatedAt.Add(time.Duration(*defaultInstanceSize.LifespanSeconds) * time.Second)
 				kafkaRequest.ExpiresAt = &expireTime
 
-				dataRetentionSizeQuantity := config.Quantity(kafkaStorageSize)
+				dataRetentionSizeQuantity := config.Quantity(MaxDataRetentionSize)
 				dataRetentionSizeBytes, err := dataRetentionSizeQuantity.ToInt64()
-				g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to convert kafka data retention size '%s' to bytes", kafkaStorageSize)
+				g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to convert kafka data retention size '%s' to bytes", MaxDataRetentionSize)
 
 				kafkaRequest.MaxDataRetentionSize = public.SupportedKafkaSizeBytesValueItem{
 					Bytes: dataRetentionSizeBytes,
@@ -330,17 +328,17 @@ func TestCapacityLimitReports(t *testing.T) {
 		{
 			name: "Size exists for the instance type",
 			request: dbapi.KafkaRequest{
-				Meta:             api.Meta{},
-				Region:           "us-east-1",
-				ClusterID:        "xyz",
-				CloudProvider:    "aws",
-				MultiAZ:          true,
-				Name:             "test-cluster",
-				Status:           "ready",
-				KafkaStorageSize: "60GB",
-				InstanceType:     "standard",
-				QuotaType:        "rhosak",
-				SizeId:           "x1",
+				Meta:                 api.Meta{},
+				Region:               "us-east-1",
+				ClusterID:            "xyz",
+				CloudProvider:        "aws",
+				MultiAZ:              true,
+				Name:                 "test-cluster",
+				Status:               "ready",
+				MaxDataRetentionSize: "60GB",
+				InstanceType:         "standard",
+				QuotaType:            "rhosak",
+				SizeId:               "x1",
 			},
 			config: config.KafkaConfig{
 				SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
@@ -377,17 +375,17 @@ func TestCapacityLimitReports(t *testing.T) {
 		{
 			name: "Size doesn't exist for the instance type",
 			request: dbapi.KafkaRequest{
-				Meta:             api.Meta{},
-				Region:           "us-east-1",
-				ClusterID:        "xyz",
-				CloudProvider:    "aws",
-				MultiAZ:          true,
-				Name:             "test-cluster",
-				Status:           "ready",
-				KafkaStorageSize: "60GB",
-				InstanceType:     "developer",
-				QuotaType:        "rhosak",
-				SizeId:           "x1",
+				Meta:                 api.Meta{},
+				Region:               "us-east-1",
+				ClusterID:            "xyz",
+				CloudProvider:        "aws",
+				MultiAZ:              true,
+				Name:                 "test-cluster",
+				Status:               "ready",
+				MaxDataRetentionSize: "60GB",
+				InstanceType:         "developer",
+				QuotaType:            "rhosak",
+				SizeId:               "x1",
 			},
 			config: config.KafkaConfig{
 				SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
@@ -424,17 +422,17 @@ func TestCapacityLimitReports(t *testing.T) {
 		{
 			name: "Size doesn't exist for the instance type",
 			request: dbapi.KafkaRequest{
-				Meta:             api.Meta{},
-				Region:           "us-east-1",
-				ClusterID:        "xyz",
-				CloudProvider:    "aws",
-				MultiAZ:          true,
-				Name:             "test-cluster",
-				Status:           "ready",
-				KafkaStorageSize: "60GB",
-				InstanceType:     "standard",
-				QuotaType:        "rhosak",
-				SizeId:           "x1",
+				Meta:                 api.Meta{},
+				Region:               "us-east-1",
+				ClusterID:            "xyz",
+				CloudProvider:        "aws",
+				MultiAZ:              true,
+				Name:                 "test-cluster",
+				Status:               "ready",
+				MaxDataRetentionSize: "60GB",
+				InstanceType:         "standard",
+				QuotaType:            "rhosak",
+				SizeId:               "x1",
 			},
 			config: config.KafkaConfig{
 				SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{

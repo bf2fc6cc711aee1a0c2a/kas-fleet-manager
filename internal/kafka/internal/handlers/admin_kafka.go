@@ -134,7 +134,7 @@ func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 			ValidateKafkaUpdateFields(
 				&kafkaUpdateReq,
 			),
-			ValidateKafkaStorageSize(kafkaRequest, &kafkaUpdateReq),
+			ValidateMaxDataRetentionSize(kafkaRequest, &kafkaUpdateReq),
 			func() *errors.ServiceError { // Validate status
 				kafkaStatus := kafkaRequest.Status
 				if !arrays.Contains(constants.GetUpdateableStatuses(), kafkaStatus) {
@@ -194,12 +194,10 @@ func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				return kafka.Status
 			}
 
-			requestedStorageSize, _ := arrays.FirstNonEmpty(kafkaUpdateReq.MaxDataRetentionSize, kafkaUpdateReq.DeprecatedKafkaStorageSize)
-
 			updateRequired := update(&kafkaRequest.DesiredKafkaVersion, kafkaUpdateReq.KafkaVersion)
 			updateRequired = update(&kafkaRequest.DesiredStrimziVersion, kafkaUpdateReq.StrimziVersion) || updateRequired
 			updateRequired = update(&kafkaRequest.DesiredKafkaIBPVersion, kafkaUpdateReq.KafkaIbpVersion) || updateRequired
-			updateRequired = update(&kafkaRequest.KafkaStorageSize, requestedStorageSize) || updateRequired
+			updateRequired = update(&kafkaRequest.MaxDataRetentionSize, kafkaUpdateReq.MaxDataRetentionSize) || updateRequired
 
 			newStatus := getStatusBasedOnSuspendedParam(kafkaUpdateReq.Suspended, kafkaRequest)
 			updateRequired = update(&kafkaRequest.Status, newStatus) || updateRequired

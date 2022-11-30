@@ -435,7 +435,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 		return errors.InstancePlanNotSupported(sizeErr.Error())
 	}
 
-	kafkaRequest.KafkaStorageSize = size.MaxDataRetentionSize.String()
+	kafkaRequest.MaxDataRetentionSize = size.MaxDataRetentionSize.String()
 
 	// We intentionally manually set CreatedAt and UpdatedAt instead of letting
 	// gorm do it. The reason for that is that otherwise the ExpiresAt value
@@ -970,7 +970,7 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 
 	// only updated specified columns to avoid changing other columns e.g Status
 	updatableFields := map[string]interface{}{
-		"kafka_storage_size":        kafkaRequest.KafkaStorageSize,
+		"max_data_retention_size":   kafkaRequest.MaxDataRetentionSize,
 		"desired_strimzi_version":   kafkaRequest.DesiredStrimziVersion,
 		"desired_kafka_version":     kafkaRequest.DesiredKafkaVersion,
 		"desired_kafka_ibp_version": kafkaRequest.DesiredKafkaIBPVersion,
@@ -1162,7 +1162,7 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 				IngressPerSec:               k.IngressThroughputPerSec.String(),
 				EgressPerSec:                k.EgressThroughputPerSec.String(),
 				TotalMaxConnections:         k.TotalMaxConnections,
-				MaxDataRetentionSize:        kafkaRequest.KafkaStorageSize,
+				MaxDataRetentionSize:        kafkaRequest.MaxDataRetentionSize,
 				MaxPartitions:               k.MaxPartitions,
 				MaxDataRetentionPeriod:      k.MaxDataRetentionPeriod,
 				MaxConnectionAttemptsPerSec: k.MaxConnectionAttemptsPerSec,

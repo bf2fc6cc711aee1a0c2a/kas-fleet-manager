@@ -39,11 +39,8 @@ type KafkaRequest struct {
 	InstanceType      string     `json:"instance_type,omitempty"`
 	// This field is now deprecated, please use the /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region} endpoint to retrieve the field instead.
 	// Deprecated
-	DeprecatedInstanceTypeName string `json:"instance_type_name,omitempty"`
-	ReauthenticationEnabled    bool   `json:"reauthentication_enabled"`
-	// Maximum data storage available to this Kafka. This is now deprecated, please use max_data_retention_size instead.
-	// Deprecated
-	DeprecatedKafkaStorageSize string                           `json:"kafka_storage_size,omitempty"`
+	DeprecatedInstanceTypeName string                           `json:"instance_type_name,omitempty"`
+	ReauthenticationEnabled    bool                             `json:"reauthentication_enabled"`
 	MaxDataRetentionSize       SupportedKafkaSizeBytesValueItem `json:"max_data_retention_size,omitempty"`
 	BrowserUrl                 string                           `json:"browser_url,omitempty"`
 	SizeId                     string                           `json:"size_id,omitempty"`
