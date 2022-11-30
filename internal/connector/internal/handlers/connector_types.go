@@ -18,7 +18,7 @@ type ConnectorTypesHandler struct {
 }
 
 var (
-	maxConnectorTypeIdLength = 50
+	maxConnectorTypeIdLength = 63
 )
 
 func NewConnectorTypesHandler(service services.ConnectorTypesService, manager *workers.ConnectorManager) *ConnectorTypesHandler {

@@ -224,7 +224,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			user := h.authZService.GetValidationUser(r.Context())
 			validates := []handlers.Validate{
 				handlers.Validation("name", &resource.Name, handlers.MinLen(1), handlers.MaxLen(100)),
-				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
+				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
 				handlers.Validation("service_account.client_id", &resource.ServiceAccount.ClientId, handlers.MinLen(1)),
 				handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
 				validateConnector(h.connectorTypesService, &resource),
