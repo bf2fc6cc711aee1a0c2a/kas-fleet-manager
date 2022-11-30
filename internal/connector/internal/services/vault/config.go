@@ -23,8 +23,8 @@ type Config struct {
 func NewConfig() *Config {
 	return &Config{
 		Kind:                KindTmp,
-		AccessKeyFile:       "secrets/vault.accesskey",
-		SecretAccessKeyFile: "secrets/vault.secretaccesskey",
+		AccessKeyFile:       "secrets/vault/aws_access_key_id",
+		SecretAccessKeyFile: "secrets/vault/aws_secret_access_key",
 		Region:              DefaultRegion,
 		SecretPrefixEnable:  false,
 		SecretPrefix:        "managed-connectors",
