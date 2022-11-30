@@ -11,6 +11,10 @@
     - source
     - category-streaming-and-messaging
     - category-amazon
+  annotations:
+    cos.bf2.org/pricing-tier: plus
 - id: unknown
   labels:
     - source
+  annotations:
+    cos.bf2.org/pricing-tier: free
