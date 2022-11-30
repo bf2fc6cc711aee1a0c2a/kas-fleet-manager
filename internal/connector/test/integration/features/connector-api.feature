@@ -177,7 +177,7 @@ Feature: create a connector
               "category-amazon"
             ],
             "annotations": {
-              "cos.bf2.org/pricing-tier": "premium"
+              "cos.bf2.org/pricing-tier": "essential"
             },
             "capabilities": [
               "processors"
@@ -835,7 +835,7 @@ Feature: create a connector
                "category-amazon"
              ],
              "annotations": {
-               "cos.bf2.org/pricing-tier": "premium"
+               "cos.bf2.org/pricing-tier": "essential"
              },
              "capabilities": [
               "processors"
