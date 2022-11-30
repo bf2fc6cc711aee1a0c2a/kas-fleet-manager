@@ -17,7 +17,7 @@ const (
 	// ConnectorClusterPhaseDeleting - cluster status when in the process of being deleted
 	ConnectorClusterPhaseDeleting ConnectorClusterPhaseEnum = "deleting"
 
-	ConnectorClusterOrgIdAnnotation string = "connector_mgmt.bf2.org/organisation-id"
+	ConnectorClusterOrgIdAnnotation string = "cos.bf2.org/organisation-id"
 )
 
 var AgentRequestConnectorClusterStatus = []string{
