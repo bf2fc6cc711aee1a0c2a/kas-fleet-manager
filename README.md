@@ -371,9 +371,10 @@ uses AWS secrets manager as a connector specific _vault service_ for storing
 connector secret  properties such as usernames, passwords, etc.
 
 Before running integration tests, the required AWS secrets files
-in the `secrets` directory MUST be configured using the command:
+in the `secrets/vault` directory MUST be configured in the files:
 ```
-make aws/setup
+secrets/vault/aws_access_key_id
+secrets/vault/aws_secret_access_key
 ```
 
 ## Additional documentation:
