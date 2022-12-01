@@ -1513,6 +1513,99 @@ Feature: create a connector
       }
       """
 
+    # Check annotations update
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      {
+          "annotations": {
+            "cos.bf2.org/organisation-id": "13640203",
+            "cos.bf2.org/pricing-tier": "essential",
+            "custom/my-key": "my-value"
+          }
+      }
+      """
+    Then the response code should be 202
+    And the ".annotations" selection from the response should match json:
+      """
+      {
+          "cos.bf2.org/organisation-id": "13640203",
+          "cos.bf2.org/pricing-tier": "essential",
+          "custom/my-key": "my-value"
+      }
+      """
+
+    # Check invalid annotations update that tries to change pricing-tier
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      {
+          "annotations": {
+            "cos.bf2.org/organisation-id": "13640203",
+            "cos.bf2.org/pricing-tier": "free",
+            "custom/my-key": "my-value"
+          }
+      }
+      """
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "cannot override reserved annotation cos.bf2.org/pricing-tier"
+      }
+      """
+
+    # Check invalid annotations update that tries to change organisation-id
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      {
+          "annotations": {
+            "cos.bf2.org/organisation-id": "666",
+            "cos.bf2.org/pricing-tier": "premium",
+            "custom/my-key": "my-value"
+          }
+      }
+      """
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "cannot override reserved annotation cos.bf2.org/organisation-id"
+      }
+      """
+
+    # Check annotations update to remove an annotation
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      {
+          "annotations": {
+            "cos.bf2.org/organisation-id": "13640203",
+            "cos.bf2.org/pricing-tier": "essential",
+            "custom/my-key": null
+          }
+      }
+      """
+    Then the response code should be 202
+    And the ".annotations" selection from the response should match json:
+      """
+      {
+          "cos.bf2.org/organisation-id": "13640203",
+          "cos.bf2.org/pricing-tier": "essential"
+      }
+      """
+
     # Check that not allowed secrets update of a connector are rejected
     Given I set the "Content-Type" header to "application/merge-patch+json"
     When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:

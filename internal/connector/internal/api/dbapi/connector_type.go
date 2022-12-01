@@ -11,6 +11,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	ConnectorTypePricingTierAnnotation = "cos.bf2.org/pricing-tier"
+)
+
 type ConnectorType struct {
 	db.Model
 	Version     string

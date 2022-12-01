@@ -84,6 +84,30 @@ Feature: create a connector
     Then the response code should be 204
     And the response should match ""
 
+    # Check invalid annotations update that tries to change organisation-id
+    When I PUT path "/v1/kafka_connector_clusters/${cluster_id}" with json body:
+      """
+      {
+        "name": "My Cluster Name",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "666",
+          "test/key": "test-value"
+        }
+      }
+      """
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "cannot override reserved annotation cos.bf2.org/organisation-id"
+      }
+      """
+
     When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 200
     And the response should match json:

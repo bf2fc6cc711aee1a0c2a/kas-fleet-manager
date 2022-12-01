@@ -454,7 +454,11 @@ Feature: connector agent API
             "created_at": "${response.object.metadata.created_at}",
             "resolved_secrets": true,
             "resource_version": ${response.object.metadata.resource_version},
-            "updated_at": "${response.object.metadata.updated_at}"
+            "updated_at": "${response.object.metadata.updated_at}",
+            "annotations": {
+              "cos.bf2.org/organisation-id": "20000000",
+              "cos.bf2.org/pricing-tier": "essential"
+            }
           },
           "spec": {
             "kafka": {
@@ -552,7 +556,11 @@ Feature: connector agent API
               "created_at": "${response.items[0].metadata.created_at}",
               "resolved_secrets": true,
               "resource_version": ${response.items[0].metadata.resource_version},
-              "updated_at": "${response.items[0].metadata.updated_at}"
+              "updated_at": "${response.items[0].metadata.updated_at}",
+              "annotations": {
+                "cos.bf2.org/organisation-id": "20000000",
+                "cos.bf2.org/pricing-tier": "essential"
+              }
             },
             "spec": {
               "kafka": {
@@ -639,7 +647,11 @@ Feature: connector agent API
             "created_at": "${response.metadata.created_at}",
             "resolved_secrets": true,
             "resource_version": ${response.metadata.resource_version},
-            "updated_at": "${response.metadata.updated_at}"
+            "updated_at": "${response.metadata.updated_at}",
+            "annotations": {
+              "cos.bf2.org/organisation-id": "20000000",
+              "cos.bf2.org/pricing-tier": "essential"
+            }
           },
           "spec": {
             "kafka": {
@@ -898,7 +910,11 @@ Feature: connector agent API
             "created_at": "${response.object.metadata.created_at}",
             "resolved_secrets": true,
             "resource_version": ${response.object.metadata.resource_version},
-            "updated_at": "${response.object.metadata.updated_at}"
+            "updated_at": "${response.object.metadata.updated_at}",
+            "annotations": {
+              "cos.bf2.org/organisation-id": "20000000",
+              "cos.bf2.org/pricing-tier": "essential"
+            }
           },
           "spec": {
             "kafka": {
@@ -1051,7 +1067,11 @@ Feature: connector agent API
         "created_at": "${response.metadata.created_at}",
         "resolved_secrets": false,
         "resource_version": ${response.metadata.resource_version},
-        "updated_at": "${response.metadata.updated_at}"
+        "updated_at": "${response.metadata.updated_at}",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "20000000",
+          "cos.bf2.org/pricing-tier": "essential"
+        }
       },
       "spec": {
         "cluster_id": "${connector_cluster_id}",
@@ -1299,7 +1319,11 @@ Feature: connector agent API
               "created_at": "${response.items[0].metadata.created_at}",
               "resolved_secrets": false,
               "resource_version": ${response.items[0].metadata.resource_version},
-              "updated_at": "${response.items[0].metadata.updated_at}"
+              "updated_at": "${response.items[0].metadata.updated_at}",
+              "annotations": {
+                "cos.bf2.org/organisation-id": "20000000",
+                "cos.bf2.org/pricing-tier": "essential"
+              }
             },
             "spec": {
               "cluster_id": "${connector_cluster_id}",
@@ -1416,7 +1440,11 @@ Feature: connector agent API
           "created_at": "${response.metadata.created_at}",
           "resolved_secrets": false,
           "resource_version": ${response.metadata.resource_version},
-          "updated_at": "${response.metadata.updated_at}"
+          "updated_at": "${response.metadata.updated_at}",
+          "annotations": {
+            "cos.bf2.org/organisation-id": "20000000",
+            "cos.bf2.org/pricing-tier": "essential"
+          }
         },
         "spec": {
           "cluster_id": "${connector_cluster_id}",
@@ -2334,7 +2362,11 @@ Feature: connector agent API
               "created_at": "${response.items[0].metadata.created_at}",
               "resolved_secrets": false,
               "resource_version": ${response.items[0].metadata.resource_version},
-              "updated_at": "${response.items[0].metadata.updated_at}"
+              "updated_at": "${response.items[0].metadata.updated_at}",
+              "annotations": {
+                "cos.bf2.org/organisation-id": "20000000",
+                "cos.bf2.org/pricing-tier": "free"
+              }
             },
             "spec": {
               "cluster_id": "${connector_cluster_id}",

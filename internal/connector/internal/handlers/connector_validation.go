@@ -58,7 +58,7 @@ func connectorValidationFunction(connectorTypesService services.ConnectorTypesSe
 var reservedDomains = []string{"kubernetes\\.io/", "k8s\\.io/", "openshift\\.io/"}
 
 // user is not allowed to create or patch system generated annotations
-var reservedAnnotations = []string{dbapi.ConnectorClusterOrgIdAnnotation}
+var reservedAnnotations = []string{dbapi.ConnectorClusterOrgIdAnnotation, dbapi.ConnectorTypePricingTierAnnotation}
 
 // validateCreateAnnotations returns an error if user attempts to override a system annotation when creating a resource
 func validateCreateAnnotations(annotations map[string]string) handlers.Validate {

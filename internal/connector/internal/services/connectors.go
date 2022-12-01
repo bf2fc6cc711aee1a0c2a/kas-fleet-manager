@@ -315,25 +315,38 @@ func (k *connectorsService) Update(ctx context.Context, resource *dbapi.Connecto
 		return errors.BadRequest("resource version is required")
 	}
 
-	dbConn := k.connectionFactory.New()
-	update := dbConn.Model(resource).Where("id = ? AND version = ?", resource.ID, resource.Version).Updates(resource)
-	if err := update.Error; err != nil {
-		return services.HandleUpdateError(`Connector`, err)
-	}
-	if update.RowsAffected == 0 {
-		return errors.Conflict("resource version changed")
-	}
+	if err := k.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
 
-	// read it back.... to get the updated version...
-	dbConn = k.connectionFactory.New().Where("id = ?", resource.ID)
-	if err := dbConn.First(&resource).Error; err != nil {
-		return services.HandleGetError("Connector", "id", resource.ID, err)
+		// remove old annotations
+		if err := dbConn.Where("connector_id = ?", resource.ID).Delete(&dbapi.ConnectorAnnotation{}).Error; err != nil {
+			return services.HandleUpdateError("Connector", err)
+		}
+
+		update := dbConn.Model(resource).Session(&gorm.Session{FullSaveAssociations: true}).
+			Where("id = ? AND version = ?", resource.ID, resource.Version).Updates(resource)
+		if err := update.Error; err != nil {
+			return services.HandleUpdateError(`Connector`, err)
+		}
+		if update.RowsAffected == 0 {
+			return errors.Conflict("resource version changed")
+		}
+
+		return nil
+
+	}); err != nil {
+		return errors.ToServiceError(err)
 	}
 
 	_ = db.AddPostCommitAction(ctx, func() {
 		// Wake up the reconcile loop...
 		k.bus.Notify("reconcile:connector")
 	})
+
+	// read it back.... to get the updated version...
+	dbConn := k.connectionFactory.New().Preload(clause.Associations).Where("id = ?", resource.ID)
+	if err := dbConn.First(&resource).Error; err != nil {
+		return services.HandleGetError("Connector", "id", resource.ID, err)
+	}
 
 	return nil
 }

@@ -435,7 +435,8 @@ func GetValidDeploymentColumns() []string {
 func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, clusterId string, filterChannelUpdates bool, includeDanglingDeploymentsOnly bool, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError) {
 	var resourceList dbapi.ConnectorDeploymentList
 	dbConn := k.connectionFactory.New()
-	dbConn = dbConn.Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector")
+	// specify preload for annotations only, to avoid skipping deleted connectors
+	dbConn = dbConn.Preload("Annotations").Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector")
 
 	pagingMeta := &api.PagingMeta{
 		Page: listArgs.Page,
@@ -563,8 +564,9 @@ func (k *connectorClusterService) FindAvailableNamespace(owner string, orgID str
 
 func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context, connectorID string) (resource dbapi.ConnectorDeployment, serr *errors.ServiceError) {
 
-	dbConn := k.connectionFactory.New().Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector").Where("connector_id = ?", connectorID)
-	if err := dbConn.First(&resource).Error; err != nil {
+	if err := k.connectionFactory.New().Preload(clause.Associations).
+		Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector").
+		Where("connector_id = ?", connectorID).First(&resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector deployment", "connector_id", connectorID, err)
 	}
 	return
@@ -573,7 +575,9 @@ func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context
 func (k *connectorClusterService) GetDeployment(ctx context.Context, id string) (resource dbapi.ConnectorDeployment, serr *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Unscoped().Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector").Where("connector_deployments.id = ?", id).First(&resource).Error; err != nil {
+	if err := dbConn.Unscoped().Preload(clause.Associations).
+		Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector").
+		Where("connector_deployments.id = ?", id).First(&resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector deployment", "id", id, err)
 	}
 
