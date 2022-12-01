@@ -95,6 +95,34 @@ func ParseKafkaPromotionStatus(status string) (KafkaPromotionStatus, error) {
 	return parsedStatus, nil
 }
 
+type KafkaPromotionStatus string
+
+const (
+	KafkaPromotionStatusPromoting   KafkaPromotionStatus = "promoting"
+	KafkaPromotionStatusFailed      KafkaPromotionStatus = "failed"
+	KafkaPromotionStatusNoPromotion KafkaPromotionStatus = ""
+)
+
+func (s KafkaPromotionStatus) String() string {
+	return string(s)
+}
+
+func ParseKafkaPromotionStatus(status string) (KafkaPromotionStatus, error) {
+	validPromotionStatuses := map[KafkaPromotionStatus]struct{}{
+		KafkaPromotionStatusPromoting:   {},
+		KafkaPromotionStatusFailed:      {},
+		KafkaPromotionStatusNoPromotion: {},
+	}
+
+	parsedStatus := KafkaPromotionStatus(status)
+	_, ok := validPromotionStatuses[parsedStatus]
+	if !ok {
+		return parsedStatus, fmt.Errorf("cannot parse %q as KafkaPromotionStatus: invalid status", parsedStatus)
+	}
+
+	return parsedStatus, nil
+}
+
 type KafkaList []*KafkaRequest
 type KafkaIndex map[string]*KafkaRequest
 
