@@ -68,4 +68,8 @@ type KafkaRequest struct {
 	BillingCloudAccountId                 string `json:"billing_cloud_account_id,omitempty"`
 	Marketplace                           string `json:"marketplace,omitempty"`
 	BillingModel                          string `json:"billing_model,omitempty"`
+	// Status of the Kafka request promotion. Possible values: ['promoting', 'failed']. If unset it means no promotion is in progress.
+	PromotionStatus string `json:"promotion_status,omitempty"`
+	// Details of the Kafka request promotion. It can be set when a Kafka request promotion is in progress or has failed
+	PromotionDetails string `json:"promotion_details,omitempty"`
 }
