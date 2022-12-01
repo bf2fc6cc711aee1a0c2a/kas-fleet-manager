@@ -57,6 +57,8 @@ const (
 	ID
 	DESIRED_KAFKA_BILLING_MODEL
 	ACTUAL_KAFKA_BILLING_MODEL
+	PROMOTION_STATUS
+	PROMOTION_DETAILS
 )
 
 type KafkaAttribute int
@@ -110,6 +112,10 @@ func With(attribute KafkaRequestAttribute, value string) KafkaRequestBuildOption
 			request.DesiredKafkaBillingModel = value
 		case ACTUAL_KAFKA_BILLING_MODEL:
 			request.ActualKafkaBillingModel = value
+		case PROMOTION_STATUS:
+			request.PromotionStatus = dbapi.KafkaPromotionStatus(value)
+		case PROMOTION_DETAILS:
+			request.PromotionDetails = value
 		}
 	}
 }

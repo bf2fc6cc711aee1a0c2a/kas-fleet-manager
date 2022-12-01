@@ -2,6 +2,7 @@ package dbapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -48,17 +49,47 @@ type KafkaRequest struct {
 	RoutesCreated bool `json:"routes_created"`
 	// Namespace is the namespace of the provisioned kafka instance.
 	// We store this in the database to ensure that old kafkas whose namespace contained "owner-<kafka-id>" information will continue to work.
-	Namespace                string `json:"namespace"`
-	ReauthenticationEnabled  bool   `json:"reauthentication_enabled"`
-	RoutesCreationId         string `json:"routes_creation_id"`
-	SizeId                   string `json:"size_id"`
-	BillingCloudAccountId    string `json:"billing_cloud_account_id"`
-	Marketplace              string `json:"marketplace"`
-	ActualKafkaBillingModel  string `json:"actual_kafka_billing_model"`
-	DesiredKafkaBillingModel string `json:"desired_kafka_billing_model"`
+	Namespace                string               `json:"namespace"`
+	ReauthenticationEnabled  bool                 `json:"reauthentication_enabled"`
+	RoutesCreationId         string               `json:"routes_creation_id"`
+	SizeId                   string               `json:"size_id"`
+	BillingCloudAccountId    string               `json:"billing_cloud_account_id"`
+	Marketplace              string               `json:"marketplace"`
+	ActualKafkaBillingModel  string               `json:"actual_kafka_billing_model"`
+	DesiredKafkaBillingModel string               `json:"desired_kafka_billing_model"`
+	PromotionStatus          KafkaPromotionStatus `json:"promotion_status"`
+	PromotionDetails         string               `json:"promotion_details"`
 	// ExpiresAt contains the timestamp of when a Kafka instance is scheduled to expire.
 	// On expiration, the Kafka instance will be marked for deletion, its status will be set to 'deprovision'.
 	ExpiresAt time.Time `json:"expires_at"`
+}
+
+type KafkaPromotionStatus string
+
+const (
+	KafkaPromotionStatusPromoting   KafkaPromotionStatus = "promoting"
+	KafkaPromotionStatusFailed      KafkaPromotionStatus = "failed"
+	KafkaPromotionStatusNoPromotion KafkaPromotionStatus = ""
+)
+
+func (s KafkaPromotionStatus) String() string {
+	return string(s)
+}
+
+func ParseKafkaPromotionStatus(status string) (KafkaPromotionStatus, error) {
+	validPromotionStatuses := map[KafkaPromotionStatus]struct{}{
+		KafkaPromotionStatusPromoting:   {},
+		KafkaPromotionStatusFailed:      {},
+		KafkaPromotionStatusNoPromotion: {},
+	}
+
+	parsedStatus := KafkaPromotionStatus(status)
+	_, ok := validPromotionStatuses[parsedStatus]
+	if !ok {
+		return parsedStatus, fmt.Errorf("cannot parse %q as KafkaPromotionStatus: invalid status", parsedStatus)
+	}
+
+	return parsedStatus, nil
 }
 
 type KafkaList []*KafkaRequest
