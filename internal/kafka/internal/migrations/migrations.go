@@ -92,6 +92,7 @@ var migrations = []*gormigrate.Migration{
 	addClusterOrgIdClusterTypeColumns(),
 	addDefaultValueForClusterTypeColumn(),
 	removeWronglyCreatedEnterpriseClusterInProd(),
+	addKafkaPromotionFields(),
 	addAccessKafkasViaPrivateNetworkColumnInClustersTable(),
 }
 
