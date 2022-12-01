@@ -90,8 +90,19 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 		Action: func() (interface{}, *errors.ServiceError) {
 
+			// validate type id first
+			ct, err := h.connectorTypesService.Get(resource.ConnectorTypeId)
+			if err != nil {
+				return nil, errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
+			}
+
 			newID := api.NewID()
 			addSystemAnnotations(&resource.Annotations, user)
+			// copy type annotations to connector, e.g. for pricing
+			for _, a := range ct.Annotations {
+				resource.Annotations[a.Key] = a.Value
+			}
+
 			convResource, err := presenters.ConvertConnectorRequest(newID, resource)
 			if err != nil {
 				return nil, err
@@ -106,10 +117,6 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			}
 			if err := ValidateConnectorOperation(r.Context(), h.namespaceService, convResource, phase.CreateConnector); err != nil {
 				return nil, err
-			}
-			ct, err := h.connectorTypesService.Get(resource.ConnectorTypeId)
-			if err != nil {
-				return nil, errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
 			}
 
 			err = moveSecretsToVault(convResource, ct, h.vaultService, true)

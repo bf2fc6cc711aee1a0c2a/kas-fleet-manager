@@ -871,7 +871,8 @@ Feature: connector agent API
         "channel": "stable",
         "desired_state": "ready",
         "annotations": {
-          "cos.bf2.org/organisation-id": "20000000"
+          "cos.bf2.org/organisation-id": "20000000",
+          "cos.bf2.org/pricing-tier": "essential"
         },
         "status": {
           "state": "updating"
@@ -1194,7 +1195,8 @@ Feature: connector agent API
       "desired_state":"ready",
       "resource_version":${response.resource_version},
       "annotations": {
-        "cos.bf2.org/organisation-id": "20000000"
+        "cos.bf2.org/organisation-id": "20000000",
+        "cos.bf2.org/pricing-tier": "essential"
       },
       "status":{
         "state":"updating"

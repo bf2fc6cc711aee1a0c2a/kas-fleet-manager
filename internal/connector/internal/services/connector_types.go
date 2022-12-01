@@ -8,6 +8,7 @@ package services
 
 import (
 	"database/sql"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"gorm.io/gorm/clause"
 	"strings"
 
@@ -61,48 +62,86 @@ func (cts *connectorTypesService) Create(resource *dbapi.ConnectorType) *errors.
 		return errors.Validation("connector type id is undefined")
 	}
 
-	dbConn := cts.connectionFactory.New()
+	// perform all type related DB updates in a single TX
+	if err := cts.connectionFactory.New().Transaction(func(dbConn *gorm.DB) error {
 
-	var oldResource dbapi.ConnectorType
-	if err := dbConn.Select("id").Where("id = ?", tid).First(&oldResource).Error; err != nil {
+		var oldResource dbapi.ConnectorType
+		if err := dbConn.Select("id").Preload("Annotations").
+			Where("id = ?", tid).First(&oldResource).Error; err != nil {
 
-		if services.IsRecordNotFoundError(err) {
-			// We need to create the resource....
-			if err := dbConn.Create(resource).Error; err != nil {
-				return errors.GeneralError("failed to create connector type %q: %v", tid, err)
+			if services.IsRecordNotFoundError(err) {
+				// We need to create the resource....
+				if err := dbConn.Create(resource).Error; err != nil {
+					return errors.GeneralError("failed to create connector type %q: %v", tid, err)
+				}
+			} else {
+				return errors.NewWithCause(errors.ErrorGeneral, err, "unable to find connector type")
 			}
+
 		} else {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "unable to find connector type")
+			// remove old associations first
+			if err := dbConn.Where("connector_type_id = ?", tid).Delete(&dbapi.ConnectorTypeAnnotation{}).Error; err != nil {
+				return errors.GeneralError("failed to remove connector type annotations %q: %v", tid, err)
+			}
+			if err := dbConn.Where("connector_type_id = ?", tid).Delete(&dbapi.ConnectorTypeLabel{}).Error; err != nil {
+				return errors.GeneralError("failed to remove connector type labels %q: %v", tid, err)
+			}
+			if err := dbConn.Exec("DELETE FROM connector_type_channels WHERE connector_type_id = ?", tid).Error; err != nil {
+				return errors.GeneralError("failed to remove connector type channels %q: %v", tid, err)
+			}
+			if err := dbConn.Where("connector_type_id = ?", tid).Delete(&dbapi.ConnectorTypeCapability{}).Error; err != nil {
+				return errors.GeneralError("failed to remove connector type capabilities %q: %v", tid, err)
+			}
+
+			// update the existing connector type
+			if err := dbConn.Session(&gorm.Session{FullSaveAssociations: true}).Updates(resource).Error; err != nil {
+				return errors.GeneralError("failed to update connector type %q: %v", tid, err)
+			}
+
+			// update connector annotations
+			if err := updateConnectorAnnotations(dbConn, oldResource); err != nil {
+				return err
+			}
 		}
 
-	} else {
-		// remove old associations first
-		if err := dbConn.Where("connector_type_id = ?", tid).Delete(&dbapi.ConnectorTypeAnnotation{}).Error; err != nil {
-			return errors.GeneralError("failed to remove connector type annotations %q: %v", tid, err)
-		}
-		if err := dbConn.Where("connector_type_id = ?", tid).Delete(&dbapi.ConnectorTypeLabel{}).Error; err != nil {
-			return errors.GeneralError("failed to remove connector type labels %q: %v", tid, err)
-		}
-		if err := dbConn.Exec("DELETE FROM connector_type_channels WHERE connector_type_id = ?", tid).Error; err != nil {
-			return errors.GeneralError("failed to remove connector type channels %q: %v", tid, err)
-		}
-		if err := dbConn.Where("connector_type_id = ?", tid).Delete(&dbapi.ConnectorTypeCapability{}).Error; err != nil {
-			return errors.GeneralError("failed to remove connector type capabilities %q: %v", tid, err)
+		// read it back.... to get the updated version...
+		if err := dbConn.Where("id = ?", tid).
+			Preload(clause.Associations).
+			First(&resource).Error; err != nil {
+			return services.HandleGetError("Connector type", "id", tid, err)
 		}
 
-		// update the existing connector type
-		if err := dbConn.Session(&gorm.Session{FullSaveAssociations: true}).Updates(resource).Error; err != nil {
-			return errors.GeneralError("failed to update connector type %q: %v", tid, err)
+		return nil
+	}); err != nil {
+		switch se := err.(type) {
+		case *errors.ServiceError:
+			return se
+		default:
+			return errors.GeneralError("failed to create/update connector type %q: %v", tid, se.Error())
 		}
 	}
 
-	// read it back.... to get the updated version...
-	if err := dbConn.Where("id = ?", tid).
-		Preload(clause.Associations).
-		First(&resource).Error; err != nil {
-		return services.HandleGetError("Connector", "id", tid, err)
-	}
+	return nil
+}
 
+func updateConnectorAnnotations(dbConn *gorm.DB, oldResource dbapi.ConnectorType) error {
+	// delete old type annotations copied to connectors
+	oldKeys := arrays.Map(oldResource.Annotations, func(ann dbapi.ConnectorTypeAnnotation) string {
+		return ann.Key
+	})
+	tid := oldResource.ID
+	if err := dbConn.Exec("DELETE FROM connector_annotations ca "+
+		"USING connectors c WHERE ca.connector_id = c.id AND "+
+		"c.connector_type_id = ? AND ca.key IN ?", tid, oldKeys).Error; err != nil {
+		return errors.GeneralError("failed to delete old connector annotations related to type %q: %v", tid, err)
+	}
+	// copy new type annotations to connectors
+	if err := dbConn.Exec("INSERT INTO connector_annotations (connector_id, key, value) "+
+		"SELECT c.id, ct.key, ct.value FROM connector_type_annotations ct "+
+		"JOIN connectors c ON c.connector_type_id = ct.connector_type_id "+
+		"AND ct.connector_type_id = ?", tid).Error; err != nil {
+		return errors.GeneralError("failed to create new connector annotations related to type %q: %v", tid, err)
+	}
 	return nil
 }
 

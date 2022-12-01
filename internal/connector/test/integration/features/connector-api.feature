@@ -1449,7 +1449,8 @@ Feature: create a connector
             "modified_at": "${response.items[0].modified_at}",
             "desired_state": "ready",
             "annotations": {
-              "cos.bf2.org/organisation-id": "13640203"
+              "cos.bf2.org/organisation-id": "13640203",
+              "cos.bf2.org/pricing-tier": "essential"
             },
             "status": {
               "state": "assigning"
@@ -1493,7 +1494,8 @@ Feature: create a connector
           },
           "connector_type_id": "aws-sqs-source-v1alpha1",
           "annotations": {
-            "cos.bf2.org/organisation-id": "13640203"
+            "cos.bf2.org/organisation-id": "13640203",
+            "cos.bf2.org/pricing-tier": "essential"
           },
           "channel": "stable",
           "connector": {
@@ -2131,7 +2133,8 @@ Feature: create a connector
               "url": "registry.hostname"
             },
             "annotations": {
-              "cos.bf2.org/organisation-id": "${jim_org_id}"
+              "cos.bf2.org/organisation-id": "${jim_org_id}",
+              "cos.bf2.org/pricing-tier": "essential"
             },
             "status": {
               "state": "bad-connector-type"
@@ -2176,7 +2179,8 @@ Feature: create a connector
             "url": "registry.hostname"
           },
           "annotations": {
-            "cos.bf2.org/organisation-id": "${jim_org_id}"
+            "cos.bf2.org/organisation-id": "${jim_org_id}",
+            "cos.bf2.org/pricing-tier": "essential"
           },
           "status": {
             "state": "bad-connector-type"
