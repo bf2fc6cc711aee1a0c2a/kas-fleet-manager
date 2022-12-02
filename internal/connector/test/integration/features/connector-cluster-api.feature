@@ -108,6 +108,46 @@ Feature: create a connector
       }
       """
 
+    # Check invalid annotations update that try to use reserved domains
+    When I PUT path "/v1/kafka_connector_clusters/${cluster_id}" with json body:
+      """
+      {
+        "name": "My Cluster Name",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640203",
+          "app.kubernetes.io/component": "my-component"
+        }
+      }
+      """
+    Then the response code should be 400
+    And the ".reason" selection from the response should match "cannot use reserved annotation app.kubernetes.io/component from domain kubernetes.io/"
+
+    When I PUT path "/v1/kafka_connector_clusters/${cluster_id}" with json body:
+      """
+      {
+        "name": "My Cluster Name",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640203",
+          "authorization.k8s.io/decision": "my-decision"
+        }
+      }
+      """
+    Then the response code should be 400
+    And the ".reason" selection from the response should match "cannot use reserved annotation authorization.k8s.io/decision from domain k8s.io/"
+
+    When I PUT path "/v1/kafka_connector_clusters/${cluster_id}" with json body:
+      """
+      {
+        "name": "My Cluster Name",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640203",
+          "openshift.io/cluster-monitoring": "false"
+        }
+      }
+      """
+    Then the response code should be 400
+    And the ".reason" selection from the response should match "cannot use reserved annotation openshift.io/cluster-monitoring from domain openshift.io/"
+
     When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 200
     And the response should match json:

@@ -12,4 +12,4 @@
     - category-streaming-and-messaging
     - category-amazon
   annotations:
-    cos.bf2.org/pricing-tier: essential
+    cos.bf2.org/pricing-tier: essentials

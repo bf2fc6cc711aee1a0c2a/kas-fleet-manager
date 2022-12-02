@@ -177,7 +177,7 @@ Feature: create a connector
               "category-amazon"
             ],
             "annotations": {
-              "cos.bf2.org/pricing-tier": "essential"
+              "cos.bf2.org/pricing-tier": "essentials"
             },
             "capabilities": [
               "processors"
@@ -835,7 +835,7 @@ Feature: create a connector
                "category-amazon"
              ],
              "annotations": {
-               "cos.bf2.org/pricing-tier": "essential"
+               "cos.bf2.org/pricing-tier": "essentials"
              },
              "capabilities": [
               "processors"
@@ -1450,7 +1450,7 @@ Feature: create a connector
             "desired_state": "ready",
             "annotations": {
               "cos.bf2.org/organisation-id": "13640203",
-              "cos.bf2.org/pricing-tier": "essential"
+              "cos.bf2.org/pricing-tier": "essentials"
             },
             "status": {
               "state": "assigning"
@@ -1495,7 +1495,7 @@ Feature: create a connector
           "connector_type_id": "aws-sqs-source-v1alpha1",
           "annotations": {
             "cos.bf2.org/organisation-id": "13640203",
-            "cos.bf2.org/pricing-tier": "essential"
+            "cos.bf2.org/pricing-tier": "essentials"
           },
           "channel": "stable",
           "connector": {
@@ -1520,7 +1520,7 @@ Feature: create a connector
       {
           "annotations": {
             "cos.bf2.org/organisation-id": "13640203",
-            "cos.bf2.org/pricing-tier": "essential",
+            "cos.bf2.org/pricing-tier": "essentials",
             "custom/my-key": "my-value"
           }
       }
@@ -1530,7 +1530,7 @@ Feature: create a connector
       """
       {
           "cos.bf2.org/organisation-id": "13640203",
-          "cos.bf2.org/pricing-tier": "essential",
+          "cos.bf2.org/pricing-tier": "essentials",
           "custom/my-key": "my-value"
       }
       """
@@ -1567,23 +1567,13 @@ Feature: create a connector
       {
           "annotations": {
             "cos.bf2.org/organisation-id": "666",
-            "cos.bf2.org/pricing-tier": "premium",
+            "cos.bf2.org/pricing-tier": "essentials",
             "custom/my-key": "my-value"
           }
       }
       """
     Then the response code should be 400
-    And the response should match json:
-      """
-      {
-        "code": "CONNECTOR-MGMT-21",
-        "href": "/api/connector_mgmt/v1/errors/21",
-        "id": "21",
-        "kind": "Error",
-        "operation_id": "${response.operation_id}",
-        "reason": "cannot override reserved annotation cos.bf2.org/organisation-id"
-      }
-      """
+    And the ".reason" selection from the response should match "cannot override reserved annotation cos.bf2.org/organisation-id"
 
     # Check annotations update to remove an annotation
     Given I set the "Content-Type" header to "application/merge-patch+json"
@@ -1592,7 +1582,7 @@ Feature: create a connector
       {
           "annotations": {
             "cos.bf2.org/organisation-id": "13640203",
-            "cos.bf2.org/pricing-tier": "essential",
+            "cos.bf2.org/pricing-tier": "essentials",
             "custom/my-key": null
           }
       }
@@ -1602,7 +1592,7 @@ Feature: create a connector
       """
       {
           "cos.bf2.org/organisation-id": "13640203",
-          "cos.bf2.org/pricing-tier": "essential"
+          "cos.bf2.org/pricing-tier": "essentials"
       }
       """
 
@@ -2227,7 +2217,7 @@ Feature: create a connector
             },
             "annotations": {
               "cos.bf2.org/organisation-id": "${jim_org_id}",
-              "cos.bf2.org/pricing-tier": "essential"
+              "cos.bf2.org/pricing-tier": "essentials"
             },
             "status": {
               "state": "bad-connector-type"
@@ -2273,7 +2263,7 @@ Feature: create a connector
           },
           "annotations": {
             "cos.bf2.org/organisation-id": "${jim_org_id}",
-            "cos.bf2.org/pricing-tier": "essential"
+            "cos.bf2.org/pricing-tier": "essentials"
           },
           "status": {
             "state": "bad-connector-type"

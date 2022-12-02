@@ -457,7 +457,7 @@ Feature: connector agent API
             "updated_at": "${response.object.metadata.updated_at}",
             "annotations": {
               "cos.bf2.org/organisation-id": "20000000",
-              "cos.bf2.org/pricing-tier": "essential"
+              "cos.bf2.org/pricing-tier": "essentials"
             }
           },
           "spec": {
@@ -559,7 +559,7 @@ Feature: connector agent API
               "updated_at": "${response.items[0].metadata.updated_at}",
               "annotations": {
                 "cos.bf2.org/organisation-id": "20000000",
-                "cos.bf2.org/pricing-tier": "essential"
+                "cos.bf2.org/pricing-tier": "essentials"
               }
             },
             "spec": {
@@ -650,7 +650,7 @@ Feature: connector agent API
             "updated_at": "${response.metadata.updated_at}",
             "annotations": {
               "cos.bf2.org/organisation-id": "20000000",
-              "cos.bf2.org/pricing-tier": "essential"
+              "cos.bf2.org/pricing-tier": "essentials"
             }
           },
           "spec": {
@@ -884,7 +884,7 @@ Feature: connector agent API
         "desired_state": "ready",
         "annotations": {
           "cos.bf2.org/organisation-id": "20000000",
-          "cos.bf2.org/pricing-tier": "essential"
+          "cos.bf2.org/pricing-tier": "essentials"
         },
         "status": {
           "state": "updating"
@@ -913,7 +913,7 @@ Feature: connector agent API
             "updated_at": "${response.object.metadata.updated_at}",
             "annotations": {
               "cos.bf2.org/organisation-id": "20000000",
-              "cos.bf2.org/pricing-tier": "essential"
+              "cos.bf2.org/pricing-tier": "essentials"
             }
           },
           "spec": {
@@ -1070,7 +1070,7 @@ Feature: connector agent API
         "updated_at": "${response.metadata.updated_at}",
         "annotations": {
           "cos.bf2.org/organisation-id": "20000000",
-          "cos.bf2.org/pricing-tier": "essential"
+          "cos.bf2.org/pricing-tier": "essentials"
         }
       },
       "spec": {
@@ -1216,7 +1216,7 @@ Feature: connector agent API
       "resource_version":${response.resource_version},
       "annotations": {
         "cos.bf2.org/organisation-id": "20000000",
-        "cos.bf2.org/pricing-tier": "essential"
+        "cos.bf2.org/pricing-tier": "essentials"
       },
       "status":{
         "state":"updating"
@@ -1322,7 +1322,7 @@ Feature: connector agent API
               "updated_at": "${response.items[0].metadata.updated_at}",
               "annotations": {
                 "cos.bf2.org/organisation-id": "20000000",
-                "cos.bf2.org/pricing-tier": "essential"
+                "cos.bf2.org/pricing-tier": "essentials"
               }
             },
             "spec": {
@@ -1443,7 +1443,7 @@ Feature: connector agent API
           "updated_at": "${response.metadata.updated_at}",
           "annotations": {
             "cos.bf2.org/organisation-id": "20000000",
-            "cos.bf2.org/pricing-tier": "essential"
+            "cos.bf2.org/pricing-tier": "essentials"
           }
         },
         "spec": {

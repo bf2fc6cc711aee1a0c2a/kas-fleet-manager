@@ -55,7 +55,7 @@ func connectorValidationFunction(connectorTypesService services.ConnectorTypesSe
 }
 
 // annotations are mapped to k8s labels, check that it's not used to set any reserved domain labels
-var reservedDomains = []string{"kubernetes\\.io/", "k8s\\.io/", "openshift\\.io/"}
+var reservedDomains = []string{"kubernetes.io/", "k8s.io/", "openshift.io/"}
 
 // user is not allowed to create or patch system generated annotations
 var reservedAnnotations = []string{dbapi.ConnectorClusterOrgIdAnnotation, dbapi.ConnectorTypePricingTierAnnotation}
@@ -88,7 +88,7 @@ func validateAnnotations(annotations map[string]string) *errors.ServiceError {
 		}
 		for _, d := range reservedDomains {
 			if strings.Contains(k, d) {
-				return errors.BadRequest("cannot use reserved annotation domain %s", k)
+				return errors.BadRequest("cannot use reserved annotation %s from domain %s", k, d)
 			}
 		}
 	}
