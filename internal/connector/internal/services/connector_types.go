@@ -166,7 +166,7 @@ func (cts *connectorTypesService) Get(id string) (*dbapi.ConnectorType, *errors.
 }
 
 func GetValidConnectorTypeColumns() []string {
-	return []string{"id", "created_at", "updated_at", "version", "name", "description", "label", "channel", "featured_rank"}
+	return []string{"id", "created_at", "updated_at", "version", "name", "description", "label", "channel", "featured_rank", "pricing_tier"}
 }
 
 // List returns all connector types
@@ -197,6 +197,10 @@ func (cts *connectorTypesService) List(listArgs *services.ListArguments) (dbapi.
 		if strings.Contains(searchDbQuery.Query, "label") {
 			dbConn = dbConn.Joins("LEFT JOIN connector_type_labels labels on labels.connector_type_id = connector_types.id")
 			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "label", "labels.label")
+		}
+		if strings.Contains(searchDbQuery.Query, "pricing_tier") {
+			dbConn = dbConn.Joins("LEFT JOIN connector_type_annotations annotations on annotations.connector_type_id = connector_types.id")
+			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "pricing_tier", "annotations.key = 'cos.bf2.org/pricing-tier' and annotations.value")
 		}
 		dbConn = dbConn.Where(searchDbQuery.Query, searchDbQuery.Values...)
 	}

@@ -1638,7 +1638,7 @@ components:
 
         * Cluster: id, created_at, updated_at, owner, organisation_id, name, state, client_id
         * Namespace: id, created_at, updated_at, name, cluster_id, owner, expiration, tenant_user_id, tenant_organisation_id, state
-        * Connector Types: id, created_at, updated_at, version, name, description, label, channel, featured_rank
+        * Connector Types: id, created_at, updated_at, version, name, description, label, channel, featured_rank, pricing_tier
         * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url
 
         Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`.
