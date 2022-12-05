@@ -11,6 +11,7 @@ Feature: create a connector
     Given a user named "Evil Bob"
     Given a user named "Jim"
     Given a user named "Tommy"
+    Given I store orgid for "Jim" as ${jim_org_id}
 
   Scenario: check that the connector types have been reconciled
     Given I am logged in as "Gary"
@@ -175,6 +176,9 @@ Feature: create a connector
               "category-streaming-and-messaging",
               "category-amazon"
             ],
+            "annotations": {
+              "cos.bf2.org/pricing-tier": "essentials"
+            },
             "capabilities": [
               "processors"
             ],
@@ -414,6 +418,9 @@ Feature: create a connector
             "labels": [
               "sink"
             ],
+            "annotations": {
+              "cos.bf2.org/pricing-tier": "free"
+            },
             "capabilities": [
               "processors"
             ],
@@ -624,6 +631,9 @@ Feature: create a connector
             "labels": [
               "sink"
             ],
+            "annotations": {
+              "cos.bf2.org/pricing-tier": "free"
+            },
             "capabilities": [
               "processors"
             ],
@@ -800,6 +810,269 @@ Feature: create a connector
       }
       """
 
+  Scenario: Gary searches for essentials connector types
+    Given I am logged in as "Gary"
+    # also, ignoring order by channel, label, and pricing tier should not cause any errors
+    When I GET path "/v1/kafka_connector_types?search=pricing_tier=essentials&orderBy=label+ASC,pricing_tier+ASC,channel+DESC"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "channels": [
+              "stable",
+              "beta"
+            ],
+            "description": "AWS SQS Source",
+            "featured_rank": 10,
+            "href": "/api/connector_mgmt/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
+            "icon_href": "TODO",
+            "id": "aws-sqs-source-v1alpha1",
+            "kind": "ConnectorType",
+            "labels": [
+              "source",
+              "category-streaming-and-messaging",
+              "category-amazon"
+            ],
+            "annotations": {
+              "cos.bf2.org/pricing-tier": "essentials"
+            },
+            "capabilities": [
+              "processors"
+            ],
+            "name": "aws-sqs-source",
+            "schema": {
+              "$defs": {
+                "processors": {
+                  "extract_field": {
+                    "description": "Extract a field from the body",
+                    "properties": {
+                      "field": {
+                        "description": "The name of the field to be added",
+                        "title": "Field",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field"
+                    ],
+                    "title": "Extract Field Action",
+                    "type": "object"
+                  },
+                  "has_header_filter": {
+                    "description": "Filter based on the presence of one header",
+                    "properties": {
+                      "name": {
+                        "description": "The header name to evaluate",
+                        "example": "headerName",
+                        "title": "Header Name",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "An optional header value to compare the header to",
+                        "example": "headerValue",
+                        "title": "Header Value",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "title": "Has Header Filter Action",
+                    "type": "object"
+                  },
+                  "insert_field": {
+                    "description": "Adds a custom field with a constant value to the message in transit.\n\nThis action works with Json Object. So it will expect a Json Array or a Json Object.\n\nIf for example you have an array like '{ \"foo\":\"John\", \"bar\":30 }' and your action has been configured with field as 'element' and value as 'hello', you'll get '{ \"foo\":\"John\", \"bar\":30, \"element\":\"hello\" }'\n\nNo headers mapping supported, only constant values.",
+                    "properties": {
+                      "field": {
+                        "description": "The name of the field to be added",
+                        "title": "Field",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "The value of the field",
+                        "title": "Value",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "value"
+                    ],
+                    "title": "Insert Field Action",
+                    "type": "object"
+                  },
+                  "throttle": {
+                    "description": "The Throttle action allows to ensure that a specific sink does not get overloaded.",
+                    "properties": {
+                      "messages": {
+                        "description": "The number of messages to send in the time period set",
+                        "example": 10,
+                        "title": "Messages Number",
+                        "type": "integer"
+                      },
+                      "timePeriod": {
+                        "default": "1000",
+                        "description": "Sets the time period during which the maximum request count is valid for, in milliseconds",
+                        "title": "Time Period",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "messages"
+                    ],
+                    "title": "Throttle Action",
+                    "type": "object"
+                  }
+                }
+              },
+              "properties": {
+                "aws_access_key": {
+                  "oneOf": [
+                    {
+                      "description": "The access key obtained from AWS",
+                      "format": "password",
+                      "title": "Access Key",
+                      "type": "string"
+                    },
+                    {
+                      "description": "An opaque reference to the aws_access_key",
+                      "properties": {},
+                      "type": "object"
+                    }
+                  ],
+                  "title": "Access Key",
+                  "x-group": "credentials"
+                },
+                "aws_amazon_a_w_s_host": {
+                  "description": "The hostname of the Amazon AWS cloud.",
+                  "title": "AWS Host",
+                  "type": "string"
+                },
+                "aws_auto_create_queue": {
+                  "default": false,
+                  "description": "Setting the autocreation of the SQS queue.",
+                  "title": "Autocreate Queue",
+                  "type": "boolean"
+                },
+                "aws_delete_after_read": {
+                  "default": true,
+                  "description": "Delete messages after consuming them",
+                  "title": "Auto-delete Messages",
+                  "type": "boolean"
+                },
+                "aws_protocol": {
+                  "default": "https",
+                  "description": "The underlying protocol used to communicate with SQS",
+                  "example": "http or https",
+                  "title": "Protocol",
+                  "type": "string"
+                },
+                "aws_queue_name_or_arn": {
+                  "description": "The SQS Queue Name or ARN",
+                  "title": "Queue Name",
+                  "type": "string"
+                },
+                "aws_region": {
+                  "description": "The AWS region to connect to",
+                  "example": "eu-west-1",
+                  "title": "AWS Region",
+                  "type": "string"
+                },
+                "aws_secret_key": {
+                  "oneOf": [
+                    {
+                      "description": "The secret key obtained from AWS",
+                      "format": "password",
+                      "title": "Secret Key",
+                      "type": "string"
+                    },
+                    {
+                      "description": "An opaque reference to the aws_secret_key",
+                      "properties": {},
+                      "type": "object"
+                    }
+                  ],
+                  "title": "Secret Key",
+                  "x-group": "credentials"
+                },
+                "kafka_topic": {
+                  "description": "Comma separated list of Kafka topic names",
+                  "title": "Topic Names",
+                  "type": "string"
+                },
+                "processors": {
+                  "items": {
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "insert_field": {
+                            "$ref": "#/$defs/processors/insert_field"
+                          }
+                        },
+                        "required": [
+                          "insert_field"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "extract_field": {
+                            "$ref": "#/$defs/processors/extract_field"
+                          }
+                        },
+                        "required": [
+                          "extract_field"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "has_header_filter": {
+                            "$ref": "#/$defs/processors/has_header_filter"
+                          }
+                        },
+                        "required": [
+                          "has_header_filter"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "throttle": {
+                            "$ref": "#/$defs/processors/throttle"
+                          }
+                        },
+                        "required": [
+                          "throttle"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "aws_queue_name_or_arn",
+                "aws_access_key",
+                "aws_secret_key",
+                "aws_region",
+                "kafka_topic"
+              ],
+              "type": "object"
+            },
+            "version": "v1alpha1"
+          }
+        ],
+        "kind": "ConnectorTypeList",
+        "page": 1,
+        "size": 1,
+        "total": 1
+      }
+      """
+
   Scenario: Gary searches for connector types on beta channel, ordered by version
     Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types?search=channel=beta&orderBy=version"
@@ -824,6 +1097,9 @@ Feature: create a connector
                "category-streaming-and-messaging",
                "category-amazon"
              ],
+             "annotations": {
+               "cos.bf2.org/pricing-tier": "essentials"
+             },
              "capabilities": [
               "processors"
             ],
@@ -1079,6 +1355,9 @@ Feature: create a connector
              "labels": [
                "sink"
              ],
+             "annotations": {
+               "cos.bf2.org/pricing-tier": "free"
+             },
              "capabilities": [
               "processors"
             ],
@@ -1432,6 +1711,10 @@ Feature: create a connector
             "resource_version": ${response.items[0].resource_version},
             "modified_at": "${response.items[0].modified_at}",
             "desired_state": "ready",
+            "annotations": {
+              "cos.bf2.org/organisation-id": "13640203",
+              "cos.bf2.org/pricing-tier": "essentials"
+            },
             "status": {
               "state": "assigning"
             }
@@ -1473,6 +1756,10 @@ Feature: create a connector
             "client_id": "myclient"
           },
           "connector_type_id": "aws-sqs-source-v1alpha1",
+          "annotations": {
+            "cos.bf2.org/organisation-id": "13640203",
+            "cos.bf2.org/pricing-tier": "essentials"
+          },
           "channel": "stable",
           "connector": {
               "aws_queue_name_or_arn": "test",
@@ -1486,6 +1773,89 @@ Feature: create a connector
           "status": {
             "state": "assigning"
           }
+      }
+      """
+
+    # Check annotations update
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      {
+          "annotations": {
+            "cos.bf2.org/organisation-id": "13640203",
+            "cos.bf2.org/pricing-tier": "essentials",
+            "custom/my-key": "my-value"
+          }
+      }
+      """
+    Then the response code should be 202
+    And the ".annotations" selection from the response should match json:
+      """
+      {
+          "cos.bf2.org/organisation-id": "13640203",
+          "cos.bf2.org/pricing-tier": "essentials",
+          "custom/my-key": "my-value"
+      }
+      """
+
+    # Check invalid annotations update that tries to change pricing-tier
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      {
+          "annotations": {
+            "cos.bf2.org/organisation-id": "13640203",
+            "cos.bf2.org/pricing-tier": "free",
+            "custom/my-key": "my-value"
+          }
+      }
+      """
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "cannot override reserved annotation cos.bf2.org/pricing-tier"
+      }
+      """
+
+    # Check invalid annotations update that tries to change organisation-id
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      {
+          "annotations": {
+            "cos.bf2.org/organisation-id": "666",
+            "cos.bf2.org/pricing-tier": "essentials",
+            "custom/my-key": "my-value"
+          }
+      }
+      """
+    Then the response code should be 400
+    And the ".reason" selection from the response should match "cannot override reserved annotation cos.bf2.org/organisation-id"
+
+    # Check annotations update to remove an annotation
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      {
+          "annotations": {
+            "cos.bf2.org/organisation-id": "13640203",
+            "cos.bf2.org/pricing-tier": "essentials",
+            "custom/my-key": null
+          }
+      }
+      """
+    Then the response code should be 202
+    And the ".annotations" selection from the response should match json:
+      """
+      {
+          "cos.bf2.org/organisation-id": "13640203",
+          "cos.bf2.org/pricing-tier": "essentials"
       }
       """
 
@@ -2108,6 +2478,10 @@ Feature: create a connector
               "id": "myregistry",
               "url": "registry.hostname"
             },
+            "annotations": {
+              "cos.bf2.org/organisation-id": "${jim_org_id}",
+              "cos.bf2.org/pricing-tier": "essentials"
+            },
             "status": {
               "state": "bad-connector-type"
             }
@@ -2149,6 +2523,10 @@ Feature: create a connector
           "schema_registry": {
             "id": "myregistry",
             "url": "registry.hostname"
+          },
+          "annotations": {
+            "cos.bf2.org/organisation-id": "${jim_org_id}",
+            "cos.bf2.org/pricing-tier": "essentials"
           },
           "status": {
             "state": "bad-connector-type"

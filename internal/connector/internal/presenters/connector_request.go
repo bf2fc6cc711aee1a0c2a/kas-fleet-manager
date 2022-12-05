@@ -2,13 +2,14 @@ package presenters
 
 import (
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
-func ConvertConnectorRequest(from public.ConnectorRequest) (*dbapi.Connector, *errors.ServiceError) {
+func ConvertConnectorRequest(id string, from public.ConnectorRequest) (*dbapi.Connector, *errors.ServiceError) {
 
 	spec, err := json.Marshal(from.Connector)
 	if err != nil {
@@ -20,12 +21,16 @@ func ConvertConnectorRequest(from public.ConnectorRequest) (*dbapi.Connector, *e
 		namespaceId = nil
 	}
 	return &dbapi.Connector{
+		Model: db.Model{
+			ID: id,
+		},
 		NamespaceId:     namespaceId,
 		Name:            from.Name,
 		ConnectorTypeId: from.ConnectorTypeId,
 		ConnectorSpec:   spec,
 		DesiredState:    dbapi.ConnectorDesiredState(from.DesiredState),
 		Channel:         string(from.Channel),
+		Annotations:     ConvertConnectorAnnotations(id, from.Annotations),
 		Kafka: dbapi.KafkaConnectionSettings{
 			KafkaID:         from.Kafka.Id,
 			BootstrapServer: from.Kafka.Url,

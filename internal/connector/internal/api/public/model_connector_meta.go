@@ -24,5 +24,7 @@ type ConnectorMeta struct {
 	NamespaceId     string                `json:"namespace_id"`
 	Channel         Channel               `json:"channel,omitempty"`
 	DesiredState    ConnectorDesiredState `json:"desired_state"`
-	ResourceVersion int64                 `json:"resource_version,omitempty"`
+	// Name-value string annotations for resource
+	Annotations     map[string]string `json:"annotations,omitempty"`
+	ResourceVersion int64             `json:"resource_version,omitempty"`
 }

@@ -19,4 +19,6 @@ type ConnectorDeploymentAdminViewAllOfMetadata struct {
 	UpdatedAt       time.Time `json:"updated_at"`
 	ResourceVersion int64     `json:"resource_version"`
 	ResolvedSecrets bool      `json:"resolved_secrets"`
+	// Name-value string annotations for resource
+	Annotations map[string]string `json:"annotations,omitempty"`
 }

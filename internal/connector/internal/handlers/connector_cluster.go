@@ -27,8 +27,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var (
-	maxConnectorClusterIdLength = 32
+const (
+	maxConnectorClusterIdLength   = 32
+	maxConnectorClusterNameLength = 100
 )
 
 type ConnectorClusterHandler struct {
@@ -57,17 +58,15 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
 			handlers.Validation("name", &resource.Name, handlers.WithDefault("New Cluster"),
-				handlers.MinLen(1), handlers.MaxLen(100)),
+				handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterNameLength)),
+			validateCreateAnnotations(resource.Annotations),
 			user.AuthorizedOrgAdmin(),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			convResource := presenters.ConvertConnectorClusterRequest(resource)
-
-			convResource.ID = api.NewID()
-			convResource.Owner = user.UserId()
-			convResource.OrganisationId = user.OrgId()
-			convResource.Status.Phase = dbapi.ConnectorClusterPhaseDisconnected
+			addSystemAnnotations(&resource.Annotations, user)
+			newID := api.NewID()
+			convResource := presenters.ConvertConnectorClusterRequest(newID, resource, user.UserId(), user.OrgId())
 
 			acc, err := h.Keycloak.RegisterConnectorFleetshardOperatorServiceAccount(convResource.ID)
 			if err != nil {
@@ -76,7 +75,7 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 			convResource.ClientId = acc.ClientID
 			convResource.ClientSecret = acc.ClientSecret
 
-			if err = h.Service.Create(r.Context(), &convResource); err != nil {
+			if err = h.Service.Create(r.Context(), convResource); err != nil {
 				// deregister service account on creation error
 				if derr := h.Keycloak.DeleteServiceAccountInternal(convResource.ClientId); derr != nil {
 					// just log the error
@@ -126,6 +125,8 @@ func (h *ConnectorClusterHandler) Update(w http.ResponseWriter, r *http.Request)
 		Validate: []handlers.Validate{
 			handlers.Validation("connector_cluster_id", &connectorClusterId,
 				handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), user.AuthorizedClusterAdmin()),
+			handlers.Validation("name", &resource.Name,
+				handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterNameLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			existing, err := h.Service.Get(ctx, connectorClusterId)
@@ -133,10 +134,21 @@ func (h *ConnectorClusterHandler) Update(w http.ResponseWriter, r *http.Request)
 				return nil, err
 			}
 
+			// validate patched annotations
+			if len(resource.Annotations) == 0 {
+				return nil, errors.BadRequest("annotations cannot be nil/empty.")
+			}
+			existingAnnotations := presenters.PresentClusterAnnotations(existing.Annotations)
+			err = validatePatchAnnotations(resource.Annotations, existingAnnotations)()
+			if err != nil {
+				return nil, err
+			}
+
 			// Copy over the fields that support being updated...
 			existing.Name = resource.Name
+			existing.Annotations = presenters.ConvertClusterAnnotations(connectorClusterId, resource.Annotations)
 
-			return nil, h.Service.Update(ctx, &existing)
+			return nil, h.Service.Update(ctx, existing)
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusNoContent)
@@ -179,7 +191,7 @@ func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, resource := range resources {
-				converted := presenters.PresentConnectorCluster(resource)
+				converted := presenters.PresentConnectorCluster(&resource)
 				resourceList.Items = append(resourceList.Items, converted)
 			}
 
@@ -210,7 +222,7 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 			}
 
 			if r.URL.Query().Get("reset_credentials") == "true" {
-				if serviceError = h.Service.ResetServiceAccount(ctx, &cluster); serviceError != nil {
+				if serviceError = h.Service.ResetServiceAccount(ctx, cluster); serviceError != nil {
 					return nil, serviceError
 				}
 			}
@@ -230,7 +242,7 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 	handlers.HandleGet(w, r, cfg)
 }
 
-func (o *ConnectorClusterHandler) buildAddonParams(cluster dbapi.ConnectorCluster, authTokenURL string) []ocm.Parameter {
+func (o *ConnectorClusterHandler) buildAddonParams(cluster *dbapi.ConnectorCluster, authTokenURL string) []ocm.Parameter {
 	p := []ocm.Parameter{
 		{
 			Id:    "control-plane-base-url",
@@ -264,7 +276,7 @@ func (o *ConnectorClusterHandler) buildAddonParams(cluster dbapi.ConnectorCluste
 	return p
 }
 
-func (o *ConnectorClusterHandler) buildTokenURL(cluster dbapi.ConnectorCluster) (string, error) {
+func (o *ConnectorClusterHandler) buildTokenURL(cluster *dbapi.ConnectorCluster) (string, error) {
 	u, err := url.Parse(o.Keycloak.GetRealmConfig().TokenEndpointURI)
 	if err != nil {
 		return "", err
@@ -308,4 +320,12 @@ func (h *ConnectorClusterHandler) GetNamespaces(writer http.ResponseWriter, requ
 	}
 
 	handlers.HandleList(writer, request, cfg)
+}
+
+func addSystemAnnotations(annotations *map[string]string, user *authz.ValidationUser) {
+	// add system org-id annotation
+	if *annotations == nil {
+		*annotations = make(map[string]string, 0)
+	}
+	(*annotations)[dbapi.ConnectorClusterOrgIdAnnotation] = user.OrgId()
 }

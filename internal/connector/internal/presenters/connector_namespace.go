@@ -36,7 +36,7 @@ func ConvertConnectorNamespaceRequest(namespaceRequest *public.ConnectorNamespac
 		},
 	}
 
-	result.Annotations = getAnnotations(result.ID, namespaceRequest.Annotations)
+	result.Annotations = ConvertNamespaceAnnotations(result.ID, namespaceRequest.Annotations)
 
 	switch namespaceRequest.Kind {
 	case public.CONNECTORNAMESPACETENANTKIND_USER:
@@ -75,7 +75,7 @@ func ConvertConnectorNamespaceEvalRequest(namespaceRequest *public.ConnectorName
 		},
 	}
 
-	result.Annotations = getAnnotations(result.ID, namespaceRequest.Annotations)
+	result.Annotations = ConvertNamespaceAnnotations(result.ID, namespaceRequest.Annotations)
 
 	result.TenantUserId = &result.Owner
 	result.TenantUser = &dbapi.ConnectorTenantUser{
@@ -124,7 +124,7 @@ func ConvertConnectorNamespaceWithTenantRequest(namespaceRequest *admin.Connecto
 		return nil, errors.BadRequest("invalid kind %s", namespaceRequest.Tenant.Kind)
 	}
 
-	result.Annotations = getAnnotations(result.ID, namespaceRequest.Annotations)
+	result.Annotations = ConvertNamespaceAnnotations(result.ID, namespaceRequest.Annotations)
 
 	return result, nil
 }
@@ -316,6 +316,14 @@ func PresentPrivateConnectorNamespace(namespace *dbapi.ConnectorNamespace, quota
 	return result
 }
 
+func PresentNamespaceAnnotations(annotations []dbapi.ConnectorNamespaceAnnotation) map[string]string {
+	res := make(map[string]string, len(annotations))
+	for _, ann := range annotations {
+		res[ann.Key] = ann.Value
+	}
+	return res
+}
+
 func getTimestamp(expiration time.Time) string {
 	bytes, _ := json.Marshal(expiration)
 	return strings.Trim(string(bytes), "\"")
@@ -332,7 +340,7 @@ func getError(conditions dbapi.ConditionList) string {
 	return strings.Join(err, "; ")
 }
 
-func getAnnotations(namespaceId string, annotations map[string]string) []dbapi.ConnectorNamespaceAnnotation {
+func ConvertNamespaceAnnotations(namespaceId string, annotations map[string]string) []dbapi.ConnectorNamespaceAnnotation {
 	result := make([]dbapi.ConnectorNamespaceAnnotation, len(annotations))
 
 	index := 0

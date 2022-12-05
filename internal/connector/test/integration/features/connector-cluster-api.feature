@@ -27,6 +27,9 @@ Feature: create a connector
         "name": "New Cluster",
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640203"
+        },
         "status": {
           "state": "disconnected"
         }
@@ -57,6 +60,9 @@ Feature: create a connector
         "created_at": "${response.created_at}",
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640203"
+        },
         "status": {
           "state": "disconnected"
         }
@@ -68,11 +74,79 @@ Feature: create a connector
     When I PUT path "/v1/kafka_connector_clusters/${cluster_id}" with json body:
       """
       {
-        "name": "My Cluster Name"
+        "name": "My Cluster Name",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640203",
+          "test/key": "test-value"
+        }
       }
       """
     Then the response code should be 204
     And the response should match ""
+
+    # Check invalid annotations update that tries to change organisation-id
+    When I PUT path "/v1/kafka_connector_clusters/${cluster_id}" with json body:
+      """
+      {
+        "name": "My Cluster Name",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "666",
+          "test/key": "test-value"
+        }
+      }
+      """
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "cannot override reserved annotation cos.bf2.org/organisation-id"
+      }
+      """
+
+    # Check invalid annotations update that try to use reserved domains
+    When I PUT path "/v1/kafka_connector_clusters/${cluster_id}" with json body:
+      """
+      {
+        "name": "My Cluster Name",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640203",
+          "app.kubernetes.io/component": "my-component"
+        }
+      }
+      """
+    Then the response code should be 400
+    And the ".reason" selection from the response should match "cannot use reserved annotation app.kubernetes.io/component from domain kubernetes.io/"
+
+    When I PUT path "/v1/kafka_connector_clusters/${cluster_id}" with json body:
+      """
+      {
+        "name": "My Cluster Name",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640203",
+          "authorization.k8s.io/decision": "my-decision"
+        }
+      }
+      """
+    Then the response code should be 400
+    And the ".reason" selection from the response should match "cannot use reserved annotation authorization.k8s.io/decision from domain k8s.io/"
+
+    When I PUT path "/v1/kafka_connector_clusters/${cluster_id}" with json body:
+      """
+      {
+        "name": "My Cluster Name",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640203",
+          "openshift.io/cluster-monitoring": "false"
+        }
+      }
+      """
+    Then the response code should be 400
+    And the ".reason" selection from the response should match "cannot use reserved annotation openshift.io/cluster-monitoring from domain openshift.io/"
 
     When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 200
@@ -86,6 +160,10 @@ Feature: create a connector
         "created_at": "${response.created_at}",
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640203",
+          "test/key": "test-value"
+        },
         "status": {
           "state": "disconnected"
         }

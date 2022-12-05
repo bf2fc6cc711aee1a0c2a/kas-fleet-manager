@@ -9,3 +9,5 @@
   featured-rank: 0
   labels:
     - sink
+  annotations:
+    cos.bf2.org/pricing-tier: free

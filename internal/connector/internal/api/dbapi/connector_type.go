@@ -11,6 +11,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	ConnectorTypePricingTierAnnotation = "cos.bf2.org/pricing-tier"
+)
+
 type ConnectorType struct {
 	db.Model
 	Version     string
@@ -25,6 +29,8 @@ type ConnectorType struct {
 	IconHref string
 	// labels used to categorize the connector
 	Labels []ConnectorTypeLabel `gorm:"foreignKey:ConnectorTypeID"`
+	// annotations metadata
+	Annotations []ConnectorTypeAnnotation `gorm:"foreignKey:ConnectorTypeID;references:ID"`
 	// connector capabilities used to understand what features a connector support
 	Capabilities []ConnectorTypeCapability `gorm:"foreignKey:ConnectorTypeID"`
 	Checksum     *string
@@ -39,6 +45,12 @@ type ConnectorChannel struct {
 	UpdatedAt time.Time
 	// needed for soft delete. See https://gorm.io/docs/delete.html#Soft-Delete
 	DeletedAt gorm.DeletedAt
+}
+
+type ConnectorTypeAnnotation struct {
+	ConnectorTypeID string `gorm:"primaryKey;index"`
+	Key             string `gorm:"primaryKey;not null"`
+	Value           string `gorm:"not null"`
 }
 
 type ConnectorTypeLabel struct {

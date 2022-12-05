@@ -20,4 +20,6 @@ type ConnectorClusterMeta struct {
 	CreatedAt  time.Time `json:"created_at,omitempty"`
 	ModifiedAt time.Time `json:"modified_at,omitempty"`
 	Name       string    `json:"name,omitempty"`
+	// Name-value string annotations for resource
+	Annotations map[string]string `json:"annotations,omitempty"`
 }

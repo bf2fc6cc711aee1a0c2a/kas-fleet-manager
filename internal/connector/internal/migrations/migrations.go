@@ -46,6 +46,8 @@ var migrations = []*gormigrate.Migration{
 	addConnectorTypeFeaturedRank("202208250000"),
 	addConnectorTypeLease("202208220000"),
 	addConnectorClusterPlatform("202209270000"),
+	addConnectorResourceAnnotations("202211070000"),
+	renameNamespaceProfileAnnotations("202211280000"),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

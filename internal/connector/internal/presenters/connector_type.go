@@ -43,6 +43,7 @@ func ConvertConnectorType(from public.ConnectorType) (*dbapi.ConnectorType, erro
 		Description:  from.Description,
 		FeaturedRank: from.FeaturedRank,
 		IconHref:     from.IconHref,
+		Annotations:  ConvertTypeAnnotations(from.Id, from.Annotations),
 	}
 
 	ct.SetLabels(from.Labels)
@@ -56,6 +57,20 @@ func ConvertConnectorType(from public.ConnectorType) (*dbapi.ConnectorType, erro
 		return nil, err
 	}
 	return ct, nil
+}
+
+func ConvertTypeAnnotations(id string, annotations map[string]string) []dbapi.ConnectorTypeAnnotation {
+	res := make([]dbapi.ConnectorTypeAnnotation, len(annotations))
+	i := 0
+	for k, v := range annotations {
+		res[i].ConnectorTypeID = id
+		res[i].Key = k
+		res[i].Value = v
+
+		i++
+	}
+
+	return res
 }
 
 func PresentConnectorType(from *dbapi.ConnectorType) (*public.ConnectorType, error) {
@@ -77,7 +92,16 @@ func PresentConnectorType(from *dbapi.ConnectorType) (*public.ConnectorType, err
 		Labels:       from.LabelNames(),
 		Channels:     toChannelSlice(from.ChannelNames()),
 		Capabilities: from.CapabilitiesNames(),
+		Annotations:  PresentTypeAnnotations(from.Annotations),
 	}, nil
+}
+
+func PresentTypeAnnotations(annotations []dbapi.ConnectorTypeAnnotation) map[string]string {
+	res := make(map[string]string, len(annotations))
+	for _, ann := range annotations {
+		res[ann.Key] = ann.Value
+	}
+	return res
 }
 
 func PresentConnectorTypeLabelCount(from *dbapi.ConnectorTypeLabelCount) (*public.ConnectorTypeLabelCount, error) {
@@ -96,6 +120,7 @@ func PresentConnectorTypeAdminView(from dbapi.ConnectorCatalogEntry) (*admin.Con
 		FeaturedRank: from.ConnectorType.FeaturedRank,
 		IconHref:     from.ConnectorType.IconHref,
 		Labels:       make([]string, len(from.ConnectorType.Labels)),
+		Annotations:  PresentTypeAnnotations(from.ConnectorType.Annotations),
 		Channels:     make(map[string]admin.ConnectorTypeChannel),
 	}
 

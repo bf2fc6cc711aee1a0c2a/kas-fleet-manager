@@ -16,13 +16,14 @@ import (
 
 // ConnectorNamespace A connector namespace
 type ConnectorNamespace struct {
-	Id              string                  `json:"id"`
-	Kind            string                  `json:"kind,omitempty"`
-	Href            string                  `json:"href,omitempty"`
-	Owner           string                  `json:"owner,omitempty"`
-	CreatedAt       time.Time               `json:"created_at,omitempty"`
-	ModifiedAt      time.Time               `json:"modified_at,omitempty"`
-	Name            string                  `json:"name"`
+	Id         string    `json:"id"`
+	Kind       string    `json:"kind,omitempty"`
+	Href       string    `json:"href,omitempty"`
+	Owner      string    `json:"owner,omitempty"`
+	CreatedAt  time.Time `json:"created_at,omitempty"`
+	ModifiedAt time.Time `json:"modified_at,omitempty"`
+	Name       string    `json:"name"`
+	// Name-value string annotations for resource
 	Annotations     map[string]string       `json:"annotations,omitempty"`
 	ResourceVersion int64                   `json:"resource_version"`
 	Quota           ConnectorNamespaceQuota `json:"quota,omitempty"`

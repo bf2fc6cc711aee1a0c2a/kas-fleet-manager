@@ -126,7 +126,9 @@ Feature: connector admin api
     Then the response code should be 200
     And the ".kind" selection from the response should match "ConnectorClusterList"
     And the ".items[] | select(.name == "stuart_cluster") | .id" selection from the response should match "${stuart_cluster_id}"
+    And the ".items[] | select(.name == "stuart_cluster") | .annotations | length" selection from the response should match "1"
     And the ".items[] | select(.name == "kevin_cluster") | .id" selection from the response should match "${kevin_cluster_id}"
+    And the ".items[] | select(.name == "kevin_cluster") | .annotations | length" selection from the response should match "1"
 
     When I GET path "/v1/admin/kafka_connector_clusters/${stuart_cluster_id}"
     Then the response code should be 200
@@ -140,6 +142,9 @@ Feature: connector admin api
         "created_at": "${response.created_at}",
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640240"
+        },
         "status": {
           "state": "disconnected",
           "platform": {}
@@ -159,6 +164,9 @@ Feature: connector admin api
         "created_at": "${response.created_at}",
         "owner": "${response.owner}",
         "modified_at": "${response.modified_at}",
+        "annotations": {
+          "cos.bf2.org/organisation-id": "13640241"
+        },
         "status": {
           "state": "disconnected",
           "platform": {}

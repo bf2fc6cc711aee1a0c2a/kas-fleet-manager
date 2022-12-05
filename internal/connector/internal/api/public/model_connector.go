@@ -16,17 +16,19 @@ import (
 
 // Connector struct for Connector
 type Connector struct {
-	Id              string                           `json:"id,omitempty"`
-	Kind            string                           `json:"kind,omitempty"`
-	Href            string                           `json:"href,omitempty"`
-	Owner           string                           `json:"owner,omitempty"`
-	CreatedAt       time.Time                        `json:"created_at,omitempty"`
-	ModifiedAt      time.Time                        `json:"modified_at,omitempty"`
-	Name            string                           `json:"name"`
-	ConnectorTypeId string                           `json:"connector_type_id"`
-	NamespaceId     string                           `json:"namespace_id"`
-	Channel         Channel                          `json:"channel,omitempty"`
-	DesiredState    ConnectorDesiredState            `json:"desired_state"`
+	Id              string                `json:"id,omitempty"`
+	Kind            string                `json:"kind,omitempty"`
+	Href            string                `json:"href,omitempty"`
+	Owner           string                `json:"owner,omitempty"`
+	CreatedAt       time.Time             `json:"created_at,omitempty"`
+	ModifiedAt      time.Time             `json:"modified_at,omitempty"`
+	Name            string                `json:"name"`
+	ConnectorTypeId string                `json:"connector_type_id"`
+	NamespaceId     string                `json:"namespace_id"`
+	Channel         Channel               `json:"channel,omitempty"`
+	DesiredState    ConnectorDesiredState `json:"desired_state"`
+	// Name-value string annotations for resource
+	Annotations     map[string]string                `json:"annotations,omitempty"`
 	ResourceVersion int64                            `json:"resource_version,omitempty"`
 	Kafka           KafkaConnectionSettings          `json:"kafka"`
 	ServiceAccount  ServiceAccount                   `json:"service_account"`

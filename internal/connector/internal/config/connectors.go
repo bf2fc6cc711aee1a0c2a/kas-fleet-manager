@@ -43,9 +43,10 @@ type ConnectorCatalogEntry struct {
 }
 
 type ConnectorMetadata struct {
-	ConnectorTypeId string   `json:"id" yaml:"id"`
-	FeaturedRank    int32    `json:"featured-rank" yaml:"featured-rank"`
-	Labels          []string `json:"labels" yaml:"labels"`
+	ConnectorTypeId string            `json:"id" yaml:"id"`
+	FeaturedRank    int32             `json:"featured-rank" yaml:"featured-rank"`
+	Labels          []string          `json:"labels" yaml:"labels"`
+	Annotations     map[string]string `json:"annotations" yaml:"annotations"`
 }
 
 func NewConnectorsConfig() *ConnectorsConfig {
@@ -162,7 +163,7 @@ func (c *ConnectorsConfig) readConnectorCatalog(connectorMetadata map[string]Con
 			if meta, found := connectorMetadata[id]; found {
 				entry.ConnectorType.FeaturedRank = meta.FeaturedRank
 				entry.ConnectorType.Labels = meta.Labels
-				// TODO annotations
+				entry.ConnectorType.Annotations = meta.Annotations
 			} else {
 				return fmt.Errorf("missing metadata for connector %s", id)
 			}

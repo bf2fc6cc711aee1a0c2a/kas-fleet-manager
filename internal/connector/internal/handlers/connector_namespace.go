@@ -53,6 +53,7 @@ func (h *ConnectorNamespaceHandler) Create(w http.ResponseWriter, r *http.Reques
 		Validate: []handlers.Validate{
 			handlers.Validation("name", &resource.Name, handlers.WithDefault(generateNamespaceName()), handlers.MaxLen(maxConnectorNamespaceNameLength), handlers.Matches(namespaceNamePattern)),
 			handlers.Validation("cluster_id", &resource.ClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength), user.AuthorizedClusterUser()),
+			validateCreateAnnotations(resource.Annotations),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
@@ -97,6 +98,7 @@ func (h *ConnectorNamespaceHandler) CreateEvaluation(w http.ResponseWriter, r *h
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
 			handlers.Validation("name", &resource.Name, handlers.WithDefault(generateNamespaceName()), handlers.MaxLen(maxConnectorNamespaceNameLength), handlers.Matches(namespaceNamePattern)),
+			validateCreateAnnotations(resource.Annotations),
 			user.AuthorizedCreateEvalNamespace(),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -168,11 +170,24 @@ func (h *ConnectorNamespaceHandler) Update(w http.ResponseWriter, r *http.Reques
 				return nil, err
 			}
 
+			existingAnnotations := presenters.PresentNamespaceAnnotations(existing.Annotations)
+			err = validatePatchAnnotations(resource.Annotations, existingAnnotations)()
+			if err != nil {
+				return nil, err
+			}
+
 			// Copy over the fields that support being updated...
+			updated := false
 			if len(resource.Name) != 0 {
 				existing.Name = resource.Name
-			} else {
-				// name is the only updatable field for now
+				updated = true
+			}
+			if len(resource.Annotations) != 0 {
+				existing.Annotations = presenters.ConvertNamespaceAnnotations(connectorNamespaceId, resource.Annotations)
+				updated = true
+			}
+			if !updated {
+				// nothing to update
 				return nil, nil
 			}
 

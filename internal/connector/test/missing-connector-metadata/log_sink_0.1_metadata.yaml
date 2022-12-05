@@ -8,3 +8,5 @@
 - id: log_sink_0.1
   labels:
     - sink
+  annotations:
+    cos.bf2.org/pricing-tier: free

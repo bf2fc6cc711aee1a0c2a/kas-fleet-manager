@@ -16,6 +16,8 @@ const (
 	ConnectorClusterPhaseReady ConnectorClusterPhaseEnum = "ready"
 	// ConnectorClusterPhaseDeleting - cluster status when in the process of being deleted
 	ConnectorClusterPhaseDeleting ConnectorClusterPhaseEnum = "deleting"
+
+	ConnectorClusterOrgIdAnnotation string = "cos.bf2.org/organisation-id"
 )
 
 var AgentRequestConnectorClusterStatus = []string{
@@ -29,13 +31,21 @@ type ConnectorCluster struct {
 	Name           string
 	ClientId       string
 	ClientSecret   string
-	Status         ConnectorClusterStatus `gorm:"embedded;embeddedPrefix:status_"`
+	Annotations    []ConnectorClusterAnnotation `gorm:"foreignKey:ConnectorClusterID;references:ID"`
+	Status         ConnectorClusterStatus       `gorm:"embedded;embeddedPrefix:status_"`
+}
+
+type ConnectorClusterAnnotation struct {
+	ConnectorClusterID string `gorm:"primaryKey;index"`
+	Key                string `gorm:"primaryKey;not null"`
+	Value              string `gorm:"not null"`
 }
 
 type ConnectorClusterPlatform struct {
-	ID      string
-	Type    string
-	Version string
+	// renamed struct field to PlatformID to avoid gorm Preload conflict
+	PlatformID string `gorm:"column:id"`
+	Type       string
+	Version    string
 }
 
 type ConnectorClusterStatus struct {

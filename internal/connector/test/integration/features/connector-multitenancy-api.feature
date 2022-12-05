@@ -60,7 +60,7 @@ Feature: connector namespaces API
     """
     {
       "name": "Stuart_namespace",
-      "annotations": { "connector_mgmt.bf2.org/profile": "evaluation-profile" }
+      "annotations": { "cos.bf2.org/profile": "evaluation-profile" }
     }
     """
     Then the response code should be 500
@@ -102,7 +102,7 @@ Feature: connector namespaces API
     """
     {
       "name": "Stuart_namespace",
-      "annotations": { "connector_mgmt.bf2.org/profile": "evaluation-profile" }
+      "annotations": { "cos.bf2.org/profile": "evaluation-profile" }
     }
     """
     Then the response code should be 500
@@ -226,7 +226,7 @@ Feature: connector namespaces API
     """
     {
       "name": "<user>_namespace",
-      "annotations": { "connector_mgmt.bf2.org/profile": "evaluation-profile" }
+      "annotations": { "cos.bf2.org/profile": "evaluation-profile" }
     }
     """
     Then the response code should be 201
@@ -251,7 +251,7 @@ Feature: connector namespaces API
         "memory_requests": "1Gi"
       },
       "annotations": {
-          "connector_mgmt.bf2.org/profile": "evaluation-profile"
+          "cos.bf2.org/profile": "evaluation-profile"
       },
       "status": {
         "state": "disconnected",
@@ -270,7 +270,7 @@ Feature: connector namespaces API
     """
     {
       "name": "<user>_namespace",
-      "annotations": { "connector_mgmt.bf2.org/profile": "default-profile" }
+      "annotations": { "cos.bf2.org/profile": "default-profile" }
     }
     """
     Then the response code should be 403
@@ -316,7 +316,7 @@ Feature: connector namespaces API
              "id": "${<user_id>}"
            },
            "annotations": {
-             "connector_mgmt.bf2.org/profile": "evaluation-profile"
+             "cos.bf2.org/profile": "evaluation-profile"
            },
            "status": {
              "state": "disconnected",
@@ -451,7 +451,7 @@ Feature: connector namespaces API
              "id": "13640230"
            },
            "annotations": {
-             "connector_mgmt.bf2.org/profile": "default-profile"
+             "cos.bf2.org/profile": "default-profile"
            },
            "status": {
              "state": "disconnected",
@@ -474,7 +474,7 @@ Feature: connector namespaces API
       "name": "shared_namespace",
       "cluster_id": "${connector_cluster_id}",
       "kind": "organisation",
-      "annotations": { "connector_mgmt.bf2.org/profile": "invalid-profile" }
+      "annotations": { "cos.bf2.org/profile": "invalid-profile" }
     }
     """
     Then the response code should be 400
@@ -498,7 +498,7 @@ Feature: connector namespaces API
       "name": "shared_namespace",
       "cluster_id": "${connector_cluster_id}",
       "kind": "organisation",
-      "annotations": { "connector_mgmt.bf2.org/profile": "default-profile" }
+      "annotations": { "cos.bf2.org/profile": "default-profile" }
     }
     """
     Then the response code should be 201
@@ -516,7 +516,7 @@ Feature: connector namespaces API
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
       "annotations": {
-        "connector_mgmt.bf2.org/profile": "default-profile"
+        "cos.bf2.org/profile": "default-profile"
       },
       "tenant": {
         "kind": "organisation",
@@ -538,7 +538,7 @@ Feature: connector namespaces API
       "name": "Lucky_namespace",
       "cluster_id": "${connector_cluster_id}",
       "kind": "user",
-      "annotations": { "connector_mgmt.bf2.org/profile": "default-profile" }
+      "annotations": { "cos.bf2.org/profile": "default-profile" }
     }
     """
     Then the response code should be 201
@@ -556,7 +556,7 @@ Feature: connector namespaces API
       "created_at": "${response.created_at}",
       "modified_at": "${response.modified_at}",
       "annotations": {
-          "connector_mgmt.bf2.org/profile": "default-profile"
+          "cos.bf2.org/profile": "default-profile"
       },
       "tenant": {
         "kind": "user",
@@ -600,7 +600,7 @@ Feature: connector namespaces API
              "id": "13640230"
            },
            "annotations": {
-             "connector_mgmt.bf2.org/profile": "default-profile"
+             "cos.bf2.org/profile": "default-profile"
            },
            "status": {
              "state": "disconnected",
@@ -623,7 +623,7 @@ Feature: connector namespaces API
              "id": "13640230"
            },
            "annotations": {
-             "connector_mgmt.bf2.org/profile": "default-profile"
+             "cos.bf2.org/profile": "default-profile"
            },
            "status": {
              "state": "disconnected",
@@ -659,7 +659,7 @@ Feature: connector namespaces API
     {
       "cluster_id": "${connector_cluster_id}",
       "kind": "organisation",
-      "annotations": { "connector_mgmt.bf2.org/profile": "default-profile" }
+      "annotations": { "cos.bf2.org/profile": "default-profile" }
     }
     """
     Then the response code should be 201
@@ -677,7 +677,7 @@ Feature: connector namespaces API
       "name": "--eval-namespace",
       "cluster_id": "${connector_cluster_id}",
       "kind": "organisation",
-      "annotations": { "connector_mgmt.bf2.org/profile": "default-profile" }
+      "annotations": { "cos.bf2.org/profile": "default-profile" }
     }
     """
     Then the response code should be 400
@@ -754,7 +754,7 @@ Feature: connector namespaces API
              "id": "${response.items[0].tenant.id}"
            },
            "annotations": {
-             "connector_mgmt.bf2.org/profile": "default-profile"
+             "cos.bf2.org/profile": "default-profile"
            },
            "status": {
              "state": "disconnected",
@@ -777,7 +777,7 @@ Feature: connector namespaces API
       "name": "<user>_namespace",
       "cluster_id": "${connector_cluster_id}",
       "annotations": {
-        "connector_mgmt.bf2.org/profile": "default-profile"
+        "cos.bf2.org/profile": "default-profile"
       },
       "tenant": {
         "kind": "user",
@@ -804,7 +804,7 @@ Feature: connector namespaces API
         "id": "${<user_id>}"
       },
       "annotations": {
-        "connector_mgmt.bf2.org/profile": "default-profile"
+        "cos.bf2.org/profile": "default-profile"
       },
       "status": {
         "state": "disconnected",
@@ -841,7 +841,7 @@ Feature: connector namespaces API
              "id": "${response.items[0].tenant.id}"
            },
            "annotations": {
-             "connector_mgmt.bf2.org/profile": "default-profile"
+             "cos.bf2.org/profile": "default-profile"
            },
            "status": {
              "state": "disconnected",
@@ -923,7 +923,7 @@ Feature: connector namespaces API
              "id": "13640231"
            },
            "annotations": {
-             "connector_mgmt.bf2.org/profile": "default-profile"
+             "cos.bf2.org/profile": "default-profile"
            },
            "status": {
              "state": "disconnected",
@@ -951,7 +951,7 @@ Feature: connector namespaces API
         "id": "13640231"
       },
       "annotations": {
-        "connector_mgmt.bf2.org/profile": "default-profile"
+        "cos.bf2.org/profile": "default-profile"
       },
       "status": {
         "state": "disconnected",
@@ -971,7 +971,7 @@ Feature: connector namespaces API
         "id": "13640231"
       },
       "annotations": {
-        "connector_mgmt.bf2.org/profile": "default-profile"
+        "cos.bf2.org/profile": "default-profile"
       },
       "status": {
         "state": "disconnected",
@@ -992,7 +992,7 @@ Feature: connector namespaces API
         "id": "13640231"
       },
       "annotations": {
-        "connector_mgmt.bf2.org/profile": "default-profile"
+        "cos.bf2.org/profile": "default-profile"
       },
       "status": {
         "state": "disconnected",
@@ -1019,7 +1019,7 @@ Feature: connector namespaces API
         "id": "13640231"
       },
       "annotations": {
-        "connector_mgmt.bf2.org/profile": "default-profile"
+        "cos.bf2.org/profile": "default-profile"
       },
       "status": {
         "state": "disconnected",
@@ -1041,7 +1041,7 @@ Feature: connector namespaces API
         "id": "13640231"
       },
       "annotations": {
-        "connector_mgmt.bf2.org/profile": "default-profile"
+        "cos.bf2.org/profile": "default-profile"
       },
       "status": {
         "state": "disconnected",
@@ -1079,7 +1079,7 @@ Feature: connector namespaces API
              "id": "13640231"
            },
            "annotations": {
-             "connector_mgmt.bf2.org/profile": "default-profile"
+             "cos.bf2.org/profile": "default-profile"
            },
            "status": {
              "state": "disconnected",

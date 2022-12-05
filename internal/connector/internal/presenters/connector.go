@@ -47,10 +47,25 @@ func ConvertConnector(from public.Connector) (*dbapi.Connector, *errors.ServiceE
 			ClientId:     from.ServiceAccount.ClientId,
 			ClientSecret: from.ServiceAccount.ClientSecret,
 		},
+		Annotations: ConvertConnectorAnnotations(from.Id, from.Annotations),
 		Status: dbapi.ConnectorStatus{
 			Phase: dbapi.ConnectorStatusPhase(from.Status.State),
 		},
 	}, nil
+}
+
+func ConvertConnectorAnnotations(id string, annotations map[string]string) []dbapi.ConnectorAnnotation {
+	res := make([]dbapi.ConnectorAnnotation, len(annotations))
+	i := 0
+	for k, v := range annotations {
+		res[i].ConnectorID = id
+		res[i].Key = k
+		res[i].Value = v
+
+		i++
+	}
+
+	return res
 }
 
 func PresentConnectorWithError(from *dbapi.ConnectorWithConditions) (public.Connector, *errors.ServiceError) {
@@ -92,6 +107,7 @@ func PresentConnectorAdminView(from *dbapi.ConnectorWithConditions) (admin.Conne
 		},
 		DesiredState: admin.ConnectorDesiredState(from.DesiredState),
 		Channel:      admin.Channel(from.Channel),
+		Annotations:  PresentConnectorAnnotations(from.Annotations),
 	}
 	reference := PresentReference(connector.Id, connector)
 	connector.Kind = reference.Kind
@@ -110,6 +126,14 @@ func PresentConnectorAdminView(from *dbapi.ConnectorWithConditions) (admin.Conne
 	}
 
 	return connector, nil
+}
+
+func PresentConnectorAnnotations(annotations []dbapi.ConnectorAnnotation) map[string]string {
+	res := make(map[string]string, len(annotations))
+	for _, ann := range annotations {
+		res[ann.Key] = ann.Value
+	}
+	return res
 }
 
 func getStatusError(conditions []private.MetaV1Condition) string {
@@ -157,6 +181,7 @@ func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceE
 		NamespaceId:     namespaceId,
 		ConnectorTypeId: from.ConnectorTypeId,
 		Connector:       spec,
+		Annotations:     PresentConnectorAnnotations(from.Annotations),
 		Status: public.ConnectorStatusStatus{
 			State: public.ConnectorState(from.Status.Phase),
 		},

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"gorm.io/gorm/clause"
 	"reflect"
 	"strings"
 
@@ -25,7 +26,7 @@ import (
 
 type ConnectorClusterService interface {
 	Create(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError
-	Get(ctx context.Context, id string) (dbapi.ConnectorCluster, *errors.ServiceError)
+	Get(ctx context.Context, id string) (*dbapi.ConnectorCluster, *errors.ServiceError)
 	Delete(ctx context.Context, id string) *errors.ServiceError
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.ConnectorClusterList, *api.PagingMeta, *errors.ServiceError)
 	Update(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError
@@ -119,8 +120,19 @@ func (k *connectorClusterService) CleanupDeployments() *errors.ServiceError {
 // Create creates a connector cluster in the database
 func (k *connectorClusterService) Create(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Save(resource).Error; err != nil {
-		return services.HandleCreateError("Connector", err)
+	if err := dbConn.Transaction(func(tx *gorm.DB) error {
+		// NOTE: directly calling Create on cluster fails due to some issue in Gorm,
+		// hence this TX to save cluster and annotations in separate Gorm calls
+		if err := tx.Omit("Annotations").Create(resource).Error; err != nil {
+			return err
+		}
+		// save annotations
+		if err := tx.Create(resource.Annotations).Error; err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return services.HandleCreateError("Connector cluster", err)
 	}
 
 	// create a default namespace for the new cluster
@@ -156,13 +168,16 @@ func filterClusterToOwnerOrOrg(ctx context.Context, dbConn *gorm.DB) (*gorm.DB, 
 }
 
 // Get gets a connector cluster by id from the database
-func (k *connectorClusterService) Get(ctx context.Context, id string) (dbapi.ConnectorCluster, *errors.ServiceError) {
+func (k *connectorClusterService) Get(ctx context.Context, id string) (*dbapi.ConnectorCluster, *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
-	var resource dbapi.ConnectorCluster
-	dbConn = dbConn.Where("id = ?", id)
+	resource := &dbapi.ConnectorCluster{
+		Model: db.Model{
+			ID: id,
+		},
+	}
 
-	if err := dbConn.Unscoped().First(&resource).Error; err != nil {
+	if err := dbConn.Unscoped().Preload(clause.Associations).First(resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector cluster", "id", id, err)
 	}
 	if resource.DeletedAt.Valid {
@@ -274,7 +289,7 @@ func (k *connectorClusterService) List(ctx context.Context, listArgs *services.L
 	}
 
 	// execute query
-	if err := dbConn.Find(&resourceList).Error; err != nil {
+	if err := dbConn.Preload(clause.Associations).Find(&resourceList).Error; err != nil {
 		return resourceList, pagingMeta, services.HandleGetError(`Connector cluster`, `query`, listArgs.Search, err)
 	}
 
@@ -291,9 +306,23 @@ func isAdmin(ctx context.Context) (bool, *errors.ServiceError) {
 }
 
 func (k *connectorClusterService) Update(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError {
-	dbConn := k.connectionFactory.New()
-	if err := dbConn.Where("id = ?", resource.ID).Model(resource).Updates(resource).Error; err != nil {
-		return services.HandleUpdateError("Connector", err)
+	if err := k.connectionFactory.New().Transaction(func(tx *gorm.DB) error {
+		// remove old associations first
+		if err := tx.Where("connector_cluster_id = ?", resource.ID).
+			Delete(&dbapi.ConnectorClusterAnnotation{}).Error; err != nil {
+			return errors.GeneralError("failed to remove connector cluster annotations %q: %v", resource.ID, err)
+		}
+		// create new associations
+		if err := tx.Create(&resource.Annotations).Error; err != nil {
+			return errors.GeneralError("failed to update connector cluster annotations %q: %v", resource.ID, err)
+		}
+		if err := tx.Model(resource).Omit("Annotations").
+			Where("id = ?", resource.ID).Updates(resource).Error; err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return services.HandleUpdateError("Connector cluster", err)
 	}
 	return nil
 }
@@ -406,7 +435,8 @@ func GetValidDeploymentColumns() []string {
 func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, clusterId string, filterChannelUpdates bool, includeDanglingDeploymentsOnly bool, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError) {
 	var resourceList dbapi.ConnectorDeploymentList
 	dbConn := k.connectionFactory.New()
-	dbConn = dbConn.Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector")
+	// specify preload for annotations only, to avoid skipping deleted connectors
+	dbConn = dbConn.Preload("Annotations").Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector")
 
 	pagingMeta := &api.PagingMeta{
 		Page: listArgs.Page,
@@ -534,8 +564,9 @@ func (k *connectorClusterService) FindAvailableNamespace(owner string, orgID str
 
 func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context, connectorID string) (resource dbapi.ConnectorDeployment, serr *errors.ServiceError) {
 
-	dbConn := k.connectionFactory.New().Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector").Where("connector_id = ?", connectorID)
-	if err := dbConn.First(&resource).Error; err != nil {
+	if err := k.connectionFactory.New().Preload(clause.Associations).
+		Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector").
+		Where("connector_id = ?", connectorID).First(&resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector deployment", "connector_id", connectorID, err)
 	}
 	return
@@ -544,7 +575,9 @@ func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context
 func (k *connectorClusterService) GetDeployment(ctx context.Context, id string) (resource dbapi.ConnectorDeployment, serr *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Unscoped().Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector").Where("connector_deployments.id = ?", id).First(&resource).Error; err != nil {
+	if err := dbConn.Unscoped().Preload(clause.Associations).
+		Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector").
+		Where("connector_deployments.id = ?", id).First(&resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector deployment", "id", id, err)
 	}
 

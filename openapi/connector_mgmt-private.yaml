@@ -462,6 +462,8 @@ components:
                   format: int64
                 resolved_secrets:
                   type: boolean
+                annotations:
+                  $ref: "connector_mgmt.yaml#/components/schemas/ConnectorResourceAnnotations"
             spec:
               $ref: '#/components/schemas/ConnectorDeploymentSpec'
             status:

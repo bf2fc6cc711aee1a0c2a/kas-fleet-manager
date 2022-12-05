@@ -12,9 +12,9 @@ func ConvertConnectorClusterStatus(from private.ConnectorClusterStatus) dbapi.Co
 		Phase:      dbapi.ConnectorClusterPhaseEnum(from.Phase),
 		Operators:  ConvertOperatorStatus(from.Operators),
 		Platform: dbapi.ConnectorClusterPlatform{
-			ID:      from.Platform.Id,
-			Type:    from.Platform.Type,
-			Version: from.Platform.Version,
+			PlatformID: from.Platform.Id,
+			Type:       from.Platform.Type,
+			Version:    from.Platform.Version,
 		},
 	}
 }
@@ -25,7 +25,7 @@ func PresentConnectorClusterAdminStatus(from dbapi.ConnectorClusterStatus) admin
 		State:      admin.ConnectorClusterState(from.Phase),
 		Operators:  PresentAdminOperators(from.Operators),
 		Platform: admin.ConnectorClusterPlatform{
-			Id:      from.Platform.ID,
+			Id:      from.Platform.PlatformID,
 			Type:    from.Platform.Type,
 			Version: from.Platform.Version,
 		},
