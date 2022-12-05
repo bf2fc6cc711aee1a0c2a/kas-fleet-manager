@@ -251,7 +251,6 @@ func (cts *connectorTypesService) ListLabels(listArgs *services.ListArguments) (
 	var resourceList dbapi.ConnectorTypeLabelCountList
 	// two connections for labels and featured connectors count queries
 	dbConn := cts.connectionFactory.New()
-	dbConn2 := cts.connectionFactory.New()
 
 	// Apply search query
 	if len(listArgs.Search) > 0 {
@@ -262,10 +261,10 @@ func (cts *connectorTypesService) ListLabels(listArgs *services.ListArguments) (
 		}
 		if strings.Contains(searchDbQuery.Query, "channel") {
 			dbConn = dbConn.Joins("LEFT JOIN connector_type_channels channels on channels.connector_type_id = connector_types.id")
-			dbConn2 = dbConn2.Joins("LEFT JOIN connector_type_channels channels on channels.connector_type_id = connector_types.id")
 			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "channel", "channels.connector_channel_channel")
 		}
 		if strings.Contains(searchDbQuery.Query, "label") {
+			dbConn = dbConn.Joins("LEFT JOIN connector_type_labels labels on labels.connector_type_id = connector_types.id")
 			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "label", "labels.label")
 		}
 		if strings.Contains(searchDbQuery.Query, "pricing_tier") {
@@ -273,35 +272,20 @@ func (cts *connectorTypesService) ListLabels(listArgs *services.ListArguments) (
 			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "pricing_tier", "annotations.key = 'cos.bf2.org/pricing-tier' and annotations.value")
 		}
 		dbConn = dbConn.Where(searchDbQuery.Query, searchDbQuery.Values...)
-		dbConn2 = dbConn2.Where(searchDbQuery.Query, searchDbQuery.Values...)
 	}
 
 	// execute query
-	result := dbConn.Model(&dbapi.ConnectorType{}).
-		Select("labels.label as label, count(distinct id) as count").
-		Joins("RIGHT JOIN connector_type_labels labels on labels.connector_type_id = connector_types.id").
-		Group("labels.label").
-		Order("labels.label ASC"). // default order label name
+	result := cts.connectionFactory.New().Model(&dbapi.ConnectorTypeLabel{}).
+		Select("connector_type_labels.label as label, count(distinct id) as count").
+		Joins("LEFT JOIN (?) AS types on connector_type_labels.connector_type_id = types.id",
+			dbConn.Model(&dbapi.ConnectorType{}).Select("connector_types.id")).
+		Group("connector_type_labels.label").
+		Order("connector_type_labels.label ASC"). // default order label name
 		Find(&resourceList)
 	if result.Error != nil {
 		return nil, errors.ToServiceError(result.Error)
 	}
 
-	// add "category-featured" label with count of types with non-zero featured_rank
-	var count int32
-	result = cts.connectionFactory.New().Select("count(id) as count").Table("(?) as types",
-		dbConn2.Model(&dbapi.ConnectorType{}).
-			Select("distinct id").
-			Joins("JOIN connector_type_labels labels on labels.connector_type_id = connector_types.id").
-			Where("featured_rank <> 0").
-			Group("id")).
-		Find(&count)
-	if result.Error != nil {
-		return nil, errors.ToServiceError(result.Error)
-	}
-
-	// append "category-featured" label to the front of the list
-	resourceList = append([]*dbapi.ConnectorTypeLabelCount{{Label: "category-featured", Count: count}}, resourceList...)
 	return resourceList, nil
 }
 

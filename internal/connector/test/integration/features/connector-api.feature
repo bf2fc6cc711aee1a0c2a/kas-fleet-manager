@@ -61,11 +61,11 @@ Feature: create a connector
         "items": [
           {
             "count": 1,
-            "label": "category-featured"
+            "label": "category-amazon"
           },
           {
             "count": 1,
-            "label": "category-amazon"
+            "label": "category-featured"
           },
           {
             "count": 1,
@@ -92,11 +92,23 @@ Feature: create a connector
         "items": [
           {
             "count": 0,
+            "label": "category-amazon"
+          },
+          {
+            "count": 0,
             "label": "category-featured"
+          },
+          {
+            "count": 0,
+            "label": "category-streaming-and-messaging"
           },
           {
             "count": 1,
             "label": "sink"
+          },
+          {
+            "count": 0,
+            "label": "source"
           }
         ]
       }
@@ -111,15 +123,19 @@ Feature: create a connector
         "items": [
           {
             "count": 1,
-            "label": "category-featured"
-          },
-          {
-            "count": 1,
             "label": "category-amazon"
           },
           {
             "count": 1,
+            "label": "category-featured"
+          },
+          {
+            "count": 1,
             "label": "category-streaming-and-messaging"
+          },
+          {
+            "count": 0,
+            "label": "sink"
           },
           {
             "count": 1,
@@ -138,15 +154,23 @@ Feature: create a connector
         "items": [
           {
             "count": 1,
-            "label": "category-featured"
-          },
-          {
-            "count": 1,
             "label": "category-amazon"
           },
           {
             "count": 1,
+            "label": "category-featured"
+          },
+          {
+            "count": 1,
             "label": "category-streaming-and-messaging"
+          },
+          {
+            "count": 0,
+            "label": "sink"
+          },
+          {
+            "count": 1,
+            "label": "source"
           }
         ]
       }
@@ -174,7 +198,8 @@ Feature: create a connector
             "labels": [
               "source",
               "category-streaming-and-messaging",
-              "category-amazon"
+              "category-amazon",
+              "category-featured"
             ],
             "annotations": {
               "cos.bf2.org/pricing-tier": "essentials"
@@ -833,7 +858,8 @@ Feature: create a connector
             "labels": [
               "source",
               "category-streaming-and-messaging",
-              "category-amazon"
+              "category-amazon",
+              "category-featured"
             ],
             "annotations": {
               "cos.bf2.org/pricing-tier": "essentials"
@@ -1095,7 +1121,8 @@ Feature: create a connector
              "labels": [
                "source",
                "category-streaming-and-messaging",
-               "category-amazon"
+               "category-amazon",
+               "category-featured"
              ],
              "annotations": {
                "cos.bf2.org/pricing-tier": "essentials"
