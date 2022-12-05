@@ -10,6 +10,7 @@ import (
 	"database/sql"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"gorm.io/gorm/clause"
+	"regexp"
 	"strings"
 
 	"gorm.io/gorm"
@@ -169,6 +170,8 @@ func GetValidConnectorTypeColumns() []string {
 	return []string{"id", "created_at", "updated_at", "version", "name", "description", "label", "channel", "featured_rank", "pricing_tier"}
 }
 
+var skipOrderByColumnsRegExp = regexp.MustCompile("^(channel)|(label)|(pricing_tier)")
+
 // List returns all connector types
 func (cts *connectorTypesService) List(listArgs *services.ListArguments) (dbapi.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError) {
 	if err := listArgs.Validate(GetValidConnectorTypeColumns()); err != nil {
@@ -212,6 +215,10 @@ func (cts *connectorTypesService) List(listArgs *services.ListArguments) (dbapi.
 
 	// Set the order by arguments if any
 	for _, orderByArg := range listArgs.OrderBy {
+		// ignore unsupported columns in orderBy
+		if skipOrderByColumnsRegExp.MatchString(orderByArg) {
+			continue
+		}
 		dbConn = dbConn.Order(orderByArg)
 	}
 
@@ -260,6 +267,10 @@ func (cts *connectorTypesService) ListLabels(listArgs *services.ListArguments) (
 		}
 		if strings.Contains(searchDbQuery.Query, "label") {
 			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "label", "labels.label")
+		}
+		if strings.Contains(searchDbQuery.Query, "pricing_tier") {
+			dbConn = dbConn.Joins("LEFT JOIN connector_type_annotations annotations on annotations.connector_type_id = connector_types.id")
+			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "pricing_tier", "annotations.key = 'cos.bf2.org/pricing-tier' and annotations.value")
 		}
 		dbConn = dbConn.Where(searchDbQuery.Query, searchDbQuery.Values...)
 		dbConn2 = dbConn2.Where(searchDbQuery.Query, searchDbQuery.Values...)

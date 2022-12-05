@@ -812,7 +812,8 @@ Feature: create a connector
 
   Scenario: Gary searches for essentials connector types
     Given I am logged in as "Gary"
-    When I GET path "/v1/kafka_connector_types?search=pricing_tier=essentials"
+    # also, ignoring order by channel, label, and pricing tier should not cause any errors
+    When I GET path "/v1/kafka_connector_types?search=pricing_tier=essentials&orderBy=label+ASC,pricing_tier+ASC,channel+DESC"
     Then the response code should be 200
     And the response should match json:
       """
