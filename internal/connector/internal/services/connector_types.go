@@ -132,15 +132,15 @@ func updateConnectorAnnotations(dbConn *gorm.DB, oldResource dbapi.ConnectorType
 	})
 	tid := oldResource.ID
 	if err := dbConn.Exec("DELETE FROM connector_annotations ca "+
-		"USING connectors c WHERE ca.connector_id = c.id AND "+
+		"USING connectors c WHERE c.deleted_at IS NULL AND ca.connector_id = c.id AND "+
 		"c.connector_type_id = ? AND ca.key IN ?", tid, oldKeys).Error; err != nil {
 		return errors.GeneralError("failed to delete old connector annotations related to type %q: %v", tid, err)
 	}
 	// copy new type annotations to connectors
 	if err := dbConn.Exec("INSERT INTO connector_annotations (connector_id, key, value) "+
 		"SELECT c.id, ct.key, ct.value FROM connector_type_annotations ct "+
-		"JOIN connectors c ON c.connector_type_id = ct.connector_type_id "+
-		"AND ct.connector_type_id = ?", tid).Error; err != nil {
+		"JOIN connectors c ON c.deleted_at IS NULL AND c.connector_type_id = ct.connector_type_id AND "+
+		"ct.connector_type_id = ?", tid).Error; err != nil {
 		return errors.GeneralError("failed to create new connector annotations related to type %q: %v", tid, err)
 	}
 	return nil
