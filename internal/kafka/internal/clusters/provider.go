@@ -33,8 +33,6 @@ type Provider interface {
 	// Install the strimzi operator in a given cluster
 	InstallStrimzi(clusterSpec *types.ClusterSpec) (bool, error)
 	// Install the cluster logging operator for a given cluster
-	InstallClusterLogging(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error)
-	// Install the cluster logging operator for a given cluster
 	InstallKasFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error)
 	GetMachinePool(clusterID string, id string) (*types.MachinePoolInfo, error)
 	CreateMachinePool(request *types.MachinePoolRequest) (*types.MachinePoolRequest, error)

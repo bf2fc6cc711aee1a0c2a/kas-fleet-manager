@@ -11,7 +11,6 @@ const (
 	MockModeEmulateServer         = "emulate-server"
 	strimziOperatorAddonID        = "managed-kafka"
 	kasFleetshardAddonID          = "kas-fleetshard-operator"
-	ClusterLoggingOperatorAddonID = "cluster-logging-operator"
 )
 
 type OCMConfig struct {
@@ -29,7 +28,6 @@ type OCMConfig struct {
 	MockMode                      string `json:"mock_type"`
 	StrimziOperatorAddonID        string `json:"strimzi_operator_addon_id"`
 	KasFleetshardAddonID          string `json:"kas_fleetshard_addon_id"`
-	ClusterLoggingOperatorAddonID string `json:"cluster_logging_operator_addon_id"`
 }
 
 func NewOCMConfig() *OCMConfig {
@@ -60,7 +58,6 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.MockMode, "ocm-mock-mode", c.MockMode, "Set mock type")
 	fs.StringVar(&c.StrimziOperatorAddonID, "strimzi-operator-addon-id", c.StrimziOperatorAddonID, "The name of the Strimzi operator addon")
 	fs.StringVar(&c.KasFleetshardAddonID, "kas-fleetshard-addon-id", c.KasFleetshardAddonID, "The name of the kas-fleetshard operator addon")
-	fs.StringVar(&c.ClusterLoggingOperatorAddonID, "cluster-logging-operator-addon-id", "", "The name of the cluster logging operator addon. An empty string indicates that the operator should not be installed")
 }
 
 func (c *OCMConfig) HasCredentials() bool {

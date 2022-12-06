@@ -29,7 +29,6 @@ import (
 
 var (
 	strimziAddonID                = "managed-kafka-test"
-	clusterLoggingOperatorAddonID = "cluster-logging-operator-test"
 	supportedInstanceType         = "developer"
 	acceptedCluster               = api.Cluster{
 		Status: api.ClusterAccepted,
@@ -1678,60 +1677,6 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 	}
 }
 
-func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
-	type fields struct {
-		clusterService services.ClusterService
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-	}{
-		{
-			name: "error when installing cluster logging operator",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
-						return false, apiErrors.GeneralError("failed to install cluster logging operator")
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "cluster logging operator installed successfully",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
-						return true, nil
-					},
-				},
-			},
-			wantErr: false,
-		},
-	}
-
-	for _, testcase := range tests {
-		tt := testcase
-		t.Run(tt.name, func(t *testing.T) {
-			g := gomega.NewWithT(t)
-			c := &ClusterManager{
-				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService:             tt.fields.clusterService,
-					SupportedProviders:         &config.ProviderConfig{},
-					ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{},
-					DataplaneClusterConfig:     &config.DataplaneClusterConfig{},
-					OCMConfig:                  &ocm.OCMConfig{ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
-				},
-			}
-			_, err := c.reconcileClusterLoggingOperator(api.Cluster{
-				ClusterID: "clusterId",
-			})
-			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
-		})
-	}
-}
-
 func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 	type fields struct {
 		clusterService services.ClusterService
@@ -1807,9 +1752,6 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
-						return false, nil
-					},
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
@@ -1832,9 +1774,6 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 				},
 				clusterService: &services.ClusterServiceMock{
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
-						return false, nil
-					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
@@ -1860,9 +1799,6 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
-						return false, nil
-					},
 					UpdateFunc:       nil, // set to nil as this should not be called since client_id and client_secret are already set
 					UpdateStatusFunc: nil, // set to nil as it should not be called as operators installation status is false
 				},
@@ -1882,27 +1818,6 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, apiErrors.GeneralError("failed to install strimzi")
 					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
-						return false, nil
-					},
-				},
-			},
-			arg: api.Cluster{
-				ClusterID: "test-cluster-id",
-			},
-			want:    false,
-			wantErr: true,
-		},
-		{
-			name: "return an error if cluster logging operator installation fails",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
-						return false, apiErrors.GeneralError("failed to install strimzi")
-					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
-						return false, nil
-					},
 				},
 			},
 			arg: api.Cluster{
@@ -1916,9 +1831,6 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
-						return false, nil
-					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -1952,9 +1864,6 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return true, nil
 					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
-						return true, nil
-					},
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
@@ -1976,7 +1885,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID, ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
+					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
 					ClusterService:             tt.fields.clusterService,
 					KasFleetshardOperatorAddon: tt.fields.agentOperator,
 				},

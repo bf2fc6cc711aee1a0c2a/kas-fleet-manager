@@ -157,10 +157,6 @@ func (o *OCMProvider) InstallStrimzi(clusterSpec *types.ClusterSpec) (bool, erro
 	return o.installAddon(clusterSpec, o.ocmConfig.StrimziOperatorAddonID)
 }
 
-func (o *OCMProvider) InstallClusterLogging(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
-	return o.installAddonWithParams(clusterSpec, o.ocmConfig.ClusterLoggingOperatorAddonID, params)
-}
-
 func (o *OCMProvider) InstallKasFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 	return o.installAddonWithParams(clusterSpec, o.ocmConfig.KasFleetshardAddonID, params)
 }

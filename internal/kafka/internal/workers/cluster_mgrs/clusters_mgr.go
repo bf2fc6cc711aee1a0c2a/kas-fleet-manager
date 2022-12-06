@@ -71,25 +71,6 @@ var clusterMetricsStatuses = []api.ClusterStatus{
 	api.ClusterDeprovisioning,
 }
 
-var clusterLoggingOperatorAddonParams = []types.Parameter{
-	{
-		Id:    "use-cloudwatch",
-		Value: "true",
-	},
-	{
-		Id:    "use-app-logs",
-		Value: "true",
-	},
-	{
-		Id:    "use-infra-logs",
-		Value: "false",
-	},
-	{
-		Id:    "use-audit-logs",
-		Value: "false",
-	},
-}
-
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters.
 
 type ClusterManager struct {
@@ -558,16 +539,6 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 		return false, err
 	}
 
-	clusterLoggingOperatorIsReady := false
-
-	if c.OCMConfig.ClusterLoggingOperatorAddonID != "" {
-		ready, err := c.reconcileClusterLoggingOperator(provisionedCluster)
-		if err != nil {
-			return false, err
-		}
-		clusterLoggingOperatorIsReady = ready
-	}
-
 	glog.Infof("Provisioning kas-fleetshard-operator as it is enabled")
 	kasFleetshardOperatorIsReady, params, errs := c.KasFleetshardOperatorAddon.Provision(provisionedCluster)
 	if errs != nil {
@@ -582,7 +553,7 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 		}
 	}
 
-	if strimziOperatorIsReady && kasFleetshardOperatorIsReady && (clusterLoggingOperatorIsReady || c.OCMConfig.ClusterLoggingOperatorAddonID == "") {
+	if strimziOperatorIsReady && kasFleetshardOperatorIsReady {
 		return true, nil
 	}
 
@@ -596,16 +567,6 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 		return false, err
 	}
 	glog.V(5).Infof("ready status of strimzi installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
-	return ready, nil
-}
-
-// reconcileClusterLoggingOperator installs the cluster logging operator on provisioned clusters
-func (c *ClusterManager) reconcileClusterLoggingOperator(provisionedCluster api.Cluster) (bool, error) {
-	ready, err := c.ClusterService.InstallClusterLogging(&provisionedCluster, clusterLoggingOperatorAddonParams)
-	if err != nil {
-		return false, err
-	}
-	glog.V(5).Infof("ready status of cluster logging installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
 	return ready, nil
 }
 

@@ -505,11 +505,6 @@ parameters:
   description: ID of the kas-fleetshard addon
   value: "kas-fleetshard-operator-qe"
 
-- name: CLUSTER_LOGGING_OPERATOR_ADDON_ID
-  displayName: Cluster logging operator addon ID
-  description: ID of the cluster logging operator addon
-  value: ""
-
 - name: ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE
   description: Enables reconciliation for data plane clusters in the 'Ready' state
   value: "true"
