@@ -48,6 +48,7 @@ var migrations = []*gormigrate.Migration{
 	addConnectorClusterPlatform("202209270000"),
 	addConnectorResourceAnnotations("202211070000"),
 	renameNamespaceProfileAnnotations("202211280000"),
+	addOrgIDAnnotations("202212050000"),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
