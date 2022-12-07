@@ -20,7 +20,11 @@
 #           - id: the id of the billing model we are going to configure. The set of valid IDs here is the set of the KafkaBillingModel IDs
 #             available in the 'supported_billing_models' set per instance type in the 'supported_instance_types' configuration.
 #           - max_allowed_instances: the number of instances of this type the user can create
-#           - expiration_days: after how many days the instance will expire (it will be suspended). Defaults to 0 (unlimited)
+#           - expiration_date: the date when the quota will expire (all instances with this billing model will be suspended). If not specified, there is no expiration
+#             The date must comprise the offset from the UTC, using the following format: "YYYY-MM-DD {+,-}{HH:MM}".
+#             Examples:
+#             - CET: 2022-12-06 +01:00
+#             - UTC: 2022-12-06 +00:00
 #           - grace_period_days: when in suspended status, defines after how many days the instance will be deleted. Defaults to 0 (unlimited)
 registered_service_accounts:
   - username: testuser1@example.com
@@ -70,7 +74,11 @@ registered_service_accounts:
 #     - id: the id of the billing model we are going to configure. The set of valid IDs here is the set of the KafkaBillingModel IDs
 #       available in the 'supported_billing_models' set per instance type in the 'supported_instance_types' configuration.
 #     - max_allowed_instances: the number of instances of this type the user can create
-#     - expiration_days: after how many days the instance will expire (it will be suspended). Defaults to 0 (unlimited)
+#     - expiration_date: the date when the quota will expire (all instances with this billing model will be suspended). If not specified, there is no expiration
+#       The date must comprise the offset from the UTC, using the following format: "YYYY-MM-DD {+,-}{HH:MM}".
+#       Examples:
+#       - CET: 2022-12-06 +01:00
+#       - UTC: 2022-12-06 +00:00
 #     - grace_period_days: when in suspended status, defines after how many days the instance will be deleted. Defaults to 0 (unlimited)
 registered_users_per_organisation:
     # The Control Plane team

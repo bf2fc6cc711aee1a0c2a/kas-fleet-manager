@@ -7,7 +7,6 @@ import (
 
 var defaultBillingModel = BillingModel{
 	Id:              "standard",
-	ExpirationDays:  0, // no expiration
 	GracePeriodDays: 0, // no grace period
 }
 
