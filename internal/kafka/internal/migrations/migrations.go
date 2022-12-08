@@ -88,6 +88,7 @@ var migrations = []*gormigrate.Migration{
 	removeTheWronglyAutoCreatedClusterInStageEnvironmentWithID_cdhunvd8igjhbi0nmtt0(),
 	addDesiredKafkaBillingModel(),
 	renameKafkaBillingModelColumn(),
+	addExpiresAtToKafkaRequest(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

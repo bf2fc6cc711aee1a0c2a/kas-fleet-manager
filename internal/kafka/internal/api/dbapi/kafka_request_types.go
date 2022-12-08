@@ -56,6 +56,9 @@ type KafkaRequest struct {
 	Marketplace              string `json:"marketplace"`
 	ActualKafkaBillingModel  string `json:"actual_kafka_billing_model"`
 	DesiredKafkaBillingModel string `json:"desired_kafka_billing_model"`
+	// ExpiresAt contains the timestamp of when a Kafka instance is scheduled to expire.
+	// On expiration, the Kafka instance will be marked for deletion, its status will be set to 'deprovision'.
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 type KafkaList []*KafkaRequest
