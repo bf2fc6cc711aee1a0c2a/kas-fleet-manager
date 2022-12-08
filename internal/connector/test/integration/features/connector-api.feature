@@ -1803,7 +1803,18 @@ Feature: create a connector
       }
       """
 
-    # Check annotations update
+    # Check update using content type application/json-patch+json
+    Given I set the "Content-Type" header to "application/json-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      [
+        { "op": "replace", "path": "/name", "value": "my-new-name" }
+      ]
+      """
+    Then the response code should be 202
+    And the ".name" selection from the response should match "my-new-name"
+
+    # Check annotations update using content type application/merge-patch+json
     Given I set the "Content-Type" header to "application/merge-patch+json"
     When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
       """
@@ -1883,6 +1894,27 @@ Feature: create a connector
       {
           "cos.bf2.org/organisation-id": "13640203",
           "cos.bf2.org/pricing-tier": "essentials"
+      }
+      """
+
+    # Check that not allowed secrets update of a connector are rejected with json-patch
+    Given I set the "Content-Type" header to "application/json-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      [
+        { "op": "add", "path": "/connector/aws_secret_key/ref", "value": "hack" }
+      ]
+      """
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "invalid patch: attempting to change opaque connector secret"
       }
       """
 
