@@ -18,6 +18,7 @@ import (
 type ClusterStatus string
 type ClusterProviderType string
 type ClusterInstanceTypeSupport string
+type ClusterType string
 
 func (k ClusterStatus) String() string {
 	return string(k)
@@ -108,6 +109,8 @@ const (
 	ClusterProviderAwsEKS     ClusterProviderType = "aws_eks"
 	ClusterProviderStandalone ClusterProviderType = "standalone"
 
+	Enterprise ClusterType = "enterprise"
+
 	DeveloperTypeSupport   ClusterInstanceTypeSupport = "developer"
 	StandardTypeSupport    ClusterInstanceTypeSupport = "standard"
 	AllInstanceTypeSupport ClusterInstanceTypeSupport = "standard,developer"
@@ -123,6 +126,10 @@ var ordinals = map[string]int{
 	ClusterDeprovisioning.String():                  50,
 	ClusterCleanup.String():                         60,
 	ClusterFailed.String():                          70,
+}
+
+func (t ClusterType) String() string {
+	return string(t)
 }
 
 // This represents the valid statuses of a dataplane cluster
@@ -165,6 +172,10 @@ type Cluster struct {
 	// DynamicCapacityInfo holds dynamic scaling capacity information per instance type.
 	// For each instance type, the maxinum number of nodes, remaining units and maximum supported units are stored
 	DynamicCapacityInfo JSON `json:"dynamic_capacity_info"`
+
+	// for now used only for enterprise OSD clusters
+	ClusterType    string `json:"cluster_type"`
+	OrganizationID string `json:"organization_id"`
 }
 
 type ClusterList []*Cluster

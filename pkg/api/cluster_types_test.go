@@ -978,6 +978,30 @@ func Test_ClusterProviderType_String(t *testing.T) {
 	}
 }
 
+func Test_ClusterType_String(t *testing.T) {
+	enterpriseType := Enterprise
+	tests := []struct {
+		name        string
+		clusterType ClusterType
+		want        string
+	}{
+		{
+			name:        "returns cluster type string",
+			clusterType: enterpriseType,
+			want:        "enterprise",
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			res := tt.clusterType.String()
+			g.Expect(res).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
 func Test_ClusterStatus_String(t *testing.T) {
 	tests := []struct {
 		name   string

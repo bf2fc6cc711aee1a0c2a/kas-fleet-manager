@@ -1,0 +1,12 @@
+---
+# List of organizations as per .organization.id in the OCM that can register Enterprise clusters
+# The Control Plane team
+- 13640203
+# The App SRE team
+- 12147054
+# The Kafka Instances team
+- 13639843
+# The MK Security team
+- 13785172
+# The Running the Service team
+- 13645369

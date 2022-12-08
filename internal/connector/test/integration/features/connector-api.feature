@@ -2308,25 +2308,53 @@ Feature: create a connector
             "reason": "Service account id is invalid"
           },
           {
-             "code": "CONNECTOR-MGMT-41",
-             "href": "/api/connector_mgmt/v1/errors/41",
-             "id": "41",
-             "kind": "Error",
-             "reason": "Instance Type not supported"
+            "code": "CONNECTOR-MGMT-41",
+            "href": "/api/connector_mgmt/v1/errors/41",
+            "id": "41",
+            "kind": "Error",
+            "reason": "Instance Type not supported"
           },
           {
-             "code": "CONNECTOR-MGMT-42",
-             "href": "/api/connector_mgmt/v1/errors/42",
-             "id": "42",
-             "kind": "Error",
-             "reason": "Instance plan not supported"
+            "code": "CONNECTOR-MGMT-42",
+            "href": "/api/connector_mgmt/v1/errors/42",
+            "id": "42",
+            "kind": "Error",
+            "reason": "Instance plan not supported"
           },
           {
-             "code": "CONNECTOR-MGMT-43",
-             "href": "/api/connector_mgmt/v1/errors/43",
-             "id": "43",
-             "kind": "Error",
-             "reason": "Billing account id missing or invalid"
+            "code": "CONNECTOR-MGMT-43",
+            "href": "/api/connector_mgmt/v1/errors/43",
+            "id": "43",
+            "kind": "Error",
+            "reason": "Billing account id missing or invalid"
+          },
+          {
+            "code": "CONNECTOR-MGMT-44",
+            "href": "/api/connector_mgmt/v1/errors/44",
+            "id": "44",
+            "kind": "Error",
+            "reason": "Enterprise cluster ID is already used"
+          },
+          {
+            "code": "CONNECTOR-MGMT-45",
+            "href": "/api/connector_mgmt/v1/errors/45",
+            "id": "45",
+            "kind": "Error",
+            "reason": "Enterprise cluster ID is invalid"
+          },
+          {
+            "code": "CONNECTOR-MGMT-46",
+            "href": "/api/connector_mgmt/v1/errors/46",
+            "id": "46",
+            "kind": "Error",
+            "reason": "Enterprise external cluster ID is invalid"
+          },
+          {
+            "code": "CONNECTOR-MGMT-47",
+            "href": "/api/connector_mgmt/v1/errors/47",
+            "id": "47",
+            "kind": "Error",
+            "reason": "Dns name is invalid"
           },
           {
             "code": "CONNECTOR-MGMT-103",
@@ -2429,8 +2457,8 @@ Feature: create a connector
         ],
         "kind": "ErrorList",
         "page": 1,
-        "size": 43,
-        "total": 43
+        "size": 47,
+        "total": 47
       }
       """
 

@@ -1682,3 +1682,67 @@ func Test_validateVersionsCompatibility(t *testing.T) {
 		})
 	}
 }
+
+func Test_Validation_ValidateClusterIdIsUnique(t *testing.T) {
+	clusterID := "1234abcd1234abcd1234abcd1234abcd"
+	type args struct {
+		clusterService services.ClusterService
+		clusterID      *string
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "throw an error when the FindClusterByID throws an error other than not found error",
+			args: args{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, errors.GeneralError("error ocurred when getting cluster")
+					},
+				},
+				clusterID: &clusterID,
+			},
+			wantErr: true,
+		},
+		{
+			name: "do not throw an error when the FindClusterByID throws not found error",
+			args: args{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, errors.GeneralError("failed to find cluster")
+					},
+				},
+				clusterID: &clusterID,
+			},
+			wantErr: false,
+		},
+		{
+			name: "throw an error when the FindClusterByID returns a cluster and no error",
+			args: args{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							ClusterID: clusterID,
+						}, nil
+					},
+				},
+				clusterID: &clusterID,
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			validateFn := ValidateClusterIdIsUnique(tt.args.clusterID, tt.args.clusterService)
+			err := validateFn()
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+		})
+	}
+}

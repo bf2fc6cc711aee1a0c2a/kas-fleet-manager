@@ -12,6 +12,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 
+	internalAcl "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/routes"
@@ -54,9 +55,11 @@ type options struct {
 	ClusterService              services.ClusterService
 	SupportedKafkaInstanceTypes services.SupportedKafkaInstanceTypesService
 
-	AccessControlListMiddleware *acl.AccessControlListMiddleware
-	AccessControlListConfig     *acl.AccessControlListConfig
-	AdminRoleAuthZConfig        *auth.AdminRoleAuthZConfig
+	AccessControlListMiddleware                       *acl.AccessControlListMiddleware
+	AccessControlListConfig                           *acl.AccessControlListConfig
+	EnterpriseClusterRegistrationAccessListMiddleware *internalAcl.EnterpriseClusterRegistrationAccessListMiddleware
+	AdminRoleAuthZConfig                              *auth.AdminRoleAuthZConfig
+	KasFleetshardOperatorAddon                        services.KasFleetshardOperatorAddon
 }
 
 func NewRouteLoader(s options) environments.RouteLoader {
@@ -87,6 +90,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	supportedKafkaInstanceTypesHandler := handlers.NewSupportedKafkaInstanceTypesHandler(s.SupportedKafkaInstanceTypes)
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
+	enterpriseClusterMiddleware := s.EnterpriseClusterRegistrationAccessListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
 	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.ServerConfig.TokenIssuerURL}, errors.ErrorUnauthenticated)
 	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.AMSClient, errors.ErrorTermsNotAccepted)
@@ -264,6 +268,14 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	adminRouter.HandleFunc("/kafkas/{id}", adminKafkaHandler.Update).
 		Name(logger.NewLogEvent("admin-update-kafka", "[admin] update kafka by id").ToString()).
 		Methods(http.MethodPatch)
+
+	clusterHandler := handlers.NewClusterHandler(s.KasFleetshardOperatorAddon, s.ClusterService)
+	clusterRouter := apiV1Router.PathPrefix("/clusters").Subrouter()
+	clusterRouter.Use(enterpriseClusterMiddleware)
+	apiV1KafkasCreateRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
+	clusterRouter.HandleFunc("", clusterHandler.RegisterEnterpriseCluster).
+		Name(logger.NewLogEvent("register-enterprise-cluster", "register enterprise cluster").ToString()).
+		Methods(http.MethodPost)
 
 	return nil
 }

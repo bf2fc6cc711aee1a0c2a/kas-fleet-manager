@@ -177,6 +177,11 @@ parameters:
   description: "YAML configuration for admin API endpoints authorization"
   value: "[{method: GET, roles: [kas-fleet-manager-admin-full, kas-fleet-manager-admin-read, kas-fleet-manager-admin-write]}, {method: PATCH, roles: [kas-fleet-manager-admin-full, kas-fleet-manager-admin-write]}, {method: DELETE, roles: [kas-fleet-manager-admin-full]}]"
 
+- name: ENTERPRISE_CLUSTER_REGISTRATION_ALLOWED_ORGANIZATIONS
+  displayName: Enterprise cluster registration allowed organizations configuration
+  description: List of organizations allowed to register Enterprise clusters
+  value: "[13640203, 12147054, 13639843, 13785172, 13645369]"
+
 - name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
   displayName: Enable Kafka TLS
   description: Enable the Kafka TLS certificate
@@ -639,6 +644,15 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
+      name: enterprise-cluster-registration-access-control-list-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      enterprise-cluster-registration-list-config.yaml: |-
+        ${ENTERPRISE_CLUSTER_REGISTRATION_ALLOWED_ORGANIZATIONS}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
       name: kas-fleet-manager-allowed-users-config
       annotations:
         qontract.recycle: "true"
@@ -840,7 +854,10 @@ objects:
               name: kas-fleet-manager-node-prewarming-config   
           - name: kas-fleet-manager-admin-authz-config
             configMap:
-              name: kas-fleet-manager-admin-authz-config 
+              name: kas-fleet-manager-admin-authz-config
+          - name: enterprise-cluster-registration-access-control-list-config
+            configMap:
+              name: enterprise-cluster-registration-access-control-list-config
           - name: kas-fleet-manager-allowed-users-config
             configMap:
               name: kas-fleet-manager-allowed-users-config
@@ -936,6 +953,9 @@ objects:
             - name: kas-fleet-manager-node-prewarming-config
               mountPath: /config/node-prewarming-configuration.yaml
               subPath: node-prewarming-configuration.yaml
+            - name: enterprise-cluster-registration-access-control-list-config
+              mountPath: /config/enterprise-cluster-registration-list-config.yaml
+              subPath: enterprise-cluster-registration-list-config.yaml
             - name: kas-fleet-manager-admin-authz-config
               mountPath: /config/admin-authz-configuration.yaml
               subPath: admin-authz-configuration.yaml
@@ -1125,6 +1145,7 @@ objects:
             - --admin-api-sso-endpoint-uri=${ADMIN_API_SSO_ENDPOINT_URI}
             - --admin-api-sso-realm=${ADMIN_API_SSO_REALM}
             - --admin-authz-config-file=/config/admin-authz-configuration.yaml
+            - --enterprise-cluster-registration-access-control-list-config-file=/config/enterprise-cluster-registration-list-config.yaml
             - -v=${GLOG_V}
             resources:
               requests:

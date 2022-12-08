@@ -52,6 +52,7 @@ type KasFleetshardOperatorAddon interface {
 	Provision(cluster api.Cluster) (bool, ParameterList, *errors.ServiceError)
 	ReconcileParameters(cluster api.Cluster) (ParameterList, *errors.ServiceError)
 	RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError
+	GetAddonParams(cluster *api.Cluster) (ParameterList, *errors.ServiceError)
 }
 
 func NewKasFleetshardOperatorAddon(o kasFleetshardOperatorAddon) KasFleetshardOperatorAddon {
@@ -70,7 +71,7 @@ type kasFleetshardOperatorAddon struct {
 
 func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, ParameterList, *errors.ServiceError) {
 	kasFleetshardAddonID := o.OCMConfig.KasFleetshardAddonID
-	params, paramsErr := o.getAddonParams(&cluster)
+	params, paramsErr := o.GetAddonParams(&cluster)
 	if paramsErr != nil {
 		return false, nil, paramsErr
 	}
@@ -95,7 +96,7 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, Param
 
 func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) (ParameterList, *errors.ServiceError) {
 	kasFleetshardAddonID := o.OCMConfig.KasFleetshardAddonID
-	params, paramsErr := o.getAddonParams(&cluster)
+	params, paramsErr := o.GetAddonParams(&cluster)
 	if paramsErr != nil {
 		return nil, paramsErr
 	}
@@ -122,7 +123,7 @@ func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) (P
 	}
 }
 
-func (o *kasFleetshardOperatorAddon) getAddonParams(cluster *api.Cluster) ([]types.Parameter, *errors.ServiceError) {
+func (o *kasFleetshardOperatorAddon) GetAddonParams(cluster *api.Cluster) (ParameterList, *errors.ServiceError) {
 	var acc *api.ServiceAccount
 	if cluster.ClientID == "" || cluster.ClientSecret == "" {
 		var pErr *errors.ServiceError

@@ -43,6 +43,24 @@ var (
 	keycloakRealmConfig = keycloak.KeycloakRealmConfig{
 		ValidIssuerURI: "https://foo.bar",
 	}
+	enterpriseAcceptedCluster = api.Cluster{
+		Status:      api.ClusterAccepted,
+		ClusterType: api.Enterprise.String(),
+	}
+	provisioningCluster = api.Cluster{
+		Status: api.ClusterProvisioning,
+	}
+	enterpriseProvisioningCluster = api.Cluster{
+		Status:      api.ClusterProvisioning,
+		ClusterType: api.Enterprise.String(),
+	}
+	provisionedCluster = api.Cluster{
+		Status: api.ClusterProvisioned,
+	}
+	enterpriseProvisionedCluster = api.Cluster{
+		Status:      api.ClusterProvisioned,
+		ClusterType: api.Enterprise.String(),
+	}
 )
 
 func TestClusterManager_GetID(t *testing.T) {
@@ -397,6 +415,38 @@ func TestClusterManager_processAcceptedClusters(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "should succeed if no errors are encountered when dealing with enterprise cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							enterpriseAcceptedCluster,
+						}, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should fail if an error is encountered when dealing with enterprise cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							enterpriseAcceptedCluster,
+						}, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to update cluster")
+					},
+				},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, testcase := range tests {
@@ -439,7 +489,7 @@ func TestClusterManager_processProvisioningClusters(t *testing.T) {
 				clusterService: &services.ClusterServiceMock{
 					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{
-							acceptedCluster,
+							provisioningCluster,
 						}, nil
 					},
 					CheckClusterStatusFunc: func(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
@@ -455,15 +505,47 @@ func TestClusterManager_processProvisioningClusters(t *testing.T) {
 				clusterService: &services.ClusterServiceMock{
 					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{
-							acceptedCluster,
+							provisioningCluster,
 						}, nil
 					},
 					CheckClusterStatusFunc: func(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
-						return &acceptedCluster, nil
+						return &provisioningCluster, nil
 					},
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "should succeed if no errors are encountered when dealing with enterprise cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							enterpriseProvisioningCluster,
+						}, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should fail if an error is encountered when dealing with enterprise cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							enterpriseProvisioningCluster,
+						}, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to update cluster")
+					},
+				},
+			},
+			wantErr: true,
 		},
 	}
 
@@ -599,6 +681,38 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "should succeed if no errors are encountered when dealing with enterprise cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							enterpriseProvisionedCluster,
+						}, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should fail if an error is encountered when dealing with enterprise cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							enterpriseProvisionedCluster,
+						}, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to update cluster")
+					},
+				},
+			},
+			wantErr: true,
 		},
 	}
 
@@ -2574,7 +2688,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			name: "Successfully applies manually configured Cluster without deprovisioning clusters",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListAllClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+					ListNonEnterpriseClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{{ClusterID: "test02"}}, nil
 					},
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
@@ -2597,7 +2711,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			name: "Successfully applies manually configured Cluster with deprovisioning clusters",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListAllClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+					ListNonEnterpriseClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{{ClusterID: "test02"}}, nil
 					},
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
@@ -2623,7 +2737,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			name: "Should fail if UpdateMultiClusterStatus fails on clusters to deprovision",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListAllClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+					ListNonEnterpriseClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{{ClusterID: "test02"}}, nil
 					},
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
@@ -2649,7 +2763,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			name: "Should fail if RegisterClusterJob fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListAllClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+					ListNonEnterpriseClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{{ClusterID: "test02"}}, nil
 					},
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
@@ -2664,7 +2778,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			name: "Should fail if FindKafkaInstanceCount fails",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListAllClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+					ListNonEnterpriseClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{{ClusterID: "test02"}}, nil
 					},
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
@@ -2682,7 +2796,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 			name: "Failed to apply manually configured Cluster",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListAllClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+					ListNonEnterpriseClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 						return nil, &apiErrors.ServiceError{}
 					},
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {

@@ -81,14 +81,14 @@ var _ ClusterService = &ClusterServiceMock{}
 //			IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error) {
 //				panic("mock out the IsStrimziKafkaVersionAvailableInCluster method")
 //			},
-//			ListAllClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
-//				panic("mock out the ListAllClusterIDs method")
-//			},
 //			ListByStatusFunc: func(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 //				panic("mock out the ListByStatus method")
 //			},
 //			ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError) {
 //				panic("mock out the ListGroupByProviderAndRegion method")
+//			},
+//			ListNonEnterpriseClusterIDsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
+//				panic("mock out the ListNonEnterpriseClusterIDs method")
 //			},
 //			RegisterClusterJobFunc: func(clusterRequest *api.Cluster) *apiErrors.ServiceError {
 //				panic("mock out the RegisterClusterJob method")
@@ -169,14 +169,14 @@ type ClusterServiceMock struct {
 	// IsStrimziKafkaVersionAvailableInClusterFunc mocks the IsStrimziKafkaVersionAvailableInCluster method.
 	IsStrimziKafkaVersionAvailableInClusterFunc func(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error)
 
-	// ListAllClusterIDsFunc mocks the ListAllClusterIDs method.
-	ListAllClusterIDsFunc func() ([]api.Cluster, *apiErrors.ServiceError)
-
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
 
 	// ListGroupByProviderAndRegionFunc mocks the ListGroupByProviderAndRegion method.
 	ListGroupByProviderAndRegionFunc func(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError)
+
+	// ListNonEnterpriseClusterIDsFunc mocks the ListNonEnterpriseClusterIDs method.
+	ListNonEnterpriseClusterIDsFunc func() ([]api.Cluster, *apiErrors.ServiceError)
 
 	// RegisterClusterJobFunc mocks the RegisterClusterJob method.
 	RegisterClusterJobFunc func(clusterRequest *api.Cluster) *apiErrors.ServiceError
@@ -304,9 +304,6 @@ type ClusterServiceMock struct {
 			// IbpVersion is the ibpVersion argument value.
 			IbpVersion string
 		}
-		// ListAllClusterIDs holds details about calls to the ListAllClusterIDs method.
-		ListAllClusterIDs []struct {
-		}
 		// ListByStatus holds details about calls to the ListByStatus method.
 		ListByStatus []struct {
 			// State is the state argument value.
@@ -320,6 +317,9 @@ type ClusterServiceMock struct {
 			Regions []string
 			// Status is the status argument value.
 			Status []string
+		}
+		// ListNonEnterpriseClusterIDs holds details about calls to the ListNonEnterpriseClusterIDs method.
+		ListNonEnterpriseClusterIDs []struct {
 		}
 		// RegisterClusterJob holds details about calls to the RegisterClusterJob method.
 		RegisterClusterJob []struct {
@@ -366,9 +366,9 @@ type ClusterServiceMock struct {
 	lockInstallClusterLogging                          sync.RWMutex
 	lockInstallStrimzi                                 sync.RWMutex
 	lockIsStrimziKafkaVersionAvailableInCluster        sync.RWMutex
-	lockListAllClusterIDs                              sync.RWMutex
 	lockListByStatus                                   sync.RWMutex
 	lockListGroupByProviderAndRegion                   sync.RWMutex
+	lockListNonEnterpriseClusterIDs                    sync.RWMutex
 	lockRegisterClusterJob                             sync.RWMutex
 	lockUpdate                                         sync.RWMutex
 	lockUpdateMultiClusterStatus                       sync.RWMutex
@@ -1038,33 +1038,6 @@ func (mock *ClusterServiceMock) IsStrimziKafkaVersionAvailableInClusterCalls() [
 	return calls
 }
 
-// ListAllClusterIDs calls ListAllClusterIDsFunc.
-func (mock *ClusterServiceMock) ListAllClusterIDs() ([]api.Cluster, *apiErrors.ServiceError) {
-	if mock.ListAllClusterIDsFunc == nil {
-		panic("ClusterServiceMock.ListAllClusterIDsFunc: method is nil but ClusterService.ListAllClusterIDs was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockListAllClusterIDs.Lock()
-	mock.calls.ListAllClusterIDs = append(mock.calls.ListAllClusterIDs, callInfo)
-	mock.lockListAllClusterIDs.Unlock()
-	return mock.ListAllClusterIDsFunc()
-}
-
-// ListAllClusterIDsCalls gets all the calls that were made to ListAllClusterIDs.
-// Check the length with:
-//
-//	len(mockedClusterService.ListAllClusterIDsCalls())
-func (mock *ClusterServiceMock) ListAllClusterIDsCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockListAllClusterIDs.RLock()
-	calls = mock.calls.ListAllClusterIDs
-	mock.lockListAllClusterIDs.RUnlock()
-	return calls
-}
-
 // ListByStatus calls ListByStatusFunc.
 func (mock *ClusterServiceMock) ListByStatus(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 	if mock.ListByStatusFunc == nil {
@@ -1134,6 +1107,33 @@ func (mock *ClusterServiceMock) ListGroupByProviderAndRegionCalls() []struct {
 	mock.lockListGroupByProviderAndRegion.RLock()
 	calls = mock.calls.ListGroupByProviderAndRegion
 	mock.lockListGroupByProviderAndRegion.RUnlock()
+	return calls
+}
+
+// ListNonEnterpriseClusterIDs calls ListNonEnterpriseClusterIDsFunc.
+func (mock *ClusterServiceMock) ListNonEnterpriseClusterIDs() ([]api.Cluster, *apiErrors.ServiceError) {
+	if mock.ListNonEnterpriseClusterIDsFunc == nil {
+		panic("ClusterServiceMock.ListNonEnterpriseClusterIDsFunc: method is nil but ClusterService.ListNonEnterpriseClusterIDs was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockListNonEnterpriseClusterIDs.Lock()
+	mock.calls.ListNonEnterpriseClusterIDs = append(mock.calls.ListNonEnterpriseClusterIDs, callInfo)
+	mock.lockListNonEnterpriseClusterIDs.Unlock()
+	return mock.ListNonEnterpriseClusterIDsFunc()
+}
+
+// ListNonEnterpriseClusterIDsCalls gets all the calls that were made to ListNonEnterpriseClusterIDs.
+// Check the length with:
+//
+//	len(mockedClusterService.ListNonEnterpriseClusterIDsCalls())
+func (mock *ClusterServiceMock) ListNonEnterpriseClusterIDsCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockListNonEnterpriseClusterIDs.RLock()
+	calls = mock.calls.ListNonEnterpriseClusterIDs
+	mock.lockListNonEnterpriseClusterIDs.RUnlock()
 	return calls
 }
 
