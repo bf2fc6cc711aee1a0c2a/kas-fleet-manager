@@ -50,8 +50,8 @@ type ClusterService interface {
 	// or are being deprovisioned from it i.e kafka that are not in deleting state.
 	// NOTE. Kafka in "failed" are included as well since it is not a terminal status at the moment.
 	FindNonEmptyClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
-	// ListAllClusterIDs returns all the valid cluster ids in array
-	ListAllClusterIDs() ([]api.Cluster, *apiErrors.ServiceError)
+	// ListNonEnterpriseClusterIDs returns all the valid cluster ids in array (except enterprise clusters)
+	ListNonEnterpriseClusterIDs() ([]api.Cluster, *apiErrors.ServiceError)
 	// FindAllClusters return all the valid clusters in array
 	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, error)
 	// FindKafkaInstanceCount returns the kafka instance counts associated with the list of clusters. If the list is empty, it will list all clusterIDs that have Kafka instances assigned.
@@ -367,7 +367,7 @@ func (c clusterService) FindNonEmptyClusterByID(clusterID string) (*api.Cluster,
 	return cluster, nil
 }
 
-func (c clusterService) ListAllClusterIDs() ([]api.Cluster, *apiErrors.ServiceError) {
+func (c clusterService) ListNonEnterpriseClusterIDs() ([]api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
 
 	var res []api.Cluster
@@ -379,6 +379,7 @@ func (c clusterService) ListAllClusterIDs() ([]api.Cluster, *apiErrors.ServiceEr
 	if err := dbConn.Model(&api.Cluster{}).
 		Select("cluster_id").
 		Where("cluster_id != '' ").
+		Where("cluster_type != ? ", api.Enterprise.String()). // don't include enterprise clusters
 		Order("created_at asc ").
 		Scan(&res).Error; err != nil {
 		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to query by cluster info")
@@ -736,7 +737,8 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 	var clusters []*ClusterSelection
 	dbConn := c.connectionFactory.New().
 		Model(&api.Cluster{}).
-		Where("status != ?", api.ClusterFailed)
+		Where("status != ?", api.ClusterFailed).
+		Where("cluster_type != ?", api.Enterprise.String())
 
 	if err := dbConn.Scan(&clusters).Error; err != nil {
 		return nil, errors.Wrap(err, "failed to list data plane clusters")

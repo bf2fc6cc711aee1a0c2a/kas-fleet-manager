@@ -490,3 +490,141 @@ func Test_ValidateQueryParam(t *testing.T) {
 		})
 	}
 }
+
+func Test_ValidateExternalClusterId(t *testing.T) {
+	invalidExternalClusterId := "invalid"
+	validExternalClusterId := "69d631de-9b7f-4bc2-bf4f-4d3295a7b25d"
+	field := "external cluster id"
+	type args struct {
+		value *string
+		field string
+	}
+	tests := []struct {
+		name            string
+		args            args
+		wantErr         bool
+		expectedErrCode errors.ServiceErrorCode
+	}{
+		{
+			name: "no error thrown if external cluster id format is valid",
+			args: args{
+				field: field,
+				value: &validExternalClusterId,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should throw an error if external cluster id format is valid",
+			args: args{
+				field: field,
+				value: &invalidExternalClusterId,
+			},
+			wantErr:         true,
+			expectedErrCode: errors.ErrorInvalidExternalClusterId,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			err := handlers.ValidateExternalClusterId(tt.args.value, tt.args.field)()
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			if err != nil {
+				g.Expect(err.Code).To(gomega.Equal(tt.expectedErrCode))
+			}
+		})
+	}
+}
+
+func Test_ValidateClusterId(t *testing.T) {
+	invalidClusterId := "abcd123-4asc-456fdks9485lskd030g"
+	validClusterId := "abcd1234ascd3456fdks9485lskd030g"
+	field := "cluster id"
+	type args struct {
+		value *string
+		field string
+	}
+	tests := []struct {
+		name            string
+		args            args
+		wantErr         bool
+		expectedErrCode errors.ServiceErrorCode
+	}{
+		{
+			name: "no error thrown if cluster id format is valid",
+			args: args{
+				field: field,
+				value: &validClusterId,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should throw an error if cluster id format is invalid",
+			args: args{
+				field: field,
+				value: &invalidClusterId,
+			},
+			wantErr:         true,
+			expectedErrCode: errors.ErrorInvalidClusterId,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			err := handlers.ValidateClusterId(tt.args.value, tt.args.field)()
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			if err != nil {
+				g.Expect(err.Code).To(gomega.Equal(tt.expectedErrCode))
+			}
+		})
+	}
+}
+
+func Test_ValidateDnsName(t *testing.T) {
+	invalidDnsName := "invalid"
+	validDnsName := "apps.som-cluster-aws.awdk.s1.devshift.org"
+	field := "dns name"
+	type args struct {
+		value *string
+		field string
+	}
+	tests := []struct {
+		name            string
+		args            args
+		wantErr         bool
+		expectedErrCode errors.ServiceErrorCode
+	}{
+		{
+			name: "no error thrown if cluster dns format is valid",
+			args: args{
+				field: field,
+				value: &validDnsName,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should throw an error if cluster dns format is invalid",
+			args: args{
+				field: field,
+				value: &invalidDnsName,
+			},
+			wantErr:         true,
+			expectedErrCode: errors.ErrorInvalidDnsName,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			err := handlers.ValidateDnsName(tt.args.value, tt.args.field)()
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			if err != nil {
+				g.Expect(err.Code).To(gomega.Equal(tt.expectedErrCode))
+			}
+		})
+	}
+}

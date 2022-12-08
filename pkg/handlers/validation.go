@@ -18,7 +18,10 @@ var (
 	ValidClientIdUuidRegexp       = regexp.MustCompile(`^srvc-acct-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 	ValidServiceAccountNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
 	ValidServiceAccountDescRegexp = regexp.MustCompile(`^[a-zA-Z0-9.,\-\s]*$`)
-	MinRequiredFieldLength        = 1
+	ValidAlphaNumeric             = regexp.MustCompile(`^[a-zA-Z0-9]*$`)
+	// taken from here: https://regex101.com/r/SEg6KL/1 - will likely be removed if we can use our permissions to get cluster dns from cluster id
+	ValidDnsName           = regexp.MustCompile(`^(?:[_a-z0-9](?:[_a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?)?$`)
+	MinRequiredFieldLength = 1
 
 	MaxServiceAccountNameLength = 50
 	MaxServiceAccountDescLength = 255
@@ -59,6 +62,33 @@ func ValidateServiceAccountId(value *string, field string) Validate {
 	return func() *errors.ServiceError {
 		if !ValidUuidRegexp.MatchString(*value) {
 			return errors.MalformedServiceAccountId("%s does not match %s", field, ValidUuidRegexp.String())
+		}
+		return nil
+	}
+}
+
+func ValidateExternalClusterId(value *string, field string) Validate {
+	return func() *errors.ServiceError {
+		if !ValidUuidRegexp.MatchString(*value) {
+			return errors.InvalidExternalClusterId("%s does not match %s", field, ValidUuidRegexp.String())
+		}
+		return nil
+	}
+}
+
+func ValidateClusterId(value *string, field string) Validate {
+	return func() *errors.ServiceError {
+		if !ValidAlphaNumeric.MatchString(*value) {
+			return errors.InvalidClusterId("%s does not match %s", field, ValidUuidRegexp.String())
+		}
+		return nil
+	}
+}
+
+func ValidateDnsName(value *string, field string) Validate {
+	return func() *errors.ServiceError {
+		if !ValidDnsName.MatchString(*value) {
+			return errors.InvalidDnsName("%s does not match %s", field, ValidDnsName.String())
 		}
 		return nil
 	}

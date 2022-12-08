@@ -192,6 +192,22 @@ const (
 	ErrorBillingAccountInvalid       ServiceErrorCode = 43
 	ErrorBillingAccountInvalidReason string           = "Billing account id missing or invalid"
 
+	// Enterprise cluster id must be unique
+	ErrorDuplicateClusterId       ServiceErrorCode = 44
+	ErrorDuplicateClusterIdReason string           = "Enterprise cluster ID is already used"
+
+	// Enterprise cluster id is invalid
+	ErrorInvalidClusterId       ServiceErrorCode = 45
+	ErrorInvalidClusterIdReason string           = "Enterprise cluster ID is invalid"
+
+	// Enterprise cluster external id is invalid
+	ErrorInvalidExternalClusterId       ServiceErrorCode = 46
+	ErrorInvalidExternalClusterIdReason string           = "Enterprise external cluster ID is invalid"
+
+	// Dns name is invalid
+	ErrorInvalidDnsName       ServiceErrorCode = 47
+	ErrorInvalidDnsNameReason string           = "Dns name is invalid"
+
 	// Too Many requests error. Used by rate limiting
 	ErrorTooManyRequests       ServiceErrorCode = 429
 	ErrorTooManyRequestsReason string           = "Too many requests"
@@ -299,6 +315,10 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil},
 		ServiceError{ErrorInstancePlanNotSupported, ErrorInstancePlanNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorBillingAccountInvalid, ErrorBillingAccountInvalidReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorDuplicateClusterId, ErrorDuplicateClusterIdReason, http.StatusConflict, nil},
+		ServiceError{ErrorInvalidClusterId, ErrorInvalidClusterIdReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorInvalidExternalClusterId, ErrorInvalidExternalClusterIdReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorInvalidDnsName, ErrorInvalidDnsNameReason, http.StatusBadRequest, nil},
 	}
 }
 
@@ -646,8 +666,24 @@ func MalformedServiceAccountId(reason string, values ...interface{}) *ServiceErr
 	return New(ErrorMalformedServiceAccountId, reason, values...)
 }
 
+func InvalidExternalClusterId(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorInvalidExternalClusterId, reason, values...)
+}
+
+func InvalidClusterId(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorInvalidClusterId, reason, values...)
+}
+
+func InvalidDnsName(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorInvalidDnsName, reason, values...)
+}
+
 func DuplicateKafkaClusterName() *ServiceError {
 	return New(ErrorDuplicateKafkaClusterName, ErrorDuplicateKafkaClusterNameReason)
+}
+
+func DuplicateClusterId() *ServiceError {
+	return New(ErrorDuplicateClusterId, ErrorDuplicateClusterIdReason)
 }
 
 func MinimumFieldLengthNotReached(reason string, values ...interface{}) *ServiceError {

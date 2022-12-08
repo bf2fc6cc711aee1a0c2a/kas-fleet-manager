@@ -71,10 +71,14 @@ func (m *DeprovisioningClustersManager) processDeprovisioningClusters() error {
 
 	for i := range deprovisioningClusters {
 		cluster := deprovisioningClusters[i]
-		glog.V(10).Infof("deprovision cluster ClusterID = %s", cluster.ClusterID)
-		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterDeprovisioning)
-		if err := m.reconcileDeprovisioningCluster(&cluster); err != nil {
-			errList.AddErrors(errors.Wrapf(err, "failed to reconcile deprovisioning cluster %s", cluster.ClusterID))
+		if cluster.ClusterType != api.Enterprise.String() {
+			glog.V(10).Infof("deprovision cluster ClusterID = %s", cluster.ClusterID)
+			metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterDeprovisioning)
+			if err := m.reconcileDeprovisioningCluster(&cluster); err != nil {
+				errList.AddErrors(errors.Wrapf(err, "failed to reconcile deprovisioning cluster %s", cluster.ClusterID))
+			}
+		} else {
+			glog.V(10).Infof("skipping deprovisioning of %s cluster with ClusterID = %s", api.Enterprise.String(), cluster.ClusterID)
 		}
 	}
 
@@ -107,7 +111,7 @@ func (m *DeprovisioningClustersManager) reconcileDeprovisioningCluster(cluster *
 	}
 
 	// cluster has been removed from cluster service. Mark it for cleanup.
-	glog.Infof("Cluster %s  has been removed from cluster service.", cluster.ClusterID)
+	glog.Infof("Cluster %s has been removed from cluster service.", cluster.ClusterID)
 	updateStatusErr := m.clusterService.UpdateStatus(*cluster, api.ClusterCleanup)
 	if updateStatusErr != nil {
 		return errors.Wrapf(updateStatusErr, "failed to update deprovisioning cluster %s status to 'cleanup'", cluster.ClusterID)

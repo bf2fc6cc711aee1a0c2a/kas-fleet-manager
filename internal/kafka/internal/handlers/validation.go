@@ -3,9 +3,10 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"regexp"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -28,6 +29,8 @@ import (
 var ValidKafkaClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
 
 var MaxKafkaNameLength = 32
+
+var ClusterIdLength = 32
 
 func ValidateBillingModel(kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {
@@ -90,6 +93,23 @@ func ValidateKafkaClusterNameIsUnique(name *string, kafkaService services.KafkaS
 
 		if pageMeta.Total > 0 {
 			return errors.DuplicateKafkaClusterName()
+		}
+
+		return nil
+	}
+}
+
+func ValidateClusterIdIsUnique(clusterId *string, clusterService services.ClusterService) handlers.Validate {
+	return func() *errors.ServiceError {
+
+		cluster, err := clusterService.FindClusterByID(*clusterId)
+
+		if err != nil && !strings.HasPrefix(err.Reason, "failed to find cluster") {
+			return err
+		}
+
+		if cluster != nil {
+			return errors.DuplicateClusterId()
 		}
 
 		return nil

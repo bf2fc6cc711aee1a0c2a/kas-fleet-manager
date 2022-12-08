@@ -805,6 +805,7 @@ deploy/service: MAX_ALLOWED_DEVELOPER_INSTANCES ?= "1"
 deploy/service: ADMIN_API_SSO_BASE_URL ?= "https://auth.redhat.com"
 deploy/service: ADMIN_API_SSO_ENDPOINT_URI ?= "/auth/realms/EmployeeIDP"
 deploy/service: ADMIN_API_SSO_REALM ?= "EmployeeIDP"
+deploy/service: ENTERPRISE_CLUSTER_REGISTRATION_ALLOWED_ORGANIZATIONS ?= "[13640203, 12147054, 13639843, 13785172, 13645369]"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until $(OC) get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
@@ -884,6 +885,7 @@ deploy/service: deploy/envoy deploy/route
 		-p ADMIN_API_SSO_BASE_URL="${ADMIN_API_SSO_BASE_URL}" \
 		-p ADMIN_API_SSO_ENDPOINT_URI="${ADMIN_API_SSO_ENDPOINT_URI}" \
 		-p ADMIN_API_SSO_REALM="${ADMIN_API_SSO_REALM}" \
+		-P ENTERPRISE_CLUSTER_REGISTRATION_ALLOWED_ORGANIZATIONS="${ENTERPRISE_CLUSTER_REGISTRATION_ALLOWED_ORGANIZATIONS}"
 		| $(OC) apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 

@@ -89,6 +89,7 @@ var migrations = []*gormigrate.Migration{
 	addDesiredKafkaBillingModel(),
 	renameKafkaBillingModelColumn(),
 	addExpiresAtToKafkaRequest(),
+	addClusterOrgIdClusterTypeColumns(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

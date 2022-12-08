@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/environments"
@@ -47,6 +48,7 @@ func ConfigProviders() di.Option {
 		di.Provide(config.NewDataplaneClusterConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
 		di.Provide(config.NewKasFleetshardConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(quota_management.NewQuotaManagementListConfig, di.As(new(environments2.ConfigModule))),
+		di.Provide(acl.NewEnterpriseClusterRegistrationAccessControlListConfig, di.As(new(environments2.ConfigModule))),
 
 		// Additional CLI subcommands
 		di.Provide(environments2.Func(ServiceProviders)),
@@ -83,5 +85,6 @@ func ServiceProviders() di.Option {
 		di.Provide(kafka_mgrs.NewProvisioningKafkaManager, di.As(new(workers.Worker))),
 		di.Provide(kafka_mgrs.NewReadyKafkaManager, di.As(new(workers.Worker))),
 		di.Provide(kafka_mgrs.NewKafkaCNAMEManager, di.As(new(workers.Worker))),
+		di.Provide(acl.NewEnterpriseClusterRegistrationAccessListMiddleware),
 	)
 }

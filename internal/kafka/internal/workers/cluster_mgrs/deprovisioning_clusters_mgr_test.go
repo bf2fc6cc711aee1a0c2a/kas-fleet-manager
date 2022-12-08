@@ -135,6 +135,12 @@ func TestDeprovisioningClustersManager_processDeprovisioningClusters(t *testing.
 	deprovisionCluster := api.Cluster{
 		Status: api.ClusterDeprovisioning,
 	}
+	// enterprise cluster should never be in this status, however
+	// it must be tested that deprovisioning of such cluster should be skipped
+	enterpriseDeprovisionCluster := api.Cluster{
+		Status:      api.ClusterDeprovisioning,
+		ClusterType: api.Enterprise.String(),
+	}
 	autoScalingDataPlaneConfig := &config.DataplaneClusterConfig{
 		DataPlaneClusterScalingType: config.AutoScaling,
 	}
@@ -196,6 +202,21 @@ func TestDeprovisioningClustersManager_processDeprovisioningClusters(t *testing.
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
 					},
+				},
+				dataplaneClusterConfig: autoScalingDataPlaneConfig,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should skip deletion for enterprise clusters",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							enterpriseDeprovisionCluster,
+						}, nil
+					},
+					// FindNonEmptyClusterByID, Delete and UpdateStatus functions should never be called for enterprise cluster
 				},
 				dataplaneClusterConfig: autoScalingDataPlaneConfig,
 			},

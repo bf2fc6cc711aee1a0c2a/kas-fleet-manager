@@ -220,10 +220,19 @@ func (c *ClusterManager) processAcceptedClusters() []error {
 	for i := range acceptedClusters {
 		cluster := acceptedClusters[i]
 		glog.V(10).Infof("accepted cluster ClusterID = %s", cluster.ClusterID)
-		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterAccepted)
-		if err := c.reconcileAcceptedCluster(&cluster); err != nil {
-			errs = append(errs, errors.Wrapf(err, "failed to reconcile accepted cluster %s", cluster.ID))
-			continue
+		if cluster.ClusterType != api.Enterprise.String() {
+			metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterAccepted)
+			if err := c.reconcileAcceptedCluster(&cluster); err != nil {
+				errs = append(errs, errors.Wrapf(err, "failed to reconcile accepted cluster %s", cluster.ID))
+			}
+		} else {
+			cluster.Status = api.ClusterStatus(api.ClusterProvisioning.String())
+			updateErr := c.ClusterService.Update(cluster)
+			if updateErr != nil {
+				errs = append(errs, errors.Wrapf(updateErr, "failed to update status of accepted %s cluster %s", api.Enterprise.String(), cluster.ID))
+			} else {
+				glog.V(10).Infof("changed status of accepted %s cluster with ClusterID = %s to %s", api.Enterprise.String(), cluster.ClusterID, api.ClusterProvisioning.String())
+			}
 		}
 	}
 	return errs
@@ -242,12 +251,21 @@ func (c *ClusterManager) processProvisioningClusters() []error {
 	// process each local pending cluster and compare to the underlying ocm cluster
 	for i := range provisioningClusters {
 		provisioningCluster := provisioningClusters[i]
-		glog.V(10).Infof("provisioning cluster ClusterID = %s", provisioningCluster.ClusterID)
-		metrics.UpdateClusterStatusSinceCreatedMetric(provisioningCluster, api.ClusterProvisioning)
-		_, err := c.reconcileClusterStatus(&provisioningCluster)
-		if err != nil {
-			errs = append(errs, errors.Wrapf(err, "failed to reconcile cluster %s status", provisioningCluster.ClusterID))
-			continue
+		if provisioningCluster.ClusterType != api.Enterprise.String() {
+			glog.V(10).Infof("provisioning cluster ClusterID = %s", provisioningCluster.ClusterID)
+			metrics.UpdateClusterStatusSinceCreatedMetric(provisioningCluster, api.ClusterProvisioning)
+			_, err := c.reconcileClusterStatus(&provisioningCluster)
+			if err != nil {
+				errs = append(errs, errors.Wrapf(err, "failed to reconcile cluster %s status", provisioningCluster.ClusterID))
+			}
+		} else {
+			provisioningCluster.Status = api.ClusterStatus(api.ClusterProvisioned.String())
+			updateErr := c.ClusterService.Update(provisioningCluster)
+			if updateErr != nil {
+				errs = append(errs, errors.Wrapf(updateErr, "failed to update status of accepted %s cluster %s", api.Enterprise.String(), provisioningCluster.ID))
+			} else {
+				glog.V(10).Infof("changed status of provisioning %s cluster with ClusterID = %s to %s", api.Enterprise.String(), provisioningCluster.ClusterID, api.ClusterProvisioned.String())
+			}
 		}
 	}
 	return errs
@@ -268,12 +286,21 @@ func (c *ClusterManager) processProvisionedClusters() []error {
 
 	// process each local provisioned cluster and apply necessary terraforming.
 	for _, provisionedCluster := range provisionedClusters {
-		glog.V(10).Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
-		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterProvisioned)
-		err := c.reconcileProvisionedCluster(provisionedCluster)
-		if err != nil {
-			errs = append(errs, errors.Wrapf(err, "failed to reconcile provisioned cluster %s", provisionedCluster.ClusterID))
-			continue
+		if provisionedCluster.ClusterType != api.Enterprise.String() {
+			glog.V(10).Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
+			metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterProvisioned)
+			err := c.reconcileProvisionedCluster(provisionedCluster)
+			if err != nil {
+				errs = append(errs, errors.Wrapf(err, "failed to reconcile provisioned cluster %s", provisionedCluster.ClusterID))
+			}
+		} else {
+			provisionedCluster.Status = api.ClusterStatus(api.ClusterWaitingForKasFleetShardOperator.String())
+			updateErr := c.ClusterService.Update(provisionedCluster)
+			if updateErr != nil {
+				errs = append(errs, errors.Wrapf(updateErr, "failed to update status of provisioned %s cluster %s", api.Enterprise.String(), provisionedCluster.ID))
+			} else {
+				glog.V(10).Infof("changed status of provisioned %s cluster with ClusterID = %s to %s", api.Enterprise.String(), provisionedCluster.ClusterID, api.ClusterWaitingForKasFleetShardOperator.String())
+			}
 		}
 	}
 
@@ -292,12 +319,15 @@ func (c *ClusterManager) processReadyClusters() []error {
 	}
 
 	for _, readyCluster := range readyClusters {
-		glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
-		recErr := c.reconcileReadyCluster(readyCluster)
+		if readyCluster.ClusterType != api.Enterprise.String() {
+			glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
+			recErr := c.reconcileReadyCluster(readyCluster)
 
-		if recErr != nil {
-			errs = append(errs, errors.Wrapf(recErr, "failed to reconcile ready cluster %s", readyCluster.ClusterID))
-			continue
+			if recErr != nil {
+				errs = append(errs, errors.Wrapf(recErr, "failed to reconcile ready cluster %s", readyCluster.ClusterID))
+			}
+		} else {
+			glog.V(10).Infof("skipping reconciliation of ready %s cluster with ClusterID = %s", api.Enterprise.String(), readyCluster.ClusterID)
 		}
 	}
 	return errs
@@ -315,11 +345,15 @@ func (c *ClusterManager) processWaitingForKasFleetshardOperatorClusters() []erro
 
 	// process each local waiting cluster and apply necessary terraforming.
 	for _, waitingCluster := range waitingClusters {
-		glog.V(10).Infof("waiting for Kas Fleetshard Operator cluster ClusterID = %s", waitingCluster.ClusterID)
-		metrics.UpdateClusterStatusSinceCreatedMetric(waitingCluster, api.ClusterWaitingForKasFleetShardOperator)
-		err := c.reconcileWaitingForKasFleetshardOperatorCluster(waitingCluster)
-		if err != nil {
-			errs = append(errs, errors.Wrapf(err, "failed to reconcile waiting for Kas Fleetshard Operator cluster %s", waitingCluster.ClusterID))
+		if waitingCluster.ClusterType != api.Enterprise.String() {
+			glog.V(10).Infof("waiting for Kas Fleetshard Operator cluster ClusterID = %s", waitingCluster.ClusterID)
+			metrics.UpdateClusterStatusSinceCreatedMetric(waitingCluster, api.ClusterWaitingForKasFleetShardOperator)
+			err := c.reconcileWaitingForKasFleetshardOperatorCluster(waitingCluster)
+			if err != nil {
+				errs = append(errs, errors.Wrapf(err, "failed to reconcile waiting for Kas Fleetshard Operator cluster %s", waitingCluster.ClusterID))
+			}
+		} else {
+			glog.V(10).Infof("skipping reconciliation of waiting for Kas Fleetshard Operator %s cluster with ClusterID = %s", api.Enterprise.String(), waitingCluster.ClusterID)
 		}
 	}
 
@@ -329,6 +363,11 @@ func (c *ClusterManager) processWaitingForKasFleetshardOperatorClusters() []erro
 func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 	if !c.DataplaneClusterConfig.IsReadyDataPlaneClustersReconcileEnabled() {
 		glog.Infof("Reconcile of dataplane ready clusters is disabled. Skipped reconcile of ready ClusterID '%s'", cluster.ClusterID)
+		return nil
+	}
+
+	if cluster.ClusterType == api.Enterprise.String() {
+		glog.Infof("Reconcile of %s ready clusters is disabled. Skipped reconcile of ready ClusterID '%s'", api.Enterprise.String(), cluster.ClusterID)
 		return nil
 	}
 
@@ -611,7 +650,7 @@ func (c *ClusterManager) reconcileClusterLoggingOperator(provisionedCluster api.
 
 // reconcileClusterWithConfig reconciles clusters within the dataplane-cluster-configuration file.
 // New clusters will be registered if it is not yet in the database.
-// A cluster will be deprovisioned if it is in the database but not in the coreConfig file.
+// A cluster will be deprovisioned if it is in the database but not in the coreConfig file (unless its an enterprise OSD cluster)
 func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	if !c.DataplaneClusterConfig.IsDataPlaneManualScalingEnabled() {
 		glog.Infoln("manual cluster configuration reconciliation is skipped as it is disabled")
@@ -619,7 +658,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	}
 
 	glog.Infoln("reconciling manual cluster configurations")
-	allClusterIds, err := c.ClusterService.ListAllClusterIDs()
+	allClusterIds, err := c.ClusterService.ListNonEnterpriseClusterIDs() // enterprise clusters' IDs will be excluded from this result
 	if err != nil {
 		return []error{errors.Wrapf(err, "failed to retrieve cluster ids from clusters")}
 	}

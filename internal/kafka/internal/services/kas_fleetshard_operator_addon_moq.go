@@ -19,6 +19,9 @@ var _ KasFleetshardOperatorAddon = &KasFleetshardOperatorAddonMock{}
 //
 //		// make and configure a mocked KasFleetshardOperatorAddon
 //		mockedKasFleetshardOperatorAddon := &KasFleetshardOperatorAddonMock{
+//			GetAddonParamsFunc: func(cluster *api.Cluster) (ParameterList, *apiErrors.ServiceError) {
+//				panic("mock out the GetAddonParams method")
+//			},
 //			ProvisionFunc: func(cluster api.Cluster) (bool, ParameterList, *apiErrors.ServiceError) {
 //				panic("mock out the Provision method")
 //			},
@@ -35,6 +38,9 @@ var _ KasFleetshardOperatorAddon = &KasFleetshardOperatorAddonMock{}
 //
 //	}
 type KasFleetshardOperatorAddonMock struct {
+	// GetAddonParamsFunc mocks the GetAddonParams method.
+	GetAddonParamsFunc func(cluster *api.Cluster) (ParameterList, *apiErrors.ServiceError)
+
 	// ProvisionFunc mocks the Provision method.
 	ProvisionFunc func(cluster api.Cluster) (bool, ParameterList, *apiErrors.ServiceError)
 
@@ -46,6 +52,11 @@ type KasFleetshardOperatorAddonMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// GetAddonParams holds details about calls to the GetAddonParams method.
+		GetAddonParams []struct {
+			// Cluster is the cluster argument value.
+			Cluster *api.Cluster
+		}
 		// Provision holds details about calls to the Provision method.
 		Provision []struct {
 			// Cluster is the cluster argument value.
@@ -62,9 +73,42 @@ type KasFleetshardOperatorAddonMock struct {
 			Cluster api.Cluster
 		}
 	}
+	lockGetAddonParams       sync.RWMutex
 	lockProvision            sync.RWMutex
 	lockReconcileParameters  sync.RWMutex
 	lockRemoveServiceAccount sync.RWMutex
+}
+
+// GetAddonParams calls GetAddonParamsFunc.
+func (mock *KasFleetshardOperatorAddonMock) GetAddonParams(cluster *api.Cluster) (ParameterList, *apiErrors.ServiceError) {
+	if mock.GetAddonParamsFunc == nil {
+		panic("KasFleetshardOperatorAddonMock.GetAddonParamsFunc: method is nil but KasFleetshardOperatorAddon.GetAddonParams was just called")
+	}
+	callInfo := struct {
+		Cluster *api.Cluster
+	}{
+		Cluster: cluster,
+	}
+	mock.lockGetAddonParams.Lock()
+	mock.calls.GetAddonParams = append(mock.calls.GetAddonParams, callInfo)
+	mock.lockGetAddonParams.Unlock()
+	return mock.GetAddonParamsFunc(cluster)
+}
+
+// GetAddonParamsCalls gets all the calls that were made to GetAddonParams.
+// Check the length with:
+//
+//	len(mockedKasFleetshardOperatorAddon.GetAddonParamsCalls())
+func (mock *KasFleetshardOperatorAddonMock) GetAddonParamsCalls() []struct {
+	Cluster *api.Cluster
+} {
+	var calls []struct {
+		Cluster *api.Cluster
+	}
+	mock.lockGetAddonParams.RLock()
+	calls = mock.calls.GetAddonParams
+	mock.lockGetAddonParams.RUnlock()
+	return calls
 }
 
 // Provision calls ProvisionFunc.
