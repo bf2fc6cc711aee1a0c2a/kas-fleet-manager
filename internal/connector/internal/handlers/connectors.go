@@ -30,9 +30,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var (
+const (
 	maxKafkaNameLength   = 32
 	maxConnectorIdLength = 32
+	APPLICATION_JSON     = "application/json"
+	JSON_PATCH           = "application/json-patch+json"
+	MERGE_PATCH          = "application/merge-patch+json"
 )
 
 type ConnectorsHandler struct {
@@ -148,7 +151,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
 			handlers.Validation("connector_id", &connectorId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
-			handlers.Validation("Content-Type header", &contentType, handlers.IsOneOf("application/json", "application/json-patch+json", "application/merge-patch+json")),
+			handlers.Validation("Content-Type header", &contentType, handlers.IsOneOf(APPLICATION_JSON, JSON_PATCH, MERGE_PATCH)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			dbresource, serr := h.connectorsService.Get(r.Context(), connectorId)
@@ -178,6 +181,22 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, errors.BadRequest("failed to get patch bytes")
 			}
 
+			// get json resource
+			resourceJson, serr := getResourceJson(resource)
+			if serr != nil {
+				return nil, serr
+			}
+
+			// convert json-patch into merge-patch, since validateConnectorPatch can only validate merge-patch
+			if contentType == JSON_PATCH {
+				patchBytes, err = convertToMergePatch(patchBytes, resourceJson)
+				if err != nil {
+					return nil, errors.BadRequest("failed to convert to merge patch: %v", err)
+				}
+				// changed patch bytes to merge patch
+				contentType = MERGE_PATCH
+			}
+
 			// Don't allow updating connector secrets with values like {"ref": "something"}
 			serr = validateConnectorPatch(patchBytes, ct)
 			if serr != nil {
@@ -185,7 +204,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			}
 
 			patch := public.ConnectorRequest{}
-			serr = PatchResource(resource, contentType, patchBytes, &patch)
+			serr = PatchResource(resourceJson, contentType, patchBytes, &patch)
 			if serr != nil {
 				return nil, serr
 			}
@@ -384,27 +403,27 @@ func StringListSubtract(l []string, items ...string) (result []string) {
 	return result
 }
 
-func PatchResource(resource interface{}, patchType string, patchBytes []byte, patched interface{}) *errors.ServiceError {
-	if reflect.ValueOf(resource).Kind() == reflect.Ptr {
-		resource = reflect.ValueOf(resource).Elem() // deref pointer...
-	}
-	resourceJson, err := json.Marshal(resource)
+func convertToMergePatch(patchBytes []byte, resourceJson []byte) ([]byte, error) {
+	patchObj, err := jsonpatch.DecodePatch(patchBytes)
 	if err != nil {
-		return errors.GeneralError("failed to encode to json")
+		return nil, errors.BadRequest("invalid json patch: %v", err)
 	}
+	patched, err := patchObj.Apply(resourceJson)
+	if err != nil {
+		return nil, errors.GeneralError("failed to apply patch: %v", err)
+	}
+	// diff original and patched to create merge-patch for validation
+	result, err := jsonpatch.CreateMergePatch(resourceJson, patched)
+	if err != nil {
+		return nil, errors.GeneralError("failed to apply patch: %v", err)
+	}
+	return result, nil
+}
 
+func PatchResource(resourceJson []byte, patchType string, patchBytes []byte, patched interface{}) *errors.ServiceError {
 	// apply the patch...
+	var err error
 	switch patchType {
-	case "application/json-patch+json":
-		var patchObj jsonpatch.Patch
-		patchObj, err := jsonpatch.DecodePatch(patchBytes)
-		if err != nil {
-			return errors.BadRequest("invalid json patch: %v", err)
-		}
-		resourceJson, err = patchObj.Apply(resourceJson)
-		if err != nil {
-			return errors.GeneralError("failed to apply patch patch: %v", err)
-		}
 	case "application/merge-patch+json", "application/json":
 		resourceJson, err = jsonpatch.MergePatch(resourceJson, patchBytes)
 		if err != nil {
@@ -419,6 +438,17 @@ func PatchResource(resource interface{}, patchType string, patchBytes []byte, pa
 		return errors.GeneralError("failed to decode patched resource: %v", err)
 	}
 	return nil
+}
+
+func getResourceJson(resource interface{}) ([]byte, *errors.ServiceError) {
+	if reflect.ValueOf(resource).Kind() == reflect.Ptr {
+		resource = reflect.ValueOf(resource).Elem() // deref pointer...
+	}
+	resourceJson, err := json.Marshal(resource)
+	if err != nil {
+		return nil, errors.GeneralError("failed to encode to json")
+	}
+	return resourceJson, nil
 }
 
 func (h ConnectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
