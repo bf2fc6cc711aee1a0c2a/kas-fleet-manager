@@ -1,7 +1,10 @@
 package quota_management
 
 import (
+	"fmt"
+	"gopkg.in/yaml.v2"
 	"testing"
+	"time"
 
 	"github.com/onsi/gomega"
 )
@@ -45,7 +48,7 @@ func Test_QuotaManagementListConfig_ReadFiles(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Should sucesfully read the config files without error",
+			name: "Should successfully read the config files without error",
 			fields: fields{
 				QuotaList: RegisteredUsersListConfiguration{
 					Organisations:   nil,
@@ -148,6 +151,71 @@ func Test_QuotaManagementListConfig_GetAllowedAccountByUsernameAndOrgId(t *testi
 			got, found := c.GetAllowedAccountByUsernameAndOrgId(tt.args.username, tt.args.orgId)
 			g.Expect(got).To(gomega.Equal(tt.want))
 			g.Expect(found).To(gomega.Equal(tt.found))
+		})
+	}
+}
+
+const testCaseEval string = `
+registered_service_accounts:
+  - username: testuser1@example.com
+    max_allowed_instances: 3
+    granted_quota:
+      - instance_type_id: standard
+        kafka_billing_models:
+          - id: eval
+            expiration_date: %s
+            grace_period_days: %s
+registered_users_per_organisation:
+  - id: 13640203
+    any_user: true
+    max_allowed_instances: 5
+    registered_users: []
+    granted_quota:
+      - instance_type_id: standard
+        kafka_billing_models:
+          - id: eval
+            max_allowed_instances: 5
+            expiration_date: %s
+            grace_period_days: %s
+`
+
+func Test_QuotaManagementListConfig_QuotaExpiration(t *testing.T) {
+
+	utcLocation, _ := time.LoadLocation("UTC")
+
+	type fields struct {
+		ConfigFileContent string
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		wantDate1 *time.Time
+		wantDate2 *time.Time
+	}{
+		{
+			name:      "Test config with expiration in UTC",
+			wantDate1: func() *time.Time { res := time.Date(2023, 1, 30, 0, 0, 0, 0, utcLocation); return &res }(),
+			wantDate2: func() *time.Time { res := time.Date(2023, 1, 30, 0, 0, 0, 0, utcLocation); return &res }(),
+			fields: fields{
+				ConfigFileContent: fmt.Sprintf(testCaseEval, "2023-01-30 +00:00", "3", "2023-01-30 +00:00", "5"),
+			},
+		},
+	}
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			var cfg RegisteredUsersListConfiguration
+			err := yaml.UnmarshalStrict([]byte(tt.fields.ConfigFileContent), &cfg)
+			g.Expect(err).ToNot(gomega.HaveOccurred())
+			org, ok := cfg.Organisations.GetById("13640203")
+			g.Expect(ok).To(gomega.BeTrue())
+			gq := org.GrantedQuota
+			g.Expect(gq).To(gomega.HaveLen(1))
+			q := gq[0]
+			bm, ok := q.GetKafkaBillingModelByID("eval")
+			g.Expect(ok).To(gomega.BeTrue())
+			g.Expect(time.Time(*bm.ExpirationDate)).To(gomega.BeTemporally("==", *tt.wantDate1))
 		})
 	}
 }

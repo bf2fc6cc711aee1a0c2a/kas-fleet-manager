@@ -40,7 +40,7 @@ func (org Organisation) IsInstanceCountWithinLimit(instanceTypeID string, billin
 func (org Organisation) GetMaxAllowedInstances(instanceTypeID string, billingModelID string) int {
 	bm, ok := getBillingModel(org.GetGrantedQuota(), instanceTypeID, billingModelID)
 
-	if !ok {
+	if !ok || bm.HasExpired() {
 		return 0
 	}
 

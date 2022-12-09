@@ -19,7 +19,7 @@ func (account Account) IsInstanceCountWithinLimit(instanceTypeID string, billing
 func (account Account) GetMaxAllowedInstances(instanceTypeID string, billingModelID string) int {
 	bm, ok := getBillingModel(account.GetGrantedQuota(), instanceTypeID, billingModelID)
 
-	if !ok {
+	if !ok || bm.HasExpired() {
 		return 0
 	}
 

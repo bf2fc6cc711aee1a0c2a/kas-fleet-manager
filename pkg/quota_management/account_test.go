@@ -4,6 +4,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/onsi/gomega"
 	"testing"
+	"time"
 )
 
 var testAccounts = AccountList{
@@ -28,7 +29,7 @@ var testAccounts = AccountList{
 				KafkaBillingModels: BillingModelList{
 					BillingModel{
 						Id:                  "eval",
-						ExpirationDays:      40,
+						ExpirationDate:      func() *ExpirationDate { res := ExpirationDate(time.Now()); return &res }(),
 						GracePeriodDays:     4,
 						MaxAllowedInstances: 50,
 					},
@@ -171,6 +172,30 @@ func Test_Account_GetMaxAllowedInstances(t *testing.T) {
 			args: args{
 				instanceType:   "eval",
 				billingModelID: "standard",
+			},
+			want: 0,
+		},
+		{
+			name: "test organisation quota (expired billing model)",
+			account: Account{
+				Username:            "test-account",
+				MaxAllowedInstances: 5,
+				GrantedQuota: []Quota{
+					{
+						InstanceTypeID: "standard",
+						KafkaBillingModels: []BillingModel{
+							{
+								Id:                  "eval",
+								MaxAllowedInstances: 8,
+								ExpirationDate:      func() *ExpirationDate { res := ExpirationDate(time.Now()); return &res }(),
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				instanceType:   "standard",
+				billingModelID: "eval",
 			},
 			want: 0,
 		},
