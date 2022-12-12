@@ -25,7 +25,7 @@ func (middleware *EnterpriseClusterRegistrationAccessListMiddleware) Authorize(n
 		context := r.Context()
 		claims, err := auth.GetClaimsFromContext(context)
 		if err != nil {
-			shared.HandleError(r, w, errors.NewWithCause(errors.ErrorForbidden, err, ""))
+			shared.HandleError(r, w, errors.NewWithCause(errors.ErrorUnauthorized, err, ""))
 			return
 		}
 
@@ -33,7 +33,7 @@ func (middleware *EnterpriseClusterRegistrationAccessListMiddleware) Authorize(n
 
 		orgIsAccepted := middleware.enterpriseClusterRegistrationAccessControlListConfig.EnterpriseClusterRegistrationAccessControlList.IsOrganizationAccepted(orgId)
 		if !orgIsAccepted {
-			shared.HandleError(r, w, errors.New(errors.ErrorForbidden, "organization '%s' is not authorized to access the service", orgId))
+			shared.HandleError(r, w, errors.New(errors.ErrorUnauthorized, "organization '%s' is not authorized to access the service", orgId))
 			return
 		}
 
