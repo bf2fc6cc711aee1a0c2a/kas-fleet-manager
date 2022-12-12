@@ -174,7 +174,7 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `QUOTA_TYPE`: Quota management service to be used. Options: `quota-management-list` and `ams`, Default: `quota-management-list`.
 - `KAS_FLEETSHARD_OLM_INDEX_IMAGE`: KAS Fleetshard operator OLM index image. Defaults to `quay.io/osd-addons/kas-fleetshard-operator:production-82b42db`.
 - `STRIMZI_OLM_INDEX_IMAGE`: Strimzi operator OLM index image. Defaults to `quay.io/osd-addons/managed-kafka:production-82b42db`.
-- `OBSERVABILITY_OPERATOR_INDEX_IMAGE`: Observability Operator index image. Defaults to `quay.io/rhoas/observability-operator-index:v4.0.1`.
+- `OBSERVABILITY_OPERATOR_INDEX_IMAGE`: Observability Operator index image. Defaults to `quay.io/rhoas/observability-operator-index:v4.0.2`.
 - `DATAPLANE_CLUSTER_SCALING_TYPE`: Dataplane cluster scaling type. Options: `manual`, `auto` and `none`, Defaults: `manual`.
 - `CLUSTER_LOGGING_OPERATOR_ADDON_ID`: The id of the cluster logging operator addon. Defaults to `''`.
 - `STRIMZI_OPERATOR_ADDON_ID`: The id of the Strimzi operator addon. Defaults to `managed-kafka-qe`.
@@ -185,7 +185,7 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `KAS_FLEETSHARD_OLM_PACKAGE_NAME`: kas-fleetshard operator OLM package name. This is optional and to be defined when interacting with standalone data plane clusters. Defaults to `kas-fleetshard-operator`.
 - `STRIMZI_OPERATOR_STARTING_CSV`: Strimzi operator starting csv. This is only applied for standalone clusters. Defaults to empty string 
 - `KAS_FLEETSHARD_OPERATOR_STARTING_CSV`: Kas-fleetshard operator starting csv. This is only applied for standalone clusters. Defaults to empty string
-- `OBSERVABILITY_OPERATOR_STARTING_CSV`: Observability Operator starting CSV. Defaults to `observability-operator.v4.0.1`.
+- `OBSERVABILITY_OPERATOR_STARTING_CSV`: Observability Operator starting CSV. Defaults to `observability-operator.v4.0.2`.
 - `KAS_FLEETSHARD_OPERATOR_SUBSCRIPTION_CONFIG`: Kas-fleetshard operator subscription config. This is applied for standalone clusters only. The configuration must be of type [SubscriptionConfig](https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig). Defaults to an empty object i.e `{}`. See the [config/kas-fleetshard-operator-subscription-spec-config.yaml](../config/kas-fleetshard-operator-subscription-spec-config.yaml) file for example values.
 - `STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG`: Strimzi operator subscription config. This is applied for standalone clusters only. The configuration must be of type [SubscriptionConfig](https://pkg.go.dev/github.com/operator-framework/api@v0.3.25/pkg/operators/v1alpha1?utm_source=gopls#SubscriptionConfig). Defaults to an empty object i.e `{}`. See the [config/strimzi-operator-subscription-spec-config.yaml](../config/strimzi-operator-subscription-spec-config.yaml) file for example values. 
 - `SSO_PROVIDER_TYPE`: Option to choose between sso providers i.e, mas_sso or redhat_sso, mas_sso by default.
