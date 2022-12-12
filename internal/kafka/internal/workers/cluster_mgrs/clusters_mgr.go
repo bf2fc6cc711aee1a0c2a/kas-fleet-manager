@@ -722,18 +722,31 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 }
 
 func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet {
-	r := []interface{}{
-		c.buildReadOnlyGroupResource(),
-		c.buildDedicatedReaderClusterRoleBindingResource(),
-		c.buildKafkaSREGroupResource(),
-		c.buildKafkaSreClusterRoleBindingResource(),
-		c.buildObservabilityNamespaceResource(),
-		c.buildObservatoriumDexSecretResource(),
-		c.buildObservatoriumSSOSecretResource(),
-		c.buildObservabilityCatalogSourceResource(),
-		c.buildObservabilityOperatorGroupResource(),
-		c.buildObservabilitySubscriptionResource(),
+	var r []interface{}
+	if cluster.ClusterType == api.Enterprise.String() {
+		r = []interface{}{
+			c.buildObservabilityNamespaceResource(),
+			c.buildObservatoriumDexSecretResource(),
+			c.buildObservatoriumSSOSecretResource(),
+			c.buildObservabilityCatalogSourceResource(),
+			c.buildObservabilityOperatorGroupResource(),
+			c.buildObservabilitySubscriptionResource(),
+		}
+	} else {
+		r = []interface{}{
+			c.buildReadOnlyGroupResource(),
+			c.buildDedicatedReaderClusterRoleBindingResource(),
+			c.buildKafkaSREGroupResource(),
+			c.buildKafkaSreClusterRoleBindingResource(),
+			c.buildObservabilityNamespaceResource(),
+			c.buildObservatoriumDexSecretResource(),
+			c.buildObservatoriumSSOSecretResource(),
+			c.buildObservabilityCatalogSourceResource(),
+			c.buildObservabilityOperatorGroupResource(),
+			c.buildObservabilitySubscriptionResource(),
+		}
 	}
+
 	strimziNamespace := strimziAddonNamespace
 	if c.OCMConfig.StrimziOperatorAddonID == "managed-kafka-qe" {
 		strimziNamespace = strimziQEAddonNamespace
