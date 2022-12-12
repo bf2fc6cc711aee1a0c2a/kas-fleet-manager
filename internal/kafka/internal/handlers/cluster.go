@@ -40,6 +40,8 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 			ValidateClusterIdIsUnique(&clusterPayload.ClusterId, h.clusterService),
 
 			handlers.ValidateDnsName(&clusterPayload.ClusterIngressDnsName, "cluster dns name"),
+
+			validateKafkaMachinePoolNodeCount(&clusterPayload),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
@@ -55,15 +57,28 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 				return nil, errors.GeneralError(getOrgIdErr.Error())
 			}
 
+			supportedKafkaInstanceType := api.StandardTypeSupport.String()
 			clusterRequest := &api.Cluster{
 				ClusterType:           api.Enterprise.String(),
+				ProviderType:          api.ClusterProviderOCM,
 				Status:                api.ClusterAccepted,
 				ClusterID:             clusterPayload.ClusterId,
 				OrganizationID:        orgId,
 				ClusterDNS:            clusterPayload.ClusterIngressDnsName,
 				ExternalID:            clusterPayload.ClusterExternalId,
 				MultiAZ:               true,
-				SupportedInstanceType: api.StandardTypeSupport.String(),
+				SupportedInstanceType: supportedKafkaInstanceType,
+			}
+
+			capacityInfo := map[string]api.DynamicCapacityInfo{
+				supportedKafkaInstanceType: {
+					MaxNodes: clusterPayload.KafkaMachinePoolNodeCount,
+				},
+			}
+
+			err := clusterRequest.SetDynamicCapacityInfo(capacityInfo)
+			if err != nil { // this should never occur
+				return nil, errors.GeneralError("invalid node count info")
 			}
 
 			fsoParams, svcErr := h.kasFleetshardOperatorAddon.GetAddonParams(clusterRequest)
