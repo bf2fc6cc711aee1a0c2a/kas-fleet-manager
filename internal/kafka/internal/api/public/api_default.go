@@ -1338,16 +1338,16 @@ Register enterprise OSD cluster
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param enterpriseOsdClusterPayload Enterprise OSD cluster details
 
-@return KafkaRequest
+@return EnterpriseCluster
 */
-func (a *DefaultApiService) RegisterEnterpriseOsdCluster(ctx _context.Context, enterpriseOsdClusterPayload EnterpriseOsdClusterPayload) (KafkaRequest, *_nethttp.Response, error) {
+func (a *DefaultApiService) RegisterEnterpriseOsdCluster(ctx _context.Context, enterpriseOsdClusterPayload EnterpriseOsdClusterPayload) (EnterpriseCluster, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  KafkaRequest
+		localVarReturnValue  EnterpriseCluster
 	)
 
 	// create path and map variables
