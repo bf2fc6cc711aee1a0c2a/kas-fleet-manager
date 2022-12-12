@@ -102,7 +102,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	// waiting for cluster state to become `waiting_for_kas_fleetshard_operator`, so that its persisted struct can be updated after terraforming phase
 	cluster, checkWaitingForKasFleetshardOperatorErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterWaitingForKasFleetShardOperator)
-	g.Expect(checkWaitingForKasFleetshardOperatorErr).NotTo(gomega.HaveOccurred(), "Error waiting for cluster to start provisioning: %s %v", cluster.ClusterID, checkWaitingForKasFleetshardOperatorErr)
+	g.Expect(checkWaitingForKasFleetshardOperatorErr).NotTo(gomega.HaveOccurred(), "Error waiting for cluster to reach waiting_for_kas_fleetshard_operator status: %q %v current status is %q", cluster.ClusterID, checkWaitingForKasFleetshardOperatorErr, cluster.Status)
 
 	// save the updated cluster struct
 	err = common.PersistClusterStruct(*cluster, api.ClusterWaitingForKasFleetShardOperator)
