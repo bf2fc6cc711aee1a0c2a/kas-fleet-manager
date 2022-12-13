@@ -44,7 +44,7 @@ func TestClusterRegistration_BadRequest(t *testing.T) {
 					ClusterIngressDnsName:     "apps.example.com",
 					KafkaMachinePoolNodeCount: 3,
 				}
-				_, resp, err := client.DefaultApi.RegisterEnterpriseOsdCluster(ctx, payload)
+				_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 				if resp != nil {
 					resp.Body.Close()
 				}
@@ -61,7 +61,7 @@ func TestClusterRegistration_BadRequest(t *testing.T) {
 					ClusterIngressDnsName:     "apps.example.com",
 					KafkaMachinePoolNodeCount: 6,
 				}
-				_, resp, err := client.DefaultApi.RegisterEnterpriseOsdCluster(ctx, payload)
+				_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 				if resp != nil {
 					resp.Body.Close()
 				}
@@ -78,7 +78,7 @@ func TestClusterRegistration_BadRequest(t *testing.T) {
 					ClusterIngressDnsName:     "appsexamplecom",
 					KafkaMachinePoolNodeCount: 3,
 				}
-				_, resp, err := client.DefaultApi.RegisterEnterpriseOsdCluster(ctx, payload)
+				_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 				if resp != nil {
 					resp.Body.Close()
 				}
@@ -95,7 +95,7 @@ func TestClusterRegistration_BadRequest(t *testing.T) {
 					ClusterIngressDnsName:     "apps.example.com",
 					KafkaMachinePoolNodeCount: 2,
 				}
-				_, resp, err := client.DefaultApi.RegisterEnterpriseOsdCluster(ctx, payload)
+				_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 				if resp != nil {
 					resp.Body.Close()
 				}
@@ -112,7 +112,7 @@ func TestClusterRegistration_BadRequest(t *testing.T) {
 					ClusterIngressDnsName:     "apps.example.com",
 					KafkaMachinePoolNodeCount: 20,
 				}
-				_, resp, err := client.DefaultApi.RegisterEnterpriseOsdCluster(ctx, payload)
+				_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 				if resp != nil {
 					resp.Body.Close()
 				}
@@ -151,7 +151,7 @@ func TestClusterRegistration_UnauthorizedTest(t *testing.T) {
 		ClusterIngressDnsName:     "apps.example.com",
 		KafkaMachinePoolNodeCount: 3,
 	}
-	_, resp, err := client.DefaultApi.RegisterEnterpriseOsdCluster(ctx, payload)
+	_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 	if resp != nil {
 		resp.Body.Close()
 	}
@@ -205,7 +205,7 @@ func TestClusterRegistration_ClusterIDUniquenessChecks(t *testing.T) {
 		KafkaMachinePoolNodeCount: 3,
 	}
 
-	_, resp, err := client.DefaultApi.RegisterEnterpriseOsdCluster(ctx, payload)
+	_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 	if resp != nil {
 		resp.Body.Close()
 	}
@@ -239,7 +239,7 @@ func TestClusterRegistration_Successful(t *testing.T) {
 		KafkaMachinePoolNodeCount: 12,
 	}
 
-	enterpriseCluster, resp, err := client.DefaultApi.RegisterEnterpriseOsdCluster(ctx, payload)
+	enterpriseCluster, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
