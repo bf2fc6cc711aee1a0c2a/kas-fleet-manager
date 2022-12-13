@@ -12,9 +12,9 @@ package public
 
 // EnterpriseOsdClusterPayload Schema for the request body sent to /clusters POST
 type EnterpriseOsdClusterPayload struct {
-	// OSD cluster ID
+	// The data plane cluster ID. This is the ID of the cluster obtained from OpenShift Cluster Manager (OCM) API
 	ClusterId string `json:"cluster_id"`
-	// external cluster ID. Can be obtained from the response JSON of ocm get /api/clusters_mgmt/v1/clusters/<cluster_id>
+	// external cluster ID. Can be obtained from the response JSON of OCM get /api/clusters_mgmt/v1/clusters/<cluster_id>
 	ClusterExternalId string `json:"cluster_external_id"`
 	// dns name of the cluster. Can be obtained from the response JSON of the /api/clusters_mgmt/v1/clusters/<cluster_id>/ingresses (dns_name)
 	ClusterIngressDnsName string `json:"cluster_ingress_dns_name"`

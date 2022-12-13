@@ -12,7 +12,7 @@ package public
 
 // EnterpriseCluster Enterprise cluster registration endpoint response
 type EnterpriseCluster struct {
-	// ocm cluster id of the registered Enterprise cluster
+	// OCM cluster id of the registered Enterprise cluster
 	ClusterId string `json:"cluster_id,omitempty"`
 	// status of registered Enterprise cluster
 	Status               string                `json:"status,omitempty"`
