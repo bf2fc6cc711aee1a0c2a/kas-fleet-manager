@@ -139,7 +139,7 @@ func TestDeprovisioningClustersManager_processDeprovisioningClusters(t *testing.
 	// it must be tested that deprovisioning of such cluster should be skipped
 	enterpriseDeprovisionCluster := api.Cluster{
 		Status:      api.ClusterDeprovisioning,
-		ClusterType: api.Enterprise.String(),
+		ClusterType: api.EnterpriseDataPlaneClusterType.String(),
 	}
 	autoScalingDataPlaneConfig := &config.DataplaneClusterConfig{
 		DataPlaneClusterScalingType: config.AutoScaling,

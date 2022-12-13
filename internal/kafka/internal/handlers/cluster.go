@@ -59,7 +59,7 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 
 			supportedKafkaInstanceType := api.StandardTypeSupport.String()
 			clusterRequest := &api.Cluster{
-				ClusterType:           api.Enterprise.String(),
+				ClusterType:           api.EnterpriseDataPlaneClusterType.String(),
 				ProviderType:          api.ClusterProviderOCM,
 				Status:                api.ClusterAccepted,
 				ClusterID:             clusterPayload.ClusterId,

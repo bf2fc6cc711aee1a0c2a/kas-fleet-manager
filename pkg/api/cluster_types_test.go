@@ -979,10 +979,10 @@ func Test_ClusterProviderType_String(t *testing.T) {
 }
 
 func Test_ClusterType_String(t *testing.T) {
-	enterpriseType := Enterprise
+	enterpriseType := EnterpriseDataPlaneClusterType
 	tests := []struct {
 		name        string
-		clusterType ClusterType
+		clusterType DataPlaneClusterType
 		want        string
 	}{
 		{
