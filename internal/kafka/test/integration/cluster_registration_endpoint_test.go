@@ -259,7 +259,7 @@ func TestClusterRegistration_Successful(t *testing.T) {
 	g.Expect(payload.ClusterExternalId).To(gomega.Equal(cluster.ExternalID))
 	g.Expect(payload.ClusterIngressDnsName).To(gomega.Equal(cluster.ClusterDNS))
 	g.Expect(api.StandardTypeSupport.String()).To(gomega.Equal(cluster.SupportedInstanceType))
-	g.Expect(api.Enterprise.String()).To(gomega.Equal(cluster.ClusterType))
+	g.Expect(api.EnterpriseDataPlaneClusterType.String()).To(gomega.Equal(cluster.ClusterType))
 	g.Expect(api.ClusterProviderOCM).To(gomega.Equal(cluster.ProviderType))
 
 	dynamicScalingInfo := cluster.RetrieveDynamicCapacityInfo()

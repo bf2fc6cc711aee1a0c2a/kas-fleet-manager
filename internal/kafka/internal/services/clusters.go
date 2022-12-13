@@ -379,7 +379,7 @@ func (c clusterService) ListNonEnterpriseClusterIDs() ([]api.Cluster, *apiErrors
 	if err := dbConn.Model(&api.Cluster{}).
 		Select("cluster_id").
 		Where("cluster_id != '' ").
-		Where("cluster_type != ? ", api.Enterprise.String()). // don't include enterprise clusters
+		Where("cluster_type != ? ", api.EnterpriseDataPlaneClusterType.String()). // don't include enterprise clusters
 		Order("created_at asc ").
 		Scan(&res).Error; err != nil {
 		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to query by cluster info")
@@ -738,7 +738,7 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 	dbConn := c.connectionFactory.New().
 		Model(&api.Cluster{}).
 		Where("status != ?", api.ClusterFailed).
-		Where("cluster_type != ?", api.Enterprise.String())
+		Where("cluster_type != ?", api.EnterpriseDataPlaneClusterType.String())
 
 	if err := dbConn.Scan(&clusters).Error; err != nil {
 		return nil, errors.Wrap(err, "failed to list data plane clusters")

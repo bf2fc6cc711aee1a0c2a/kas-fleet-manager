@@ -18,7 +18,7 @@ import (
 type ClusterStatus string
 type ClusterProviderType string
 type ClusterInstanceTypeSupport string
-type ClusterType string
+type DataPlaneClusterType string
 
 func (k ClusterStatus) String() string {
 	return string(k)
@@ -109,7 +109,8 @@ const (
 	ClusterProviderAwsEKS     ClusterProviderType = "aws_eks"
 	ClusterProviderStandalone ClusterProviderType = "standalone"
 
-	Enterprise ClusterType = "enterprise"
+	EnterpriseDataPlaneClusterType DataPlaneClusterType = "enterprise"
+	ManagedDataPlaneClusterType    DataPlaneClusterType = "managed"
 
 	DeveloperTypeSupport   ClusterInstanceTypeSupport = "developer"
 	StandardTypeSupport    ClusterInstanceTypeSupport = "standard"
@@ -128,7 +129,7 @@ var ordinals = map[string]int{
 	ClusterFailed.String():                          70,
 }
 
-func (t ClusterType) String() string {
+func (t DataPlaneClusterType) String() string {
 	return string(t)
 }
 
@@ -200,6 +201,10 @@ func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
 
 	if cluster.SupportedInstanceType == "" {
 		cluster.SupportedInstanceType = AllInstanceTypeSupport.String()
+	}
+
+	if cluster.ClusterType == "" {
+		cluster.ClusterType = ManagedDataPlaneClusterType.String()
 	}
 
 	return nil

@@ -289,6 +289,7 @@ func (p *standardDynamicScaleUpProcessor) ScaleUp() error {
 		MultiAZ:               newClusterMultiAZ,
 		Status:                api.ClusterAccepted,
 		ProviderType:          api.ClusterProviderOCM,
+		ClusterType:           api.ManagedDataPlaneClusterType.String(),
 	}
 	glog.V(10).Infof("registering new cluster job creation with attributes: %+v", clusterRequest)
 

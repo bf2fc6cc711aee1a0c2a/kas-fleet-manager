@@ -45,21 +45,21 @@ var (
 	}
 	enterpriseAcceptedCluster = api.Cluster{
 		Status:      api.ClusterAccepted,
-		ClusterType: api.Enterprise.String(),
+		ClusterType: api.EnterpriseDataPlaneClusterType.String(),
 	}
 	provisioningCluster = api.Cluster{
 		Status: api.ClusterProvisioning,
 	}
 	enterpriseProvisioningCluster = api.Cluster{
 		Status:      api.ClusterProvisioning,
-		ClusterType: api.Enterprise.String(),
+		ClusterType: api.EnterpriseDataPlaneClusterType.String(),
 	}
 	provisionedCluster = api.Cluster{
 		Status: api.ClusterProvisioned,
 	}
 	enterpriseProvisionedCluster = api.Cluster{
 		Status:      api.ClusterProvisioned,
-		ClusterType: api.Enterprise.String(),
+		ClusterType: api.EnterpriseDataPlaneClusterType.String(),
 	}
 )
 
