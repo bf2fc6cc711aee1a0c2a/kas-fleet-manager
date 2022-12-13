@@ -662,9 +662,11 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	if err != nil {
 		return []error{errors.Wrapf(err, "failed to retrieve cluster ids from clusters")}
 	}
-	clusterIdsMap := make(map[string]api.Cluster)
+
+	clusterIdsMap := make(map[string]api.Cluster, len(allClusterIds))
 	for _, v := range allClusterIds {
 		clusterIdsMap[v.ClusterID] = v
+		glog.Infof("found existing non enterprise clusters with cluster_id %q", v.ClusterID)
 	}
 
 	//Create all missing clusters
