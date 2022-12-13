@@ -32,6 +32,8 @@ var MaxKafkaNameLength = 32
 
 var ClusterIdLength = 32
 
+const minimunNumberOfNodesForTheKafkaMachinePool = 3
+
 func ValidateBillingModel(kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {
 		// the billing model can only be either standard or marketplace
@@ -387,6 +389,21 @@ func ValidateKafkaStorageSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *
 				return errors.FieldValidationError("failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", storageSize, kafkaRequest.KafkaStorageSize)
 			}
 		}
+		return nil
+	}
+}
+
+func validateKafkaMachinePoolNodeCount(clusterPayload *public.EnterpriseOsdClusterPayload) handlers.Validate {
+	return func() *errors.ServiceError {
+		if clusterPayload.KafkaMachinePoolNodeCount < minimunNumberOfNodesForTheKafkaMachinePool {
+			return errors.FieldValidationError("failed to register cluster. Kafka machine pool node count: %q should be greater or equal to %q", clusterPayload.KafkaMachinePoolNodeCount, minimunNumberOfNodesForTheKafkaMachinePool)
+		}
+
+		remainder := clusterPayload.KafkaMachinePoolNodeCount % 3
+		if remainder != 0 {
+			return errors.FieldValidationError("failed to register cluster. Kafka machine pool node count: %q should be in multiple of 3", clusterPayload.KafkaMachinePoolNodeCount)
+		}
+
 		return nil
 	}
 }

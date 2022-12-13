@@ -18,4 +18,6 @@ type EnterpriseOsdClusterPayload struct {
 	ClusterExternalId string `json:"cluster_external_id"`
 	// dns name of the cluster. Can be obtained from the response JSON of the /api/clusters_mgmt/v1/clusters/<cluster_id>/ingresses (dns_name)
 	ClusterIngressDnsName string `json:"cluster_ingress_dns_name"`
+	// The node count given to the created kafka machine pool.  The machine pool must be created via /api/clusters_mgmt/v1/clusters/<cluster_id>/machine_pools prior to passing this value. The created machine pool must have a `bf2.org/kafkaInstanceProfileType=standard` label and a `bf2.org/kafkaInstanceProfileType=standard:NoExecute` taint. The name of the machine pool must be `kafka-standard`  The node count value has to be a multiple of 3 with a minimum of 3 nodes.
+	KafkaMachinePoolNodeCount int32 `json:"kafka_machine_pool_node_count"`
 }

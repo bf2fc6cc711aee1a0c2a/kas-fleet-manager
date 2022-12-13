@@ -131,9 +131,39 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
+			name: "should return an error if kafka_machine_pool_node_count is less than 3",
+			args: args{
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 2}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				ctx:  context.TODO(),
+			},
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+			},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name: "should return an error if kafka_machine_pool_node_count is not a multiple of 3",
+			args: args{
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 5}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				ctx:  context.TODO(),
+			},
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+			},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
 			name: "should return an error if claims cant be obtained from context",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s"}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
 				ctx:  context.TODO(),
 			},
 			fields: fields{
@@ -148,7 +178,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should return an error if GetAddonParams returns an error",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s"}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
 				ctx:  ctxWithClaims,
 			},
 			fields: fields{
@@ -168,7 +198,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should return an error if RegisterClusterJob returns an error",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s"}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
 				ctx:  ctxWithClaims,
 			},
 			fields: fields{
@@ -196,7 +226,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should successfully register enterprise cluster",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s"}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
 				ctx:  ctxWithClaims,
 			},
 			fields: fields{
@@ -234,7 +264,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should successfully register enterprise cluster if FindClusterByID returns cluster not found error",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s"}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
 				ctx:  ctxWithClaims,
 			},
 			fields: fields{

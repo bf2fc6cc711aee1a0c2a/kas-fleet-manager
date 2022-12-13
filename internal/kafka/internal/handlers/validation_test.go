@@ -20,7 +20,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
-
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/onsi/gomega"
 )
@@ -1743,6 +1742,55 @@ func Test_Validation_ValidateClusterIdIsUnique(t *testing.T) {
 			validateFn := ValidateClusterIdIsUnique(tt.args.clusterID, tt.args.clusterService)
 			err := validateFn()
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+		})
+	}
+}
+
+func Test_validateKafkaMachinePoolNodeCount(t *testing.T) {
+	type args struct {
+		clusterPayload public.EnterpriseOsdClusterPayload
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "do not return an error when node count is greater or equal to 3",
+			args: args{
+				clusterPayload: public.EnterpriseOsdClusterPayload{
+					KafkaMachinePoolNodeCount: 3,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "return an error when node count is less than 3",
+			args: args{
+				clusterPayload: public.EnterpriseOsdClusterPayload{
+					KafkaMachinePoolNodeCount: 2,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "return an error when node count is not a multiple of 3",
+			args: args{
+				clusterPayload: public.EnterpriseOsdClusterPayload{
+					KafkaMachinePoolNodeCount: 5,
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(testcase.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			validateFn := validateKafkaMachinePoolNodeCount(&testcase.args.clusterPayload)
+			err := validateFn()
+			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr))
 		})
 	}
 }
