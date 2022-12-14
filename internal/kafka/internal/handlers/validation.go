@@ -396,12 +396,12 @@ func ValidateKafkaStorageSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *
 func validateKafkaMachinePoolNodeCount(clusterPayload *public.EnterpriseOsdClusterPayload) handlers.Validate {
 	return func() *errors.ServiceError {
 		if clusterPayload.KafkaMachinePoolNodeCount < minimunNumberOfNodesForTheKafkaMachinePool {
-			return errors.FieldValidationError("failed to register cluster. Kafka machine pool node count: %q should be greater or equal to %q", clusterPayload.KafkaMachinePoolNodeCount, minimunNumberOfNodesForTheKafkaMachinePool)
+			return errors.FieldValidationError("failed to register cluster. Kafka machine pool node count: %d should be greater or equal to %d", clusterPayload.KafkaMachinePoolNodeCount, minimunNumberOfNodesForTheKafkaMachinePool)
 		}
 
 		remainder := clusterPayload.KafkaMachinePoolNodeCount % 3
 		if remainder != 0 {
-			return errors.FieldValidationError("failed to register cluster. Kafka machine pool node count: %q should be in multiple of 3", clusterPayload.KafkaMachinePoolNodeCount)
+			return errors.FieldValidationError("failed to register cluster. Kafka machine pool node count: %d should be in multiple of 3", clusterPayload.KafkaMachinePoolNodeCount)
 		}
 
 		return nil
