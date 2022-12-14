@@ -32,8 +32,8 @@ type ClusterService interface {
 	Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
 	GetClusterDNS(clusterID string) (string, *apiErrors.ServiceError)
 	GetExternalID(clusterID string) (string, *apiErrors.ServiceError)
-	// List - returns a list of enterprise clusters (ClusterID and Status fields only) which belong to organization obtained from the context
-	List(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError)
+	// ListEnterpriseClustersOfAnOrganization - returns a list of enterprise clusters (ClusterID and Status fields only) which belong to organization obtained from the context
+	ListEnterpriseClustersOfAnOrganization(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError)
 	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
 	UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error
 	// Update updates a Cluster. Only fields whose value is different than the
@@ -108,8 +108,8 @@ func (c clusterService) RegisterClusterJob(clusterRequest *api.Cluster) *apiErro
 	return nil
 }
 
-// List - returns a list of clusters (ClusterID and Status fields only) which belong to organization obtained from the context
-func (c clusterService) List(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError) {
+// ListEnterpriseClustersOfAnOrganization - returns a list of clusters (ClusterID and Status fields only) which belong to organization obtained from the context
+func (c clusterService) ListEnterpriseClustersOfAnOrganization(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError) {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return nil, apiErrors.NewWithCause(apiErrors.ErrorUnauthenticated, err, "user not authenticated")

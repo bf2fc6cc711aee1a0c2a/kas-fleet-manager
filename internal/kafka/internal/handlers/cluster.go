@@ -108,7 +108,7 @@ func (h clusterHandler) List(w http.ResponseWriter, r *http.Request) {
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 
-			clusters, err := h.clusterService.List(ctx)
+			clusters, err := h.clusterService.ListEnterpriseClustersOfAnOrganization(ctx)
 			if err != nil {
 				return nil, err
 			}

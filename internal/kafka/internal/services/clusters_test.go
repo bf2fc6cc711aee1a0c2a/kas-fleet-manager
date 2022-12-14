@@ -810,7 +810,7 @@ func Test_RegisterClusterJob(t *testing.T) {
 	}
 }
 
-func Test_List(t *testing.T) {
+func Test_ListEnterpriseClustersOfAnOrganization(t *testing.T) {
 	type args struct {
 		ctx context.Context
 	}
@@ -923,7 +923,7 @@ func Test_List(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 
-			result, err := c.List(tt.args.ctx)
+			result, err := c.ListEnterpriseClustersOfAnOrganization(tt.args.ctx)
 
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 

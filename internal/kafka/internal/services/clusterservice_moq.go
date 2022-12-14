@@ -82,11 +82,11 @@ var _ ClusterService = &ClusterServiceMock{}
 //			IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error) {
 //				panic("mock out the IsStrimziKafkaVersionAvailableInCluster method")
 //			},
-//			ListFunc: func(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError) {
-//				panic("mock out the List method")
-//			},
 //			ListByStatusFunc: func(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 //				panic("mock out the ListByStatus method")
+//			},
+//			ListEnterpriseClustersOfAnOrganizationFunc: func(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError) {
+//				panic("mock out the ListEnterpriseClustersOfAnOrganization method")
 //			},
 //			ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError) {
 //				panic("mock out the ListGroupByProviderAndRegion method")
@@ -173,11 +173,11 @@ type ClusterServiceMock struct {
 	// IsStrimziKafkaVersionAvailableInClusterFunc mocks the IsStrimziKafkaVersionAvailableInCluster method.
 	IsStrimziKafkaVersionAvailableInClusterFunc func(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error)
 
-	// ListFunc mocks the List method.
-	ListFunc func(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError)
-
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
+
+	// ListEnterpriseClustersOfAnOrganizationFunc mocks the ListEnterpriseClustersOfAnOrganization method.
+	ListEnterpriseClustersOfAnOrganizationFunc func(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError)
 
 	// ListGroupByProviderAndRegionFunc mocks the ListGroupByProviderAndRegion method.
 	ListGroupByProviderAndRegionFunc func(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError)
@@ -311,15 +311,15 @@ type ClusterServiceMock struct {
 			// IbpVersion is the ibpVersion argument value.
 			IbpVersion string
 		}
-		// List holds details about calls to the List method.
-		List []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-		}
 		// ListByStatus holds details about calls to the ListByStatus method.
 		ListByStatus []struct {
 			// State is the state argument value.
 			State api.ClusterStatus
+		}
+		// ListEnterpriseClustersOfAnOrganization holds details about calls to the ListEnterpriseClustersOfAnOrganization method.
+		ListEnterpriseClustersOfAnOrganization []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 		}
 		// ListGroupByProviderAndRegion holds details about calls to the ListGroupByProviderAndRegion method.
 		ListGroupByProviderAndRegion []struct {
@@ -378,8 +378,8 @@ type ClusterServiceMock struct {
 	lockInstallClusterLogging                          sync.RWMutex
 	lockInstallStrimzi                                 sync.RWMutex
 	lockIsStrimziKafkaVersionAvailableInCluster        sync.RWMutex
-	lockList                                           sync.RWMutex
 	lockListByStatus                                   sync.RWMutex
+	lockListEnterpriseClustersOfAnOrganization         sync.RWMutex
 	lockListGroupByProviderAndRegion                   sync.RWMutex
 	lockListNonEnterpriseClusterIDs                    sync.RWMutex
 	lockRegisterClusterJob                             sync.RWMutex
@@ -1051,38 +1051,6 @@ func (mock *ClusterServiceMock) IsStrimziKafkaVersionAvailableInClusterCalls() [
 	return calls
 }
 
-// List calls ListFunc.
-func (mock *ClusterServiceMock) List(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError) {
-	if mock.ListFunc == nil {
-		panic("ClusterServiceMock.ListFunc: method is nil but ClusterService.List was just called")
-	}
-	callInfo := struct {
-		Ctx context.Context
-	}{
-		Ctx: ctx,
-	}
-	mock.lockList.Lock()
-	mock.calls.List = append(mock.calls.List, callInfo)
-	mock.lockList.Unlock()
-	return mock.ListFunc(ctx)
-}
-
-// ListCalls gets all the calls that were made to List.
-// Check the length with:
-//
-//	len(mockedClusterService.ListCalls())
-func (mock *ClusterServiceMock) ListCalls() []struct {
-	Ctx context.Context
-} {
-	var calls []struct {
-		Ctx context.Context
-	}
-	mock.lockList.RLock()
-	calls = mock.calls.List
-	mock.lockList.RUnlock()
-	return calls
-}
-
 // ListByStatus calls ListByStatusFunc.
 func (mock *ClusterServiceMock) ListByStatus(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 	if mock.ListByStatusFunc == nil {
@@ -1112,6 +1080,38 @@ func (mock *ClusterServiceMock) ListByStatusCalls() []struct {
 	mock.lockListByStatus.RLock()
 	calls = mock.calls.ListByStatus
 	mock.lockListByStatus.RUnlock()
+	return calls
+}
+
+// ListEnterpriseClustersOfAnOrganization calls ListEnterpriseClustersOfAnOrganizationFunc.
+func (mock *ClusterServiceMock) ListEnterpriseClustersOfAnOrganization(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError) {
+	if mock.ListEnterpriseClustersOfAnOrganizationFunc == nil {
+		panic("ClusterServiceMock.ListEnterpriseClustersOfAnOrganizationFunc: method is nil but ClusterService.ListEnterpriseClustersOfAnOrganization was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockListEnterpriseClustersOfAnOrganization.Lock()
+	mock.calls.ListEnterpriseClustersOfAnOrganization = append(mock.calls.ListEnterpriseClustersOfAnOrganization, callInfo)
+	mock.lockListEnterpriseClustersOfAnOrganization.Unlock()
+	return mock.ListEnterpriseClustersOfAnOrganizationFunc(ctx)
+}
+
+// ListEnterpriseClustersOfAnOrganizationCalls gets all the calls that were made to ListEnterpriseClustersOfAnOrganization.
+// Check the length with:
+//
+//	len(mockedClusterService.ListEnterpriseClustersOfAnOrganizationCalls())
+func (mock *ClusterServiceMock) ListEnterpriseClustersOfAnOrganizationCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockListEnterpriseClustersOfAnOrganization.RLock()
+	calls = mock.calls.ListEnterpriseClustersOfAnOrganization
+	mock.lockListEnterpriseClustersOfAnOrganization.RUnlock()
 	return calls
 }
 

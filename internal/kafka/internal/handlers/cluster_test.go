@@ -352,7 +352,7 @@ func Test_ListEnterpriseClusters(t *testing.T) {
 			},
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListFunc: func(ctx context.Context) ([]*api.Cluster, *errors.ServiceError) {
+					ListEnterpriseClustersOfAnOrganizationFunc: func(ctx context.Context) ([]*api.Cluster, *errors.ServiceError) {
 						return nil, errors.GeneralError("failed to register cluster")
 					},
 				},
@@ -366,7 +366,7 @@ func Test_ListEnterpriseClusters(t *testing.T) {
 			},
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					ListFunc: func(ctx context.Context) ([]*api.Cluster, *errors.ServiceError) {
+					ListEnterpriseClustersOfAnOrganizationFunc: func(ctx context.Context) ([]*api.Cluster, *errors.ServiceError) {
 						return []*api.Cluster{
 							{
 								ClusterID: validLengthClusterId,
