@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
+	mockCluster "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	mockKafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	mockObjRef "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/object_reference"
 	mockServAcc "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/service_accounts"
@@ -31,6 +32,14 @@ func TestPresentReference(t *testing.T) {
 				obj: mockKafka.BuildKafkaRequest(),
 			},
 			want: mockObjRef.GetKafkaObjectReference(),
+		},
+		{
+			name: "should return valid ObjectReference for cluster",
+			args: args{
+				id:  mockObjRef.GetObjectReferenceMockId(""),
+				obj: mockCluster.BuildCluster(nil),
+			},
+			want: mockObjRef.GetClusterObjectReference(),
 		},
 		{
 			name: "should return valid ObjectReference for error",

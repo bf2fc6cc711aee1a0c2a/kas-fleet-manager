@@ -1,10 +1,12 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -30,6 +32,8 @@ type ClusterService interface {
 	Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
 	GetClusterDNS(clusterID string) (string, *apiErrors.ServiceError)
 	GetExternalID(clusterID string) (string, *apiErrors.ServiceError)
+	// List - returns a list of enterprise clusters (ClusterID and Status fields only) which belong to organization obtained from the context
+	List(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError)
 	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
 	UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error
 	// Update updates a Cluster. Only fields whose value is different than the
@@ -102,6 +106,35 @@ func (c clusterService) RegisterClusterJob(clusterRequest *api.Cluster) *apiErro
 		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to register cluster job")
 	}
 	return nil
+}
+
+// List - returns a list of clusters (ClusterID and Status fields only) which belong to organization obtained from the context
+func (c clusterService) List(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError) {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorUnauthenticated, err, "user not authenticated")
+	}
+
+	user, _ := claims.GetUsername()
+	if user == "" {
+		return nil, apiErrors.Unauthenticated("user not authenticated")
+	}
+
+	orgId, _ := claims.GetOrgId()
+
+	dbConn := c.connectionFactory.New().
+		Model(&api.Cluster{}).Select("cluster_id, status")
+
+	var clusters []*api.Cluster
+
+	if err := dbConn.Where("organization_id = ? AND cluster_type = ?", orgId, api.EnterpriseDataPlaneClusterType.String()).Scan(&clusters).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return []*api.Cluster{}, nil
+		}
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to list clusters")
+	}
+
+	return clusters, nil
 }
 
 // Create Creates a new OpenShift/k8s cluster via the provider and save the details of the cluster in the database

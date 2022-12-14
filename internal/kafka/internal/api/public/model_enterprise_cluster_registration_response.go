@@ -10,13 +10,14 @@
 
 package public
 
-// EnterpriseCluster struct for EnterpriseCluster
-type EnterpriseCluster struct {
+// EnterpriseClusterRegistrationResponse Enterprise cluster registration endpoint response
+type EnterpriseClusterRegistrationResponse struct {
 	Id   string `json:"id"`
 	Kind string `json:"kind"`
 	Href string `json:"href"`
-	// ocm cluster id of the registered Enterprise cluster
+	// OCM cluster id of the registered Enterprise cluster
 	ClusterId string `json:"cluster_id,omitempty"`
 	// status of registered Enterprise cluster
-	Status string `json:"status,omitempty"`
+	Status               string                `json:"status,omitempty"`
+	FleetshardParameters []FleetshardParameter `json:"fleetshard_parameters,omitempty"`
 }

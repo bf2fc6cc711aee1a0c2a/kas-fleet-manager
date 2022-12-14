@@ -95,10 +95,40 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			return presenters.PresentEnterpriseCluster(*clusterRequest, fsoParams)
+			return presenters.PresentEnterpriseClusterRegistrationResponse(*clusterRequest, fsoParams)
 		},
 	}
 
 	// return 200 status ok
 	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+func (h clusterHandler) List(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (interface{}, *errors.ServiceError) {
+			ctx := r.Context()
+
+			clusters, err := h.clusterService.List(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			clusterList := public.EnterpriseClusterList{
+				Kind:  "ClusterList",
+				Page:  1,
+				Size:  int32(len(clusters)),
+				Total: int32(len(clusters)),
+				Items: []public.EnterpriseCluster{},
+			}
+
+			for _, cluster := range clusters {
+				converted := presenters.PresentEnterpriseCluster(*cluster)
+				clusterList.Items = append(clusterList.Items, converted)
+			}
+
+			return clusterList, nil
+		},
+	}
+
+	handlers.HandleList(w, r, cfg)
 }

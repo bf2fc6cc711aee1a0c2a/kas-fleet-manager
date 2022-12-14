@@ -4,6 +4,7 @@
 package services
 
 import (
+	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
@@ -80,6 +81,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //			},
 //			IsStrimziKafkaVersionAvailableInClusterFunc: func(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error) {
 //				panic("mock out the IsStrimziKafkaVersionAvailableInCluster method")
+//			},
+//			ListFunc: func(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError) {
+//				panic("mock out the List method")
 //			},
 //			ListByStatusFunc: func(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 //				panic("mock out the ListByStatus method")
@@ -168,6 +172,9 @@ type ClusterServiceMock struct {
 
 	// IsStrimziKafkaVersionAvailableInClusterFunc mocks the IsStrimziKafkaVersionAvailableInCluster method.
 	IsStrimziKafkaVersionAvailableInClusterFunc func(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error)
+
+	// ListFunc mocks the List method.
+	ListFunc func(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError)
 
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
@@ -304,6 +311,11 @@ type ClusterServiceMock struct {
 			// IbpVersion is the ibpVersion argument value.
 			IbpVersion string
 		}
+		// List holds details about calls to the List method.
+		List []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+		}
 		// ListByStatus holds details about calls to the ListByStatus method.
 		ListByStatus []struct {
 			// State is the state argument value.
@@ -366,6 +378,7 @@ type ClusterServiceMock struct {
 	lockInstallClusterLogging                          sync.RWMutex
 	lockInstallStrimzi                                 sync.RWMutex
 	lockIsStrimziKafkaVersionAvailableInCluster        sync.RWMutex
+	lockList                                           sync.RWMutex
 	lockListByStatus                                   sync.RWMutex
 	lockListGroupByProviderAndRegion                   sync.RWMutex
 	lockListNonEnterpriseClusterIDs                    sync.RWMutex
@@ -1035,6 +1048,38 @@ func (mock *ClusterServiceMock) IsStrimziKafkaVersionAvailableInClusterCalls() [
 	mock.lockIsStrimziKafkaVersionAvailableInCluster.RLock()
 	calls = mock.calls.IsStrimziKafkaVersionAvailableInCluster
 	mock.lockIsStrimziKafkaVersionAvailableInCluster.RUnlock()
+	return calls
+}
+
+// List calls ListFunc.
+func (mock *ClusterServiceMock) List(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError) {
+	if mock.ListFunc == nil {
+		panic("ClusterServiceMock.ListFunc: method is nil but ClusterService.List was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+	}{
+		Ctx: ctx,
+	}
+	mock.lockList.Lock()
+	mock.calls.List = append(mock.calls.List, callInfo)
+	mock.lockList.Unlock()
+	return mock.ListFunc(ctx)
+}
+
+// ListCalls gets all the calls that were made to List.
+// Check the length with:
+//
+//	len(mockedClusterService.ListCalls())
+func (mock *ClusterServiceMock) ListCalls() []struct {
+	Ctx context.Context
+} {
+	var calls []struct {
+		Ctx context.Context
+	}
+	mock.lockList.RLock()
+	calls = mock.calls.List
+	mock.lockList.RUnlock()
 	return calls
 }
 

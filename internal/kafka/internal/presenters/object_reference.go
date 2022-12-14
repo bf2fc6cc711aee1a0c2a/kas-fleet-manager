@@ -22,6 +22,8 @@ const (
 	// KindServiceAccount is a string identifier for the type api.ServiceAccount
 	KindServiceAccount = "ServiceAccount"
 
+	KindCluster = "Cluster"
+
 	BasePath = "/api/kafkas_mgmt/v1"
 )
 
@@ -41,6 +43,8 @@ func objectKind(i interface{}) string {
 		return KindError
 	case api.ServiceAccount, *api.ServiceAccount:
 		return KindServiceAccount
+	case api.Cluster, *api.Cluster:
+		return KindCluster
 	default:
 		return ""
 	}
@@ -52,6 +56,8 @@ func objectPath(id string, obj interface{}) string {
 		return fmt.Sprintf("%s/kafkas/%s", BasePath, id)
 	case errors.ServiceError, *errors.ServiceError:
 		return fmt.Sprintf("%s/errors/%s", BasePath, id)
+	case api.Cluster, *api.Cluster:
+		return fmt.Sprintf("%s/clusters/%s", BasePath, id)
 	case api.ServiceAccount, *api.ServiceAccount:
 		return fmt.Sprintf("%s/service_accounts/%s", BasePath, id)
 	default:
