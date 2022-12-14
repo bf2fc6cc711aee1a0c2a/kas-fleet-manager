@@ -51,7 +51,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		fields         fields
 		args           args
 		wantStatusCode int
-		want           *public.EnterpriseCluster
+		want           *public.EnterpriseClusterRegistrationResponse
 	}{
 		{
 			name: "should return an error if body is empty",
@@ -250,9 +250,12 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				},
 			},
 			wantStatusCode: http.StatusOK,
-			want: &public.EnterpriseCluster{
+			want: &public.EnterpriseClusterRegistrationResponse{
 				Status:    api.ClusterAccepted.String(),
 				ClusterId: validLengthClusterId,
+				Id:        validLengthClusterId,
+				Kind:      "Cluster",
+				Href:      fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", validLengthClusterId),
 				FleetshardParameters: []public.FleetshardParameter{
 					{
 						Id:    "some-id",
@@ -288,9 +291,12 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				},
 			},
 			wantStatusCode: http.StatusOK,
-			want: &public.EnterpriseCluster{
+			want: &public.EnterpriseClusterRegistrationResponse{
 				Status:    api.ClusterAccepted.String(),
 				ClusterId: validLengthClusterId,
+				Id:        validLengthClusterId,
+				Kind:      "Cluster",
+				Href:      fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", validLengthClusterId),
 				FleetshardParameters: []public.FleetshardParameter{
 					{
 						Id:    "some-id",
@@ -313,10 +319,98 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 			defer resp.Body.Close()
 			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 			if tt.wantStatusCode == http.StatusOK {
-				cluster := &public.EnterpriseCluster{}
+				cluster := &public.EnterpriseClusterRegistrationResponse{}
 				err := json.NewDecoder(resp.Body).Decode(&cluster)
 				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(cluster).To(gomega.Equal(tt.want))
+			}
+		})
+	}
+}
+
+func Test_ListEnterpriseClusters(t *testing.T) {
+	type fields struct {
+		clusterService services.ClusterService
+	}
+
+	type args struct {
+		ctx context.Context
+	}
+
+	tests := []struct {
+		name           string
+		fields         fields
+		args           args
+		wantStatusCode int
+		want           public.EnterpriseClusterList
+	}{
+
+		{
+			name: "should return an error if List returns an error",
+			args: args{
+				ctx: ctxWithClaims,
+			},
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListEnterpriseClustersOfAnOrganizationFunc: func(ctx context.Context) ([]*api.Cluster, *errors.ServiceError) {
+						return nil, errors.GeneralError("failed to register cluster")
+					},
+				},
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name: "should successfully List enterprise clusters",
+			args: args{
+				ctx: ctxWithClaims,
+			},
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ListEnterpriseClustersOfAnOrganizationFunc: func(ctx context.Context) ([]*api.Cluster, *errors.ServiceError) {
+						return []*api.Cluster{
+							{
+								ClusterID: validLengthClusterId,
+								Status:    api.ClusterReady,
+							},
+						}, nil
+					},
+				},
+			},
+			wantStatusCode: http.StatusOK,
+			want: public.EnterpriseClusterList{
+				Kind:  "ClusterList",
+				Page:  1,
+				Size:  int32(1),
+				Total: int32(1),
+				Items: []public.EnterpriseCluster{
+					{
+						Status:    api.ClusterReady.String(),
+						ClusterId: validLengthClusterId,
+						Id:        validLengthClusterId,
+						Kind:      "Cluster",
+						Href:      fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", validLengthClusterId),
+					},
+				},
+			},
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			h := NewClusterHandler(nil, tt.fields.clusterService)
+			req, rw := GetHandlerParams("GET", "", nil, t)
+			req = req.WithContext(tt.args.ctx)
+			h.List(rw, req)
+			resp := rw.Result()
+			defer resp.Body.Close()
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
+			if tt.wantStatusCode == http.StatusOK {
+				clusterList := public.EnterpriseClusterList{}
+				err := json.NewDecoder(resp.Body).Decode(&clusterList)
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(clusterList).To(gomega.Equal(tt.want))
 			}
 		})
 	}

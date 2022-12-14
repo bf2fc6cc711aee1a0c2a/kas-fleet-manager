@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -13,6 +14,7 @@ import (
 	mocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	instanceTypesMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
@@ -803,6 +805,132 @@ func Test_RegisterClusterJob(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterClusterJob() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+		})
+	}
+}
+
+func Test_ListEnterpriseClustersOfAnOrganization(t *testing.T) {
+	type args struct {
+		ctx context.Context
+	}
+
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
+	if err != nil {
+		t.Fatalf("failed to create auth helper: %s", err.Error())
+	}
+	account, err := authHelper.NewAccount(testUser, "", "", "13640203")
+	if err != nil {
+		t.Fatal("failed to build a new account")
+	}
+
+	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	if err != nil {
+		t.Fatalf("failed to create jwt: %s", err.Error())
+	}
+	ctx := context.TODO()
+	authenticatedCtx := auth.SetTokenInContext(ctx, jwt)
+
+	clusterID := "npnbplmrku0bgnzj82h5uszyxwbetdwd"
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []*api.Cluster
+		wantErr bool
+		setupFn func([]*api.Cluster)
+	}{
+		{
+			name: "should successfully list enterprise clusters",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				ctx: authenticatedCtx,
+			},
+			wantErr: false,
+			want: []*api.Cluster{
+				{
+					ClusterID: clusterID,
+					Status:    api.ClusterReady,
+				},
+			},
+			setupFn: func(clusters []*api.Cluster) {
+				mocket.Catcher.Reset()
+
+				response := []map[string]interface{}{
+					{
+						"cluster_id": clusterID,
+						"status":     api.ClusterReady,
+					},
+				}
+
+				query := `SELECT cluster_id, status FROM "clusters" WHERE (organization_id = $1 AND cluster_type = $2) AND "clusters"."deleted_at" IS NULL`
+
+				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "fail: user credentials not available in context",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				ctx: context.TODO(),
+			},
+			want:    nil,
+			wantErr: true,
+			setupFn: func(clusters []*api.Cluster) {
+				mocket.Catcher.Reset()
+
+				response := []map[string]interface{}{}
+
+				query := `SELECT cluster_id, status FROM "clusters" WHERE (organization_id = $1 AND cluster_type = $2) AND "clusters"."deleted_at" IS NULL`
+
+				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "fail: database returns an error",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				ctx: authenticatedCtx,
+			},
+			want:    nil,
+			wantErr: true,
+			setupFn: func(clusters []*api.Cluster) {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+			},
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			tt.setupFn(tt.want)
+			c := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+
+			result, err := c.ListEnterpriseClustersOfAnOrganization(tt.args.ctx)
+
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+
+			g.Expect(len(result)).To(gomega.Equal(len(tt.want)))
+
+			for i, got := range result {
+				g.Expect(got).To(gomega.Equal(tt.want[i]))
 			}
 		})
 	}

@@ -272,10 +272,12 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	clusterHandler := handlers.NewClusterHandler(s.KasFleetshardOperatorAddon, s.ClusterService)
 	clusterRouter := apiV1Router.PathPrefix("/clusters").Subrouter()
 	clusterRouter.Use(enterpriseClusterMiddleware)
-	apiV1KafkasCreateRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	clusterRouter.HandleFunc("", clusterHandler.RegisterEnterpriseCluster).
 		Name(logger.NewLogEvent("register-enterprise-cluster", "register enterprise cluster").ToString()).
 		Methods(http.MethodPost)
+	clusterRouter.HandleFunc("", clusterHandler.List).
+		Name(logger.NewLogEvent("list-enterprise-clusters", "list enterprise clusters").ToString()).
+		Methods(http.MethodGet)
 
 	return nil
 }

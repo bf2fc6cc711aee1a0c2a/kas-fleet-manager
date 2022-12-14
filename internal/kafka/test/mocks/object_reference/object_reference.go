@@ -9,6 +9,7 @@ import (
 const (
 	TestId             = "test-id"
 	KindKafka          = "Kafka"
+	KindCluster        = "Cluster"
 	KindError          = "Error"
 	KindServiceAccount = "ServiceAccount"
 	BasePath           = "/api/kafkas_mgmt/v1"
@@ -32,6 +33,14 @@ func GetKafkaObjectReference() compat.ObjectReference {
 		Id:   TestId,
 		Kind: KindKafka,
 		Href: fmt.Sprintf("%s/kafkas/%s", BasePath, TestId),
+	}
+}
+
+func GetClusterObjectReference() compat.ObjectReference {
+	return compat.ObjectReference{
+		Id:   TestId,
+		Kind: KindCluster,
+		Href: fmt.Sprintf("%s/clusters/%s", BasePath, TestId),
 	}
 }
 
