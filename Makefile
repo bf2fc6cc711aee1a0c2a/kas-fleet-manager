@@ -223,6 +223,7 @@ help:
 	@echo "make image/push/internal                 push the image to the Openshift internal registry"
 	@echo "make setup/git/hooks                     setup git hooks"
 	@echo "make keycloak/setup                      setup mas sso clientId, clientSecret & crt"
+	@echo "make gcp/setup/credentials               setup GCP credentials"
 	@echo "make kafkacert/setup                     setup the kafka certificate used for Kafka Brokers"
 	@echo "make observatorium/setup                 setup observatorium secrets used by CI"
 	@echo "make observatorium/token-refresher/setup setup a local observatorium token refresher"
@@ -620,6 +621,11 @@ aws/setup:
 	@echo -n "$(ROUTE53_ACCESS_KEY)" > secrets/aws.route53accesskey
 	@echo -n "$(ROUTE53_SECRET_ACCESS_KEY)" > secrets/aws.route53secretaccesskey
 .PHONY: aws/setup
+
+# Setup for GCP credentials
+gcp/setup/credentials:
+	@echo -n "$${GCP_API_CREDENTIALS}" | base64 -d > secrets/gcp.api-credentials
+.PHONY: gcp/setup/credentials
 
 # Setup for mas sso credentials
 keycloak/setup:

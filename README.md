@@ -77,6 +77,45 @@ guide.
      ```
      make aws/setup
      ```
+1. (optional) Setup Google Cloud Platform (GCP) configuration
+
+   If you intend to configure/provision Data Planes in GCP then
+   [GCP Service Account](https://cloud.google.com/iam/docs/service-accounts)
+   JSON credentials need to be provided to Fleet Manager so it can deploy and
+   provision Data Plane Clusters there.
+   To create a GCP Service Account and its corresponding JSON credentials see:
+     * [Creating GCP Service Accounts](https://cloud.google.com/iam/docs/creating-managing-service-accounts#creating)
+     * [Creating GCP Service Account Keys](https://cloud.google.com/iam/docs/creating-managing-service-account-keys#creating)
+
+     Additionally, the GCP Service Account has to meet the following
+     requirements:
+
+     * In case the Data Plane Clusters are to be provisioned through OCM then
+       the GCP Service Account has to be named `osd-ccs-admin`
+     * In case the Data Plane Clusters are to be provisioned through OCM then
+       the following GCP IAM Roles have to be granted to the GCP Service Account:
+       [Required GCP IAM roles](https://docs.openshift.com/container-platform/latest/installing/installing_gcp/installing-gcp-account.html#installation-gcp-permissions_installing-gcp-account).
+       See [Manage Service Account access](https://cloud.google.com/iam/docs/manage-access-service-accounts#single-role)
+       for details on how to do it
+
+   In order to configure GCP Service Account JSON credentials for Fleet Manager
+   retrieve them from GCP and configure them. To do so the following
+   alternatives are available:
+   * Copy the contents of the JSON credentials into the
+     `secrets/gcp.api-credentials` file
+   * Run the  `gcp/setup/credentials` Makefile target providing the JSON
+     credentials content as a base64-encoded string in the `GCP_API_CREDENTIALS`
+     environment variable. To do so run:
+     ```bash
+     GCP_API_CREDENTIALS="<base64-encoded-gcp-serviceaccount-credentials>" make gcp/setup/credentials
+     ```
+
+   Finally, make sure that `gcp` is listed as a supported Cloud Provider with at
+   least one configured [GCP region](https://cloud.google.com/compute/docs/regions-zones)
+   in Fleet Manager in the `config/provider-configuration.yaml` configuration
+   file. See the documentation in that file for detail on the configuration
+   schema.
+
 1. Setup MAS SSO configuration
      * keycloak cert
        ```
