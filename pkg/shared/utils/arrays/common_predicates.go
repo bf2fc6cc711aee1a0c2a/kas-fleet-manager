@@ -36,6 +36,30 @@ func StringEqualsIgnoreCasePredicate[T string | *string](value T) PredicateFunc[
 	}
 }
 
+func StringHasPrefixIgnoreCasePredicate[T string | *string](value T) PredicateFunc[T] {
+	return func(prefix T) bool {
+		return shared.StringHasPrefixIgnoreCase(value, prefix)
+	}
+}
+
+func StringHasNotPrefixIgnoreCasePredicate[T string | *string](value T) PredicateFunc[T] {
+	return func(prefix T) bool {
+		return !shared.StringHasPrefixIgnoreCase(value, prefix)
+	}
+}
+
+func StringHasSuffixIgnoreCasePredicate[T string | *string](value T) PredicateFunc[T] {
+	return func(suffix T) bool {
+		return shared.StringHasSuffixIgnoreCase(value, suffix)
+	}
+}
+
+func StringHasNotSuffixIgnoreCasePredicate[T string | *string](value T) PredicateFunc[T] {
+	return func(suffix T) bool {
+		return !shared.StringHasSuffixIgnoreCase(value, suffix)
+	}
+}
+
 // CompositePredicateAll - returns a composed predicate that will return `true` when all the passed predicates returns `true`
 func CompositePredicateAll[T any](predicates ...PredicateFunc[T]) PredicateFunc[T] {
 	return func(x T) bool {

@@ -3,7 +3,6 @@ package quota
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
@@ -28,8 +27,8 @@ type QuotaManagementListService struct {
 
 var _ services.QuotaService = &QuotaManagementListService{}
 
-// ValidateBillingAccount - don't validate billing accounts when using the quota list
-func (q QuotaManagementListService) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+// don't validate billing accounts when using the quota list
+func (q QuotaManagementListService) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
 	return nil
 }
 

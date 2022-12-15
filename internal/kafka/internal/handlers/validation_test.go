@@ -655,7 +655,7 @@ func TestValidateBillingCloudAccountIdAndMarketplace(t *testing.T) {
 					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
 						return types.DEVELOPER, nil
 					},
-					ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+					ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
 						return nil
 					},
 				},
@@ -674,7 +674,7 @@ func TestValidateBillingCloudAccountIdAndMarketplace(t *testing.T) {
 					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
 						return types.DEVELOPER, nil
 					},
-					ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+					ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
 						return errors.GeneralError("error assigning instance type")
 					},
 				},
@@ -693,7 +693,7 @@ func TestValidateBillingCloudAccountIdAndMarketplace(t *testing.T) {
 					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
 						return "", errors.New(errors.ErrorGeneral, "error assigning instance type: ")
 					},
-					ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+					ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
 						return nil
 					},
 				},

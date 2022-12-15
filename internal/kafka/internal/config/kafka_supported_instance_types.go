@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
@@ -37,6 +38,21 @@ type KafkaBillingModel struct {
 	AMSBillingModels []string `yaml:"ams_billing_models" validate:"min=1,unique,ams_billing_models_validator"`
 }
 
+func (kbm *KafkaBillingModel) HasSupportForAMSBillingModel(amsBillingModel string) bool {
+	return arrays.AnyMatch(kbm.AMSBillingModels, arrays.StringEqualsIgnoreCasePredicate(amsBillingModel))
+}
+
+func (kbm *KafkaBillingModel) HasSupportForMarketplace() bool {
+	return arrays.AnyMatch(kbm.AMSBillingModels, arrays.CompositePredicateAny(
+		arrays.StringHasPrefixIgnoreCasePredicate("marketplace-"),
+		arrays.StringEqualsIgnoreCasePredicate("marketplace")),
+	)
+}
+
+func (kbm *KafkaBillingModel) HasSupportForStandard() bool {
+	return arrays.AnyMatch(kbm.AMSBillingModels, arrays.StringEqualsIgnoreCasePredicate("standard"))
+}
+
 func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(sizeId string) (*KafkaInstanceSize, error) {
 	for _, size := range kp.Sizes {
 		if size.Id == sizeId {
@@ -48,12 +64,10 @@ func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(sizeId string) (*KafkaInst
 }
 
 func (kp *KafkaInstanceType) GetKafkaSupportedBillingModelByID(kafkaBillingModelID string) (*KafkaBillingModel, error) {
-	for _, supportedBillingModel := range kp.SupportedBillingModels {
-		if supportedBillingModel.ID == kafkaBillingModelID {
-			ret := supportedBillingModel
-			return &ret, nil
-		}
+	if idx, billingModel := arrays.FindFirst(kp.SupportedBillingModels, func(x KafkaBillingModel) bool { return shared.StringEqualsIgnoreCase(x.ID, kafkaBillingModelID) }); idx != -1 {
+		return &billingModel, nil
 	}
+
 	return nil, fmt.Errorf("kafka supported billing model id: '%s' not found for '%s' instance type", kafkaBillingModelID, kp.Id)
 }
 
