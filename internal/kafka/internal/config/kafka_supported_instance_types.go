@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
@@ -29,28 +30,6 @@ type KafkaInstanceType struct {
 	DisplayName            string              `yaml:"display_name"`
 	Sizes                  []KafkaInstanceSize `yaml:"sizes"`
 	SupportedBillingModels []KafkaBillingModel `yaml:"supported_billing_models" validate:"min=1,unique=ID,dive"`
-}
-
-type KafkaBillingModel struct {
-	ID               string   `yaml:"id" validate:"required"`
-	AMSResource      string   `yaml:"ams_resource" validate:"required,ams_resource_validator"`
-	AMSProduct       string   `yaml:"ams_product" validate:"required,ams_product_validator"`
-	AMSBillingModels []string `yaml:"ams_billing_models" validate:"min=1,unique,ams_billing_models_validator"`
-}
-
-func (kbm *KafkaBillingModel) HasSupportForAMSBillingModel(amsBillingModel string) bool {
-	return arrays.AnyMatch(kbm.AMSBillingModels, arrays.StringEqualsIgnoreCasePredicate(amsBillingModel))
-}
-
-func (kbm *KafkaBillingModel) HasSupportForMarketplace() bool {
-	return arrays.AnyMatch(kbm.AMSBillingModels, arrays.CompositePredicateAny(
-		arrays.StringHasPrefixIgnoreCasePredicate("marketplace-"),
-		arrays.StringEqualsIgnoreCasePredicate("marketplace")),
-	)
-}
-
-func (kbm *KafkaBillingModel) HasSupportForStandard() bool {
-	return arrays.AnyMatch(kbm.AMSBillingModels, arrays.StringEqualsIgnoreCasePredicate("standard"))
 }
 
 func (kp *KafkaInstanceType) GetKafkaInstanceSizeByID(sizeId string) (*KafkaInstanceSize, error) {
@@ -131,6 +110,28 @@ func (kp *KafkaInstanceType) validate() error {
 	}
 
 	return nil
+}
+
+type KafkaBillingModel struct {
+	ID               string   `yaml:"id" validate:"required"`
+	AMSResource      string   `yaml:"ams_resource" validate:"required,ams_resource_validator"`
+	AMSProduct       string   `yaml:"ams_product" validate:"required,ams_product_validator"`
+	AMSBillingModels []string `yaml:"ams_billing_models" validate:"min=1,unique,ams_billing_models_validator"`
+}
+
+func (kbm *KafkaBillingModel) HasSupportForAMSBillingModel(amsBillingModel string) bool {
+	return arrays.AnyMatch(kbm.AMSBillingModels, arrays.StringEqualsIgnoreCasePredicate(amsBillingModel))
+}
+
+func (kbm *KafkaBillingModel) HasSupportForMarketplace() bool {
+	return arrays.AnyMatch(kbm.AMSBillingModels, arrays.CompositePredicateAny(
+		arrays.StringHasPrefixIgnoreCasePredicate("marketplace-"),
+		arrays.StringEqualsIgnoreCasePredicate("marketplace")),
+	)
+}
+
+func (kbm *KafkaBillingModel) HasSupportForStandard() bool {
+	return arrays.AnyMatch(kbm.AMSBillingModels, arrays.StringEqualsIgnoreCasePredicate("standard"))
 }
 
 type KafkaInstanceSize struct {

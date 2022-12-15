@@ -83,6 +83,8 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	}
 
 	kafkaHandler := handlers.NewKafkaHandler(s.Kafka, s.ProviderConfig, s.AuthService, s.KafkaConfig)
+	kafkaPromoteValidatorFactory := handlers.NewDefaultKafkaPromoteValidatorFactory(s.KafkaConfig)
+	kafkaPromoteHandler := handlers.NewKafkaPromoteHandler(s.Kafka, s.KafkaConfig, kafkaPromoteValidatorFactory)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig, s.Kafka, s.ClusterPlacementStrategy, s.KafkaConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)
@@ -139,6 +141,12 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	apiV1KafkasCreateRouter := apiV1KafkasRouter.NewRoute().Subrouter()
 	apiV1KafkasCreateRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	apiV1KafkasCreateRouter.Use(requireTermsAcceptance)
+
+	// /kafkas/{id}/promote
+	apiV1KafkasPromoteRouter := apiV1KafkasRouter.PathPrefix("/{id}/promote").Subrouter()
+	apiV1KafkasPromoteRouter.HandleFunc("", kafkaPromoteHandler.Promote).
+		Name(logger.NewLogEvent("promote-kafka", "promote a kafka instance").ToString()).
+		Methods(http.MethodPost)
 
 	//  /kafkas/{id}/metrics
 	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()

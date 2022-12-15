@@ -111,6 +111,8 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		BillingCloudAccountId:                 kafkaRequest.BillingCloudAccountId,
 		Marketplace:                           kafkaRequest.Marketplace,
 		BillingModel:                          kafkaRequest.ActualKafkaBillingModel,
+		PromotionStatus:                       kafkaRequest.PromotionStatus.String(),
+		PromotionDetails:                      kafkaRequest.PromotionDetails,
 	}, nil
 }
 
