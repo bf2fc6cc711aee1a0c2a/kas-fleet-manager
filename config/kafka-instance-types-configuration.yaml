@@ -95,7 +95,7 @@ supported_instance_types:
   - id: developer
     display_name: Trial
     supported_billing_models:
-    - id: trial
+    - id: standard
       ams_resource: rhosak
       ams_product: RHOSAKTrial
       ams_billing_models:

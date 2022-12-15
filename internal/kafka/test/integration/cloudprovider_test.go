@@ -129,7 +129,7 @@ var mockSupportedInstanceTypes = &config.KafkaSupportedInstanceTypesConfig{
 				DisplayName: "Trial",
 				SupportedBillingModels: []config.KafkaBillingModel{
 					config.KafkaBillingModel{
-						ID:          "trial",
+						ID:          "standard",
 						AMSResource: "rhosak",
 						AMSProduct:  "RHOSAKTrial",
 						AMSBillingModels: []string{
