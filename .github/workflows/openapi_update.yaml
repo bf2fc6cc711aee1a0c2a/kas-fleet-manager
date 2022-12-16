@@ -5,6 +5,7 @@ on:
       - main
     paths:
       - "openapi/*.yaml"
+  workflow_dispatch:
 
 jobs:
   dispatch:
