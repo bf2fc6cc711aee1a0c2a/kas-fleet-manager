@@ -12,6 +12,23 @@
 #   - [required] ams_resource: AMS resource to be used. Accepted values: ['rhosak']
 #   - [required] ams_product: AMS product to be used. Accepted values: ['RHOSAK', 'RHOSAKTrial', 'RHOSAKEval']
 #   - [required] ams_billing_models: List of AMS available billing models: Accepted values: ['marketplace', 'marketplace-rhm', 'marketplace-aws']
+#   - [optional] grace_period_days: The length of time in days when a Kafka instance is set to be in a 'grace period'. Default value: 0, minimum value: 0
+#                                   This configuration only applies to kafka billing models that can be 'promoted' to another kafka billing model. 
+#  
+#                                   A Kafka instance enters a 'grace period' when a user or an organisation's subscription is no longer valid 
+#                                   (i.e. subscription in AMS expires). 
+#                                   During this grace period, the Kafka instance status changes to 'suspended' and the only action a user can perform 
+#                                   is to 'promote' their Kafka instance to use a valid subscription of another kafka billing model.
+#                                   If the Kafka instance has not been promoted by the end of the grace period, the Kafka expires and is marked for deletion.
+# 
+#                                   If this field is not specified or is set to 0, Kafka instances with this instance type and billing model are not given
+#                                   any grace period. In this case, when the user or organisation's subscription is no longer valid, the Kafka instance 
+#                                   expires (marked for deletion) immediately.
+#                                   
+#                                   Please note that lifespanSeconds takes precedence over this configuration if its specified for the instance type. 
+#                                   E.g. An instance type has a lifespanSeconds of 172800 (2 days) and the kafka billing model has a grace period of 10 days.
+#                                   If the subscription expires 1 day after the Kafka instance was created, it will be set to expire (marked for deletion)
+#                                   2 days after its creation date without fully completing the 10 day grace period.
 #
 # The following properties must be defined for each size (all values must be larger than '0'):
 #   - id: The size identifier. Each size id should be unique.
@@ -55,6 +72,7 @@ supported_instance_types:
       ams_product: RHOSAKEval
       ams_billing_models:
       - standard
+      grace_period_days: 4
     sizes:
     - id: x1
       display_name: "1"

@@ -1135,6 +1135,34 @@ func TestKafkaSupportedSizesConfig_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "Should return an error when grace_period_days is invalid",
+			configFactoryFunc: func() SupportedKafkaInstanceTypesConfig {
+				testKafkaInstanceSizex1 := buildTestStandardKafkaInstanceSize()
+				res := SupportedKafkaInstanceTypesConfig{
+					SupportedKafkaInstanceTypes: []KafkaInstanceType{
+						{
+							Id:          "standard",
+							DisplayName: "Standard",
+							Sizes: []KafkaInstanceSize{
+								testKafkaInstanceSizex1,
+							},
+							SupportedBillingModels: []KafkaBillingModel{
+								{
+									ID:               "standard",
+									AMSProduct:       string(ocm.RHOSAKProduct),
+									AMSBillingModels: []string{string(amsv1.BillingModelStandard)},
+									AMSResource:      ocm.RHOSAKResourceName,
+									GracePeriodDays:  -1,
+								},
+							},
+						},
+					},
+				}
+				return res
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, testcase := range tests {
@@ -1258,6 +1286,7 @@ func buildTestSupportedBillingModels() []KafkaBillingModel {
 			AMSResource:      ocm.RHOSAKResourceName,
 			AMSProduct:       string(ocm.RHOSAKProduct),
 			AMSBillingModels: []string{string(amsv1.BillingModelMarketplaceAWS)},
+			GracePeriodDays:  0,
 		},
 	}
 }
