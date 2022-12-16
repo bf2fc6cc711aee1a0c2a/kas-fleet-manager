@@ -117,6 +117,7 @@ type KafkaBillingModel struct {
 	AMSResource      string   `yaml:"ams_resource" validate:"required,ams_resource_validator"`
 	AMSProduct       string   `yaml:"ams_product" validate:"required,ams_product_validator"`
 	AMSBillingModels []string `yaml:"ams_billing_models" validate:"min=1,unique,ams_billing_models_validator"`
+	GracePeriodDays  int      `yaml:"grace_period_days" validate:"min=0"`
 }
 
 func (kbm *KafkaBillingModel) HasSupportForAMSBillingModel(amsBillingModel string) bool {
