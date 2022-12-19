@@ -24,27 +24,27 @@ func (r *cloudAccountBillingModelResolver) SupportRequest(kafka *dbapi.KafkaRequ
 	return kafka.BillingCloudAccountId != ""
 }
 
-func (r *cloudAccountBillingModelResolver) Resolve(orgId string, kafka *dbapi.KafkaRequest) (BillingModelDetails, error) {
+func (r *cloudAccountBillingModelResolver) Resolve(orgID string, kafka *dbapi.KafkaRequest) (BillingModelDetails, error) {
 	kafkaBillingModel, err := r.kafkaConfig.GetBillingModelByID(kafka.InstanceType, "marketplace")
 	if err != nil {
 		return BillingModelDetails{}, err
 	}
 
-	return r.resolve(orgId, kafka, kafkaBillingModel)
+	return r.resolve(orgID, kafka, kafkaBillingModel)
 }
 
 // resolve - tries to resolve the AMS Billing Model by performing the following checks:
 // 1) Tries to retrieve the cloud account. A failure here will result in an error.
 // 2) Checks if the user has sufficient marketplace quota. If not, an error is returned.
-// 3) Tries to get the marketplace associated with the cloud provider.
+// 3) Tries to get the marketplace associated with the cloud provider (if not already provided in the request).
 // 4) If the kafka billing model supports the marketplace detected in [3], we have found id, otherwise an error is returned.
-func (r *cloudAccountBillingModelResolver) resolve(orgId string, kafka *dbapi.KafkaRequest, kafkaBillingModel config.KafkaBillingModel) (BillingModelDetails, error) {
+func (r *cloudAccountBillingModelResolver) resolve(orgID string, kafka *dbapi.KafkaRequest, kafkaBillingModel config.KafkaBillingModel) (BillingModelDetails, error) {
 	kafkaInstanceSize, err := r.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
 	if err != nil {
 		return BillingModelDetails{}, errors.NewWithCause(errors.ErrorGeneral, err, "error reserving quota")
 	}
 
-	quotaCosts, err := r.quotaConfigProvider.GetQuotaCostsForProduct(orgId, kafkaBillingModel.AMSResource, kafkaBillingModel.AMSProduct)
+	quotaCosts, err := r.quotaConfigProvider.GetQuotaCostsForProduct(orgID, kafkaBillingModel.AMSResource, kafkaBillingModel.AMSProduct)
 	if err != nil {
 		return BillingModelDetails{}, errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, kafkaBillingModel.AMSProduct)
 	}

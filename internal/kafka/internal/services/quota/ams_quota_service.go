@@ -80,14 +80,14 @@ func (q amsQuotaService) billingModelMatches(computedBillingModel string, reques
 }
 
 func (q amsQuotaService) validateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, kafkaBillingModel config.KafkaBillingModel, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
-	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(organisationId)
+	orgID, err := q.amsClient.GetOrganisationIdFromExternalId(organisationId)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("error checking quota: failed to get organization with external id %v", organisationId))
 	}
 
-	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgId, kafkaBillingModel.AMSResource, kafkaBillingModel.AMSProduct)
+	quotaCosts, err := q.amsClient.GetQuotaCostsForProduct(orgID, kafkaBillingModel.AMSResource, kafkaBillingModel.AMSProduct)
 	if err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("error checking quota: failed to get assigned quota of type %s/%s for organization with id %v", instanceType.String(), kafkaBillingModel.ID, orgId))
+		return errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("error checking quota: failed to get assigned quota for %s/%s to organization with id %v", instanceType.String(), kafkaBillingModel.ID, orgID))
 	}
 
 	var matchingBillingAccounts = 0
@@ -156,14 +156,14 @@ func (q amsQuotaService) ValidateBillingAccount(organisationId string, instanceT
 }
 
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(username string, externalId string, instanceType types.KafkaInstanceType, kafkaBillingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
-	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(externalId)
+	orgID, err := q.amsClient.GetOrganisationIdFromExternalId(externalId)
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("error checking quota: failed to get organization with external id %v", externalId))
 	}
 
-	hasQuota, err := q.hasConfiguredQuotaCost(orgId, kafkaBillingModel)
+	hasQuota, err := q.hasConfiguredQuotaCost(orgID, kafkaBillingModel)
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("error checking quota: failed to get assigned quota of type %v for organization with id %v", kafkaBillingModel.AMSProduct, orgId))
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("error checking quota: failed to get assigned quota of type %v for organization with id %v", kafkaBillingModel.AMSProduct, orgID))
 	}
 
 	return hasQuota, nil
@@ -205,14 +205,14 @@ func (q amsQuotaService) hasConfiguredQuotaCost(organizationID string, kafkaBill
 }
 
 func (q amsQuotaService) getBillingModel(kafka *dbapi.KafkaRequest) (config.KafkaBillingModel, string, error) {
-	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(kafka.OrganisationId)
+	orgID, err := q.amsClient.GetOrganisationIdFromExternalId(kafka.OrganisationId)
 	if err != nil {
-		return config.KafkaBillingModel{}, "", errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("error checking quota: failed to get organization with external id %v", orgId))
+		return config.KafkaBillingModel{}, "", errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("error checking quota: failed to get organization with external id %v", orgID))
 	}
 
 	resolver := utils.NewBillingModelResolver(q.amsClient, q.kafkaConfig)
 
-	resolvedBillingModel, err := resolver.Resolve(orgId, kafka)
+	resolvedBillingModel, err := resolver.Resolve(orgID, kafka)
 
 	if err != nil {
 		return config.KafkaBillingModel{}, "", errors.NewWithCause(errors.ErrorInsufficientQuota, err, "unable to detect billing model")
