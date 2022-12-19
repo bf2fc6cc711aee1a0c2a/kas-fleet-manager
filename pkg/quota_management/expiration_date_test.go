@@ -2,11 +2,12 @@ package quota_management
 
 import (
 	"encoding/json"
-	"github.com/onsi/gomega"
-	"gopkg.in/yaml.v3"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/onsi/gomega"
+	"gopkg.in/yaml.v2"
 )
 
 func Test_UnmarshalJson(t *testing.T) {
