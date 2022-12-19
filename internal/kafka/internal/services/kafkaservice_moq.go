@@ -101,7 +101,7 @@ var _ KafkaService = &KafkaServiceMock{}
 //			UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *apiErrors.ServiceError {
 //				panic("mock out the Updates method")
 //			},
-//			ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
+//			ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
 //				panic("mock out the ValidateBillingAccount method")
 //			},
 //			VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError {
@@ -190,7 +190,7 @@ type KafkaServiceMock struct {
 	UpdatesFunc func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *apiErrors.ServiceError
 
 	// ValidateBillingAccountFunc mocks the ValidateBillingAccount method.
-	ValidateBillingAccountFunc func(externalId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError
+	ValidateBillingAccountFunc func(externalId string, instanceType types.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError
 
 	// VerifyAndUpdateKafkaAdminFunc mocks the VerifyAndUpdateKafkaAdmin method.
 	VerifyAndUpdateKafkaAdminFunc func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError
@@ -334,8 +334,8 @@ type KafkaServiceMock struct {
 			ExternalId string
 			// InstanceType is the instanceType argument value.
 			InstanceType types.KafkaInstanceType
-			// BillingModelID is the billingModelID argument value.
-			BillingModelID string
+			// KafkaBillingModelID is the kafkaBillingModelID argument value.
+			KafkaBillingModelID string
 			// BillingCloudAccountId is the billingCloudAccountId argument value.
 			BillingCloudAccountId string
 			// Marketplace is the marketplace argument value.
@@ -1187,27 +1187,27 @@ func (mock *KafkaServiceMock) UpdatesCalls() []struct {
 }
 
 // ValidateBillingAccount calls ValidateBillingAccountFunc.
-func (mock *KafkaServiceMock) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
+func (mock *KafkaServiceMock) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
 	if mock.ValidateBillingAccountFunc == nil {
 		panic("KafkaServiceMock.ValidateBillingAccountFunc: method is nil but KafkaService.ValidateBillingAccount was just called")
 	}
 	callInfo := struct {
 		ExternalId            string
 		InstanceType          types.KafkaInstanceType
-		BillingModelID        string
+		KafkaBillingModelID   string
 		BillingCloudAccountId string
 		Marketplace           *string
 	}{
 		ExternalId:            externalId,
 		InstanceType:          instanceType,
-		BillingModelID:        billingModelID,
+		KafkaBillingModelID:   kafkaBillingModelID,
 		BillingCloudAccountId: billingCloudAccountId,
 		Marketplace:           marketplace,
 	}
 	mock.lockValidateBillingAccount.Lock()
 	mock.calls.ValidateBillingAccount = append(mock.calls.ValidateBillingAccount, callInfo)
 	mock.lockValidateBillingAccount.Unlock()
-	return mock.ValidateBillingAccountFunc(externalId, instanceType, billingModelID, billingCloudAccountId, marketplace)
+	return mock.ValidateBillingAccountFunc(externalId, instanceType, kafkaBillingModelID, billingCloudAccountId, marketplace)
 }
 
 // ValidateBillingAccountCalls gets all the calls that were made to ValidateBillingAccount.
@@ -1217,14 +1217,14 @@ func (mock *KafkaServiceMock) ValidateBillingAccount(externalId string, instance
 func (mock *KafkaServiceMock) ValidateBillingAccountCalls() []struct {
 	ExternalId            string
 	InstanceType          types.KafkaInstanceType
-	BillingModelID        string
+	KafkaBillingModelID   string
 	BillingCloudAccountId string
 	Marketplace           *string
 } {
 	var calls []struct {
 		ExternalId            string
 		InstanceType          types.KafkaInstanceType
-		BillingModelID        string
+		KafkaBillingModelID   string
 		BillingCloudAccountId string
 		Marketplace           *string
 	}
