@@ -2,6 +2,7 @@ package quota
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/quota/internal/test"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -50,6 +51,12 @@ var ocmClientMockWithCloudAccounts = &ocm.ClientMock{
 }
 
 func Test_AMSGetBillingModel(t *testing.T) {
+
+	var amsDefaultKafkaConf = config.KafkaConfig{
+		Quota:                  config.NewKafkaQuotaConfig(),
+		SupportedInstanceTypes: test.NewAMSTestKafkaSupportedInstanceTypesConfig(),
+	}
+
 	type fields struct {
 		ocmClient   ocm.Client
 		kafkaConfig *config.KafkaConfig
@@ -116,7 +123,7 @@ func Test_AMSGetBillingModel(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr:                  false,
 			wantMatch:                true,
@@ -166,7 +173,7 @@ func Test_AMSGetBillingModel(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr:                  false,
 			wantMatch:                true,
@@ -216,7 +223,7 @@ func Test_AMSGetBillingModel(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr:                  false,
 			wantMatch:                true,
@@ -262,7 +269,7 @@ func Test_AMSGetBillingModel(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr:                  false,
 			wantMatch:                true,
@@ -308,7 +315,7 @@ func Test_AMSGetBillingModel(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr:                  true,
 			wantMatch:                false,
@@ -356,7 +363,7 @@ func Test_AMSGetBillingModel(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr:                  true,
 			wantMatch:                false,
@@ -404,7 +411,7 @@ func Test_AMSGetBillingModel(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr:                  true,
 			wantMatch:                false,
@@ -456,7 +463,7 @@ func Test_AMSGetBillingModel(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr:                  false,
 			wantMatch:                true,
@@ -510,7 +517,7 @@ func Test_AMSGetBillingModel(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr:                  false,
 			wantMatch:                true,
@@ -561,7 +568,7 @@ func Test_AMSGetBillingModel(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr:                  true,
 			wantErrMsg:               "KAFKAS-MGMT-120: unable to detect billing model\n caused by: KAFKAS-MGMT-120: Insufficient quota: marketplace value 'aws' is not compatible with billing model 'standard'",
@@ -607,7 +614,7 @@ func Test_AMSGetBillingModel(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr:                  true,
 			wantErrMsg:               "Insufficient quota: no quota available for any of the matched kafka billing models [marketplace]",
@@ -642,6 +649,11 @@ func Test_AMSGetBillingModel(t *testing.T) {
 }
 
 func Test_AMSValidateBillingAccount(t *testing.T) {
+	var amsDefaultKafkaConf = config.KafkaConfig{
+		Quota:                  config.NewKafkaQuotaConfig(),
+		SupportedInstanceTypes: test.NewAMSTestKafkaSupportedInstanceTypesConfig(),
+	}
+
 	type fields struct {
 		ocmClient   ocm.Client
 		kafkaConfig *config.KafkaConfig
@@ -666,7 +678,7 @@ func Test_AMSValidateBillingAccount(t *testing.T) {
 			},
 			fields: fields{
 				ocmClient:   ocmClientMockWithCloudAccounts,
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr: false,
 		},
@@ -679,7 +691,7 @@ func Test_AMSValidateBillingAccount(t *testing.T) {
 			},
 			fields: fields{
 				ocmClient:   ocmClientMockWithCloudAccounts,
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr: false,
 		},
@@ -692,7 +704,7 @@ func Test_AMSValidateBillingAccount(t *testing.T) {
 			},
 			fields: fields{
 				ocmClient:   ocmClientMockWithCloudAccounts,
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -705,7 +717,7 @@ func Test_AMSValidateBillingAccount(t *testing.T) {
 			},
 			fields: fields{
 				ocmClient:   ocmClientMockWithCloudAccounts,
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -718,7 +730,7 @@ func Test_AMSValidateBillingAccount(t *testing.T) {
 			},
 			fields: fields{
 				ocmClient:   ocmClientMockWithCloudAccounts,
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -756,7 +768,7 @@ func Test_AMSValidateBillingAccount(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -776,6 +788,11 @@ func Test_AMSValidateBillingAccount(t *testing.T) {
 }
 
 func Test_AMSCheckQuota(t *testing.T) {
+	var amsDefaultKafkaConf = config.KafkaConfig{
+		Quota:                  config.NewKafkaQuotaConfig(),
+		SupportedInstanceTypes: test.NewAMSTestKafkaSupportedInstanceTypesConfig(),
+	}
+
 	type fields struct {
 		ocmClient   *ocm.ClientMock
 		kafkaConfig *config.KafkaConfig
@@ -828,7 +845,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr: false,
 		},
@@ -873,7 +890,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -901,7 +918,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return []*v1.QuotaCost{}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -936,7 +953,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -968,7 +985,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 			g.Expect(tt.fields.ocmClient.GetQuotaCostsForProductCalls()[0].Product).To(gomega.Equal("RHOSAK"))
 			g.Expect(tt.fields.ocmClient.GetQuotaCostsForProductCalls()[0].Product).To(gomega.Equal(bm.AMSProduct))
 			g.Expect(sq).To(gomega.Equal(tt.args.hasStandardQuota))
-			bm, err1 = tt.fields.kafkaConfig.GetBillingModelByID(types.DEVELOPER.String(), "trial")
+			bm, err1 = tt.fields.kafkaConfig.GetBillingModelByID(types.DEVELOPER.String(), "standard")
 			g.Expect(err1).ToNot(gomega.HaveOccurred())
 			eq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, types.DEVELOPER, bm)
 			g.Expect(err).ToNot(gomega.HaveOccurred())
@@ -984,6 +1001,11 @@ func Test_AMSCheckQuota(t *testing.T) {
 }
 
 func Test_AMSReserveQuota(t *testing.T) {
+	var amsDefaultKafkaConf = config.KafkaConfig{
+		Quota:                  config.NewKafkaQuotaConfig(),
+		SupportedInstanceTypes: test.NewAMSTestKafkaSupportedInstanceTypesConfig(),
+	}
+
 	type fields struct {
 		ocmClient   ocm.Client
 		kafkaConfig *config.KafkaConfig
@@ -1041,12 +1063,12 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return nil, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantAMSBillingModel:          string(v1.BillingModelStandard),
 			wantSubscriptionID:           "1234",
-			wantDesiredKafkaBillingModel: "trial",
-			wantActualKafkaBillingModel:  "trial",
+			wantDesiredKafkaBillingModel: "standard",
+			wantActualKafkaBillingModel:  "standard",
 			wantErr:                      false,
 		},
 		{
@@ -1077,7 +1099,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantAMSBillingModel:          string(v1.BillingModelMarketplace),
 			wantSubscriptionID:           "1234",
@@ -1118,7 +1140,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb1, qcb2}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantAMSBillingModel:          string(v1.BillingModelStandard),
 			wantDesiredKafkaBillingModel: "standard",
@@ -1159,7 +1181,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb2, qcb1}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantAMSBillingModel:          string(v1.BillingModelMarketplace),
 			wantDesiredKafkaBillingModel: "marketplace",
@@ -1195,7 +1217,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb1}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantAMSBillingModel:          string(v1.BillingModelMarketplace),
 			wantDesiredKafkaBillingModel: "marketplace",
@@ -1236,7 +1258,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb2, qcb1}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -1263,7 +1285,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -1300,7 +1322,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb1, qcb2}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr: true,
 		},
@@ -1329,7 +1351,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr:                      true,
 			wantDesiredKafkaBillingModel: "marketplace",
@@ -1371,7 +1393,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantSubscriptionID:           "1234",
 			wantAMSBillingModel:          string(v1.BillingModelMarketplaceAWS),
@@ -1414,7 +1436,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantSubscriptionID:           "1234",
 			wantAMSBillingModel:          string(v1.BillingModelMarketplace),
@@ -1456,7 +1478,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantSubscriptionID:           "1234",
 			wantAMSBillingModel:          string(v1.BillingModelMarketplace),
@@ -1503,7 +1525,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb1, qcb2}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantSubscriptionID:           "1234",
 			wantAMSBillingModel:          string(v1.BillingModelStandard),
@@ -1546,7 +1568,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return []*v1.QuotaCost{qcb}, nil
 					},
 				},
-				kafkaConfig: &defaultKafkaConf,
+				kafkaConfig: &amsDefaultKafkaConf,
 			},
 			wantErr:                      true,
 			wantDesiredKafkaBillingModel: "marketplace",
@@ -1593,6 +1615,11 @@ func Test_AMSReserveQuota(t *testing.T) {
 }
 
 func Test_Delete_Quota(t *testing.T) {
+	var amsDefaultKafkaConf = config.KafkaConfig{
+		Quota:                  config.NewKafkaQuotaConfig(),
+		SupportedInstanceTypes: test.NewAMSTestKafkaSupportedInstanceTypesConfig(),
+	}
+
 	type fields struct {
 		ocmClient ocm.Client
 	}
@@ -1643,7 +1670,7 @@ func Test_Delete_Quota(t *testing.T) {
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
-			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, &defaultKafkaConf)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, &amsDefaultKafkaConf)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			err := quotaService.DeleteQuota(tt.args.subscriptionId)
 			if (err != nil) != tt.wantErr {
@@ -1654,6 +1681,11 @@ func Test_Delete_Quota(t *testing.T) {
 }
 
 func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
+	var amsDefaultKafkaConf = config.KafkaConfig{
+		Quota:                  config.NewKafkaQuotaConfig(),
+		SupportedInstanceTypes: test.NewAMSTestKafkaSupportedInstanceTypesConfig(),
+	}
+
 	type args struct {
 		kafkaRequest      *dbapi.KafkaRequest
 		kafkaInstanceType types.KafkaInstanceType
@@ -1822,7 +1854,7 @@ func Test_amsQuotaService_CheckIfQuotaIsDefinedForInstanceType(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.ocmClient, nil, nil, &defaultKafkaConf)
+			quotaServiceFactory := NewDefaultQuotaServiceFactory(tt.ocmClient, nil, nil, &amsDefaultKafkaConf)
 			quotaService, _ := quotaServiceFactory.GetQuotaService(api.AMSQuotaType)
 
 			// FIXME: fix when implementing support for KAFKA BILLING MODELS
