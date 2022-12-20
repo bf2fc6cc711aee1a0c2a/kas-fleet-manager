@@ -1,5 +1,7 @@
 # Deploying KAS Fleet Manager to OpenShift
 
+The minimum OpenShift version supported is OpenShift 4.11.
+
 - [Deploying KAS Fleet Manager to OpenShift](#deploying-kas-fleet-manager-to-openshift)
   - [Create a Namespace](#create-a-namespace)
   - [Build and Push the KAS Fleet Manager Image to a Registry](#build-and-push-the-kas-fleet-manager-image-to-a-registry)

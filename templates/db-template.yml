@@ -99,8 +99,10 @@ objects:
           labels:
             name: ${DATABASE_SERVICE_NAME}
         spec:
+          securityContext:
+            runAsNonRoot: true
           containers:
-            - capabilities: {}
+            - name: postgresql
               env:
                 - name: POSTGRESQL_USER
                   valueFrom:
@@ -126,7 +128,6 @@ objects:
                     - --live
                 initialDelaySeconds: 120
                 timeoutSeconds: 10
-              name: postgresql
               ports:
                 - containerPort: 5432
                   protocol: TCP
@@ -137,8 +138,10 @@ objects:
                 initialDelaySeconds: 5
                 timeoutSeconds: 1
               securityContext:
-                capabilities: {}
-                privileged: false
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                  - ALL
               terminationMessagePath: /dev/termination-log
               volumeMounts:
                 - mountPath: /var/lib/pgsql/data
