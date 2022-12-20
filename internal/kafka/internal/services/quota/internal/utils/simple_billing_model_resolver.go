@@ -31,7 +31,7 @@ func (*simpleBillingModelResolver) SupportRequest(kafka *dbapi.KafkaRequest) boo
 // This function checks if for the requested instance type the `standard` and `marketplace` billing model are defined
 // and produces a sorted array contained those billing models (if defined) in the priority order (standard first,
 // marketplace second), then demands the resolving logic to the `resolve` method.
-func (r *simpleBillingModelResolver) Resolve(orgId string, kafka *dbapi.KafkaRequest) (BillingModelDetails, error) {
+func (r *simpleBillingModelResolver) Resolve(orgID string, kafka *dbapi.KafkaRequest) (BillingModelDetails, error) {
 	// try standard and marketplace
 	var kafkaBillingModels []config.KafkaBillingModel
 	standardBillingModel, err := r.kafkaConfig.GetBillingModelByID(kafka.InstanceType, "standard")
@@ -42,36 +42,32 @@ func (r *simpleBillingModelResolver) Resolve(orgId string, kafka *dbapi.KafkaReq
 	if err == nil {
 		kafkaBillingModels = append(kafkaBillingModels, marketplaceBillingModel)
 	}
-	trialBillingModel, err := r.kafkaConfig.GetBillingModelByID(kafka.InstanceType, "trial")
-	if err == nil {
-		kafkaBillingModels = append(kafkaBillingModels, trialBillingModel)
-	}
 
-	return r.resolve(orgId, kafka, kafkaBillingModels)
+	return r.resolve(orgID, kafka, kafkaBillingModels)
 }
 
 // resolve - This method tries to resolve the billing model and, eventually, the marketplace type for the received
 // kafka request among the received kafkaBillingModels. The billing models in the `kafkaBillingModel` array are evaluated
 // in the received order, so that an order of preference can be honored.
 // Parameters:
-// orgId: The organisation ID
+// orgID: The organisation ID
 // kafka: The kafka request received by the user
 // kafkaBillingModels: The list of kafka billing models to be considered, ordered by preference
-func (r *simpleBillingModelResolver) resolve(orgId string, kafka *dbapi.KafkaRequest, kafkaBillingModels []config.KafkaBillingModel) (BillingModelDetails, error) {
+func (r *simpleBillingModelResolver) resolve(orgID string, kafka *dbapi.KafkaRequest, kafkaBillingModels []config.KafkaBillingModel) (BillingModelDetails, error) {
 	kafkaInstanceSize, err := r.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
 	if err != nil {
 		return BillingModelDetails{}, errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
 	}
 
 	for _, kbm := range kafkaBillingModels {
-		available, amsBillingModel, err := r.isBillingModelAvailable(orgId, kbm, kafkaInstanceSize.CapacityConsumed)
+		available, amsBillingModel, err := r.isBillingModelAvailable(orgID, kbm, kafkaInstanceSize.CapacityConsumed)
 		if err != nil {
 			return BillingModelDetails{}, err
 		}
 		if available {
 			// we found the details. now we can refine the `AMSBillingModel` if it is a marketplace
 			if kbm.HasSupportForMarketplace() { // we have only standard and marketplace in this resolver
-				amsBillingModel, err = r.resolveMarketplaceType(orgId, kafka, kbm, amsBillingModel)
+				amsBillingModel, err = r.resolveMarketplaceType(orgID, kafka, kbm, amsBillingModel)
 				if err != nil {
 					return BillingModelDetails{}, err
 				}
@@ -89,8 +85,8 @@ func (r *simpleBillingModelResolver) resolve(orgId string, kafka *dbapi.KafkaReq
 	)
 }
 
-func (r *simpleBillingModelResolver) resolveMarketplaceType(orgId string, kafka *dbapi.KafkaRequest, kafkaBillingModel config.KafkaBillingModel, amsBillingModel string) (string, error) {
-	quotaCosts, err := r.quotaConfigProvider.GetQuotaCostsForProduct(orgId, kafkaBillingModel.AMSResource, kafkaBillingModel.AMSProduct)
+func (r *simpleBillingModelResolver) resolveMarketplaceType(orgID string, kafka *dbapi.KafkaRequest, kafkaBillingModel config.KafkaBillingModel, amsBillingModel string) (string, error) {
+	quotaCosts, err := r.quotaConfigProvider.GetQuotaCostsForProduct(orgID, kafkaBillingModel.AMSResource, kafkaBillingModel.AMSProduct)
 	if err != nil {
 		return "", errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, kafkaBillingModel.AMSProduct)
 	}
@@ -118,14 +114,14 @@ func (r *simpleBillingModelResolver) resolveMarketplaceType(orgId string, kafka 
 	return amsBillingModel, nil
 }
 
-// isBillingModelAvailable - checks if the received billing model is available for the specified orgId.
+// isBillingModelAvailable - checks if the received billing model is available for the specified orgID.
 // A billing model is considered available if all the following conditions are true:
-// 1) Quota costs are defined for the triplet `orgId, resource, product`
+// 1) Quota costs are defined for the triplet `orgID, resource, product`
 // 2) At least one such quota cost has enough available quota to fit the requested instance size
 // 3) At least one of the quota costs detected at point 2 has a billing model supported by the received `kafkaBillingModel` object.
 // If more than one quota_cost satisfies all the previous points, the first one is returned.
-func (r *simpleBillingModelResolver) isBillingModelAvailable(orgId string, kafkaBillingModel config.KafkaBillingModel, requiredSize int) (bool, string, error) {
-	quotaCosts, err := r.quotaConfigProvider.GetQuotaCostsForProduct(orgId, kafkaBillingModel.AMSResource, kafkaBillingModel.AMSProduct)
+func (r *simpleBillingModelResolver) isBillingModelAvailable(orgID string, kafkaBillingModel config.KafkaBillingModel, requiredSize int) (bool, string, error) {
+	quotaCosts, err := r.quotaConfigProvider.GetQuotaCostsForProduct(orgID, kafkaBillingModel.AMSResource, kafkaBillingModel.AMSProduct)
 	if err != nil {
 		return false, "", errors.InsufficientQuotaError("%v: error getting quotas for product %s", err, kafkaBillingModel.AMSProduct)
 	}
