@@ -35,6 +35,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/segment"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -137,9 +138,13 @@ type kafkaService struct {
 	dataplaneClusterConfig   *config.DataplaneClusterConfig
 	providerConfig           *config.ProviderConfig
 	clusterPlacementStrategy ClusterPlacementStrategy
+	segmentClient            *segment.SegmentClientFactory
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService sso.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, providerConfig *config.ProviderConfig, clusterPlacementStrategy ClusterPlacementStrategy) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService sso.KafkaKeycloakService, kafkaConfig *config.KafkaConfig,
+	dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory,
+	authorizationService authorization.Authorization, providerConfig *config.ProviderConfig, clusterPlacementStrategy ClusterPlacementStrategy,
+	segmentClient *segment.SegmentClientFactory) *kafkaService {
 	return &kafkaService{
 		connectionFactory:        connectionFactory,
 		clusterService:           clusterService,
@@ -152,6 +157,7 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService Clu
 		dataplaneClusterConfig:   dataplaneClusterConfig,
 		providerConfig:           providerConfig,
 		clusterPlacementStrategy: clusterPlacementStrategy,
+		segmentClient:            segmentClient,
 	}
 }
 
@@ -374,11 +380,13 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 			err = errors.NewWithCause(errors.ErrorGeneral, err, "unable to validate your request, please try again")
 			logger.Logger.Errorf(err.Reason)
 		}
+		k.segmentClient.Track("Kafka Instance Create", kafkaRequest.Owner, "failed")
 		return err
 	}
 	if !hasCapacity {
 		errorMsg := fmt.Sprintf("capacity exhausted in '%s' region for '%s' instance type", kafkaRequest.Region, kafkaRequest.InstanceType)
 		logger.Logger.Warningf(errorMsg)
+		k.segmentClient.Track("Kafka Instance Create", kafkaRequest.Owner, "failed")
 		return errors.TooManyKafkaInstancesReached(fmt.Sprintf("region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType))
 	}
 
@@ -392,6 +400,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 				logger.Logger.Infof(msg)
 			}
 
+			k.segmentClient.Track("Kafka Instance Create", kafkaRequest.Owner, "failed")
 			return errors.TooManyKafkaInstancesReached(fmt.Sprintf("region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType))
 		}
 
@@ -401,6 +410,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	subscriptionId, err := k.reserveQuota(kafkaRequest)
 
 	if err != nil {
+		k.segmentClient.Track("Kafka Instance Create", kafkaRequest.Owner, "failed")
 		return err
 	}
 
@@ -411,11 +421,13 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	// when creating new kafka - default storage size is assigned
 	instanceType, instanceTypeErr := k.kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafkaRequest.InstanceType)
 	if instanceTypeErr != nil {
+		k.segmentClient.Track("Kafka Instance Create", kafkaRequest.Owner, "failed")
 		return errors.InstanceTypeNotSupported(instanceTypeErr.Error())
 	}
 
 	size, sizeErr := instanceType.GetKafkaInstanceSizeByID(kafkaRequest.SizeId)
 	if sizeErr != nil {
+		k.segmentClient.Track("Kafka Instance Create", kafkaRequest.Owner, "failed")
 		return errors.InstancePlanNotSupported(sizeErr.Error())
 	}
 
@@ -427,11 +439,12 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	// we want to use the correct quota to perform the deletion.
 	kafkaRequest.QuotaType = k.kafkaConfig.Quota.Type
 	if err := dbConn.Create(kafkaRequest).Error; err != nil {
+		k.segmentClient.Track("Kafka Instance Create", kafkaRequest.Owner, "failed")
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create kafka request") //hide the db error to http caller
 	}
 
 	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
-
+	k.segmentClient.Track("Kafka Instance Create", kafkaRequest.Owner, "success")
 	return nil
 }
 
