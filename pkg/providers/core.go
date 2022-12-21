@@ -7,6 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/segment"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/cmd/migrate"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/cmd/serve"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
@@ -21,6 +22,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
+
+	"github.com/segmentio/analytics-go/v3"
 )
 
 func CoreConfigProviders() di.Option {
@@ -94,6 +97,27 @@ func ServiceProviders() di.Option {
 				WithConfiguration(c).
 				WithRealmConfig(c.OSDClusterIDPRealm).
 				Build()
+		}),
+
+		di.Provide(func() *segment.SegmentClientFactory {
+			// The API Key should be read from a secret file
+			// For more information on analytics.Config fields, see https://pkg.go.dev/gopkg.in/segmentio/analytics-go.v3#Config
+			//
+			// Note on API errors: Segment API returns a 200 response for all API requests apart from certain errors which return 400
+			// see https://segment.com/docs/connections/sources/catalog/libraries/server/http-api/#errors for more details.
+			// e.g. The API will return a 200 even if the API Key is invalid.
+			segmentClient, err := segment.NewClientWithConfig("API_KEY", analytics.Config{
+				// Determines when the client will upload all messages in the queue.
+				// By default this is set to 20. The client will only send messages to Segment if the queue reaches this number or if the
+				// Interval was reached first (by default this is every 5 seconds)
+				BatchSize: 1,
+				Logger:    logger.Logger,
+				Verbose:   true,
+			})
+			if err != nil {
+				logger.Logger.Error(err)
+			}
+			return segmentClient
 		}),
 
 		// Types registered as a BootService are started when the env is started
