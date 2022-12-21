@@ -574,8 +574,11 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 	// filter kafka request by owner to only retrieve request of the current authenticated user
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
+		k.segmentClient.Track("Kafka Instance Delete", "", "failed")
 		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
+
+	user, _ := claims.GetUsername()
 
 	dbConn := k.connectionFactory.New()
 
@@ -585,12 +588,12 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 		orgId, _ := claims.GetOrgId()
 		dbConn = dbConn.Where("id = ?", id).Where("organisation_id = ?", orgId)
 	} else {
-		user, _ := claims.GetUsername()
 		dbConn = dbConn.Where("id = ?", id).Where("owner = ? ", user)
 	}
 
 	var kafkaRequest dbapi.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
+		k.segmentClient.Track("Kafka Instance Delete", user, "failed")
 		return services.HandleGetError("KafkaResource", "id", id, err)
 	}
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
@@ -599,10 +602,12 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 
 	if executed, err := k.UpdateStatus(id, deprovisionStatus); executed {
 		if err != nil {
+			k.segmentClient.Track("Kafka Instance Delete", user, "failed")
 			return services.HandleGetError("KafkaResource", "id", id, err)
 		}
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(deprovisionStatus, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
+		k.segmentClient.Track("Kafka Instance Delete", user, "success")
 	}
 
 	return nil
