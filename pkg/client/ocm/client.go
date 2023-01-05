@@ -41,7 +41,8 @@ type Client interface {
 	DeleteCluster(clusterID string) (int, error)
 	ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
 	DeleteSubscription(id string) (int, error)
-	FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error)
+	FindSubscriptions(query string) ([]*amsv1.Subscription, error)
+	GetSubscriptionByID(subscriptionID string) (*amsv1.SubscriptionGetResponse, error)
 	GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error)
 	GetOrganisationIdFromExternalId(externalId string) (string, error)
 	Connection() *sdkClient.Connection
@@ -55,6 +56,7 @@ type Client interface {
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 	// GetCurrentAccount returns the account information of the current authenticated user
 	GetCurrentAccount() (*amsv1.Account, error)
+	GetReservedResourcesBySubscriptionID(subscriptionID string) ([]*amsv1.ReservedResource, error)
 }
 
 var _ Client = &client{}
@@ -469,12 +471,28 @@ func (c client) DeleteSubscription(id string) (int, error) {
 	return resp.Status(), err
 }
 
-func (c client) FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error) {
+func (c client) FindSubscriptions(query string) ([]*amsv1.Subscription, error) {
 	r, err := c.connection.AccountsMgmt().V1().Subscriptions().List().Search(query).Send()
 	if err != nil {
 		return nil, err
 	}
+	return r.Items().Slice(), nil
+}
+
+func (c client) GetSubscriptionByID(subscriptionID string) (*amsv1.SubscriptionGetResponse, error) {
+	r, err := c.connection.AccountsMgmt().V1().Subscriptions().Subscription(subscriptionID).Get().Send()
+	if err != nil {
+		return nil, err
+	}
 	return r, nil
+}
+
+func (c *client) GetReservedResourcesBySubscriptionID(subscriptionID string) ([]*amsv1.ReservedResource, error) {
+	r, err := c.connection.AccountsMgmt().V1().Subscriptions().Subscription(subscriptionID).ReservedResources().List().Send()
+	if err != nil {
+		return nil, err
+	}
+	return r.Items().Slice(), nil
 }
 
 // GetMachinePool returns the machinePoolID associated to clusterID.

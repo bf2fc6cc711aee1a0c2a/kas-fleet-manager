@@ -1,7 +1,12 @@
 package integration
 
 import (
+	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"testing"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
@@ -120,4 +125,109 @@ func TestKafkaPromote_Promote(t *testing.T) {
 	g.Expect(updatedKafka.PromotionDetails).To(gomega.BeEmpty())
 	g.Expect(updatedKafka.Marketplace).To(gomega.Equal("aws"))
 	g.Expect(updatedKafka.BillingCloudAccountId).To(gomega.Equal("123456"))
+}
+
+func TestKafkaPromote_Reconciler(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
+	defer teardown()
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, err := common.GetRunningOsdClusterID(h, t)
+	if err != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", err)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
+
+	tests := []struct {
+		name                string
+		actualBillingModel  string
+		desiredBillingModel string
+		timeout             time.Duration
+		wantErr             bool
+	}{
+		{
+			name:                "Test promote eval to standard",
+			actualBillingModel:  "eval",
+			desiredBillingModel: "standard",
+		},
+		{
+			name:                "Test promote eval to marketplace",
+			actualBillingModel:  "eval",
+			desiredBillingModel: "marketplace",
+		},
+		{
+			name:                "Test promote eval to badbm",
+			actualBillingModel:  "eval",
+			desiredBillingModel: "badbm",
+			timeout:             15,
+			wantErr:             true,
+		},
+	}
+
+	for _, t1 := range tests {
+		tt := t1
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			timeout := tt.timeout
+			if timeout == 0 {
+				timeout = 60
+			}
+			kafkas := []*dbapi.KafkaRequest{
+				kafkaMocks.BuildKafkaRequest(
+					kafkaMocks.WithPredefinedTestValues(),
+					kafkaMocks.With(kafkaMocks.NAME, "dummy-kafka"),
+					kafkaMocks.With(kafkaMocks.OWNER, "username"),
+					kafkaMocks.With(kafkaMocks.CLUSTER_ID, clusterID),
+					kafkaMocks.With(kafkaMocks.STATUS, constants.KafkaRequestStatusAccepted.String()),
+					kafkaMocks.With(kafkaMocks.BOOTSTRAP_SERVER_HOST, ""),
+					kafkaMocks.With(kafkaMocks.DESIRED_KAFKA_BILLING_MODEL, tt.desiredBillingModel),
+					kafkaMocks.With(kafkaMocks.ACTUAL_KAFKA_BILLING_MODEL, tt.actualBillingModel),
+					kafkaMocks.With(kafkaMocks.PROMOTION_STATUS, "promoting"),
+				),
+			}
+
+			db := test.TestServices.DBFactory.New()
+			dbErr := db.Create(&kafkas).Error
+			g.Expect(dbErr).NotTo(gomega.HaveOccurred())
+
+			var promotedKafka dbapi.KafkaRequest
+
+			err1 := common.NewPollerBuilder(test.TestServices.DBFactory).
+				IntervalAndTimeout(1*time.Second, timeout*time.Second).
+				RetryLogMessage("Waiting for kafka to be promoted to standard").
+				RetryLogFunction(func(retry int, maxRetry int) string {
+					if promotedKafka.ID == "" {
+						return fmt.Sprintf("Waiting for kafka to be promoted to %s", tt.desiredBillingModel)
+					} else {
+						return fmt.Sprintf("Waiting for kafka (%s) to be promoted to %s. Current status (actual, desired): %s,%s", promotedKafka.ID, tt.desiredBillingModel, promotedKafka.ActualKafkaBillingModel, promotedKafka.DesiredKafkaBillingModel)
+					}
+				}).
+				OnRetry(func(attempt int, maxRetries int) (bool, error) {
+					err := db.Where("id = ?", kafkas[0].ID).Find(&promotedKafka).Error
+					if err != nil {
+						return true, err
+					}
+					return promotedKafka.ActualKafkaBillingModel == tt.desiredBillingModel && promotedKafka.DesiredKafkaBillingModel == promotedKafka.ActualKafkaBillingModel, nil
+				}).Build().Poll()
+			g.Expect(err1 != nil).To(gomega.Equal(tt.wantErr), "Unexpected error occurred %v", err1)
+			if !tt.wantErr {
+				g.Expect(promotedKafka.ActualKafkaBillingModel).To(gomega.Equal(tt.desiredBillingModel))
+				g.Expect(promotedKafka.DesiredKafkaBillingModel).To(gomega.Equal(tt.desiredBillingModel))
+				g.Expect(promotedKafka.PromotionStatus).To(gomega.BeEmpty())
+				g.Expect(promotedKafka.PromotionDetails).To(gomega.BeEmpty())
+			} else {
+				g.Expect(promotedKafka.PromotionStatus).To(gomega.Equal(dbapi.KafkaPromotionStatusFailed))
+				g.Expect(promotedKafka.PromotionDetails).ToNot(gomega.BeEmpty())
+			}
+		})
+	}
 }

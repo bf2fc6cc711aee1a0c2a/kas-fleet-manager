@@ -59,22 +59,6 @@ func (r *simpleBillingModelResolver) resolve(orgID string, kafka *dbapi.KafkaReq
 		return BillingModelDetails{}, errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
 	}
 
-	return r.resolve(orgId, kafka, kafkaBillingModels)
-}
-
-// resolve - This method tries to resolve the billing model and, eventually, the marketplace type for the received
-// kafka request among the received kafkaBillingModels. The billing models in the `kafkaBillingModel` array are evaluated
-// in the received order, so that an order of preference can be honored.
-// Parameters:
-// orgId: The organisation ID
-// kafka: The kafka request received by the user
-// kafkaBillingModels: The list of kafka billing models to be considered, ordered by preference
-func (r *simpleBillingModelResolver) resolve(orgId string, kafka *dbapi.KafkaRequest, kafkaBillingModels []config.KafkaBillingModel) (BillingModelDetails, error) {
-	kafkaInstanceSize, err := r.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
-	if err != nil {
-		return BillingModelDetails{}, errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
-	}
-
 	for _, kbm := range kafkaBillingModels {
 		available, amsBillingModel, err := r.isBillingModelAvailable(orgID, kbm, kafkaInstanceSize.CapacityConsumed)
 		if err != nil {

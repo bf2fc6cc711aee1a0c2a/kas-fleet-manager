@@ -2,6 +2,8 @@ package quota
 
 import (
 	"fmt"
+	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
+	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
@@ -295,14 +297,94 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *error
 	return resp.Subscription().ID(), nil
 }
 
-func (q amsQuotaService) DeleteQuota(subscriptionId string) *errors.ServiceError {
-	if subscriptionId == "" {
+func (q amsQuotaService) ReserveQuotaIfNotAlreadyReserved(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
+	instanceType, err := q.kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafka.InstanceType)
+	if err != nil {
+		return "", errors.GeneralError("failed checking current quota: %v", err)
+	}
+	kafkaBillingModel, err := instanceType.GetKafkaSupportedBillingModelByID(kafka.DesiredKafkaBillingModel)
+	if err != nil {
+		return "", errors.GeneralError("failed checking current quota: %v", err)
+	}
+
+	subscriptions, err := q.amsClient.FindSubscriptions(fmt.Sprintf("cluster_id='%s'", kafka.ClusterID))
+	if err != nil {
+		return "", errors.GeneralError("failed checking current quota: %v", err)
+	}
+	for _, subscription := range subscriptions {
+		// get the reserved resources
+		if subscription.Plan().ID() == kafkaBillingModel.AMSProduct && subscription.Status() == string(v1.SubscriptionStatusActive) {
+			reservedResources, err := q.amsClient.GetReservedResourcesBySubscriptionID(subscription.ID())
+			if err != nil {
+				return "", errors.GeneralError("failed checking current quota: %v", err)
+			}
+
+			if arrays.AnyMatch(reservedResources, func(rr *amsv1.ReservedResource) bool { return rr.ResourceName() == kafkaBillingModel.AMSResource }) {
+				return subscription.ID(), nil
+			}
+		}
+	}
+
+	// quota is not defined. We need to reserve a new one
+	return q.ReserveQuota(kafka)
+}
+
+func (q amsQuotaService) DeleteQuota(subscriptionID string) *errors.ServiceError {
+	if subscriptionID == "" {
 		return nil
 	}
 
-	_, err := q.amsClient.DeleteSubscription(subscriptionId)
+	_, err := q.amsClient.DeleteSubscription(subscriptionID)
 	if err != nil {
 		return errors.GeneralError("failed to delete the quota: %v", err)
 	}
 	return nil
+}
+
+// DeleteQuotaForBillingModel deletes the quota identified by `subscriptionID` only if it is related to received config.KafkaBillingModel
+func (q amsQuotaService) DeleteQuotaForBillingModel(subscriptionID string, kafkaBillingModel config.KafkaBillingModel) *errors.ServiceError {
+	if subscriptionID == "" {
+		return nil
+	}
+
+	subscription, found, err := q.GetSubscriptionByID(subscriptionID)
+	if err != nil {
+		return errors.GeneralError("failed to delete the quota: %v", err)
+	}
+
+	if !found {
+		return nil
+	}
+
+	if subscription.Plan().ID() == kafkaBillingModel.AMSProduct {
+		rr, err := q.amsClient.GetReservedResourcesBySubscriptionID(subscriptionID)
+		if err != nil {
+			return errors.GeneralError("failed to delete the quota: %v", err)
+		}
+		resourceMatches := arrays.AnyMatch(rr, func(resource *amsv1.ReservedResource) bool {
+			return resource.ResourceName() == kafkaBillingModel.AMSResource
+		})
+		if resourceMatches {
+			// this subscription is related to this billing model. We can delete it.
+			return q.DeleteQuota(subscriptionID)
+		}
+	}
+
+	// the specified subscription id is not related to the specified billing model
+	return nil
+}
+
+// GetSubscriptionByID gets a subscription by ID
+// return an error if an error happens calling the endpoint, otherwise returns whether it found the subscription(subscription, true, nil)
+// or not (subscription, false, nil)
+func (q amsQuotaService) GetSubscriptionByID(subscriptionID string) (*amsv1.Subscription, bool, *errors.ServiceError) {
+	resp, err := q.amsClient.GetSubscriptionByID(subscriptionID)
+	if resp != nil && resp.Status() == http.StatusNotFound {
+		return resp.Body(), false, nil
+	}
+	if err != nil {
+		return nil, false, errors.NewWithCause(errors.ErrorGeneral, err, "error getting the subscriptions for id '%s'", subscriptionID)
+	}
+
+	return resp.Body(), true, nil
 }

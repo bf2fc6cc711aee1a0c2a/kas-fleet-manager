@@ -13,8 +13,13 @@ type QuotaService interface {
 	CheckIfQuotaIsDefinedForInstanceType(username string, externalID string, instanceTypeID types.KafkaInstanceType, kafkaBillingModel config.KafkaBillingModel) (bool, *errors.ServiceError)
 	// ReserveQuota reserves a quota for a user and return the reservation id or an error in case of failure
 	ReserveQuota(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError)
+	// ReserveQuotaIfNotAlreadyReserved reserves a quota for the specified request if the desired quota
+	// has not been already reserved. Returns the id of the newly reserved quota or the id of the existing one
+	ReserveQuotaIfNotAlreadyReserved(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError)
 	// DeleteQuota deletes a reserved quota
 	DeleteQuota(subscriptionId string) *errors.ServiceError
+	// DeleteQuotaForBillingModel deletes a reserved quota only if it is related to the specified billing model, otherwise exits with no error
+	DeleteQuotaForBillingModel(subscriptionId string, kafkaBillingModel config.KafkaBillingModel) *errors.ServiceError
 	// ValidateBillingAccount validates if a billing account is contained in the quota cost response
 	ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError
 }

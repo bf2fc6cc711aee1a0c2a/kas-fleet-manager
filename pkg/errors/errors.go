@@ -272,53 +272,53 @@ func Find(code ServiceErrorCode) (bool, *ServiceError) {
 
 func Errors() ServiceErrors {
 	return ServiceErrors{
-		ServiceError{ErrorForbidden, ErrorForbiddenReason, http.StatusForbidden, nil},
-		ServiceError{ErrorMaxAllowedInstanceReached, ErrorMaxAllowedInstanceReachedReason, http.StatusForbidden, nil},
-		ServiceError{ErrorTooManyKafkaInstancesReached, ErrorTooManyKafkaInstancesReachedReason, http.StatusForbidden, nil},
-		ServiceError{ErrorTooManyRequests, ErrorTooManyRequestsReason, http.StatusTooManyRequests, nil},
-		ServiceError{ErrorConflict, ErrorConflictReason, http.StatusConflict, nil},
-		ServiceError{ErrorNotFound, ErrorNotFoundReason, http.StatusNotFound, nil},
-		ServiceError{ErrorGone, ErrorGoneReason, http.StatusGone, nil},
-		ServiceError{ErrorValidation, ErrorValidationReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorGeneral, ErrorGeneralReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorNotImplemented, ErrorNotImplementedReason, http.StatusMethodNotAllowed, nil},
-		ServiceError{ErrorUnauthorized, ErrorUnauthorizedReason, http.StatusForbidden, nil},
-		ServiceError{ErrorTermsNotAccepted, ErrorTermsNotAcceptedReason, http.StatusForbidden, nil},
-		ServiceError{ErrorUnauthenticated, ErrorUnauthenticatedReason, http.StatusUnauthorized, nil},
-		ServiceError{ErrorMalformedRequest, ErrorMalformedRequestReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorServiceIsUnderMaintenance, ErrorServiceIsUnderMaintenanceReason, http.StatusForbidden, nil},
-		ServiceError{ErrorBadRequest, ErrorBadRequestReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorFailedToParseSearch, ErrorFailedToParseSearchReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorFailedToCreateSSOClient, ErrorFailedToCreateSSOClientReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFailedToGetSSOClientSecret, ErrorFailedToGetSSOClientSecretReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFailedToGetSSOClient, ErrorFailedToGetSSOClientReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFailedToDeleteSSOClient, ErrorFailedToDeleteSSOClientReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFailedToCreateServiceAccount, ErrorFailedToCreateServiceAccountReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFailedToGetServiceAccount, ErrorFailedToGetServiceAccountReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorServiceAccountNotFound, ErrorServiceAccountNotFoundReason, http.StatusNotFound, nil},
-		ServiceError{ErrorFailedToDeleteServiceAccount, ErrorFailedToDeleteServiceAccountReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorInstanceTypeNotSupported, ErrorInstanceTypeNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMalformedKafkaClusterName, ErrorMalformedKafkaClusterNameReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorDuplicateKafkaClusterName, ErrorDuplicateKafkaClusterNameReason, http.StatusConflict, nil},
-		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, http.StatusForbidden, nil},
-		ServiceError{ErrorFailedToCheckQuota, ErrorFailedToCheckQuotaReason, http.StatusInternalServerError, nil},
-		ServiceError{ErrorMalformedServiceAccountName, ErrorMalformedServiceAccountNameReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMalformedServiceAccountDesc, ErrorMalformedServiceAccountDescReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil},
-		ServiceError{ErrorInstancePlanNotSupported, ErrorInstancePlanNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorBillingAccountInvalid, ErrorBillingAccountInvalidReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorDuplicateClusterId, ErrorDuplicateClusterIdReason, http.StatusConflict, nil},
-		ServiceError{ErrorInvalidClusterId, ErrorInvalidClusterIdReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorInvalidExternalClusterId, ErrorInvalidExternalClusterIdReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorInvalidDnsName, ErrorInvalidDnsNameReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorForbidden, ErrorForbiddenReason, http.StatusForbidden, nil, false},
+		ServiceError{ErrorMaxAllowedInstanceReached, ErrorMaxAllowedInstanceReachedReason, http.StatusForbidden, nil, false},
+		ServiceError{ErrorTooManyKafkaInstancesReached, ErrorTooManyKafkaInstancesReachedReason, http.StatusForbidden, nil, false},
+		ServiceError{ErrorTooManyRequests, ErrorTooManyRequestsReason, http.StatusTooManyRequests, nil, false},
+		ServiceError{ErrorConflict, ErrorConflictReason, http.StatusConflict, nil, false},
+		ServiceError{ErrorNotFound, ErrorNotFoundReason, http.StatusNotFound, nil, false},
+		ServiceError{ErrorGone, ErrorGoneReason, http.StatusGone, nil, false},
+		ServiceError{ErrorValidation, ErrorValidationReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorGeneral, ErrorGeneralReason, http.StatusInternalServerError, nil, false},
+		ServiceError{ErrorNotImplemented, ErrorNotImplementedReason, http.StatusMethodNotAllowed, nil, false},
+		ServiceError{ErrorUnauthorized, ErrorUnauthorizedReason, http.StatusForbidden, nil, false},
+		ServiceError{ErrorTermsNotAccepted, ErrorTermsNotAcceptedReason, http.StatusForbidden, nil, false},
+		ServiceError{ErrorUnauthenticated, ErrorUnauthenticatedReason, http.StatusUnauthorized, nil, false},
+		ServiceError{ErrorMalformedRequest, ErrorMalformedRequestReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorServiceIsUnderMaintenance, ErrorServiceIsUnderMaintenanceReason, http.StatusForbidden, nil, false},
+		ServiceError{ErrorBadRequest, ErrorBadRequestReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorFailedToParseSearch, ErrorFailedToParseSearchReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorFailedToCreateSSOClient, ErrorFailedToCreateSSOClientReason, http.StatusInternalServerError, nil, false},
+		ServiceError{ErrorFailedToGetSSOClientSecret, ErrorFailedToGetSSOClientSecretReason, http.StatusInternalServerError, nil, false},
+		ServiceError{ErrorFailedToGetSSOClient, ErrorFailedToGetSSOClientReason, http.StatusInternalServerError, nil, false},
+		ServiceError{ErrorFailedToDeleteSSOClient, ErrorFailedToDeleteSSOClientReason, http.StatusInternalServerError, nil, false},
+		ServiceError{ErrorFailedToCreateServiceAccount, ErrorFailedToCreateServiceAccountReason, http.StatusInternalServerError, nil, false},
+		ServiceError{ErrorFailedToGetServiceAccount, ErrorFailedToGetServiceAccountReason, http.StatusInternalServerError, nil, false},
+		ServiceError{ErrorServiceAccountNotFound, ErrorServiceAccountNotFoundReason, http.StatusNotFound, nil, false},
+		ServiceError{ErrorFailedToDeleteServiceAccount, ErrorFailedToDeleteServiceAccountReason, http.StatusInternalServerError, nil, false},
+		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorInstanceTypeNotSupported, ErrorInstanceTypeNotSupportedReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorMalformedKafkaClusterName, ErrorMalformedKafkaClusterNameReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorDuplicateKafkaClusterName, ErrorDuplicateKafkaClusterNameReason, http.StatusConflict, nil, false},
+		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError, nil, false},
+		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, http.StatusForbidden, nil, false},
+		ServiceError{ErrorFailedToCheckQuota, ErrorFailedToCheckQuotaReason, http.StatusInternalServerError, nil, false},
+		ServiceError{ErrorMalformedServiceAccountName, ErrorMalformedServiceAccountNameReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorMalformedServiceAccountDesc, ErrorMalformedServiceAccountDescReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorMaxLimitForServiceAccountsReached, ErrorMaxLimitForServiceAccountsReachedReason, http.StatusForbidden, nil, false},
+		ServiceError{ErrorInstancePlanNotSupported, ErrorInstancePlanNotSupportedReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorBillingAccountInvalid, ErrorBillingAccountInvalidReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorDuplicateClusterId, ErrorDuplicateClusterIdReason, http.StatusConflict, nil, false},
+		ServiceError{ErrorInvalidClusterId, ErrorInvalidClusterIdReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorInvalidExternalClusterId, ErrorInvalidExternalClusterIdReason, http.StatusBadRequest, nil, false},
+		ServiceError{ErrorInvalidDnsName, ErrorInvalidDnsNameReason, http.StatusBadRequest, nil, false},
 	}
 }
 
@@ -361,6 +361,64 @@ func ToServiceError(err error) *ServiceError {
 	}
 }
 
+type ServiceErrorBuilder interface {
+	Wrap(serviceError ServiceError) ServiceErrorBuilder
+	WithCode(code ServiceErrorCode) ServiceErrorBuilder
+	WithReason(reason string, values ...any) ServiceErrorBuilder
+	WithHttpCode(httpCode int) ServiceErrorBuilder
+	WithCause(cause error) ServiceErrorBuilder
+	Recoverable() ServiceErrorBuilder
+	Build() *ServiceError
+}
+
+var _ ServiceErrorBuilder = &serviceErrorBuilder{}
+
+func NewServiceErrorBuilder() ServiceErrorBuilder {
+	return &serviceErrorBuilder{}
+}
+
+type serviceErrorBuilder struct {
+	ServiceError
+}
+
+func (seb *serviceErrorBuilder) Wrap(serviceError ServiceError) ServiceErrorBuilder {
+	seb.WithReason(serviceError.Reason).
+		WithCode(serviceError.Code).
+		WithCause(&serviceError)
+	return seb
+}
+
+func (seb *serviceErrorBuilder) WithCode(code ServiceErrorCode) ServiceErrorBuilder {
+	seb.Code = code
+	return seb
+}
+
+func (seb *serviceErrorBuilder) WithReason(reason string, values ...any) ServiceErrorBuilder {
+	seb.Reason = fmt.Sprintf(reason, values...)
+	return seb
+}
+
+func (seb *serviceErrorBuilder) WithHttpCode(httpCode int) ServiceErrorBuilder {
+	seb.HttpCode = httpCode
+	return seb
+}
+
+func (seb *serviceErrorBuilder) WithCause(cause error) ServiceErrorBuilder {
+	seb.cause = cause
+	return seb
+}
+
+func (seb *serviceErrorBuilder) Recoverable() ServiceErrorBuilder {
+	seb.recoverable = true
+	return seb
+}
+
+func (seb *serviceErrorBuilder) Build() *ServiceError {
+	err := NewWithCause(seb.Code, seb.cause, seb.Error(), seb.Reason)
+	err.recoverable = seb.recoverable
+	return err
+}
+
 type ServiceError struct {
 	// Code is the numeric and distinct ID for the error
 	Code ServiceErrorCode
@@ -368,8 +426,10 @@ type ServiceError struct {
 	Reason string
 	// HttpCode is the HttpCode associated with the error when the error is returned as an API response
 	HttpCode int
-	// The original error that is causing the ServiceError, can be used for inspection
+	// cause - The original error that is causing the ServiceError, can be used for inspection
 	cause error
+	// recoverable - if true, retrying the operation could succeed
+	recoverable bool
 }
 
 // Reason can be a string with format verbs, which will be replace by the specified values
@@ -383,7 +443,7 @@ func NewWithCause(code ServiceErrorCode, cause error, reason string, values ...i
 	exists, err := Find(code)
 	if !exists {
 		glog.Errorf("Undefined error code used: %d", code)
-		err = &ServiceError{ErrorGeneral, "unspecified error", http.StatusInternalServerError, nil}
+		err = &ServiceError{ErrorGeneral, "unspecified error", http.StatusInternalServerError, nil, false}
 	}
 
 	// TODO - if cause is nil, should we use the reason as the cause?
@@ -430,6 +490,9 @@ func (e *ServiceError) Error() string {
 	return fmt.Sprintf("%s: %s", CodeStr(e.Code), e.Reason)
 }
 
+func (e *ServiceError) Recoverable() bool {
+	return e.recoverable
+}
 func (e *ServiceError) AsError() error {
 	return fmt.Errorf(e.Error())
 }
