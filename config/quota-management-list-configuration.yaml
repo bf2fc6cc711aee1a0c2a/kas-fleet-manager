@@ -91,6 +91,8 @@ registered_users_per_organisation:
         kafka_billing_models:
           - id: standard
             max_allowed_instances: 5
+          - id: marketplace
+            max_allowed_instances: 5
     # The App SRE team
   - id: 12147054
     any_user: true

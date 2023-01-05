@@ -86,6 +86,7 @@ type KafkaService interface {
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	// Lists all kafkas. As this returns all Kafka requests without need for authentication, this should only be used for internal purposes
 	ListAll() (dbapi.KafkaList, *errors.ServiceError)
+	ListKafkasToBePromoted() ([]*dbapi.KafkaRequest, *errors.ServiceError)
 	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
 	// GenerateReservedManagedKafkasByClusterID returns a list of reserved managed
 	// kafkas for a given clusterID. The number of generated reserved managed
@@ -516,6 +517,28 @@ func (k *kafkaService) ListByStatus(status ...constants.KafkaStatus) ([]*dbapi.K
 
 	if err := dbConn.Model(&dbapi.KafkaRequest{}).Where("status IN (?)", status).Scan(&kafkas).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list by status")
+	}
+
+	return kafkas, nil
+}
+
+func (k *kafkaService) ListKafkasToBePromoted() ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+	dbConn := k.connectionFactory.New()
+
+	validPromotionStatuses := []string{
+		constants.KafkaRequestStatusReady.String(),
+		constants.KafkaRequestStatusSuspended.String(),
+		constants.KafkaRequestStatusResuming.String(),
+	}
+
+	var kafkas []*dbapi.KafkaRequest
+
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).
+		Where("actual_kafka_billing_model <> desired_kafka_billing_model").
+		Where("promotion_status <> ?", dbapi.KafkaPromotionStatusFailed).
+		Where("status in ?", validPromotionStatuses).
+		Scan(&kafkas).Error; err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list kafkas to be promoted")
 	}
 
 	return kafkas, nil

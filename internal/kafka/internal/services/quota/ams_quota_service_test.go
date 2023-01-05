@@ -2,6 +2,7 @@ package quota
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/quota/internal/mocks/ams"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/quota/internal/test"
 	"testing"
 
@@ -981,8 +982,8 @@ func Test_AMSCheckQuota(t *testing.T) {
 			sq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka.Owner, kafka.OrganisationId, types.STANDARD, bm)
 			g.Expect(err).ToNot(gomega.HaveOccurred())
 			g.Expect(tt.fields.ocmClient.GetQuotaCostsForProductCalls()).To(gomega.HaveLen(1))
-			g.Expect(tt.fields.ocmClient.GetQuotaCostsForProductCalls()[0].ResourceName).To(gomega.Equal("rhosak"))
-			g.Expect(tt.fields.ocmClient.GetQuotaCostsForProductCalls()[0].Product).To(gomega.Equal("RHOSAK"))
+			g.Expect(tt.fields.ocmClient.GetQuotaCostsForProductCalls()[0].ResourceName).To(gomega.Equal(ocm.RHOSAKResourceName))
+			g.Expect(tt.fields.ocmClient.GetQuotaCostsForProductCalls()[0].Product).To(gomega.BeEquivalentTo(ocm.RHOSAKProduct))
 			g.Expect(tt.fields.ocmClient.GetQuotaCostsForProductCalls()[0].Product).To(gomega.Equal(bm.AMSProduct))
 			g.Expect(sq).To(gomega.Equal(tt.args.hasStandardQuota))
 			bm, err1 = tt.fields.kafkaConfig.GetBillingModelByID(types.DEVELOPER.String(), "standard")
@@ -992,14 +993,203 @@ func Test_AMSCheckQuota(t *testing.T) {
 			fmt.Printf("eq is %v\n", eq)
 			g.Expect(eq).To(gomega.Equal(tt.args.hasDeveloperQuota))
 			g.Expect(tt.fields.ocmClient.GetQuotaCostsForProductCalls()).To(gomega.HaveLen(2))
-			g.Expect(tt.fields.ocmClient.GetQuotaCostsForProductCalls()[1].ResourceName).To(gomega.Equal("rhosak"))
-			g.Expect(tt.fields.ocmClient.GetQuotaCostsForProductCalls()[1].Product).To(gomega.Equal("RHOSAKTrial"))
+			g.Expect(tt.fields.ocmClient.GetQuotaCostsForProductCalls()[1].ResourceName).To(gomega.Equal(ocm.RHOSAKResourceName))
+			g.Expect(tt.fields.ocmClient.GetQuotaCostsForProductCalls()[1].Product).To(gomega.BeEquivalentTo(ocm.RHOSAKTrialProduct))
 			_, err = quotaService.ReserveQuota(kafka)
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
 
+func Test_AMSReserveQuotaIfNotAlreadyReserved(t *testing.T) {
+	var amsDefaultKafkaConf = config.KafkaConfig{
+		Quota:                  config.NewKafkaQuotaConfig(),
+		SupportedInstanceTypes: test.NewAMSTestKafkaSupportedInstanceTypesConfig(),
+	}
+	type fields struct {
+		ocmClient   *ocm.ClientMock
+		kafkaConfig config.KafkaConfig
+	}
+	type args struct {
+		kafkaID                           string
+		kafkaInstanceType                 types.KafkaInstanceType
+		kafkaRequestMarketplace           string
+		kafkaRequestDesiredBillingModel   string
+		kafkaRequestBillingCloudAccountID string
+		kafkaRequestCloudProvider         string
+
+		wantsReserveCalled bool
+		wantsProductID     string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		{
+			name: "Reserve quota for new cluster",
+			fields: fields{
+				kafkaConfig: amsDefaultKafkaConf,
+				ocmClient: &ocm.ClientMock{
+					FindSubscriptionsFunc: func(query string) ([]*v1.Subscription, error) {
+						return ams.FindSubscriptions(query), nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID(cb.ClusterID() + "subscription")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+				},
+			},
+			args: args{
+				kafkaID:                         "1234",
+				kafkaInstanceType:               types.STANDARD,
+				kafkaRequestDesiredBillingModel: "eval",
+
+				wantsReserveCalled: true,
+				wantsProductID:     string(ocm.RHOSAKEvalProduct),
+			},
+		},
+		{
+			name: "Reserve quota for existing cluster and existing subscription",
+			fields: fields{
+				kafkaConfig: amsDefaultKafkaConf,
+				ocmClient: &ocm.ClientMock{
+					FindSubscriptionsFunc: func(query string) ([]*v1.Subscription, error) {
+						return ams.FindSubscriptions(query), nil
+					},
+					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
+						return ams.GetReservedResourcesBySubscriptionID(subscriptionID), nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID(cb.ClusterID() + "subscription")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+				},
+			},
+			args: args{
+				kafkaID:                         "cluster-1",
+				kafkaInstanceType:               types.STANDARD,
+				kafkaRequestDesiredBillingModel: "standard",
+
+				wantsReserveCalled: false,
+				wantsProductID:     string(ocm.RHOSAKProduct),
+			},
+		},
+		{
+			// In this test we try to reserve a standard for a cluster that has `eval` assigned
+			name: "Reserve standard quota for existing cluster with `eval` subscription",
+			fields: fields{
+				kafkaConfig: amsDefaultKafkaConf,
+				ocmClient: &ocm.ClientMock{
+					FindSubscriptionsFunc: func(query string) ([]*v1.Subscription, error) {
+						return ams.FindSubscriptions(query), nil
+					},
+					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
+						return ams.GetReservedResourcesBySubscriptionID(subscriptionID), nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID(cb.ClusterID() + "subscription")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+				},
+			},
+			args: args{
+				kafkaID:                         "cluster-7",
+				kafkaInstanceType:               types.STANDARD,
+				kafkaRequestDesiredBillingModel: "standard",
+
+				wantsReserveCalled: true,
+				wantsProductID:     string(ocm.RHOSAKProduct),
+			},
+		},
+		{
+			// In this test we try to reserve an `eval` for a cluster that has `eval` assigned
+			name: "Reserve `eval` quota for existing cluster with `eval` subscription",
+			fields: fields{
+				kafkaConfig: amsDefaultKafkaConf,
+				ocmClient: &ocm.ClientMock{
+					FindSubscriptionsFunc: func(query string) ([]*v1.Subscription, error) {
+						return ams.FindSubscriptions(query), nil
+					},
+					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
+						return ams.GetReservedResourcesBySubscriptionID(subscriptionID), nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID(cb.ClusterID() + "subscription")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+				},
+			},
+			args: args{
+				kafkaID:                         "cluster-7",
+				kafkaInstanceType:               types.STANDARD,
+				kafkaRequestDesiredBillingModel: "eval",
+
+				wantsReserveCalled: false,
+				wantsProductID:     string(ocm.RHOSAKProduct),
+			},
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		kafka := &dbapi.KafkaRequest{
+			Meta: api.Meta{
+				ID: tt.args.kafkaID,
+			},
+			ClusterID:                tt.args.kafkaID,
+			CloudProvider:            tt.args.kafkaRequestCloudProvider,
+			Owner:                    "owner",
+			SizeId:                   "x1",
+			InstanceType:             string(tt.args.kafkaInstanceType),
+			Marketplace:              tt.args.kafkaRequestMarketplace,
+			BillingCloudAccountId:    tt.args.kafkaRequestBillingCloudAccountID,
+			DesiredKafkaBillingModel: tt.args.kafkaRequestDesiredBillingModel,
+		}
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil, &tt.fields.kafkaConfig)
+			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
+
+			_, err := quotaService.ReserveQuotaIfNotAlreadyReserved(kafka)
+			g.Expect(err).ToNot(gomega.HaveOccurred(), "Expecting error not to happen:", err)
+
+			if tt.args.wantsReserveCalled {
+				g.Expect(tt.fields.ocmClient.ClusterAuthorizationCalls()).To(gomega.HaveLen(1))
+				g.Expect(tt.fields.ocmClient.ClusterAuthorizationCalls()[0].Cb.ProductID()).To(gomega.Equal(tt.args.wantsProductID))
+			} else {
+				g.Expect(tt.fields.ocmClient.ClusterAuthorizationCalls()).To(gomega.HaveLen(0), "Should not reserve a new quota")
+			}
+		})
+	}
+
+}
 func Test_AMSReserveQuota(t *testing.T) {
 	var amsDefaultKafkaConf = config.KafkaConfig{
 		Quota:                  config.NewKafkaQuotaConfig(),
@@ -1933,7 +2123,7 @@ func Test_amsQuotaService_newBaseQuotaReservedResourceBuilder(t *testing.T) {
 			want := tt.wantFactory()
 			kafkaBillingModel := config.KafkaBillingModel{
 				ID:          "standard",
-				AMSResource: "rhosak",
+				AMSResource: ocm.RHOSAKResourceName,
 			}
 			res := amsQuotaService.newBaseQuotaReservedResourceBuilder(tt.args.kafkaRequest, kafkaBillingModel)
 			g.Expect(res).To(gomega.Equal(want))
