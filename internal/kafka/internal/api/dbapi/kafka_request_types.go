@@ -1,6 +1,7 @@
 package dbapi
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -61,7 +62,7 @@ type KafkaRequest struct {
 	PromotionDetails         string               `json:"promotion_details"`
 	// ExpiresAt contains the timestamp of when a Kafka instance is scheduled to expire.
 	// On expiration, the Kafka instance will be marked for deletion, its status will be set to 'deprovision'.
-	ExpiresAt time.Time `json:"expires_at"`
+	ExpiresAt sql.NullTime `json:"expires_at"`
 }
 
 type KafkaPromotionStatus string
