@@ -45,6 +45,9 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
 						return dbapi.KafkaList{}, nil
 					},
+					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
+						return nil
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -70,6 +73,9 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
 						return dbapi.KafkaList{}, nil
 					},
+					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
+						return nil
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -94,6 +100,9 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					},
 					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
 						return dbapi.KafkaList{}, nil
+					},
+					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
+						return nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -121,6 +130,9 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					},
 					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
 						return nil, errors.GeneralError("failed to list kafkas")
+					},
+					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
+						return nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
