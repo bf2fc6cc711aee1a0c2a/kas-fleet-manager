@@ -1928,6 +1928,30 @@ func Test_validateEnterpriseClusterEligibleForDeregistration(t *testing.T) {
 				api.EnterpriseDataPlaneClusterType.String(), clusterID),
 		},
 		{
+			name: "should not return an error if force is not set to true and FindKafkaInstanceCount contains clusterID and count is 0",
+			args: args{
+				ctx:       ctxWithClaims,
+				clusterID: clusterID,
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: mocks.DefaultOrganisationId,
+							ClusterType:    "enterprise",
+						}, nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
+						return []services.ResKafkaInstanceCount{
+							{
+								Clusterid: clusterID,
+								Count:     0,
+							},
+						}, nil
+					},
+				},
+			},
+			want: nil,
+		},
+		{
 			name: "should return no error if force is not set to true and FindKafkaInstanceCount returns an empty array",
 			args: args{
 				ctx:       ctxWithClaims,

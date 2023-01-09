@@ -445,9 +445,11 @@ func validateEnterpriseClusterEligibleForDeregistration(ctx context.Context, clu
 			if err != nil {
 				return errors.GeneralError(err.Error())
 			}
-			if len(clusterKafkaCount) > 0 {
-				return errors.Forbidden("unable to deregister %s cluster with id: %s without explicitly setting 'force:true' due to kafka requests present on this cluster",
-					api.EnterpriseDataPlaneClusterType.String(), clusterID)
+			for _, count := range clusterKafkaCount {
+				if count.Clusterid == clusterID && count.Count > 0 {
+					return errors.Forbidden("unable to deregister %s cluster with id: %s without explicitly setting 'force:true' due to kafka requests present on this cluster",
+						api.EnterpriseDataPlaneClusterType.String(), clusterID)
+				}
 			}
 		}
 		return nil
