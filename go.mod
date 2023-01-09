@@ -48,7 +48,7 @@ require (
 	github.com/senseyeio/duration v0.0.0-20180430131211-7c2a214ada46
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
-	github.com/spyzhov/ajson v0.7.1
+	github.com/spyzhov/ajson v0.7.2
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/oauth2 v0.3.0
 	gopkg.in/resty.v1 v1.12.0
