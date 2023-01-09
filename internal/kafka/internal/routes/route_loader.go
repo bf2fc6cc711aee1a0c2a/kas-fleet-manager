@@ -278,6 +278,9 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	clusterRouter.HandleFunc("", clusterHandler.List).
 		Name(logger.NewLogEvent("list-enterprise-clusters", "list enterprise clusters").ToString()).
 		Methods(http.MethodGet)
+	clusterRouter.HandleFunc("/{id}", clusterHandler.DeregisterEnterpriseCluster).
+		Name(logger.NewLogEvent("deregister-enterprise-cluster", "deregister enterprise cluster by id").ToString()).
+		Methods(http.MethodDelete)
 
 	return nil
 }

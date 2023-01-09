@@ -15,6 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/gorilla/mux"
 	"github.com/onsi/gomega"
 )
 
@@ -31,6 +32,13 @@ var (
 			"username":     "test-user",
 			"org_id":       mocks.DefaultOrganisationId,
 			"is_org_admin": true,
+		},
+	})
+	nonAdminCtxWithClaims = auth.SetTokenInContext(context.TODO(), &jwt.Token{
+		Claims: jwt.MapClaims{
+			"username":     "non-admin-user",
+			"org_id":       mocks.DefaultOrganisationId,
+			"is_org_admin": false,
 		},
 	})
 )
@@ -412,6 +420,248 @@ func Test_ListEnterpriseClusters(t *testing.T) {
 				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(clusterList).To(gomega.Equal(tt.want))
 			}
+		})
+	}
+}
+
+func Test_DeregisterEnterpriseCLuster(t *testing.T) {
+	entClusterID := "1234abcd1234abcd1234abcd1234abcd"
+	type fields struct {
+		clusterService services.ClusterService
+	}
+
+	type args struct {
+		ctx         context.Context
+		queryParams map[string]string
+	}
+
+	tests := []struct {
+		name           string
+		fields         fields
+		args           args
+		wantStatusCode int
+	}{
+		{
+			name: "should fail if async is not set",
+			args: args{
+				ctx: context.TODO(),
+			},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:   "should fail if invalid force flag is provided",
+			fields: fields{},
+			args: args{
+				ctx: context.TODO(),
+				queryParams: map[string]string{
+					"async": "true", "force": "No",
+				},
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name:   "should fail if organization ID is not available within context",
+			fields: fields{},
+			args: args{
+				ctx: context.TODO(),
+				queryParams: map[string]string{
+					"async": "true", "force": "false",
+				},
+			},
+			wantStatusCode: http.StatusForbidden,
+		},
+		{
+			name: "should fail if attempt to find cluster with provided clusterID returns an error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, errors.GeneralError("failed to find cluster")
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+				queryParams: map[string]string{
+					"async": "true", "force": "false",
+				},
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name: "should fail if cluster to deregister cannot be found",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+				queryParams: map[string]string{
+					"async": "true", "force": "false",
+				},
+			},
+			wantStatusCode: http.StatusNotFound,
+		},
+		{
+			name: "should fail if organizationID of cluster to deregister is different than one from context",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: "12345678",
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+				queryParams: map[string]string{
+					"async": "true", "force": "false",
+				},
+			},
+			wantStatusCode: http.StatusForbidden,
+		},
+		{
+			name: "should fail if cluster_type of cluster to deregister is not 'enterprise'",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: mocks.DefaultOrganisationId,
+							ClusterType:    "non-enterprise",
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+				queryParams: map[string]string{
+					"async": "true", "force": "false",
+				},
+			},
+			wantStatusCode: http.StatusForbidden,
+		},
+		{
+			name: "should successfully trigger deregistration of a cluster when force is set to true and all other preconditions are met",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: mocks.DefaultOrganisationId,
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+				queryParams: map[string]string{
+					"async": "true", "force": "true",
+				},
+			},
+			wantStatusCode: http.StatusAccepted,
+		},
+		{
+			name: "should fail when force is set to false and kafka requests are present on cluster to be deregistered",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: mocks.DefaultOrganisationId,
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
+							ClusterID:      entClusterID,
+						}, nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
+						return []services.ResKafkaInstanceCount{
+							{
+								Clusterid: entClusterID,
+								Count:     1,
+							},
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+				queryParams: map[string]string{
+					"async": "true", "force": "false",
+				},
+			},
+			wantStatusCode: http.StatusForbidden,
+		},
+		{
+			name: "should fail when force is set to false and FindKafkaInstanceCount returns an error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: mocks.DefaultOrganisationId,
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
+							ClusterID:      entClusterID,
+						}, nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
+						return nil, errors.GeneralError("failed to get kafka instance count")
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+				queryParams: map[string]string{
+					"async": "true", "force": "false",
+				},
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name: "should successfully trigger cluster deregistration when force is set to false and no kafka requests are present on the cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: mocks.DefaultOrganisationId,
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
+							ClusterID:      entClusterID,
+						}, nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
+						return nil, nil
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+				queryParams: map[string]string{
+					"async": "true", "force": "false",
+				},
+			},
+			wantStatusCode: http.StatusAccepted,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			h := NewClusterHandler(nil, tt.fields.clusterService)
+			req, rw := GetHandlerParams("DELETE", "/{id}", nil, t)
+			if tt.args.queryParams != nil {
+				q := req.URL.Query()
+				for k, v := range tt.args.queryParams {
+					q.Add(k, v)
+				}
+				req.URL.RawQuery = q.Encode()
+			}
+			req = req.WithContext(tt.args.ctx)
+			req = mux.SetURLVars(req, map[string]string{"id": entClusterID})
+			h.DeregisterEnterpriseCluster(rw, req)
+			resp := rw.Result()
+			resp.Body.Close()
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})
 	}
 }

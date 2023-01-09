@@ -13,6 +13,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/onsi/gomega"
 )
@@ -229,8 +230,12 @@ func TestClusterRegistration_Successful(t *testing.T) {
 		t.SkipNow()
 	}
 
+	claims := jwt.MapClaims{
+		"is_org_admin": true,
+	}
+
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account, nil)
+	ctx := h.NewAuthenticatedContext(account, claims)
 
 	payload := public.EnterpriseOsdClusterPayload{
 		ClusterId:                 "1234abcd1234abcd1234abcd1234abcd",

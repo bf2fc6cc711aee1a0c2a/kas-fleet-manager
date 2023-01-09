@@ -125,7 +125,7 @@ func Test_KafkaHandler_Delete(t *testing.T) {
 			wantStatusCode: http.StatusInternalServerError,
 		},
 		{
-			name: "fails if RegisterKafkaDeprovisionJob fails in kafka service",
+			name: "kafka deletion accepted",
 			fields: fields{
 				service: &services.KafkaServiceMock{
 					RegisterKafkaDeprovisionJobFunc: func(ctx context.Context, id string) *errors.ServiceError {
