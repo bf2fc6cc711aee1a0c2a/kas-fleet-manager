@@ -431,27 +431,26 @@ func validateEnterpriseClusterEligibleForDeregistration(ctx context.Context, clu
 			return err
 		}
 
-		if cluster != nil {
-			if cluster.OrganizationID != orgID {
-				return errors.Forbidden("unable to deregister cluster from different organization")
-			}
-			if cluster.ClusterType != api.EnterpriseDataPlaneClusterType.String() {
-				return errors.Forbidden("unable to deregister cluster whose type is not: %s", api.EnterpriseDataPlaneClusterType.String())
-			}
-			if !forceDeleteFlag {
-				clusterKafkaCount, err := clusterService.FindKafkaInstanceCount([]string{clusterID})
-				if err != nil {
-					return errors.GeneralError(err.Error())
-				}
-				for _, count := range clusterKafkaCount {
-					if count.Clusterid == clusterID && count.Count > 0 {
-						return errors.Forbidden("unable to deregister %s cluster with id: %s without explicitly setting 'force:true' due to kafka requests present on this cluster",
-							api.EnterpriseDataPlaneClusterType.String(), clusterID)
-					}
-				}
-			}
-			return nil
+		if cluster == nil {
+			return errors.NotFound("cluster with id='%v' not found", clusterID)
 		}
-		return errors.NotFound("cluster with id='%v' not found", clusterID)
+		if cluster.OrganizationID != orgID {
+			return errors.Forbidden("unable to deregister cluster from different organization")
+		}
+		if cluster.ClusterType != api.EnterpriseDataPlaneClusterType.String() {
+			return errors.Forbidden("unable to deregister cluster whose type is not: %s", api.EnterpriseDataPlaneClusterType.String())
+		}
+		if !forceDeleteFlag {
+			clusterKafkaCount, err := clusterService.FindKafkaInstanceCount([]string{clusterID})
+			if err != nil {
+				return errors.GeneralError(err.Error())
+			}
+			if len(clusterKafkaCount) > 0 {
+				return errors.Forbidden("unable to deregister %s cluster with id: %s without explicitly setting 'force:true' due to kafka requests present on this cluster",
+					api.EnterpriseDataPlaneClusterType.String(), clusterID)
+			}
+		}
+		return nil
+
 	}
 }
