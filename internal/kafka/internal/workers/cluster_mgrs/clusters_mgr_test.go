@@ -61,6 +61,64 @@ var (
 		Status:      api.ClusterProvisioned,
 		ClusterType: api.EnterpriseDataPlaneClusterType.String(),
 	}
+	observabilityConfig = &observatorium.ObservabilityConfiguration{
+		DexUrl:                             "http://dummy",
+		DexUsername:                        "dummy",
+		DexPassword:                        "dummy",
+		DexSecret:                          "dummy",
+		DexSecretFile:                      "dummy",
+		DexPasswordFile:                    "dummy",
+		RedHatSsoGatewayUrl:                "http://dummy",
+		RedHatSsoAuthServerUrl:             "http://dummy",
+		RedHatSsoRealm:                     "dummy",
+		RedHatSsoTenant:                    "dummy",
+		RedHatSsoTokenRefresherUrl:         "http://dummy",
+		MetricsClientId:                    "dummy",
+		MetricsClientIdFile:                "dummy",
+		MetricsSecret:                      "dummy",
+		MetricsSecretFile:                  "dummy",
+		LogsClientId:                       "dummy",
+		LogsClientIdFile:                   "dummy",
+		LogsSecret:                         "dummy",
+		LogsSecretFile:                     "dummy",
+		ObservatoriumGateway:               "http://dummy",
+		ObservatoriumTenant:                "dummy",
+		AuthType:                           "redhat",
+		AuthToken:                          "dummy",
+		AuthTokenFile:                      "dummy",
+		ObservabilityConfigTag:             "main",
+		ObservabilityConfigRepo:            "dummy",
+		ObservabilityConfigChannel:         "resources",
+		ObservabilityConfigAccessToken:     "dummy",
+		ObservabilityConfigAccessTokenFile: "dummy",
+	}
+	dataplaneClusterConfig = &config.DataplaneClusterConfig{
+		ImagePullDockerConfigContent: "dummy",
+		StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
+			Namespace:               "dummy",
+			IndexImage:              "dummy",
+			Package:                 "dummy",
+			SubscriptionChannel:     "dummy",
+			SubscriptionConfigFile:  "dummy",
+			SubscriptionStartingCSV: "dummy",
+		},
+		KasFleetshardOperatorOLMConfig: config.OperatorInstallationConfig{
+			Namespace:               "dummy",
+			IndexImage:              "dummy",
+			Package:                 "dummy",
+			SubscriptionChannel:     "dummy",
+			SubscriptionConfigFile:  "dummy",
+			SubscriptionStartingCSV: "dummy",
+		},
+		ObservabilityOperatorOLMConfig: config.OperatorInstallationConfig{
+			Namespace:               "dummy",
+			IndexImage:              "dummy",
+			Package:                 "dummy",
+			SubscriptionChannel:     "dummy",
+			SubscriptionConfigFile:  "dummy",
+			SubscriptionStartingCSV: "dummy",
+		},
+	}
 )
 
 func TestClusterManager_GetID(t *testing.T) {
@@ -685,6 +743,8 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 		{
 			name: "should succeed if no errors are encountered when dealing with enterprise cluster",
 			fields: fields{
+				observabilityConfiguration: observabilityConfig,
+				dataplaneClusterConfig:     dataplaneClusterConfig,
 				clusterService: &services.ClusterServiceMock{
 					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{
@@ -694,6 +754,34 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should apply correct resource set when dealing with an enterprise cluster",
+			fields: fields{
+				observabilityConfiguration: observabilityConfig,
+				dataplaneClusterConfig:     dataplaneClusterConfig,
+				clusterService: &services.ClusterServiceMock{
+					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
+						return []api.Cluster{
+							enterpriseProvisionedCluster,
+						}, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						// the resource set must contain 8 items: the observability resources plus two image pull secrets
+						if len(resources.Resources) != 8 {
+							return apiErrors.GeneralError(fmt.Sprintf("expected 8 items in the resource set but got %v", len(resources.Resources)))
+						}
+						return nil
+					},
 				},
 			},
 			wantErr: false,
@@ -701,6 +789,8 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 		{
 			name: "should fail if an error is encountered when dealing with enterprise cluster",
 			fields: fields{
+				observabilityConfiguration: observabilityConfig,
+				dataplaneClusterConfig:     dataplaneClusterConfig,
 				clusterService: &services.ClusterServiceMock{
 					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{
@@ -709,6 +799,9 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 					},
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return apiErrors.GeneralError("failed to update cluster")
+					},
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
 					},
 				},
 			},

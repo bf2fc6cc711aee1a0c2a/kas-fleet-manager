@@ -747,16 +747,16 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 	var r []interface{}
 	switch cluster.ClusterType {
 	case api.EnterpriseDataPlaneClusterType.String():
-		r = append(r, []interface{}{
+		r = append(r,
 			c.buildObservabilityNamespaceResource(),
 			c.buildObservatoriumDexSecretResource(),
 			c.buildObservatoriumSSOSecretResource(),
 			c.buildObservabilityCatalogSourceResource(),
 			c.buildObservabilityOperatorGroupResource(),
 			c.buildObservabilitySubscriptionResource(),
-		}...)
+		)
 	default:
-		r = append(r, []interface{}{
+		r = append(r,
 			c.buildReadOnlyGroupResource(),
 			c.buildDedicatedReaderClusterRoleBindingResource(),
 			c.buildKafkaSREGroupResource(),
@@ -767,7 +767,7 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 			c.buildObservabilityCatalogSourceResource(),
 			c.buildObservabilityOperatorGroupResource(),
 			c.buildObservabilitySubscriptionResource(),
-		}...)
+		)
 	}
 	strimziNamespace := strimziAddonNamespace
 	if c.OCMConfig.StrimziOperatorAddonID == "managed-kafka-qe" {
