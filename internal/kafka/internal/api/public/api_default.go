@@ -31,9 +31,10 @@ type DefaultApiService service
 /*
 CreateKafka Method for CreateKafka
 Creates a Kafka request
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param async Perform the action in an asynchronous manner
- * @param kafkaRequestPayload Kafka data
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param async Perform the action in an asynchronous manner
+  - @param kafkaRequestPayload Kafka data
+
 @return KafkaRequest
 */
 func (a *DefaultApiService) CreateKafka(ctx _context.Context, async bool, kafkaRequestPayload KafkaRequestPayload) (KafkaRequest, *_nethttp.Response, error) {
@@ -170,9 +171,10 @@ func (a *DefaultApiService) CreateKafka(ctx _context.Context, async bool, kafkaR
 /*
 DeleteKafkaById Method for DeleteKafkaById
 Deletes a Kafka request by ID
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
- * @param async Perform the action in an asynchronous manner
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+  - @param async Perform the action in an asynchronous manner
+
 @return Error
 */
 func (a *DefaultApiService) DeleteKafkaById(ctx _context.Context, id string, async bool) (Error, *_nethttp.Response, error) {
@@ -299,8 +301,9 @@ func (a *DefaultApiService) DeleteKafkaById(ctx _context.Context, id string, asy
 /*
 FederateMetrics Method for FederateMetrics
 Returns all metrics in scrapeable format for a given kafka id
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+
 @return string
 */
 func (a *DefaultApiService) FederateMetrics(ctx _context.Context, id string) (string, *_nethttp.Response, error) {
@@ -422,11 +425,12 @@ type GetCloudProviderRegionsOpts struct {
 /*
 GetCloudProviderRegions Method for GetCloudProviderRegions
 Returns the list of supported regions of the supported cloud provider
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
- * @param optional nil or *GetCloudProviderRegionsOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+  - @param optional nil or *GetCloudProviderRegionsOpts - Optional Parameters:
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
+
 @return CloudRegionList
 */
 func (a *DefaultApiService) GetCloudProviderRegions(ctx _context.Context, id string, localVarOptionals *GetCloudProviderRegionsOpts) (CloudRegionList, *_nethttp.Response, error) {
@@ -534,10 +538,11 @@ type GetCloudProvidersOpts struct {
 /*
 GetCloudProviders Method for GetCloudProviders
 Returns the list of supported cloud providers
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *GetCloudProvidersOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param optional nil or *GetCloudProvidersOpts - Optional Parameters:
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
+
 @return CloudProviderList
 */
 func (a *DefaultApiService) GetCloudProviders(ctx _context.Context, localVarOptionals *GetCloudProvidersOpts) (CloudProviderList, *_nethttp.Response, error) {
@@ -637,9 +642,10 @@ func (a *DefaultApiService) GetCloudProviders(ctx _context.Context, localVarOpti
 /*
 GetInstanceTypesByCloudProviderAndRegion Method for GetInstanceTypesByCloudProviderAndRegion
 Returns the list of supported Kafka instance types and sizes filtered by cloud provider and region
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param cloudProvider ID of the supported cloud provider
- * @param cloudRegion Name of the supported cloud provider region
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param cloudProvider ID of the supported cloud provider
+  - @param cloudRegion Name of the supported cloud provider region
+
 @return SupportedKafkaInstanceTypesList
 */
 func (a *DefaultApiService) GetInstanceTypesByCloudProviderAndRegion(ctx _context.Context, cloudProvider string, cloudRegion string) (SupportedKafkaInstanceTypesList, *_nethttp.Response, error) {
@@ -747,8 +753,9 @@ func (a *DefaultApiService) GetInstanceTypesByCloudProviderAndRegion(ctx _contex
 /*
 GetKafkaById Method for GetKafkaById
 Returns a Kafka request by ID
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+
 @return KafkaRequest
 */
 func (a *DefaultApiService) GetKafkaById(ctx _context.Context, id string) (KafkaRequest, *_nethttp.Response, error) {
@@ -872,12 +879,13 @@ type GetKafkasOpts struct {
 /*
 GetKafkas Method for GetKafkas
 Returns a list of Kafka requests
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *GetKafkasOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
- * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the following `kafkaRequests` fields:  * bootstrap_server_host * admin_api_server_url * cloud_provider * cluster_id * created_at * href * id * instance_type * multi_az * name * organisation_id * owner * reauthentication_enabled * region * status * updated_at * version  For example, to return all Kafka instances ordered by their name, use the following syntax:  ```sql name asc ```  To return all Kafka instances ordered by their name _and_ created date, use the following syntax:  ```sql name asc, created_at asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
- * @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of an SQL statement. Allowed fields in the search are `cloud_provider`, `name`, `owner`, `region`, and `status`. Allowed comparators are `<>`, `=`, `LIKE`, or `ILIKE`. Allowed joins are `AND` and `OR`. However, you can use a maximum of 10 joins in a search query.  Examples:  To return a Kafka instance with the name `my-kafka` and the region `aws`, use the following syntax:  ``` name = my-kafka and cloud_provider = aws ```[p-]  To return a Kafka instance with a name that starts with `my`, use the following syntax:  ``` name like my%25 ```  To return a Kafka instance with a name containing `test` matching any character case combinations, use the following syntax:  ``` name ilike %25test%25 ```  If the parameter isn't provided, or if the value is empty, then all the Kafka instances that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param optional nil or *GetKafkasOpts - Optional Parameters:
+  - @param "Page" (optional.String) -  Page index
+  - @param "Size" (optional.String) -  Number of items in each page
+  - @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the `order by` clause of an SQL statement. Each query can be ordered by any of the following `kafkaRequests` fields:  * bootstrap_server_host * admin_api_server_url * cloud_provider * cluster_id * created_at * href * id * instance_type * multi_az * name * organisation_id * owner * reauthentication_enabled * region * status * updated_at * version  For example, to return all Kafka instances ordered by their name, use the following syntax:  ```sql name asc ```  To return all Kafka instances ordered by their name _and_ created date, use the following syntax:  ```sql name asc, created_at asc ```  If the parameter isn't provided, or if the value is empty, then the results are ordered by name.
+  - @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the `where` clause of an SQL statement. Allowed fields in the search are `cloud_provider`, `name`, `owner`, `region`, and `status`. Allowed comparators are `<>`, `=`, `LIKE`, or `ILIKE`. Allowed joins are `AND` and `OR`. However, you can use a maximum of 10 joins in a search query.  Examples:  To return a Kafka instance with the name `my-kafka` and the region `aws`, use the following syntax:  ``` name = my-kafka and cloud_provider = aws ```[p-]  To return a Kafka instance with a name that starts with `my`, use the following syntax:  ``` name like my%25 ```  To return a Kafka instance with a name containing `test` matching any character case combinations, use the following syntax:  ``` name ilike %25test%25 ```  If the parameter isn't provided, or if the value is empty, then all the Kafka instances that the user has permission to see are returned.  Note. If the query is invalid, an error is returned.
+
 @return KafkaRequestList
 */
 func (a *DefaultApiService) GetKafkas(ctx _context.Context, localVarOptionals *GetKafkasOpts) (KafkaRequestList, *_nethttp.Response, error) {
@@ -1008,10 +1016,11 @@ type GetMetricsByInstantQueryOpts struct {
 /*
 GetMetricsByInstantQuery Method for GetMetricsByInstantQuery
 Returns metrics with instant query by Kafka ID
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
- * @param optional nil or *GetMetricsByInstantQueryOpts - Optional Parameters:
- * @param "Filters" (optional.Interface of []string) -  List of metrics to fetch. Fetch all metrics when empty. List entries are Kafka internal metric names.
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+  - @param optional nil or *GetMetricsByInstantQueryOpts - Optional Parameters:
+  - @param "Filters" (optional.Interface of []string) -  List of metrics to fetch. Fetch all metrics when empty. List entries are Kafka internal metric names.
+
 @return MetricsInstantQueryList
 */
 func (a *DefaultApiService) GetMetricsByInstantQuery(ctx _context.Context, id string, localVarOptionals *GetMetricsByInstantQueryOpts) (MetricsInstantQueryList, *_nethttp.Response, error) {
@@ -1123,12 +1132,13 @@ type GetMetricsByRangeQueryOpts struct {
 /*
 GetMetricsByRangeQuery Method for GetMetricsByRangeQuery
 Returns metrics with timeseries range query by Kafka ID
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
- * @param duration The length of time in minutes for which to return the metrics
- * @param interval The interval in seconds between data points
- * @param optional nil or *GetMetricsByRangeQueryOpts - Optional Parameters:
- * @param "Filters" (optional.Interface of []string) -  List of metrics to fetch. Fetch all metrics when empty. List entries are Kafka internal metric names.
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+  - @param duration The length of time in minutes for which to return the metrics
+  - @param interval The interval in seconds between data points
+  - @param optional nil or *GetMetricsByRangeQueryOpts - Optional Parameters:
+  - @param "Filters" (optional.Interface of []string) -  List of metrics to fetch. Fetch all metrics when empty. List entries are Kafka internal metric names.
+
 @return MetricsRangeQueryList
 */
 func (a *DefaultApiService) GetMetricsByRangeQuery(ctx _context.Context, id string, duration int64, interval int64, localVarOptionals *GetMetricsByRangeQueryOpts) (MetricsRangeQueryList, *_nethttp.Response, error) {
@@ -1249,7 +1259,8 @@ func (a *DefaultApiService) GetMetricsByRangeQuery(ctx _context.Context, id stri
 /*
 GetVersionMetadata Method for GetVersionMetadata
 Returns the kafka Service Fleet Manager API version metadata
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+
 @return VersionMetadata
 */
 func (a *DefaultApiService) GetVersionMetadata(ctx _context.Context) (VersionMetadata, *_nethttp.Response, error) {
@@ -1324,9 +1335,10 @@ func (a *DefaultApiService) GetVersionMetadata(ctx _context.Context) (VersionMet
 /*
 UpdateKafkaById Method for UpdateKafkaById
 Update a Kafka instance by id
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The ID of record
- * @param kafkaUpdateRequest Update owner of kafka
+  - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+  - @param id The ID of record
+  - @param kafkaUpdateRequest Update owner of kafka
+
 @return KafkaRequest
 */
 func (a *DefaultApiService) UpdateKafkaById(ctx _context.Context, id string, kafkaUpdateRequest KafkaUpdateRequest) (KafkaRequest, *_nethttp.Response, error) {
