@@ -98,6 +98,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //			UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *apiErrors.ServiceError) {
 //				panic("mock out the UpdateStatus method")
 //			},
+//			UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
+//				panic("mock out the UpdateZeroValueOfKafkaRequestsExpiredAt method")
+//			},
 //			UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *apiErrors.ServiceError {
 //				panic("mock out the Updates method")
 //			},
@@ -185,6 +188,9 @@ type KafkaServiceMock struct {
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(id string, status constants.KafkaStatus) (bool, *apiErrors.ServiceError)
+
+	// UpdateZeroValueOfKafkaRequestsExpiredAtFunc mocks the UpdateZeroValueOfKafkaRequestsExpiredAt method.
+	UpdateZeroValueOfKafkaRequestsExpiredAtFunc func() error
 
 	// UpdatesFunc mocks the Updates method.
 	UpdatesFunc func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *apiErrors.ServiceError
@@ -321,6 +327,9 @@ type KafkaServiceMock struct {
 			// Status is the status argument value.
 			Status constants.KafkaStatus
 		}
+		// UpdateZeroValueOfKafkaRequestsExpiredAt holds details about calls to the UpdateZeroValueOfKafkaRequestsExpiredAt method.
+		UpdateZeroValueOfKafkaRequestsExpiredAt []struct {
+		}
 		// Updates holds details about calls to the Updates method.
 		Updates []struct {
 			// KafkaRequest is the kafkaRequest argument value.
@@ -373,6 +382,7 @@ type KafkaServiceMock struct {
 	lockRegisterKafkaJob                         sync.RWMutex
 	lockUpdate                                   sync.RWMutex
 	lockUpdateStatus                             sync.RWMutex
+	lockUpdateZeroValueOfKafkaRequestsExpiredAt  sync.RWMutex
 	lockUpdates                                  sync.RWMutex
 	lockValidateBillingAccount                   sync.RWMutex
 	lockVerifyAndUpdateKafkaAdmin                sync.RWMutex
@@ -1147,6 +1157,33 @@ func (mock *KafkaServiceMock) UpdateStatusCalls() []struct {
 	mock.lockUpdateStatus.RLock()
 	calls = mock.calls.UpdateStatus
 	mock.lockUpdateStatus.RUnlock()
+	return calls
+}
+
+// UpdateZeroValueOfKafkaRequestsExpiredAt calls UpdateZeroValueOfKafkaRequestsExpiredAtFunc.
+func (mock *KafkaServiceMock) UpdateZeroValueOfKafkaRequestsExpiredAt() error {
+	if mock.UpdateZeroValueOfKafkaRequestsExpiredAtFunc == nil {
+		panic("KafkaServiceMock.UpdateZeroValueOfKafkaRequestsExpiredAtFunc: method is nil but KafkaService.UpdateZeroValueOfKafkaRequestsExpiredAt was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockUpdateZeroValueOfKafkaRequestsExpiredAt.Lock()
+	mock.calls.UpdateZeroValueOfKafkaRequestsExpiredAt = append(mock.calls.UpdateZeroValueOfKafkaRequestsExpiredAt, callInfo)
+	mock.lockUpdateZeroValueOfKafkaRequestsExpiredAt.Unlock()
+	return mock.UpdateZeroValueOfKafkaRequestsExpiredAtFunc()
+}
+
+// UpdateZeroValueOfKafkaRequestsExpiredAtCalls gets all the calls that were made to UpdateZeroValueOfKafkaRequestsExpiredAt.
+// Check the length with:
+//
+//	len(mockedKafkaService.UpdateZeroValueOfKafkaRequestsExpiredAtCalls())
+func (mock *KafkaServiceMock) UpdateZeroValueOfKafkaRequestsExpiredAtCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockUpdateZeroValueOfKafkaRequestsExpiredAt.RLock()
+	calls = mock.calls.UpdateZeroValueOfKafkaRequestsExpiredAt
+	mock.lockUpdateZeroValueOfKafkaRequestsExpiredAt.RUnlock()
 	return calls
 }
 
