@@ -1322,7 +1322,7 @@ paths:
         schema:
           type: boolean
         style: form
-      - description: ID of the OSD enterprise cluster
+      - description: ID of the enterprise data plane cluster
         explode: false
         in: path
         name: id
