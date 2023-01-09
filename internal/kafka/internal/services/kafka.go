@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 	"sync"
@@ -125,6 +126,11 @@ type KafkaService interface {
 	GetAvailableSizesInRegion(criteria *FindClusterCriteria) ([]string, *errors.ServiceError)
 	ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError
 	AssignBootstrapServerHost(kafkaRequest *dbapi.KafkaRequest) error
+
+	// MGDSTRM-10012 temporarily add method to reconcile updating the zero-value
+	// of ExpiredAt. Remove this method when functionality has been rolled out
+	// to stage and prod
+	UpdateZeroValueOfKafkaRequestsExpiredAt() error
 }
 
 var _ KafkaService = &kafkaService{}
@@ -1319,4 +1325,14 @@ func (k *kafkaService) getRoute53RegionFromKafkaRequest(kafkaRequest *dbapi.Kafk
 	default:
 		return "", errors.GeneralError("unknown cloud provider: %q", kafkaRequest.CloudProvider)
 	}
+}
+
+func (k *kafkaService) UpdateZeroValueOfKafkaRequestsExpiredAt() error {
+	dbConn := k.connectionFactory.New()
+	zeroTime := time.Time{}
+	nullTime := sql.NullTime{Time: time.Time{}, Valid: false}
+	db := dbConn.Table("kafka_requests").Where("expires_at = ?", zeroTime).Where("deleted_at IS NULL").Update("expires_at", nullTime)
+	glog.Infof("%v kafka_requests had expires_at with the zero-value of time.Time '%v' and have been updated to NULL", db.RowsAffected, zeroTime)
+
+	return db.Error
 }

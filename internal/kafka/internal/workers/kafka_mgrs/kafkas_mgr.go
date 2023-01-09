@@ -112,7 +112,15 @@ func (k *KafkaManager) Reconcile() []error {
 		}
 	}
 
-	// cleaning up expired qkafkas
+	// MGDSTRM-10012 temporarily reconcile updating the zero-value of ExpiredAt
+	// for kafka requests
+	updateErr := k.updateZeroValueOfKafkaRequestsExpiredAt()
+	if updateErr != nil {
+		encounteredErrors = append(encounteredErrors, updateErr)
+		return encounteredErrors
+	}
+
+	// cleaning up expired kafkas
 	kafkaConfig := k.kafkaConfig
 	if kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka {
 		glog.Infoln("Deprovisioning expired kafkas")
@@ -333,4 +341,8 @@ func (k *KafkaManager) updateClusterStatusCapacityAvailableMetric(c services.Kaf
 
 func (k *KafkaManager) updateClusterStatusCapacityMaxMetric(c services.KafkaStreamingUnitCountPerCluster) {
 	metrics.UpdateClusterStatusCapacityMaxCount(c.CloudProvider, c.Region, c.InstanceType, c.ClusterId, float64(c.MaxUnits))
+}
+
+func (k *KafkaManager) updateZeroValueOfKafkaRequestsExpiredAt() error {
+	return k.kafkaService.UpdateZeroValueOfKafkaRequestsExpiredAt()
 }
