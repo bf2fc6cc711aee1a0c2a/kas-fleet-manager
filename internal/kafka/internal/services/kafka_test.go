@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -2475,10 +2476,20 @@ func Test_kafkaService_DeprovisionKafkaForUsers(t *testing.T) {
 func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
+		// testDBNowFunc is used by the DB to obtain the current time.
+		// The current time is used by the DB to set the created_at and updated_at fields.
+		// We provide customizable method to return the time to make tests return arbitrary
+		// created_at and updated_at on DB side
+		testDBNowFunc func() time.Time
 	}
 
 	const instanceType = "type1"
 	const instanceSize = "size4"
+	expiredTime := sql.NullTime{Time: time.Now().Add(-(2 * time.Hour)), Valid: true}
+	unexpiredTime := sql.NullTime{Time: expiredTime.Time.Add(48 * time.Hour), Valid: true}
+
+	nowTime := time.Now()
+	dbTime := nowTime.Add(300 * time.Microsecond)
 
 	tests := []struct {
 		name    string
@@ -2493,20 +2504,63 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			},
 			wantErr: true,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type IN ($1) AND status NOT IN ($2,$3)`).WithReply([]map[string]interface{}{{"id": "kafkainstance1", "instance_type": instanceType, "size_id": instanceSize}})
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests" WHERE status NOT IN ($2,$3) AND expires_at IS NOT NULL`).WithReply([]map[string]interface{}{{"id": "kafkainstance1", "instance_type": instanceType, "size_id": instanceSize}})
 				mocket.Catcher.NewMock().WithQuery(`UPDATE "kafka_requests" SET "status"=$1,"updated_at"=$2 WHERE id IN ($3)`).WithError(fmt.Errorf("an update error"))
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
-			name: "success when database does not throw an error",
+			name: "when a kafka instance has expired it marks it as deprovisioned successfully",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
+				testDBNowFunc: func() time.Time {
+					return dbTime
+				},
 			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests" WHERE instance_type IN ($1) AND status NOT IN ($2,$3)`).WithReply([]map[string]interface{}{{"id": "kafkainstance1", "instance_type": instanceType, "size_id": instanceSize}})
-				mocket.Catcher.NewMock().WithQuery(`UPDATE "kafka_requests" SET "status"=$1,"updated_at"=$2 WHERE id IN ($3)`)
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE status NOT IN ($1,$2) AND expires_at IS NOT NULL`).
+					WithReply([]map[string]interface{}{{"id": "kafkainstance1", "instance_type": instanceType, "size_id": instanceSize, "expires_at": &expiredTime}})
+				mocket.Catcher.NewMock().
+					WithArgs(constants.KafkaRequestStatusDeprovision.String(), dbTime, "kafkainstance1").
+					WithQuery(`UPDATE "kafka_requests" SET "status"=$1,"updated_at"=$2 WHERE id IN ($3)`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "when a kafka instance has no expiration set it succeeds and it does not mark it as deprovisioned",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				testDBNowFunc: func() time.Time {
+					return dbTime
+				},
+			},
+			wantErr: false,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE status NOT IN ($1,$2) AND expires_at IS NOT NULL`).
+					WithReply([]map[string]interface{}{})
+				mocket.Catcher.NewMock().
+					WithQuery(`UPDATE "kafka_requests"`).WithExecException()
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "when a kafka instance has expiration set but it is not expired it does not mark it as deprovisioned",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				testDBNowFunc: func() time.Time {
+					return dbTime
+				},
+			},
+			wantErr: false,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE status NOT IN ($1,$2) AND expires_at IS NOT NULL`).
+					WithReply([]map[string]interface{}{{"id": "kafkainstance1", "instance_type": instanceType, "size_id": instanceSize, "expires_at": &unexpiredTime}})
+				mocket.Catcher.NewMock().
+					WithQuery(`UPDATE "kafka_requests"`).WithExecException()
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
@@ -2516,6 +2570,9 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.fields.testDBNowFunc != nil {
+				tt.fields.connectionFactory.DB.NowFunc = tt.fields.testDBNowFunc
+			}
 			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
@@ -2530,7 +2587,7 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 						Id: instanceType,
 						Sizes: []config.KafkaInstanceSize{
 							{Id: "size1"},
-							{Id: instanceSize, LifespanSeconds: &[]int{1234}[0]},
+							{Id: instanceSize},
 						},
 					},
 				},

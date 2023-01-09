@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -147,6 +148,12 @@ func WithMultiAZ(multiaz bool) KafkaRequestBuildOption {
 func WithCreatedAt(createdAt time.Time) KafkaRequestBuildOption {
 	return func(request *dbapi.KafkaRequest) {
 		request.Meta.CreatedAt = createdAt
+	}
+}
+
+func WithExpiresAt(expiresAt sql.NullTime) KafkaRequestBuildOption {
+	return func(request *dbapi.KafkaRequest) {
+		request.ExpiresAt = expiresAt
 	}
 }
 
