@@ -89,10 +89,10 @@ jobs:
         options: --health-cmd "curl -f http://localhost:8080/auth/realms/master" --health-interval 40s --health-retries 8 --health-timeout 60s
 
     steps:
-      - name: Set up Go 1.19.3
+      - name: Set up Go 1.19.4
         uses: actions/setup-go@v3
         with:
-          go-version: "1.19.3"
+          go-version: "1.19.4"
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
       - uses: dorny/paths-filter@v2
