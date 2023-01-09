@@ -1322,7 +1322,7 @@ paths:
         schema:
           type: boolean
         style: form
-      - description: The ID of record
+      - description: ID of the OSD enterprise cluster
         explode: false
         in: path
         name: id

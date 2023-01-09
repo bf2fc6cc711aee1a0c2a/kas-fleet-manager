@@ -421,6 +421,11 @@ func validateEnterpriseClusterEligibleForDeregistration(ctx context.Context, clu
 		if getOrgIdErr != nil {
 			return errors.GeneralError(getOrgIdErr.Error())
 		}
+
+		if !claims.IsOrgAdmin() {
+			return errors.New(errors.ErrorUnauthorized, "non admin user not authorized to perform this action")
+		}
+
 		cluster, err := clusterService.FindClusterByID(clusterID)
 		if err != nil {
 			return err

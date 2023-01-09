@@ -1815,13 +1815,16 @@ func Test_validateEnterpriseClusterEligibleForDeregistration(t *testing.T) {
 			args: args{
 				ctx:       context.TODO(),
 				clusterID: "id",
-				clusterService: &services.ClusterServiceMock{
-					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return nil, errors.GeneralError("failed to find cluster")
-					},
-				},
 			},
 			want: errors.GeneralError("can't find neither 'org_id' or 'rh-org-id' attribute in claims"),
+		},
+		{
+			name: "should return an error if user is not an organization admin",
+			args: args{
+				ctx:       nonAdminCtxWithClaims,
+				clusterID: "id",
+			},
+			want: errors.New(errors.ErrorUnauthorized, "non admin user not authorized to perform this action"),
 		},
 		{
 			name: "should return an error if attempt to find cluster results in an error",

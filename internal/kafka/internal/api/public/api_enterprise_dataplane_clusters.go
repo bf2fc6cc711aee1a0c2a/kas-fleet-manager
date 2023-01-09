@@ -36,7 +36,7 @@ type DeleteEnterpriseClusterByIdOpts struct {
 DeleteEnterpriseClusterById Method for DeleteEnterpriseClusterById
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param async Perform the action in an asynchronous manner
-  - @param id The ID of record
+  - @param id ID of the OSD enterprise cluster
   - @param optional nil or *DeleteEnterpriseClusterByIdOpts - Optional Parameters:
   - @param "Force" (optional.Bool) -  When provided with value: true - enterprise cluster will be deleted alongside all kafkas present on the cluster. When skipped and enterprise cluster has any kafkas associated with it, the request will fail.
 

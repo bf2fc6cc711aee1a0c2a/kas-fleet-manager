@@ -13,6 +13,7 @@ import (
 	kafkaMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/onsi/gomega"
 )
@@ -27,14 +28,20 @@ func TestEnterpriseClusterDeregistration(t *testing.T) {
 	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, nil)
 	defer teardown()
 
-	account := h.NewRandAccount()
-	authCtx := h.NewAuthenticatedContext(account, nil)
+	adminAccount := h.NewAccountWithNameAndOrg("admin", kafkaMocks.DefaultOrganisationId)
 
-	otherOrgAccount := h.NewAccount("", "", "", "87654321")
-	otherOrgAuthCtx := h.NewAuthenticatedContext(otherOrgAccount, nil)
+	otherAdminAccount := h.NewAccountWithNameAndOrg("other-admin", "98765432")
+
+	claims := jwt.MapClaims{
+		"is_org_admin": true,
+	}
+
+	adminCtx := h.NewAuthenticatedContext(adminAccount, claims)
+
+	otherAdminadminCtx := h.NewAuthenticatedContext(otherAdminAccount, claims)
 
 	nonAuthAccount := h.NewAccount("", "", "", "")
-	nonAuthCtx := h.NewAuthenticatedContext(nonAuthAccount, nil)
+	nonadminCtx := h.NewAuthenticatedContext(nonAuthAccount, nil)
 
 	// setup pre-requisites to performing requests
 	db := test.TestServices.DBFactory.New()
@@ -121,42 +128,42 @@ func TestEnterpriseClusterDeregistration(t *testing.T) {
 
 	// test deregistration scenarios
 	// async=false deregistration non enterprise cluster
-	_, resp, e := client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(authCtx, false, id1, &forceFalse)
+	_, resp, e := client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(adminCtx, false, id1, &forceFalse)
 	g.Expect(e).To(gomega.HaveOccurred(), "error should be thrown when attempting to call deregister endpoint with async=false")
 	closeRespBody(resp)
 
 	// no org id account deregistration non enterprise cluster
-	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(nonAuthCtx, true, id1, &forceTrue)
+	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(nonadminCtx, true, id1, &forceTrue)
 	g.Expect(e).To(gomega.HaveOccurred(), "error should be thrown when attempting to call deregister endpoint with no org ID in the token")
 	closeRespBody(resp)
 
 	// not found cluster deregistration non enterprise cluster
-	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(authCtx, true, nonExistentID, &forceTrue)
+	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(adminCtx, true, nonExistentID, &forceTrue)
 	g.Expect(e).To(gomega.HaveOccurred(), "error should be thrown when attempting to call deregister endpoint against non-existent cluster")
 	closeRespBody(resp)
 
 	// other org cluster deregistration non enterprise cluster
-	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(otherOrgAuthCtx, true, id1, &forceTrue)
+	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(otherAdminadminCtx, true, id1, &forceTrue)
 	g.Expect(e).To(gomega.HaveOccurred(), "error should be thrown when attempting to deregister enterprise cluster from another org")
 	closeRespBody(resp)
 
 	// non enterprise cluster deregistration non enterprise cluster
-	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(authCtx, true, id3, &forceTrue)
+	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(adminCtx, true, id3, &forceTrue)
 	g.Expect(e).To(gomega.HaveOccurred(), "error should be thrown when attempting to deregister non-enterprise cluster")
 	closeRespBody(resp)
 
 	// force false with kafkas on the cluster failure
-	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(authCtx, true, id1, &forceFalse)
+	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(adminCtx, true, id1, &forceFalse)
 	g.Expect(e).To(gomega.HaveOccurred(), "error should be thrown when attempting to deregister enterprise cluster with kafkas on it without force=true")
 	closeRespBody(resp)
 
 	// force false with empty cluster success
-	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(authCtx, true, id2, &forceFalse)
+	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(adminCtx, true, id2, &forceFalse)
 	g.Expect(e).NotTo(gomega.HaveOccurred(), "error should not be thrown when attempting to deregister enterprise cluster with no kafkas on it without force=true")
 	closeRespBody(resp)
 
 	// force true with non-empty cluster success
-	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(authCtx, true, id1, &forceTrue)
+	_, resp, e = client.EnterpriseDataplaneClustersApi.DeleteEnterpriseClusterById(adminCtx, true, id1, &forceTrue)
 	g.Expect(e).NotTo(gomega.HaveOccurred(), "error should not be thrown when attempting to deregister enterprise cluster with kafkas on it with force=true")
 	closeRespBody(resp)
 }

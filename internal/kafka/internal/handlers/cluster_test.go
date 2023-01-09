@@ -34,6 +34,13 @@ var (
 			"is_org_admin": true,
 		},
 	})
+	nonAdminCtxWithClaims = auth.SetTokenInContext(context.TODO(), &jwt.Token{
+		Claims: jwt.MapClaims{
+			"username":     "non-admin-user",
+			"org_id":       mocks.DefaultOrganisationId,
+			"is_org_admin": false,
+		},
+	})
 )
 
 func Test_RegisterEnterpriseCluster(t *testing.T) {

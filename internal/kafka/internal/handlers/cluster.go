@@ -59,6 +59,10 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 				return nil, errors.GeneralError(getOrgIdErr.Error())
 			}
 
+			if !claims.IsOrgAdmin() {
+				return nil, errors.New(errors.ErrorUnauthorized, "non admin user not authorized to perform this action")
+			}
+
 			supportedKafkaInstanceType := api.StandardTypeSupport.String()
 			clusterRequest := &api.Cluster{
 				ClusterType:           api.EnterpriseDataPlaneClusterType.String(),

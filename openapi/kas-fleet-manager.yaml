@@ -1040,7 +1040,12 @@ paths:
           schema:
             type: boolean
           required: false
-        - $ref: "#/components/parameters/id"
+        - in: path
+          name: id
+          description: ID of the OSD enterprise cluster
+          schema:
+            type: string
+          required: true
       responses:
         "202":
           content:
