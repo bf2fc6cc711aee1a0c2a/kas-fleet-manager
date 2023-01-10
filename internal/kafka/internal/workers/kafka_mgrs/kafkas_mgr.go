@@ -120,6 +120,37 @@ func (k *KafkaManager) Reconcile() []error {
 		return encounteredErrors
 	}
 
+	for _, kafka := range kafkas {
+		if !kafka.CanBeAutomaticallySuspended() {
+			// this kafka is not in a state that can be suspended
+			continue
+		}
+
+		expired, remainingLifespan := kafka.IsExpired()
+		if expired {
+			// Expired kafkas will be deleted elsewhere
+			continue
+		}
+
+		// get the billing model
+		bm, err := k.kafkaConfig.GetBillingModelByID(kafka.InstanceType, kafka.ActualKafkaBillingModel)
+		if err != nil {
+			wrappedError := errors.Wrap(err, "failed to suspend expired Kafka instances")
+			encounteredErrors = append(encounteredErrors, wrappedError)
+			continue
+		}
+
+		if remainingLifespan.LessThanOrEqual(float64(bm.GracePeriodDays)) {
+			glog.Infof("cluster with ID '%s' entered its grace period. Suspending", kafka.ID)
+			// the instance is in grace period
+			_, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusSuspending)
+			if err != nil {
+				wrappedError := errors.Wrap(err, "failed to suspend expired Kafka instances")
+				encounteredErrors = append(encounteredErrors, wrappedError)
+			}
+		}
+	}
+
 	// cleaning up expired kafkas
 	glog.Infoln("Deprovisioning expired kafkas")
 	expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas()
