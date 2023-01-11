@@ -1718,56 +1718,26 @@ func TestAdminKafka_Update(t *testing.T) {
 		ActualKafkaBillingModel: "standard",
 	}
 
-	if err := db.Create(kafka1).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	kafkaInstancesToCreate := []*dbapi.KafkaRequest{
+		kafka1,
+		kafka2,
+		kafka3,
+		kafka4,
+		suspendedKafka,
+		suspendingKafka,
+		deprovisionKafka,
+		deletingKafka,
+		evalKafkaWithExpirationDate,
+		evalKafkaWithExpirationDate2,
+		evalKafkaWithoutExpirationDate,
+		sampleKafkaForUpdateForAllFields,
+		suspendedDeveloperKafkaWithExpirationDate,
 	}
 
-	if err := db.Create(kafka2).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
-	}
-
-	if err := db.Create(kafka3).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
-	}
-
-	if err := db.Create(kafka4).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
-	}
-
-	if err := db.Create(suspendedKafka).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
-	}
-
-	if err := db.Create(suspendingKafka).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
-	}
-
-	if err := db.Create(deprovisionKafka).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
-	}
-
-	if err := db.Create(deletingKafka).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
-	}
-
-	if err := db.Create(evalKafkaWithExpirationDate).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
-	}
-
-	if err := db.Create(evalKafkaWithExpirationDate2).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
-	}
-
-	if err := db.Create(evalKafkaWithoutExpirationDate).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
-	}
-
-	if err := db.Create(sampleKafkaForUpdateForAllFields).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
-	}
-
-	if err := db.Create(suspendedDeveloperKafkaWithExpirationDate).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	for _, k := range kafkaInstancesToCreate {
+		if err := db.Create(k).Error; err != nil {
+			t.Errorf("failed to create Kafka db record due to error: %v", err)
+		}
 	}
 
 	for _, testcase := range tests {
