@@ -21,12 +21,13 @@ func PresentEnterpriseClusterRegistrationResponse(cluster api.Cluster, fleetShar
 	reference := PresentReference(cluster.ClusterID, cluster)
 
 	c := public.EnterpriseClusterRegistrationResponse{
-		Id:                   cluster.ClusterID,
-		ClusterId:            cluster.ClusterID,
-		Status:               cluster.Status.String(),
-		Kind:                 reference.Kind,
-		Href:                 reference.Href,
-		FleetshardParameters: fsoParams,
+		Id:                            cluster.ClusterID,
+		ClusterId:                     cluster.ClusterID,
+		Status:                        cluster.Status.String(),
+		Kind:                          reference.Kind,
+		Href:                          reference.Href,
+		AccessKafkasViaPrivateNetwork: cluster.AccessKafkasViaPrivateNetwork,
+		FleetshardParameters:          fsoParams,
 	}
 
 	return c, nil
@@ -35,10 +36,11 @@ func PresentEnterpriseClusterRegistrationResponse(cluster api.Cluster, fleetShar
 func PresentEnterpriseCluster(cluster api.Cluster) public.EnterpriseCluster {
 	reference := PresentReference(cluster.ClusterID, cluster)
 	return public.EnterpriseCluster{
-		Id:        cluster.ClusterID,
-		Status:    cluster.Status.String(),
-		ClusterId: cluster.ClusterID,
-		Kind:      reference.Kind,
-		Href:      reference.Href,
+		Id:                            cluster.ClusterID,
+		Status:                        cluster.Status.String(),
+		ClusterId:                     cluster.ClusterID,
+		Kind:                          reference.Kind,
+		Href:                          reference.Href,
+		AccessKafkasViaPrivateNetwork: cluster.AccessKafkasViaPrivateNetwork,
 	}
 }

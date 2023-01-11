@@ -93,6 +93,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	// waiting for cluster state to become `provisioning`, so that its struct can be persisted
 	cluster, checkProvisioningErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterProvisioning)
 	g.Expect(checkProvisioningErr).NotTo(gomega.HaveOccurred(), "Error waiting for cluster to start provisioning: %s %v", cluster.ClusterID, checkProvisioningErr)
+	g.Expect(cluster.AccessKafkasViaPrivateNetwork).To(gomega.BeFalse())
 
 	// save cluster struct to be reused in by the cleanup script if the cluster won't become ready before the timeout
 	err = common.PersistClusterStruct(*cluster, api.ClusterProvisioning)

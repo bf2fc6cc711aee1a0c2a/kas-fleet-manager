@@ -88,7 +88,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should return an error if cluster_external_id is invalid",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s"}`, validLengthClusterId, invalidParam)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_external_id": "%s"}`, validLengthClusterId, invalidParam)),
 				ctx:  context.TODO(),
 			},
 			wantStatusCode: http.StatusBadRequest,
@@ -96,7 +96,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should return an error if FindClusterByID returns error other than cluster not found",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s"}`, validLengthClusterId, validFormatExternalClusterId)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_external_id": "%s"}`, validLengthClusterId, validFormatExternalClusterId)),
 				ctx:  context.TODO(),
 			},
 			fields: fields{
@@ -111,7 +111,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should return an error if cluster_ingress_dns_name is empty",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s"}`, validLengthClusterId, validFormatExternalClusterId)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_external_id": "%s"}`, validLengthClusterId, validFormatExternalClusterId)),
 				ctx:  context.TODO(),
 			},
 			fields: fields{
@@ -126,7 +126,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should return an error if cluster_dns_name is invalid",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s"}`, validLengthClusterId, validFormatExternalClusterId, invalidParam)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": true, "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s"}`, validLengthClusterId, validFormatExternalClusterId, invalidParam)),
 				ctx:  context.TODO(),
 			},
 			fields: fields{
@@ -141,7 +141,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should return an error if kafka_machine_pool_node_count is less than 3",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 2}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 2}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
 				ctx:  context.TODO(),
 			},
 			fields: fields{
@@ -171,7 +171,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should return an error if claims cant be obtained from context",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
 				ctx:  context.TODO(),
 			},
 			fields: fields{
@@ -186,7 +186,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should return an error if GetAddonParams returns an error",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": true, "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
 				ctx:  ctxWithClaims,
 			},
 			fields: fields{
@@ -206,7 +206,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should return an error if RegisterClusterJob returns an error",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
 				ctx:  ctxWithClaims,
 			},
 			fields: fields{
@@ -234,7 +234,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should successfully register enterprise cluster",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "access_kafkas_via_private_network": false, "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
 				ctx:  ctxWithClaims,
 			},
 			fields: fields{
@@ -259,11 +259,12 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 			},
 			wantStatusCode: http.StatusOK,
 			want: &public.EnterpriseClusterRegistrationResponse{
-				Status:    api.ClusterAccepted.String(),
-				ClusterId: validLengthClusterId,
-				Id:        validLengthClusterId,
-				Kind:      "Cluster",
-				Href:      fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", validLengthClusterId),
+				Status:                        api.ClusterAccepted.String(),
+				ClusterId:                     validLengthClusterId,
+				Id:                            validLengthClusterId,
+				AccessKafkasViaPrivateNetwork: false,
+				Kind:                          "Cluster",
+				Href:                          fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", validLengthClusterId),
 				FleetshardParameters: []public.FleetshardParameter{
 					{
 						Id:    "some-id",
@@ -275,7 +276,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should successfully register enterprise cluster if FindClusterByID returns cluster not found error",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "access_kafkas_via_private_network": true, "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
 				ctx:  ctxWithClaims,
 			},
 			fields: fields{
@@ -300,11 +301,12 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 			},
 			wantStatusCode: http.StatusOK,
 			want: &public.EnterpriseClusterRegistrationResponse{
-				Status:    api.ClusterAccepted.String(),
-				ClusterId: validLengthClusterId,
-				Id:        validLengthClusterId,
-				Kind:      "Cluster",
-				Href:      fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", validLengthClusterId),
+				Status:                        api.ClusterAccepted.String(),
+				ClusterId:                     validLengthClusterId,
+				Id:                            validLengthClusterId,
+				AccessKafkasViaPrivateNetwork: true,
+				Kind:                          "Cluster",
+				Href:                          fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", validLengthClusterId),
 				FleetshardParameters: []public.FleetshardParameter{
 					{
 						Id:    "some-id",

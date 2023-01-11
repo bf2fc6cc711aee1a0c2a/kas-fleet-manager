@@ -672,15 +672,16 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	//Create all missing clusters
 	for _, p := range c.DataplaneClusterConfig.ClusterConfig.MissingClusters(clusterIdsMap) {
 		clusterRequest := api.Cluster{
-			CloudProvider:         p.CloudProvider,
-			Region:                p.Region,
-			MultiAZ:               p.MultiAZ,
-			ClusterID:             p.ClusterId,
-			Status:                p.Status,
-			ProviderType:          p.ProviderType,
-			ClusterDNS:            p.ClusterDNS,
-			SupportedInstanceType: p.SupportedInstanceType,
-			ClusterType:           api.ManagedDataPlaneClusterType.String(),
+			CloudProvider:                 p.CloudProvider,
+			Region:                        p.Region,
+			MultiAZ:                       p.MultiAZ,
+			ClusterID:                     p.ClusterId,
+			Status:                        p.Status,
+			ProviderType:                  p.ProviderType,
+			ClusterDNS:                    p.ClusterDNS,
+			SupportedInstanceType:         p.SupportedInstanceType,
+			AccessKafkasViaPrivateNetwork: false,
+			ClusterType:                   api.ManagedDataPlaneClusterType.String(),
 		}
 		if err := c.ClusterService.RegisterClusterJob(&clusterRequest); err != nil {
 			return []error{errors.Wrapf(err, "failed to register new cluster %s with config file", p.ClusterId)}

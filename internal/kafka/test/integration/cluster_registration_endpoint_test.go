@@ -40,10 +40,11 @@ func TestClusterRegistration_BadRequest(t *testing.T) {
 			name: "should return bad request when cluster id is not valid",
 			assert: func() {
 				payload := public.EnterpriseOsdClusterPayload{
-					ClusterId:                 "invalid",
-					ClusterExternalId:         "69d631de-9b7f-4bc2-bf4f-4d3295a7b25",
-					ClusterIngressDnsName:     "apps.example.com",
-					KafkaMachinePoolNodeCount: 3,
+					ClusterId:                     "invalid",
+					ClusterExternalId:             "69d631de-9b7f-4bc2-bf4f-4d3295a7b25",
+					ClusterIngressDnsName:         "apps.example.com",
+					KafkaMachinePoolNodeCount:     3,
+					AccessKafkasViaPrivateNetwork: false,
 				}
 				_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 				if resp != nil {
@@ -57,10 +58,11 @@ func TestClusterRegistration_BadRequest(t *testing.T) {
 			name: "should return bad request when cluster external id is not valid",
 			assert: func() {
 				payload := public.EnterpriseOsdClusterPayload{
-					ClusterId:                 "1234abcd1234abcd1234abcd1234abcd",
-					ClusterExternalId:         "69d631de9b7f4bc2bf4f4d3295a7b25",
-					ClusterIngressDnsName:     "apps.example.com",
-					KafkaMachinePoolNodeCount: 6,
+					ClusterId:                     "1234abcd1234abcd1234abcd1234abcd",
+					ClusterExternalId:             "69d631de9b7f4bc2bf4f4d3295a7b25",
+					ClusterIngressDnsName:         "apps.example.com",
+					KafkaMachinePoolNodeCount:     6,
+					AccessKafkasViaPrivateNetwork: true,
 				}
 				_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 				if resp != nil {
@@ -74,10 +76,11 @@ func TestClusterRegistration_BadRequest(t *testing.T) {
 			name: "should return bad request when cluster ingress dns name is not valid",
 			assert: func() {
 				payload := public.EnterpriseOsdClusterPayload{
-					ClusterId:                 "1234abcd1234abcd1234abcd1234abcd",
-					ClusterExternalId:         "1a0l48bb-a6w1-4e50-941a-9c0185000v98",
-					ClusterIngressDnsName:     "appsexamplecom",
-					KafkaMachinePoolNodeCount: 3,
+					ClusterId:                     "1234abcd1234abcd1234abcd1234abcd",
+					ClusterExternalId:             "1a0l48bb-a6w1-4e50-941a-9c0185000v98",
+					ClusterIngressDnsName:         "appsexamplecom",
+					KafkaMachinePoolNodeCount:     3,
+					AccessKafkasViaPrivateNetwork: true,
 				}
 				_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 				if resp != nil {
@@ -91,10 +94,11 @@ func TestClusterRegistration_BadRequest(t *testing.T) {
 			name: "should return bad request when kafka machine pool node count is less than 3",
 			assert: func() {
 				payload := public.EnterpriseOsdClusterPayload{
-					ClusterId:                 "1234abcd1234abcd1234abcd1234abcd",
-					ClusterExternalId:         "1a0l48bb-a6w1-4e50-941a-9c0185000v98",
-					ClusterIngressDnsName:     "apps.example.com",
-					KafkaMachinePoolNodeCount: 2,
+					ClusterId:                     "1234abcd1234abcd1234abcd1234abcd",
+					ClusterExternalId:             "1a0l48bb-a6w1-4e50-941a-9c0185000v98",
+					ClusterIngressDnsName:         "apps.example.com",
+					KafkaMachinePoolNodeCount:     2,
+					AccessKafkasViaPrivateNetwork: true,
 				}
 				_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 				if resp != nil {
@@ -108,10 +112,11 @@ func TestClusterRegistration_BadRequest(t *testing.T) {
 			name: "should return bad request when kafka machine pool node count is not a multiple of 3",
 			assert: func() {
 				payload := public.EnterpriseOsdClusterPayload{
-					ClusterId:                 "1234abcd1234abcd1234abcd1234abcd",
-					ClusterExternalId:         "1a0l48bb-a6w1-4e50-941a-9c0185000v98",
-					ClusterIngressDnsName:     "apps.example.com",
-					KafkaMachinePoolNodeCount: 20,
+					ClusterId:                     "1234abcd1234abcd1234abcd1234abcd",
+					ClusterExternalId:             "1a0l48bb-a6w1-4e50-941a-9c0185000v98",
+					ClusterIngressDnsName:         "apps.example.com",
+					KafkaMachinePoolNodeCount:     20,
+					AccessKafkasViaPrivateNetwork: true,
 				}
 				_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 				if resp != nil {
@@ -147,10 +152,11 @@ func TestClusterRegistration_UnauthorizedTest(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, nil)
 
 	payload := public.EnterpriseOsdClusterPayload{
-		ClusterId:                 "1234abcd1234abcd1234abcd1234abcd",
-		ClusterExternalId:         "69d631de-9b7f-4bc2-bf4f-4d3295a7b25",
-		ClusterIngressDnsName:     "apps.example.com",
-		KafkaMachinePoolNodeCount: 3,
+		ClusterId:                     "1234abcd1234abcd1234abcd1234abcd",
+		ClusterExternalId:             "69d631de-9b7f-4bc2-bf4f-4d3295a7b25",
+		ClusterIngressDnsName:         "apps.example.com",
+		KafkaMachinePoolNodeCount:     3,
+		AccessKafkasViaPrivateNetwork: false,
 	}
 	_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
 	if resp != nil {
@@ -185,6 +191,7 @@ func TestClusterRegistration_ClusterIDUniquenessChecks(t *testing.T) {
 		cluster.ClientSecret = "some-client-secret"
 		cluster.ClusterID = clusterID
 		cluster.Region = afEast1Region
+		cluster.AccessKafkasViaPrivateNetwork = true
 		cluster.CloudProvider = gcp
 		cluster.MultiAZ = true
 		cluster.Status = api.ClusterReady
@@ -200,10 +207,11 @@ func TestClusterRegistration_ClusterIDUniquenessChecks(t *testing.T) {
 
 	// attempt to register a cluster with the same id should fail
 	payload := public.EnterpriseOsdClusterPayload{
-		ClusterId:                 clusterID,
-		ClusterExternalId:         "69d631de-9b7f-4bc2-bf4f-4d3295a7b25e",
-		ClusterIngressDnsName:     "apps.example.com",
-		KafkaMachinePoolNodeCount: 3,
+		ClusterId:                     clusterID,
+		ClusterExternalId:             "69d631de-9b7f-4bc2-bf4f-4d3295a7b25e",
+		ClusterIngressDnsName:         "apps.example.com",
+		KafkaMachinePoolNodeCount:     3,
+		AccessKafkasViaPrivateNetwork: true,
 	}
 
 	_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
@@ -238,10 +246,11 @@ func TestClusterRegistration_Successful(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, claims)
 
 	payload := public.EnterpriseOsdClusterPayload{
-		ClusterId:                 "1234abcd1234abcd1234abcd1234abcd",
-		ClusterExternalId:         "69d631de-9b7f-4bc2-bf4f-4d3295a7b25e",
-		ClusterIngressDnsName:     "apps.example.com",
-		KafkaMachinePoolNodeCount: 12,
+		ClusterId:                     "1234abcd1234abcd1234abcd1234abcd",
+		ClusterExternalId:             "69d631de-9b7f-4bc2-bf4f-4d3295a7b25e",
+		ClusterIngressDnsName:         "apps.example.com",
+		KafkaMachinePoolNodeCount:     12,
+		AccessKafkasViaPrivateNetwork: true,
 	}
 
 	enterpriseCluster, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
@@ -253,6 +262,7 @@ func TestClusterRegistration_Successful(t *testing.T) {
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 	g.Expect(enterpriseCluster.ClusterId).To(gomega.Equal(payload.ClusterId))
 	g.Expect(enterpriseCluster.Status).To(gomega.Equal(api.ClusterAccepted.String()))
+	g.Expect(enterpriseCluster.AccessKafkasViaPrivateNetwork).To(gomega.BeTrue())
 	g.Expect(enterpriseCluster.FleetshardParameters).To(gomega.HaveLen(7))
 	for _, parameter := range enterpriseCluster.FleetshardParameters {
 		g.Expect(parameter.Id).ToNot(gomega.BeEmpty())
@@ -274,4 +284,20 @@ func TestClusterRegistration_Successful(t *testing.T) {
 	_, checkWaitingForKasFleetshardOperatorErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, cluster.ClusterID, api.ClusterWaitingForKasFleetShardOperator)
 	g.Expect(checkWaitingForKasFleetshardOperatorErr).NotTo(gomega.HaveOccurred(), "Error waiting for cluster to reach waiting for fleetshard status: %s %v", cluster.ClusterID, checkWaitingForKasFleetshardOperatorErr)
 
+	// register another cluster with AccessKafkasViaPrivateNetwork set to false and verify that it is set to false
+	payload = public.EnterpriseOsdClusterPayload{
+		ClusterId:                     "1234abcd1234abcd1234abcd1234abce",
+		ClusterExternalId:             "69d631de-9b7f-4bc2-bf4f-4d3295a7b35e",
+		ClusterIngressDnsName:         "apps.example2.com",
+		KafkaMachinePoolNodeCount:     9,
+		AccessKafkasViaPrivateNetwork: false,
+	}
+
+	enterpriseCluster, resp, err = client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "error posting object:  %v", err)
+	g.Expect(enterpriseCluster.AccessKafkasViaPrivateNetwork).To(gomega.BeFalse())
 }

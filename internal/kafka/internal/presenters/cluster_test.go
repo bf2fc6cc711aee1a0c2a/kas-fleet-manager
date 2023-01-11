@@ -32,8 +32,9 @@ func Test_PresentEnterpriseClusterRegistrationResponse(t *testing.T) {
 			name: "should successfully convert api.Cluster to EnterpriseClusterRegistrationResponse",
 			args: args{
 				cluster: api.Cluster{
-					ClusterID: clusterId,
-					Status:    status,
+					ClusterID:                     clusterId,
+					Status:                        status,
+					AccessKafkasViaPrivateNetwork: true,
 				},
 				fleetShardParams: services.ParameterList{
 					{
@@ -43,9 +44,10 @@ func Test_PresentEnterpriseClusterRegistrationResponse(t *testing.T) {
 				},
 			},
 			want: public.EnterpriseClusterRegistrationResponse{
-				Id:        clusterId,
-				ClusterId: clusterId,
-				Status:    status.String(),
+				Id:                            clusterId,
+				ClusterId:                     clusterId,
+				Status:                        status.String(),
+				AccessKafkasViaPrivateNetwork: true,
 				FleetshardParameters: []public.FleetshardParameter{
 					{
 						Id:    paramId,
@@ -82,16 +84,18 @@ func Test_PresentEnterpriseCluster(t *testing.T) {
 			name: "should successfully convert api.Cluster to EnterpriseCluster",
 			args: args{
 				cluster: api.Cluster{
-					ClusterID: clusterId,
-					Status:    status,
+					ClusterID:                     clusterId,
+					Status:                        status,
+					AccessKafkasViaPrivateNetwork: false,
 				},
 			},
 			want: public.EnterpriseCluster{
-				Id:        clusterId,
-				ClusterId: clusterId,
-				Status:    status.String(),
-				Kind:      "Cluster",
-				Href:      fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", clusterId),
+				Id:                            clusterId,
+				ClusterId:                     clusterId,
+				Status:                        status.String(),
+				Kind:                          "Cluster",
+				AccessKafkasViaPrivateNetwork: false,
+				Href:                          fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", clusterId),
 			},
 		},
 	}

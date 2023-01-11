@@ -92,6 +92,7 @@ var migrations = []*gormigrate.Migration{
 	addClusterOrgIdClusterTypeColumns(),
 	addDefaultValueForClusterTypeColumn(),
 	removeWronglyCreatedEnterpriseClusterInProd(),
+	addAccessKafkasViaPrivateNetworkColumnInClustersTable(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

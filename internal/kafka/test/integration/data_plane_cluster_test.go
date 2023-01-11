@@ -71,6 +71,7 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testin
 		cluster.ClientID = "some-client-id"
 		cluster.ClientSecret = "some-client-secret"
 		cluster.CloudProvider = mocks.MockCluster.CloudProvider().ID()
+		cluster.AccessKafkasViaPrivateNetwork = true
 		cluster.Region = mocks.MockCluster.Region().ID()
 		cluster.Status = api.ClusterReady
 		cluster.ProviderSpec = api.JSON{}
@@ -115,6 +116,7 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRAndObserveCapacityInfo(t *testin
 	capacity, ok := managedKafkaAgentCR.Spec.Capacity[cluster.SupportedInstanceType]
 	g.Expect(ok).To(gomega.BeTrue())
 	g.Expect(capacity.MaxNodes).To(gomega.Equal(int32(1)))
+	g.Expect(managedKafkaAgentCR.Spec.Net.Private).To(gomega.BeTrue())
 
 	// turn off autoscaling and observe that capacity info is now empty
 	dataplaneConfig.DataPlaneClusterScalingType = config.NoScaling
@@ -356,6 +358,7 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
 	g.Expect(config.Spec.Observability.Repository).ShouldNot(gomega.BeEmpty())
 	g.Expect(config.Spec.Observability.Channel).ShouldNot(gomega.BeEmpty())
 	g.Expect(config.Spec.Observability.AccessToken).ShouldNot(gomega.BeNil())
+	g.Expect(config.Spec.Net.Private).To(gomega.BeFalse())
 }
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWhenOperatorIsNotReady(t *testing.T) {

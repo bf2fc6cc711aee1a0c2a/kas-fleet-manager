@@ -11,6 +11,7 @@ package private
 
 // DataplaneClusterAgentConfigSpec Data plane cluster agent spec
 type DataplaneClusterAgentConfigSpec struct {
+	Net DataplaneClusterAgentConfigSpecNet `json:"net,omitempty"`
 	// A map of supported instance type to configured nodes size
 	Capacity      map[string]DataplaneClusterAgentConfigSpecCapacity `json:"capacity,omitempty"`
 	Observability DataplaneClusterAgentConfigSpecObservability       `json:"observability,omitempty"`

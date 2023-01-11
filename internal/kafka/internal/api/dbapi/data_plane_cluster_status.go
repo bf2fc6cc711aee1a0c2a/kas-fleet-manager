@@ -22,7 +22,12 @@ type DataPlaneClusterConfigObservability struct {
 	Tag         string
 }
 
+type DataPlaneClusterConfigNetwork struct {
+	Private bool
+}
+
 type DataPlaneClusterConfig struct {
-	Observability       DataPlaneClusterConfigObservability
-	DynamicCapacityInfo map[string]api.DynamicCapacityInfo
+	Observability        DataPlaneClusterConfigObservability
+	DynamicCapacityInfo  map[string]api.DynamicCapacityInfo
+	NetworkConfiguration DataPlaneClusterConfigNetwork
 }

@@ -168,7 +168,7 @@ func (a *EnterpriseDataplaneClustersApiService) DeleteEnterpriseClusterById(ctx 
 
 /*
 GetEnterpriseOsdClusters Method for GetEnterpriseOsdClusters
-List all Enterprise OSD clusters
+List all Enterprise data plane clusters
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 
 @return EnterpriseClusterList

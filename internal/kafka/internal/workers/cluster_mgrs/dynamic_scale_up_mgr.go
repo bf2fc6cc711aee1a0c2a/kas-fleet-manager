@@ -283,13 +283,14 @@ func (p *standardDynamicScaleUpProcessor) ScaleUp() error {
 	newClusterMultiAZ := p.locator.instanceTypeName == api.StandardTypeSupport.String()
 
 	clusterRequest := &api.Cluster{
-		CloudProvider:         p.locator.provider,
-		Region:                p.locator.region,
-		SupportedInstanceType: p.locator.instanceTypeName,
-		MultiAZ:               newClusterMultiAZ,
-		Status:                api.ClusterAccepted,
-		ProviderType:          api.ClusterProviderOCM,
-		ClusterType:           api.ManagedDataPlaneClusterType.String(),
+		CloudProvider:                 p.locator.provider,
+		Region:                        p.locator.region,
+		SupportedInstanceType:         p.locator.instanceTypeName,
+		MultiAZ:                       newClusterMultiAZ,
+		Status:                        api.ClusterAccepted,
+		ProviderType:                  api.ClusterProviderOCM,
+		AccessKafkasViaPrivateNetwork: false,
+		ClusterType:                   api.ManagedDataPlaneClusterType.String(),
 	}
 	glog.V(10).Infof("registering new cluster job creation with attributes: %+v", clusterRequest)
 

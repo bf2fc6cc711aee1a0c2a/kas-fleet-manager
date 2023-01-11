@@ -64,6 +64,9 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 			Tag:         d.ObservabilityConfig.ObservabilityConfigTag,
 		},
 		DynamicCapacityInfo: dynamicCapacityInfo,
+		NetworkConfiguration: dbapi.DataPlaneClusterConfigNetwork{
+			Private: cluster.AccessKafkasViaPrivateNetwork,
+		},
 	}, nil
 }
 

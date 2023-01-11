@@ -87,6 +87,9 @@ func PresentDataPlaneClusterConfig(config *dbapi.DataPlaneClusterConfig) private
 				Tag:         config.Observability.Tag,
 			},
 			Capacity: capacity,
+			Net: private.DataplaneClusterAgentConfigSpecNet{
+				Private: config.NetworkConfiguration.Private,
+			},
 		},
 	}
 }

@@ -15,6 +15,8 @@ type EnterpriseClusterRegistrationResponse struct {
 	Id   string `json:"id"`
 	Kind string `json:"kind"`
 	Href string `json:"href"`
+	// Indicates whether Kafkas created on this data plane cluster have to be accessed via private network
+	AccessKafkasViaPrivateNetwork bool `json:"access_kafkas_via_private_network"`
 	// OCM cluster id of the registered Enterprise cluster
 	ClusterId string `json:"cluster_id,omitempty"`
 	// status of registered Enterprise cluster

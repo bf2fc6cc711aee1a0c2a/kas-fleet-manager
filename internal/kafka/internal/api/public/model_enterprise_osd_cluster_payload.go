@@ -12,6 +12,8 @@ package public
 
 // EnterpriseOsdClusterPayload Schema for the request body sent to /clusters POST
 type EnterpriseOsdClusterPayload struct {
+	// Sets whether Kafkas created on this data plane cluster have to be accessed via private network
+	AccessKafkasViaPrivateNetwork bool `json:"access_kafkas_via_private_network"`
 	// The data plane cluster ID. This is the ID of the cluster obtained from OpenShift Cluster Manager (OCM) API
 	ClusterId string `json:"cluster_id"`
 	// external cluster ID. Can be obtained from the response JSON of OCM get /api/clusters_mgmt/v1/clusters/<cluster_id>

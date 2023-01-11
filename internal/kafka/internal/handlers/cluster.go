@@ -65,15 +65,16 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 
 			supportedKafkaInstanceType := api.StandardTypeSupport.String()
 			clusterRequest := &api.Cluster{
-				ClusterType:           api.EnterpriseDataPlaneClusterType.String(),
-				ProviderType:          api.ClusterProviderOCM,
-				Status:                api.ClusterAccepted,
-				ClusterID:             clusterPayload.ClusterId,
-				OrganizationID:        orgId,
-				ClusterDNS:            clusterPayload.ClusterIngressDnsName,
-				ExternalID:            clusterPayload.ClusterExternalId,
-				MultiAZ:               true,
-				SupportedInstanceType: supportedKafkaInstanceType,
+				ClusterType:                   api.EnterpriseDataPlaneClusterType.String(),
+				ProviderType:                  api.ClusterProviderOCM,
+				Status:                        api.ClusterAccepted,
+				ClusterID:                     clusterPayload.ClusterId,
+				OrganizationID:                orgId,
+				ClusterDNS:                    clusterPayload.ClusterIngressDnsName,
+				ExternalID:                    clusterPayload.ClusterExternalId,
+				MultiAZ:                       true,
+				AccessKafkasViaPrivateNetwork: clusterPayload.AccessKafkasViaPrivateNetwork,
+				SupportedInstanceType:         supportedKafkaInstanceType,
 			}
 
 			capacityInfo := map[string]api.DynamicCapacityInfo{

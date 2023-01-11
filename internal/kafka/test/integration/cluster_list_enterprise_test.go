@@ -41,6 +41,7 @@ func TestEnterpriseClustersList(t *testing.T) {
 		}
 		cluster.OrganizationID = kafkaMocks.DefaultOrganisationId
 		cluster.ClusterType = api.EnterpriseDataPlaneClusterType.String()
+		cluster.AccessKafkasViaPrivateNetwork = true
 		cluster.Status = api.ClusterReady
 		cluster.ProviderSpec = api.JSON{}
 		cluster.ClusterSpec = api.JSON{}
@@ -55,6 +56,7 @@ func TestEnterpriseClustersList(t *testing.T) {
 		cluster.ProviderSpec = api.JSON{}
 		cluster.ClusterSpec = api.JSON{}
 		cluster.OrganizationID = "99999999"
+		cluster.AccessKafkasViaPrivateNetwork = false
 		cluster.ClusterType = api.EnterpriseDataPlaneClusterType.String()
 		cluster.Status = api.ClusterReady
 	})
@@ -79,7 +81,9 @@ func TestEnterpriseClustersList(t *testing.T) {
 	g.Expect(clusterList).ToNot((gomega.BeNil()))
 	g.Expect(len(clusterList.Items)).To(gomega.Equal(1))
 	g.Expect(clusterList.Size).To(gomega.Equal(int32(1)))
-	g.Expect(clusterList.Items[0].Status).To(gomega.Equal(api.ClusterReady.String()))
+	enterpriseCluster := clusterList.Items[0]
+	g.Expect(enterpriseCluster.Status).To(gomega.Equal(api.ClusterReady.String()))
+	g.Expect(enterpriseCluster.AccessKafkasViaPrivateNetwork).To(gomega.BeTrue())
 	g.Expect(resp2).ToNot((gomega.BeNil()))
 	if resp2 != nil {
 		defer resp2.Body.Close()

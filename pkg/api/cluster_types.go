@@ -177,6 +177,9 @@ type Cluster struct {
 	// for now used only for enterprise OSD clusters
 	ClusterType    string `json:"cluster_type"`
 	OrganizationID string `json:"organization_id"`
+
+	// AccessKafkasViaPrivateNetwork indicates whether Kafkas deployed on this OSD cluster have to be accessed via private network
+	AccessKafkasViaPrivateNetwork bool `json:"access_kafkas_via_private_network"`
 }
 
 type ClusterList []*Cluster
