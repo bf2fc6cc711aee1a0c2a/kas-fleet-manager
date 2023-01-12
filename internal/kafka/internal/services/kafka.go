@@ -434,6 +434,18 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 
 	kafkaRequest.KafkaStorageSize = size.MaxDataRetentionSize.String()
 
+	// We intentionally manually set CreatedAt and UpdatedAt instead of letting
+	// gorm do it. The reason for that is that otherwise the ExpiresAt value
+	// would be calculated from a start date potentially earlier than the CreatedAt
+	// time a different value than those. An alternative would be performing
+	// two different database updates but it would be less performant
+	timeNow := dbConn.NowFunc()
+	kafkaRequest.CreatedAt = timeNow
+	kafkaRequest.UpdatedAt = timeNow
+	if size.LifespanSeconds != nil {
+		kafkaRequest.ExpiresAt = sql.NullTime{Time: timeNow.Add(time.Duration(*size.LifespanSeconds) * time.Second), Valid: true}
+	}
+
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a kafka A is created, at the time of creation the quota-type was ams. At some point in the future
 	// the API is restarted this time changing the --quota-type flag to quota-management-list, when kafka A is deleted at this point,
