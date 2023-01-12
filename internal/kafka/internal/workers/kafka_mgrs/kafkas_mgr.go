@@ -112,15 +112,20 @@ func (k *KafkaManager) Reconcile() []error {
 		}
 	}
 
-	// cleaning up expired qkafkas
-	kafkaConfig := k.kafkaConfig
-	if kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka {
-		glog.Infoln("Deprovisioning expired kafkas")
-		expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas()
-		if expiredKafkasError != nil {
-			wrappedError := errors.Wrap(expiredKafkasError, "failed to deprovision expired Kafka instances")
-			encounteredErrors = append(encounteredErrors, wrappedError)
-		}
+	// MGDSTRM-10012 temporarily reconcile updating the zero-value of ExpiredAt
+	// for kafka requests
+	updateErr := k.updateZeroValueOfKafkaRequestsExpiredAt()
+	if updateErr != nil {
+		encounteredErrors = append(encounteredErrors, updateErr)
+		return encounteredErrors
+	}
+
+	// cleaning up expired kafkas
+	glog.Infoln("Deprovisioning expired kafkas")
+	expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas()
+	if expiredKafkasError != nil {
+		wrappedError := errors.Wrap(expiredKafkasError, "failed to deprovision expired Kafka instances")
+		encounteredErrors = append(encounteredErrors, wrappedError)
 	}
 
 	return encounteredErrors
@@ -308,4 +313,8 @@ func (k *KafkaManager) setClusterStatusCapacityAvailableMetric(c services.KafkaS
 
 func (k *KafkaManager) setClusterStatusCapacityMaxMetric(c services.KafkaStreamingUnitCountPerCluster) {
 	metrics.UpdateClusterStatusCapacityMaxCount(c.CloudProvider, c.Region, c.InstanceType, c.ClusterId, float64(c.MaxUnits))
+}
+
+func (k *KafkaManager) updateZeroValueOfKafkaRequestsExpiredAt() error {
+	return k.kafkaService.UpdateZeroValueOfKafkaRequestsExpiredAt()
 }

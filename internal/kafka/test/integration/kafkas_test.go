@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"testing"
@@ -2165,9 +2166,9 @@ func TestKafkaList_CorrectTokenIssuer_AuthzSuccess(t *testing.T) {
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 }
 
-// TestKafka_RemovingExpiredKafkas_NoStandardInstances tests that all developer kafkas are removed after their allocated life span has expired.
-// No standard instances are present
-func TestKafka_RemovingExpiredKafkas_NoStandardInstances(t *testing.T) {
+// TestKafka_KafkaExpiration tests that kafka in valid states whose expired_at
+// date is older than the current time are marked as expired
+func TestKafka_KafkaExpiration(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -2194,94 +2195,62 @@ func TestKafka_RemovingExpiredKafkas_NoStandardInstances(t *testing.T) {
 		mockkafka.BuildKafkaRequest(
 			mockkafka.WithPredefinedTestValues(),
 			mockkafka.WithMultiAZ(false),
-			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-remain"),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-remain-1"),
 			mockkafka.With(mockkafka.STATUS, constants.KafkaRequestStatusAccepted.String()),
 			mockkafka.With(mockkafka.BOOTSTRAP_SERVER_HOST, ""),
 			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
 			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.WithExpiresAt(sql.NullTime{}), // simulate kafka with no expires_at set
+		),
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.WithMultiAZ(false),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-remain-2"),
+			mockkafka.With(mockkafka.STATUS, constants.KafkaRequestStatusAccepted.String()),
+			mockkafka.With(mockkafka.BOOTSTRAP_SERVER_HOST, ""),
+			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
+			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			// we don't set expires_at so the kafka should be remain
+		),
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-48*time.Hour))),
+			mockkafka.WithMultiAZ(false),
+			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-remain-3"),
+			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
+			mockkafka.WithExpiresAt(sql.NullTime{Time: time.Now().Add(48 * time.Hour), Valid: true}),
 		),
 		mockkafka.BuildKafkaRequest(
 			mockkafka.WithPredefinedTestValues(),
 			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-49*time.Hour))),
 			mockkafka.WithMultiAZ(false),
 			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
-			mockkafka.With(mockkafka.NAME, "dummy-kafka-2"),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-markasdeprovision-1"),
 			mockkafka.With(mockkafka.STATUS, constants.KafkaRequestStatusProvisioning.String()),
 			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
-		),
-		mockkafka.BuildKafkaRequest(
-			mockkafka.WithPredefinedTestValues(),
-			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-48*time.Hour))),
-			mockkafka.WithMultiAZ(false),
-			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
-			mockkafka.With(mockkafka.NAME, "dummy-kafka-3"),
-			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
-		),
-	}
-
-	db := test.TestServices.DBFactory.New()
-	if err := db.Create(&kafkas).Error; err != nil {
-		g.Expect(err).NotTo(gomega.HaveOccurred())
-		return
-	}
-
-	// also verify that any kafkas whose life has expired has been deleted.
-	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account, nil)
-	kafkaDeletionErr := common.WaitForNumberOfKafkaToBeGivenCount(ctx, test.TestServices.DBFactory, client, 1)
-	g.Expect(kafkaDeletionErr).NotTo(gomega.HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
-}
-
-// TestKafka_RemovingExpiredKafkas_EmptyList tests that all developer kafkas are removed after their allocated life span has expired
-// while standard instances are left behind
-func TestKafka_RemovingExpiredKafkas_WithStandardInstances(t *testing.T) {
-	g := gomega.NewWithT(t)
-
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	defer ocmServer.Close()
-
-	h, client, tearDown := test.NewKafkaHelper(t, ocmServer)
-	defer tearDown()
-
-	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
-	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
-	mockKasfFleetshardSync.Start()
-	defer mockKasfFleetshardSync.Stop()
-
-	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
-	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
-
-	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
-	kafkas := []*dbapi.KafkaRequest{
-		mockkafka.BuildKafkaRequest(
-			mockkafka.WithPredefinedTestValues(),
-			mockkafka.WithMultiAZ(false),
-			mockkafka.With(mockkafka.NAME, "dummy-kafka-not-yet-expired"),
-			mockkafka.With(mockkafka.STATUS, constants.KafkaRequestStatusAccepted.String()),
-			mockkafka.With(mockkafka.BOOTSTRAP_SERVER_HOST, ""),
-			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
-			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.WithExpiresAt(sql.NullTime{Time: time.Now().Add(time.Duration(-48 * time.Hour)), Valid: true}),
 		),
 		mockkafka.BuildKafkaRequest(
 			mockkafka.WithPredefinedTestValues(),
 			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-49*time.Hour))),
 			mockkafka.WithMultiAZ(false),
 			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
-			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-remove"),
-			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-markasdeprovision-2"),
+			mockkafka.With(mockkafka.STATUS, constants.KafkaRequestStatusProvisioning.String()),
+			mockkafka.With(mockkafka.INSTANCE_TYPE, types.STANDARD.String()),
+			mockkafka.WithExpiresAt(sql.NullTime{Time: time.Now().Add(time.Duration(-48 * time.Hour)), Valid: true}),
 		),
 		mockkafka.BuildKafkaRequest(
 			mockkafka.WithPredefinedTestValues(),
-			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-48*time.Hour))),
+			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-49*time.Hour))),
 			mockkafka.WithMultiAZ(false),
 			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
-			mockkafka.With(mockkafka.NAME, "dummy-kafka-long-lived"),
+			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-notchange-1"),
+			mockkafka.With(mockkafka.STATUS, constants.KafkaRequestStatusDeleting.String()),
 			mockkafka.With(mockkafka.INSTANCE_TYPE, types.STANDARD.String()),
+			mockkafka.WithExpiresAt(sql.NullTime{Time: time.Now().Add(time.Duration(-48 * time.Hour)), Valid: true}),
+			mockkafka.WithDeleted(true),
 		),
 	}
 
@@ -2293,9 +2262,7 @@ func TestKafka_RemovingExpiredKafkas_WithStandardInstances(t *testing.T) {
 
 	// also verify that any kafkas whose life has expired has been deleted.
 	account := h.NewRandAccount()
-	account.Organization().ID()
 	ctx := h.NewAuthenticatedContext(account, nil)
-
-	kafkaDeletionErr := common.WaitForNumberOfKafkaToBeGivenCount(ctx, test.TestServices.DBFactory, client, 2)
+	kafkaDeletionErr := common.WaitForNumberOfKafkaToBeGivenCount(ctx, test.TestServices.DBFactory, client, 3)
 	g.Expect(kafkaDeletionErr).NotTo(gomega.HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
 }

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 	"sync"
@@ -120,6 +121,11 @@ type KafkaService interface {
 	GetAvailableSizesInRegion(criteria *FindClusterCriteria) ([]string, *errors.ServiceError)
 	ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError
 	AssignBootstrapServerHost(kafkaRequest *dbapi.KafkaRequest) error
+
+	// MGDSTRM-10012 temporarily add method to reconcile updating the zero-value
+	// of ExpiredAt. Remove this method when functionality has been rolled out
+	// to stage and prod
+	UpdateZeroValueOfKafkaRequestsExpiredAt() error
 }
 
 var _ KafkaService = &kafkaService{}
@@ -619,24 +625,24 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 	return nil
 }
 
+func (k *kafkaService) kafkaWithExpiresAtShouldBeDeprovisioned(kafkaRequest *dbapi.KafkaRequest, currentTime time.Time) bool {
+	glog.V(10).Infof("Evaluating expiration time of kafka request '%s' with instance type '%s', size ID '%s' and status '%s'", kafkaRequest.ID, kafkaRequest.InstanceType, kafkaRequest.SizeId, kafkaRequest.Status)
+	if currentTime.After(kafkaRequest.ExpiresAt.Time) {
+		glog.V(10).Infof("Kafka ID '%s' has expired", kafkaRequest.ID)
+		return true
+	}
+
+	glog.V(10).Infof("Kafka ID '%s' has not expired", kafkaRequest.ID)
+
+	return false
+}
+
 func (k *kafkaService) DeprovisionExpiredKafkas() *errors.ServiceError {
 	dbConn := k.connectionFactory.New().Model(&dbapi.KafkaRequest{}).Session(&gorm.Session{})
 
-	var typesWithLifespan []string
-	for _, kafkaInstanceType := range k.kafkaConfig.SupportedInstanceTypes.Configuration.SupportedKafkaInstanceTypes {
-		if kafkaInstanceType.HasAnInstanceSizeWithLifespan() {
-			typesWithLifespan = append(typesWithLifespan, kafkaInstanceType.Id)
-		}
-	}
-
-	if len(typesWithLifespan) == 0 {
-		return nil
-	}
-	glog.V(10).Infof("Kafka instance types with lifespan set: %+v", typesWithLifespan)
-
 	var existingKafkaRequests []dbapi.KafkaRequest
-	db := dbConn.Where("instance_type IN (?)", typesWithLifespan).
-		Where("status NOT IN (?)", kafkaDeletionStatuses).
+	db := dbConn.Where("status NOT IN (?)", kafkaDeletionStatuses).
+		Where("expires_at IS NOT NULL").
 		Scan(&existingKafkaRequests)
 	err := db.Error
 	if err != nil {
@@ -645,22 +651,14 @@ func (k *kafkaService) DeprovisionExpiredKafkas() *errors.ServiceError {
 
 	var kafkasToDeprovisionIDs []string
 	timeNow := time.Now()
-	for _, existingKafkaRequest := range existingKafkaRequests {
-		glog.V(10).Infof("Evaluating expiration time of kafka request '%s' with instance type '%s', ID '%s' and status '%s'", existingKafkaRequest.ID, existingKafkaRequest.InstanceType, existingKafkaRequest.SizeId, existingKafkaRequest.Status)
-		kafkaInstanceSize, err := k.kafkaConfig.GetKafkaInstanceSize(existingKafkaRequest.InstanceType, existingKafkaRequest.SizeId)
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "unable to deprovision expired kafkas")
-		}
-		if kafkaInstanceSize.LifespanSeconds != nil {
-			glog.V(10).Infof("Kafka size associated to kafka ID '%s' has '%d' lifespanSeconds", existingKafkaRequest.ID, *kafkaInstanceSize.LifespanSeconds)
-			expTime := existingKafkaRequest.GetExpirationTime(*kafkaInstanceSize.LifespanSeconds)
-			glog.V(10).Infof("Expiration time of kafka ID '%s' is '%s'", existingKafkaRequest.ID, expTime)
-			if timeNow.After(*expTime) {
-				glog.V(10).Infof("Kafka ID '%s' has expired", existingKafkaRequest.ID)
-				kafkasToDeprovisionIDs = append(kafkasToDeprovisionIDs, existingKafkaRequest.ID)
-			} else {
-				glog.V(10).Infof("Kafka ID '%s' still has not expired", existingKafkaRequest.ID)
-			}
+
+	for idx := range existingKafkaRequests {
+		existingKafkaRequest := &existingKafkaRequests[idx]
+		glog.V(10).Infof("Evaluating expiration time of kafka request '%s' with instance type '%s', size ID '%s' and status '%s'", existingKafkaRequest.ID, existingKafkaRequest.InstanceType, existingKafkaRequest.SizeId, existingKafkaRequest.Status)
+
+		shouldBeDeprovisioned := k.kafkaWithExpiresAtShouldBeDeprovisioned(existingKafkaRequest, timeNow)
+		if shouldBeDeprovisioned {
+			kafkasToDeprovisionIDs = append(kafkasToDeprovisionIDs, existingKafkaRequest.ID)
 		}
 	}
 
@@ -673,7 +671,7 @@ func (k *kafkaService) DeprovisionExpiredKafkas() *errors.ServiceError {
 			return errors.NewWithCause(errors.ErrorGeneral, err, "unable to deprovision expired kafkas")
 		}
 		if db.RowsAffected >= 1 {
-			glog.Infof("%v kafka_request's lifespans are over their lifespan and have had their status updated to deprovisioning", db.RowsAffected)
+			glog.Infof("%v expired kafka_request's have had their status updated to deprovisioning", db.RowsAffected)
 			var counter int64 = 0
 			for ; counter < db.RowsAffected; counter++ {
 				metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
@@ -1313,4 +1311,14 @@ func (k *kafkaService) getRoute53RegionFromKafkaRequest(kafkaRequest *dbapi.Kafk
 	default:
 		return "", errors.GeneralError("unknown cloud provider: %q", kafkaRequest.CloudProvider)
 	}
+}
+
+func (k *kafkaService) UpdateZeroValueOfKafkaRequestsExpiredAt() error {
+	dbConn := k.connectionFactory.New()
+	zeroTime := time.Time{}
+	nullTime := sql.NullTime{Time: time.Time{}, Valid: false}
+	db := dbConn.Table("kafka_requests").Where("expires_at = ?", zeroTime).Where("deleted_at IS NULL").Update("expires_at", nullTime)
+	glog.Infof("%v kafka_requests had expires_at with the zero-value of time.Time '%v' and have been updated to NULL", db.RowsAffected, zeroTime)
+
+	return db.Error
 }
