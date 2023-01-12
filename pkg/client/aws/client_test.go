@@ -31,7 +31,7 @@ var (
 			},
 		},
 	}
-	awsErr = awserr.New("InvalidChangeBatch", "but it already exists", nil)
+	awsErr = awserr.New(route53.ErrCodeInvalidChangeBatch, "but it already exists", nil)
 )
 
 type testClientFactory struct{}
@@ -244,7 +244,7 @@ func TestAwsClient_ChangeResourceRecordSets(t *testing.T) {
 						return testHostedZones, nil
 					},
 					ChangeResourceRecordSetsFunc: func(in1 *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
-						return nil, awserr.New("InvalidChangeBatch", "test", nil)
+						return nil, awserr.New(route53.ErrCodeInvalidChangeBatch, "test", nil)
 					},
 				},
 			},
@@ -258,7 +258,7 @@ func TestAwsClient_ChangeResourceRecordSets(t *testing.T) {
 						return testHostedZones, nil
 					},
 					ChangeResourceRecordSetsFunc: func(in1 *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error) {
-						return nil, awserr.New("InvalidChangeBatch", "but it already exists", nil)
+						return nil, awserr.New(route53.ErrCodeInvalidChangeBatch, "but it already exists", nil)
 					},
 				},
 			},
