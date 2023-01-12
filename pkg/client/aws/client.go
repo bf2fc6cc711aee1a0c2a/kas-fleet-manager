@@ -136,7 +136,7 @@ func (client *awsCl) ChangeResourceRecordSets(dnsName string, recordChangeBatch 
 
 	if err != nil {
 		awsErr := err.(awserr.Error)
-		if awsErr.Code() == "InvalidChangeBatch" {
+		if awsErr.Code() == route53.ErrCodeInvalidChangeBatch {
 			errorMessage := awsErr.Message()
 
 			// Record set not created in the first place
