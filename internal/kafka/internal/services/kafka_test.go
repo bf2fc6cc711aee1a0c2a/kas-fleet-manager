@@ -971,13 +971,18 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 	}
 
 	defaultDataplaneClusterConfig := []config.ManualCluster{buildManualCluster(1, api.AllInstanceTypeSupport.String(), testKafkaRequestRegion)}
+	nowTime := time.Now()
 
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
-		setupFn func()
+		setupFn func(connectionFactory *db.ConnectionFactory)
 		error   errorCheck
+		// verifyKafkaUpdatedContentsFunc contains a set of test assertions
+		// checking the kafka request result contents. If null then it is not
+		// run
+		verifyKafkaUpdatedContentsFunc func(g *gomega.WithT, kafkaRequest *dbapi.KafkaRequest)
 	}{
 		{
 			name: "registering kafka job succeeds",
@@ -1008,7 +1013,10 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					kafkaRequest.InstanceType = types.STANDARD.String()
 				}),
 			},
-			setupFn: func() {
+			setupFn: func(connectionFactory *db.ConnectionFactory) {
+				connectionFactory.DB.NowFunc = func() time.Time {
+					return nowTime
+				}
 				mocket.Catcher.Reset().NewMock().
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs("us-east-1", "aws", "standard").
@@ -1020,6 +1028,12 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			error: errorCheck{
 				wantErr: false,
+			},
+			verifyKafkaUpdatedContentsFunc: func(g *gomega.WithT, kafkaRequest *dbapi.KafkaRequest) {
+				g.Expect(kafkaRequest.ExpiresAt.Valid).NotTo((gomega.BeTrue()))
+				g.Expect(kafkaRequest.ExpiresAt.Time).To(gomega.BeZero())
+				g.Expect(kafkaRequest.CreatedAt).To(gomega.Equal(nowTime))
+				g.Expect(kafkaRequest.UpdatedAt).To(gomega.Equal(nowTime))
 			},
 		},
 		{
@@ -1054,7 +1068,10 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					kafkaRequest.OrganisationId = "org-id"
 				}),
 			},
-			setupFn: func() {
+			setupFn: func(connectionFactory *db.ConnectionFactory) {
+				connectionFactory.DB.NowFunc = func() time.Time {
+					return nowTime
+				}
 				mocket.Catcher.Reset().NewMock().
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs("us-east-1", "aws", "developer").
@@ -1072,6 +1089,14 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			error: errorCheck{
 				wantErr: false,
+			},
+			verifyKafkaUpdatedContentsFunc: func(g *gomega.WithT, kafkaRequest *dbapi.KafkaRequest) {
+				g.Expect(kafkaRequest.ExpiresAt.Valid).To((gomega.BeTrue()))
+				g.Expect(kafkaRequest.ExpiresAt.Time).NotTo(gomega.BeZero())
+				calculatedExpiresAt := nowTime.Add(time.Duration(*supportedKafkaSizeDeveloper[0].LifespanSeconds) * time.Second)
+				g.Expect(kafkaRequest.ExpiresAt.Time).To(gomega.Equal(calculatedExpiresAt))
+				g.Expect(kafkaRequest.CreatedAt).To(gomega.Equal(nowTime))
+				g.Expect(kafkaRequest.UpdatedAt).To(gomega.Equal(nowTime))
 			},
 		},
 		{
@@ -1103,7 +1128,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					kafkaRequest.InstanceType = types.STANDARD.String()
 				}),
 			},
-			setupFn: func() {
+			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset().NewMock().
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs("us-east-1", "aws", "standard").
@@ -1146,7 +1171,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					kafkaRequest.InstanceType = types.STANDARD.String()
 				}),
 			},
-			setupFn: func() {
+			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset().NewMock().
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs("us-east-1", "aws", "standard").
@@ -1237,7 +1262,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					kafkaRequest.OrganisationId = "org-id"
 				}),
 			},
-			setupFn: func() {
+			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				totalCountResponse := []map[string]interface{}{{"count": 0}}
 
 				mocket.Catcher.Reset()
@@ -1300,7 +1325,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					kafkaRequest.OrganisationId = "org-id"
 				}),
 			},
-			setupFn: func() {
+			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
@@ -1368,7 +1393,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				code:     errors.ErrorInstancePlanNotSupported,
 				httpCode: http.StatusBadRequest,
 			},
-			setupFn: func() {
+			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset()
 			},
 		},
@@ -1401,7 +1426,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					kafkaRequest.InstanceType = types.STANDARD.String()
 				}),
 			},
-			setupFn: func() {
+			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset().NewMock().
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs("us-east-1", "aws", "standard").
@@ -1446,7 +1471,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					kafkaRequest.InstanceType = types.STANDARD.String()
 				}),
 			},
-			setupFn: func() {
+			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset().NewMock().
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs("us-east-1", "aws", "standard").
@@ -1489,7 +1514,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					kafkaRequest.InstanceType = types.STANDARD.String()
 				}),
 			},
-			setupFn: func() {
+			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset().NewMock().
 					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
 					WithArgs("us-east-1", "aws", "standard").
@@ -1529,7 +1554,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					kafkaRequest.InstanceType = types.STANDARD.String()
 				}),
 			},
-			setupFn: func() {
+			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND "kafka_requests"."deleted_at" IS NULL`).WithReply([]map[string]interface{}{})
 				mocket.Catcher.NewMock().WithQuery("INSERT").WithExecException()
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -1545,8 +1570,9 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 		tt := testcase
 
 		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			if tt.setupFn != nil {
-				tt.setupFn()
+				tt.setupFn(tt.fields.connectionFactory)
 			}
 
 			k := &kafkaService{
@@ -1578,6 +1604,11 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					t.Errorf("RegisterKafkaJob() received http code %v, expected %v", err.HttpCode, tt.error.httpCode)
 				}
 			}
+
+			if tt.verifyKafkaUpdatedContentsFunc != nil {
+				tt.verifyKafkaUpdatedContentsFunc(g, tt.args.kafkaRequest)
+			}
+
 		})
 	}
 }
