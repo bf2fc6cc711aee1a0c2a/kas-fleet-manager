@@ -53,8 +53,15 @@ var kafkaManagedCRStatuses = []string{
 
 type KafkaRoutesAction string
 
-const KafkaRoutesActionCreate KafkaRoutesAction = "CREATE"
-const KafkaRoutesActionDelete KafkaRoutesAction = "DELETE"
+func (a KafkaRoutesAction) String() string {
+	return string(a)
+}
+
+const (
+	KafkaRoutesActionCreate KafkaRoutesAction = "CREATE"
+	KafkaRoutesActionDelete KafkaRoutesAction = "DELETE"
+)
+
 const CanaryServiceAccountPrefix = "canary"
 
 type CNameRecordStatus struct {
@@ -957,7 +964,7 @@ func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest,
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
 	}
 
-	domainRecordBatch := buildKafkaClusterCNAMESRecordBatch(routes, string(action))
+	domainRecordBatch := buildKafkaClusterCNAMESRecordBatch(routes, action)
 
 	awsConfig := aws.Config{
 		AccessKeyID:     k.awsConfig.Route53AccessKey,
@@ -1235,7 +1242,7 @@ func buildKafkaOwner(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.Kafka
 	}
 }
 
-func buildKafkaClusterCNAMESRecordBatch(routes []dbapi.DataPlaneKafkaRoute, action string) *route53.ChangeBatch {
+func buildKafkaClusterCNAMESRecordBatch(routes []dbapi.DataPlaneKafkaRoute, action KafkaRoutesAction) *route53.ChangeBatch {
 	var changes []*route53.Change
 	for _, r := range routes {
 		c := buildResourceRecordChange(r.Domain, r.Router, action)
@@ -1248,12 +1255,13 @@ func buildKafkaClusterCNAMESRecordBatch(routes []dbapi.DataPlaneKafkaRoute, acti
 	return recordChangeBatch
 }
 
-func buildResourceRecordChange(recordName string, clusterIngress string, action string) *route53.Change {
+func buildResourceRecordChange(recordName string, clusterIngress string, action KafkaRoutesAction) *route53.Change {
 	recordType := "CNAME"
 	recordTTL := int64(300)
 
+	actionStr := action.String()
 	resourceRecordChange := &route53.Change{
-		Action: &action,
+		Action: &actionStr,
 		ResourceRecordSet: &route53.ResourceRecordSet{
 			Name: &recordName,
 			Type: &recordType,
