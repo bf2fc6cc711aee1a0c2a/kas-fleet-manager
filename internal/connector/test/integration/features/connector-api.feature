@@ -176,6 +176,37 @@ Feature: create a connector
       }
       """
 
+    # check AND condition search for labels using like
+    When I GET path "/v1/kafka_connector_types/labels?search=label+like+%25category-featured%25source%25"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "count": 1,
+            "label": "category-amazon"
+          },
+          {
+            "count": 1,
+            "label": "category-featured"
+          },
+          {
+            "count": 1,
+            "label": "category-streaming-and-messaging"
+          },
+          {
+            "count": 0,
+            "label": "sink"
+          },
+          {
+            "count": 1,
+            "label": "source"
+          }
+        ]
+      }
+      """
+
   Scenario: Gary lists all connector types
     Given I am logged in as "Gary"
     When I GET path "/v1/kafka_connector_types"
@@ -839,6 +870,269 @@ Feature: create a connector
     Given I am logged in as "Gary"
     # also, ignoring order by channel, label, and pricing tier should not cause any errors
     When I GET path "/v1/kafka_connector_types?search=pricing_tier=essentials&orderBy=label+ASC,pricing_tier+ASC,channel+DESC"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "channels": [
+              "stable",
+              "beta"
+            ],
+            "description": "AWS SQS Source",
+            "featured_rank": 10,
+            "href": "/api/connector_mgmt/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
+            "icon_href": "TODO",
+            "id": "aws-sqs-source-v1alpha1",
+            "kind": "ConnectorType",
+            "labels": [
+              "source",
+              "category-streaming-and-messaging",
+              "category-amazon",
+              "category-featured"
+            ],
+            "annotations": {
+              "cos.bf2.org/pricing-tier": "essentials"
+            },
+            "capabilities": [
+              "processors"
+            ],
+            "name": "aws-sqs-source",
+            "schema": {
+              "$defs": {
+                "processors": {
+                  "extract_field": {
+                    "description": "Extract a field from the body",
+                    "properties": {
+                      "field": {
+                        "description": "The name of the field to be added",
+                        "title": "Field",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field"
+                    ],
+                    "title": "Extract Field Action",
+                    "type": "object"
+                  },
+                  "has_header_filter": {
+                    "description": "Filter based on the presence of one header",
+                    "properties": {
+                      "name": {
+                        "description": "The header name to evaluate",
+                        "example": "headerName",
+                        "title": "Header Name",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "An optional header value to compare the header to",
+                        "example": "headerValue",
+                        "title": "Header Value",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "title": "Has Header Filter Action",
+                    "type": "object"
+                  },
+                  "insert_field": {
+                    "description": "Adds a custom field with a constant value to the message in transit.\n\nThis action works with Json Object. So it will expect a Json Array or a Json Object.\n\nIf for example you have an array like '{ \"foo\":\"John\", \"bar\":30 }' and your action has been configured with field as 'element' and value as 'hello', you'll get '{ \"foo\":\"John\", \"bar\":30, \"element\":\"hello\" }'\n\nNo headers mapping supported, only constant values.",
+                    "properties": {
+                      "field": {
+                        "description": "The name of the field to be added",
+                        "title": "Field",
+                        "type": "string"
+                      },
+                      "value": {
+                        "description": "The value of the field",
+                        "title": "Value",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "value"
+                    ],
+                    "title": "Insert Field Action",
+                    "type": "object"
+                  },
+                  "throttle": {
+                    "description": "The Throttle action allows to ensure that a specific sink does not get overloaded.",
+                    "properties": {
+                      "messages": {
+                        "description": "The number of messages to send in the time period set",
+                        "example": 10,
+                        "title": "Messages Number",
+                        "type": "integer"
+                      },
+                      "timePeriod": {
+                        "default": "1000",
+                        "description": "Sets the time period during which the maximum request count is valid for, in milliseconds",
+                        "title": "Time Period",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "messages"
+                    ],
+                    "title": "Throttle Action",
+                    "type": "object"
+                  }
+                }
+              },
+              "properties": {
+                "aws_access_key": {
+                  "oneOf": [
+                    {
+                      "description": "The access key obtained from AWS",
+                      "format": "password",
+                      "title": "Access Key",
+                      "type": "string"
+                    },
+                    {
+                      "description": "An opaque reference to the aws_access_key",
+                      "properties": {},
+                      "type": "object"
+                    }
+                  ],
+                  "title": "Access Key",
+                  "x-group": "credentials"
+                },
+                "aws_amazon_a_w_s_host": {
+                  "description": "The hostname of the Amazon AWS cloud.",
+                  "title": "AWS Host",
+                  "type": "string"
+                },
+                "aws_auto_create_queue": {
+                  "default": false,
+                  "description": "Setting the autocreation of the SQS queue.",
+                  "title": "Autocreate Queue",
+                  "type": "boolean"
+                },
+                "aws_delete_after_read": {
+                  "default": true,
+                  "description": "Delete messages after consuming them",
+                  "title": "Auto-delete Messages",
+                  "type": "boolean"
+                },
+                "aws_protocol": {
+                  "default": "https",
+                  "description": "The underlying protocol used to communicate with SQS",
+                  "example": "http or https",
+                  "title": "Protocol",
+                  "type": "string"
+                },
+                "aws_queue_name_or_arn": {
+                  "description": "The SQS Queue Name or ARN",
+                  "title": "Queue Name",
+                  "type": "string"
+                },
+                "aws_region": {
+                  "description": "The AWS region to connect to",
+                  "example": "eu-west-1",
+                  "title": "AWS Region",
+                  "type": "string"
+                },
+                "aws_secret_key": {
+                  "oneOf": [
+                    {
+                      "description": "The secret key obtained from AWS",
+                      "format": "password",
+                      "title": "Secret Key",
+                      "type": "string"
+                    },
+                    {
+                      "description": "An opaque reference to the aws_secret_key",
+                      "properties": {},
+                      "type": "object"
+                    }
+                  ],
+                  "title": "Secret Key",
+                  "x-group": "credentials"
+                },
+                "kafka_topic": {
+                  "description": "Comma separated list of Kafka topic names",
+                  "title": "Topic Names",
+                  "type": "string"
+                },
+                "processors": {
+                  "items": {
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "insert_field": {
+                            "$ref": "#/$defs/processors/insert_field"
+                          }
+                        },
+                        "required": [
+                          "insert_field"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "extract_field": {
+                            "$ref": "#/$defs/processors/extract_field"
+                          }
+                        },
+                        "required": [
+                          "extract_field"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "has_header_filter": {
+                            "$ref": "#/$defs/processors/has_header_filter"
+                          }
+                        },
+                        "required": [
+                          "has_header_filter"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "throttle": {
+                            "$ref": "#/$defs/processors/throttle"
+                          }
+                        },
+                        "required": [
+                          "throttle"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "aws_queue_name_or_arn",
+                "aws_access_key",
+                "aws_secret_key",
+                "aws_region",
+                "kafka_topic"
+              ],
+              "type": "object"
+            },
+            "version": "v1alpha1"
+          }
+        ],
+        "kind": "ConnectorTypeList",
+        "page": 1,
+        "size": 1,
+        "total": 1
+      }
+      """
+
+  Scenario: Gary searches for connector types matching multiple label values
+    Given I am logged in as "Gary"
+    When I GET path "/v1/kafka_connector_types?search=label+like+%25category-featured%25source%25"
     Then the response code should be 200
     And the response should match json:
       """

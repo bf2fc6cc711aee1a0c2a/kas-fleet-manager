@@ -172,6 +172,8 @@ func GetValidConnectorTypeColumns() []string {
 
 var skipOrderByColumnsRegExp = regexp.MustCompile("^(channel)|(label)|(pricing_tier)")
 
+var labelSetSearchClause = regexp.MustCompile("label [Ii]?[Ll][Ii][Kk][Ee] ")
+
 // List returns all connector types
 func (cts *connectorTypesService) List(listArgs *services.ListArguments) (dbapi.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError) {
 	if err := listArgs.Validate(GetValidConnectorTypeColumns()); err != nil {
@@ -198,7 +200,11 @@ func (cts *connectorTypesService) List(listArgs *services.ListArguments) (dbapi.
 			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "channel", "channels.connector_channel_channel")
 		}
 		if strings.Contains(searchDbQuery.Query, "label") {
-			dbConn = dbConn.Joins("LEFT JOIN connector_type_labels labels on labels.connector_type_id = connector_types.id")
+			if labelSetSearchClause.MatchString(searchDbQuery.Query) {
+				dbConn = dbConn.Joins("LEFT JOIN (select connector_type_id, string_agg(label, ',' order by label) as label from connector_type_labels group by connector_type_id) as labels on labels.connector_type_id = connector_types.id")
+			} else {
+				dbConn = dbConn.Joins("LEFT JOIN connector_type_labels labels on labels.connector_type_id = connector_types.id")
+			}
 			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "label", "labels.label")
 		}
 		if strings.Contains(searchDbQuery.Query, "pricing_tier") {
@@ -264,7 +270,11 @@ func (cts *connectorTypesService) ListLabels(listArgs *services.ListArguments) (
 			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "channel", "channels.connector_channel_channel")
 		}
 		if strings.Contains(searchDbQuery.Query, "label") {
-			dbConn = dbConn.Joins("LEFT JOIN connector_type_labels labels on labels.connector_type_id = connector_types.id")
+			if labelSetSearchClause.MatchString(searchDbQuery.Query) {
+				dbConn = dbConn.Joins("LEFT JOIN (select connector_type_id, string_agg(label, ',' order by label) as label from connector_type_labels group by connector_type_id) as labels on labels.connector_type_id = connector_types.id")
+			} else {
+				dbConn = dbConn.Joins("LEFT JOIN connector_type_labels labels on labels.connector_type_id = connector_types.id")
+			}
 			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "label", "labels.label")
 		}
 		if strings.Contains(searchDbQuery.Query, "pricing_tier") {
