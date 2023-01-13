@@ -1,6 +1,7 @@
 package presenters
 
 import (
+	"database/sql"
 	"testing"
 	"time"
 
@@ -120,6 +121,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 	kafkaStorageSize := "1000Gi"
 
 	defaultInstanceSize := *mocksupportedinstancetypes.BuildKafkaInstanceSize()
+	nowTime := time.Now()
 
 	tests := []struct {
 		name   string
@@ -139,6 +141,8 @@ func TestPresentKafkaRequest(t *testing.T) {
 					mock.With(mock.STORAGE_SIZE, kafkaStorageSize),
 					mock.With(mock.DESIRED_KAFKA_BILLING_MODEL, "mydesiredkafkabillingmodel"),
 					mock.With(mock.ACTUAL_KAFKA_BILLING_MODEL, "myactualkafkabillingmodel"),
+					mock.WithCreatedAt(nowTime),
+					mock.WithExpiresAt(sql.NullTime{Time: nowTime.Add(time.Duration(*defaultInstanceSize.LifespanSeconds) * time.Second), Valid: true}),
 				),
 			},
 			want: *mock.BuildPublicKafkaRequest(func(kafkaRequest *public.KafkaRequest) {
@@ -156,6 +160,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.DeprecatedMaxDataRetentionPeriod = defaultInstanceSize.MaxDataRetentionPeriod
 				kafkaRequest.DeprecatedMaxConnectionAttemptsPerSec = int32(defaultInstanceSize.MaxConnectionAttemptsPerSec)
 
+				kafkaRequest.CreatedAt = nowTime
 				expireTime := kafkaRequest.CreatedAt.Add(time.Duration(*defaultInstanceSize.LifespanSeconds) * time.Second)
 				kafkaRequest.ExpiresAt = &expireTime
 
