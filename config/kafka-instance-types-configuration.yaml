@@ -44,7 +44,13 @@
 #   - minInSyncReplicas: Minimum number of in sync replicas
 #   - replicationFactor: Replication factor
 #   - supportedAZModes: a list of the supported AZ modes. The possible values are "single", "multi"
-#   - lifespanSeconds: The limit lifespan of the kafka instance in seconds. If not specified then the instance never expires
+#   - [optional] lifespanSeconds: The limit lifespan of the kafka instance in seconds.
+#                                 This attribute is applied at kafka creation time. It is
+#                                 used to calculate the date at which a kafka instance expires.
+#                                 Updates to this attribute will not impact the already existing kafka instances.
+#                                 If not specified then the instance never expires as a cause of the
+#                                 lifespanSeconds attribute.
+#                                 Accepted values: 1..N
 #   - quotaConsumed: Quota consumed for selecting this size for a Kafka instance.
 #   - [deprecated] quotaType: Quota type that will be consumed when this size is selected. This field is
 #                             now deprecated and it is ignored. Configure supported_billing_models at instance-type level instead
