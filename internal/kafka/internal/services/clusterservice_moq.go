@@ -46,6 +46,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //			DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
 //				panic("mock out the DeleteByClusterID method")
 //			},
+//			DeregisterClusterJobFunc: func(clusterId string) *apiErrors.ServiceError {
+//				panic("mock out the DeregisterClusterJob method")
+//			},
 //			FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
 //				panic("mock out the FindAllClusters method")
 //			},
@@ -97,6 +100,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //			RegisterClusterJobFunc: func(clusterRequest *api.Cluster) *apiErrors.ServiceError {
 //				panic("mock out the RegisterClusterJob method")
 //			},
+//			RemoveResourcesFunc: func(cluster *api.Cluster, syncSetName string) *apiErrors.ServiceError {
+//				panic("mock out the RemoveResources method")
+//			},
 //			UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 //				panic("mock out the Update method")
 //			},
@@ -136,6 +142,9 @@ type ClusterServiceMock struct {
 
 	// DeleteByClusterIDFunc mocks the DeleteByClusterID method.
 	DeleteByClusterIDFunc func(clusterID string) *apiErrors.ServiceError
+
+	// DeregisterClusterJobFunc mocks the DeregisterClusterJob method.
+	DeregisterClusterJobFunc func(clusterId string) *apiErrors.ServiceError
 
 	// FindAllClustersFunc mocks the FindAllClusters method.
 	FindAllClustersFunc func(criteria FindClusterCriteria) ([]*api.Cluster, error)
@@ -187,6 +196,9 @@ type ClusterServiceMock struct {
 
 	// RegisterClusterJobFunc mocks the RegisterClusterJob method.
 	RegisterClusterJobFunc func(clusterRequest *api.Cluster) *apiErrors.ServiceError
+
+	// RemoveResourcesFunc mocks the RemoveResources method.
+	RemoveResourcesFunc func(cluster *api.Cluster, syncSetName string) *apiErrors.ServiceError
 
 	// UpdateFunc mocks the Update method.
 	UpdateFunc func(cluster api.Cluster) *apiErrors.ServiceError
@@ -244,6 +256,11 @@ type ClusterServiceMock struct {
 		DeleteByClusterID []struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
+		}
+		// DeregisterClusterJob holds details about calls to the DeregisterClusterJob method.
+		DeregisterClusterJob []struct {
+			// ClusterId is the clusterId argument value.
+			ClusterId string
 		}
 		// FindAllClusters holds details about calls to the FindAllClusters method.
 		FindAllClusters []struct {
@@ -338,6 +355,13 @@ type ClusterServiceMock struct {
 			// ClusterRequest is the clusterRequest argument value.
 			ClusterRequest *api.Cluster
 		}
+		// RemoveResources holds details about calls to the RemoveResources method.
+		RemoveResources []struct {
+			// Cluster is the cluster argument value.
+			Cluster *api.Cluster
+			// SyncSetName is the syncSetName argument value.
+			SyncSetName string
+		}
 		// Update holds details about calls to the Update method.
 		Update []struct {
 			// Cluster is the cluster argument value.
@@ -366,6 +390,7 @@ type ClusterServiceMock struct {
 	lockCreate                                         sync.RWMutex
 	lockDelete                                         sync.RWMutex
 	lockDeleteByClusterID                              sync.RWMutex
+	lockDeregisterClusterJob                           sync.RWMutex
 	lockFindAllClusters                                sync.RWMutex
 	lockFindCluster                                    sync.RWMutex
 	lockFindClusterByID                                sync.RWMutex
@@ -383,6 +408,7 @@ type ClusterServiceMock struct {
 	lockListGroupByProviderAndRegion                   sync.RWMutex
 	lockListNonEnterpriseClusterIDs                    sync.RWMutex
 	lockRegisterClusterJob                             sync.RWMutex
+	lockRemoveResources                                sync.RWMutex
 	lockUpdate                                         sync.RWMutex
 	lockUpdateMultiClusterStatus                       sync.RWMutex
 	lockUpdateStatus                                   sync.RWMutex
@@ -653,6 +679,38 @@ func (mock *ClusterServiceMock) DeleteByClusterIDCalls() []struct {
 	mock.lockDeleteByClusterID.RLock()
 	calls = mock.calls.DeleteByClusterID
 	mock.lockDeleteByClusterID.RUnlock()
+	return calls
+}
+
+// DeregisterClusterJob calls DeregisterClusterJobFunc.
+func (mock *ClusterServiceMock) DeregisterClusterJob(clusterId string) *apiErrors.ServiceError {
+	if mock.DeregisterClusterJobFunc == nil {
+		panic("ClusterServiceMock.DeregisterClusterJobFunc: method is nil but ClusterService.DeregisterClusterJob was just called")
+	}
+	callInfo := struct {
+		ClusterId string
+	}{
+		ClusterId: clusterId,
+	}
+	mock.lockDeregisterClusterJob.Lock()
+	mock.calls.DeregisterClusterJob = append(mock.calls.DeregisterClusterJob, callInfo)
+	mock.lockDeregisterClusterJob.Unlock()
+	return mock.DeregisterClusterJobFunc(clusterId)
+}
+
+// DeregisterClusterJobCalls gets all the calls that were made to DeregisterClusterJob.
+// Check the length with:
+//
+//	len(mockedClusterService.DeregisterClusterJobCalls())
+func (mock *ClusterServiceMock) DeregisterClusterJobCalls() []struct {
+	ClusterId string
+} {
+	var calls []struct {
+		ClusterId string
+	}
+	mock.lockDeregisterClusterJob.RLock()
+	calls = mock.calls.DeregisterClusterJob
+	mock.lockDeregisterClusterJob.RUnlock()
 	return calls
 }
 
@@ -1211,6 +1269,42 @@ func (mock *ClusterServiceMock) RegisterClusterJobCalls() []struct {
 	mock.lockRegisterClusterJob.RLock()
 	calls = mock.calls.RegisterClusterJob
 	mock.lockRegisterClusterJob.RUnlock()
+	return calls
+}
+
+// RemoveResources calls RemoveResourcesFunc.
+func (mock *ClusterServiceMock) RemoveResources(cluster *api.Cluster, syncSetName string) *apiErrors.ServiceError {
+	if mock.RemoveResourcesFunc == nil {
+		panic("ClusterServiceMock.RemoveResourcesFunc: method is nil but ClusterService.RemoveResources was just called")
+	}
+	callInfo := struct {
+		Cluster     *api.Cluster
+		SyncSetName string
+	}{
+		Cluster:     cluster,
+		SyncSetName: syncSetName,
+	}
+	mock.lockRemoveResources.Lock()
+	mock.calls.RemoveResources = append(mock.calls.RemoveResources, callInfo)
+	mock.lockRemoveResources.Unlock()
+	return mock.RemoveResourcesFunc(cluster, syncSetName)
+}
+
+// RemoveResourcesCalls gets all the calls that were made to RemoveResources.
+// Check the length with:
+//
+//	len(mockedClusterService.RemoveResourcesCalls())
+func (mock *ClusterServiceMock) RemoveResourcesCalls() []struct {
+	Cluster     *api.Cluster
+	SyncSetName string
+} {
+	var calls []struct {
+		Cluster     *api.Cluster
+		SyncSetName string
+	}
+	mock.lockRemoveResources.RLock()
+	calls = mock.calls.RemoveResources
+	mock.lockRemoveResources.RUnlock()
 	return calls
 }
 

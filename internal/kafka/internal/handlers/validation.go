@@ -408,7 +408,7 @@ func validateKafkaMachinePoolNodeCount(clusterPayload *public.EnterpriseOsdClust
 	}
 }
 
-func validateEnterpriseClusterEligibleForDeregistration(ctx context.Context, clusterID string, forceDeleteFlag bool, clusterService services.ClusterService) handlers.Validate {
+func validateEnterpriseClusterEligibleForDeregistration(ctx context.Context, clusterID string, clusterService services.ClusterService) handlers.Validate {
 	return func() *errors.ServiceError {
 		claims, claimsErr := getClaims(ctx)
 
@@ -440,19 +440,24 @@ func validateEnterpriseClusterEligibleForDeregistration(ctx context.Context, clu
 		if cluster.ClusterType != api.EnterpriseDataPlaneClusterType.String() {
 			return errors.Forbidden("unable to deregister cluster whose type is not: %s", api.EnterpriseDataPlaneClusterType.String())
 		}
-		if !forceDeleteFlag {
-			clusterKafkaCount, err := clusterService.FindKafkaInstanceCount([]string{clusterID})
-			if err != nil {
-				return errors.GeneralError(err.Error())
-			}
-			for _, count := range clusterKafkaCount {
-				if count.Clusterid == clusterID && count.Count > 0 {
-					return errors.Forbidden("unable to deregister %s cluster with id: %s without explicitly setting 'force:true' due to kafka requests present on this cluster",
-						api.EnterpriseDataPlaneClusterType.String(), clusterID)
-				}
+		return nil
+	}
+}
+
+// validateEnterpriseClusterHasNoKafkas requires a cluster to be empty, thus having no kafka instances
+func validateEnterpriseClusterHasNoKafkas(ctx context.Context, clusterID string, clusterService services.ClusterService) handlers.Validate {
+	return func() *errors.ServiceError {
+		instanceCounts, err := clusterService.FindKafkaInstanceCount([]string{clusterID})
+		if err != nil {
+			return errors.GeneralError("error querying kafka instances for clusterID: %v", clusterID)
+		}
+
+		for _, instanceCount := range instanceCounts {
+			if instanceCount.Clusterid == clusterID && instanceCount.Count > 0 {
+				return errors.Forbidden("unable to deregister cluster with kafka instances")
 			}
 		}
-		return nil
 
+		return nil
 	}
 }

@@ -12,7 +12,6 @@ package public
 
 import (
 	_context "context"
-	"github.com/antihax/optional"
 	_ioutil "io/ioutil"
 	_nethttp "net/http"
 	_neturl "net/url"
@@ -27,22 +26,15 @@ var (
 // EnterpriseDataplaneClustersApiService EnterpriseDataplaneClustersApi service
 type EnterpriseDataplaneClustersApiService service
 
-// DeleteEnterpriseClusterByIdOpts Optional parameters for the method 'DeleteEnterpriseClusterById'
-type DeleteEnterpriseClusterByIdOpts struct {
-	Force optional.Bool
-}
-
 /*
 DeleteEnterpriseClusterById Method for DeleteEnterpriseClusterById
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param async Perform the action in an asynchronous manner
   - @param id ID of the enterprise data plane cluster
-  - @param optional nil or *DeleteEnterpriseClusterByIdOpts - Optional Parameters:
-  - @param "Force" (optional.Bool) -  When provided with value: true - enterprise cluster will be deleted alongside all kafkas present on the cluster. When skipped and enterprise cluster has any kafkas associated with it, the request will fail.
 
 @return Error
 */
-func (a *EnterpriseDataplaneClustersApiService) DeleteEnterpriseClusterById(ctx _context.Context, async bool, id string, localVarOptionals *DeleteEnterpriseClusterByIdOpts) (Error, *_nethttp.Response, error) {
+func (a *EnterpriseDataplaneClustersApiService) DeleteEnterpriseClusterById(ctx _context.Context, async bool, id string) (Error, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodDelete
 		localVarPostBody     interface{}
@@ -61,9 +53,6 @@ func (a *EnterpriseDataplaneClustersApiService) DeleteEnterpriseClusterById(ctx 
 	localVarFormParams := _neturl.Values{}
 
 	localVarQueryParams.Add("async", parameterToString(async, ""))
-	if localVarOptionals != nil && localVarOptionals.Force.IsSet() {
-		localVarQueryParams.Add("force", parameterToString(localVarOptionals.Force.Value(), ""))
-	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 

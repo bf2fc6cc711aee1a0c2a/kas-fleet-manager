@@ -64,6 +64,10 @@ func newStandaloneProvider(connectionFactory *db.ConnectionFactory, dataplaneClu
 // blank assignment to verify that StandaloneProvider implements Provider
 var _ Provider = &StandaloneProvider{}
 
+func (s *StandaloneProvider) RemoveResources(clusterSpec *types.ClusterSpec, syncSetName string) error {
+	return nil
+}
+
 func (s *StandaloneProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 	return nil, nil
 }

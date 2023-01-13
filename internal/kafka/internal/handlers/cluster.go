@@ -1,9 +1,6 @@
 package handlers
 
 import (
-	"net/http"
-	"strconv"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -11,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 type clusterHandler struct {
@@ -143,33 +141,16 @@ func (h clusterHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h clusterHandler) DeregisterEnterpriseCluster(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	clusterID := mux.Vars(r)["id"]
-	forceDeleteFlag := r.URL.Query().Get("force")
-
-	if forceDeleteFlag == "" {
-		forceDeleteFlag = "false"
-	}
-
-	forceBoolValue, err := strconv.ParseBool(forceDeleteFlag)
-
-	validateForceParam := func() handlers.Validate {
-		return func() *errors.ServiceError {
-			if err != nil {
-				return errors.GeneralError("failed to parse query param force: %s", forceDeleteFlag)
-			}
-			return nil
-		}
-	}
 
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
 			handlers.ValidateAsyncEnabled(r, "deleting enterprise cluster"),
-			validateForceParam(),
 			ValidateKafkaClaims(ctx, ValidateOrganisationId()),
-			validateEnterpriseClusterEligibleForDeregistration(ctx, clusterID, forceBoolValue, h.clusterService),
+			validateEnterpriseClusterEligibleForDeregistration(ctx, clusterID, h.clusterService),
+			validateEnterpriseClusterHasNoKafkas(ctx, clusterID, h.clusterService),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			// cluster deletion from db and cleanup will be handled in a follow up Jira
-			return nil, nil
+			return nil, h.clusterService.DeregisterClusterJob(clusterID)
 		},
 	}
 	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)

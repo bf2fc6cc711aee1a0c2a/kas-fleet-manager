@@ -47,8 +47,12 @@ type ClusterService interface {
 	GetClientID(clusterID string) (string, error)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError)
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
+	DeregisterClusterJob(clusterID string) *apiErrors.ServiceError
 	// DeleteByClusterID will delete the cluster from the database
 	DeleteByClusterID(clusterID string) *apiErrors.ServiceError
+	// HardDeleteByClusterID hard deletes a cluster from the database, no delete flag is set
+	// HardDeleteByClusterID hard deletes a cluster from the database, no delete flag is set
+	HardDeleteByClusterID(clusterID string) *apiErrors.ServiceError
 	// FindNonEmptyClusterByID returns a cluster if it present and it is not empty.
 	// Cluster emptiness is determined by checking whether the cluster contains Kafkas that have been provisioned, are being provisioned on it,
 	// or are being deprovisioned from it i.e kafka that are not in deleting state.
@@ -70,6 +74,7 @@ type ClusterService interface {
 	Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
 	ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError
+	RemoveResources(cluster *api.Cluster, syncSetName string) *apiErrors.ServiceError
 	// Install the strimzi operator in a given cluster
 	InstallStrimzi(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	// Install the cluster logging operator for a given cluster
@@ -104,6 +109,15 @@ func (c clusterService) RegisterClusterJob(clusterRequest *api.Cluster) *apiErro
 	dbConn := c.connectionFactory.New()
 	if err := dbConn.Save(clusterRequest).Error; err != nil {
 		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to register cluster job")
+	}
+	return nil
+}
+
+// DeregisterClusterJob deregister an existing cluster if it exists
+func (c clusterService) DeregisterClusterJob(clusterID string) *apiErrors.ServiceError {
+	err := c.UpdateStatus(api.Cluster{ClusterID: clusterID}, api.ClusterDeprovisioning)
+	if err != nil {
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to deregister cluster")
 	}
 	return nil
 }
@@ -382,6 +396,19 @@ func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceEr
 	return nil
 }
 
+func (c clusterService) HardDeleteByClusterID(clusterID string) *apiErrors.ServiceError {
+	dbConn := c.connectionFactory.New()
+	metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationHardDelete)
+
+	if err := dbConn.Unscoped().Delete(&api.Cluster{}, api.Cluster{ClusterID: clusterID}).Error; err != nil {
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "Unable to hard delete cluster with cluster_id %s", clusterID)
+	}
+
+	glog.Infof("Cluster %s hard deleted successful", clusterID)
+	metrics.IncreaseClusterSuccessOperationsCountMetric(constants.ClusterOperationHardDelete)
+	return nil
+}
+
 func (c clusterService) FindNonEmptyClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
 
@@ -640,6 +667,17 @@ func (c clusterService) ApplyResources(cluster *api.Cluster, resources types.Res
 	}
 	if _, err := p.ApplyResources(buildClusterSpec(cluster), resources); err != nil {
 		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to apply resources %s", resources.Name)
+	}
+	return nil
+}
+
+func (c clusterService) RemoveResources(cluster *api.Cluster, syncSetName string) *apiErrors.ServiceError {
+	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
+	if err != nil {
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
+	}
+	if err := p.RemoveResources(buildClusterSpec(cluster), syncSetName); err != nil {
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to remove resources %s", syncSetName)
 	}
 	return nil
 }

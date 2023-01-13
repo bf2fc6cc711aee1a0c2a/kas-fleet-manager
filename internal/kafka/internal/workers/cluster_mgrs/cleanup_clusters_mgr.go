@@ -82,9 +82,15 @@ func (m *CleanupClustersManager) processCleanupClusters() error {
 
 	for _, cluster := range cleanupClusters {
 		glog.V(10).Infof("cleanup cluster ClusterID = %s", cluster.ClusterID)
-		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterCleanup)
-		if err := m.reconcileCleanupCluster(cluster); err != nil {
-			errList.AddErrors(errors.Wrapf(err, "failed to reconcile cleanup cluster %s", cluster.ClusterID))
+		if cluster.ClusterType != api.EnterpriseDataPlaneClusterType.String() {
+			metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterCleanup)
+			if err := m.reconcileCleanupCluster(cluster); err != nil {
+				errList.AddErrors(errors.Wrapf(err, "failed to reconcile cleanup cluster %s", cluster.ClusterID))
+			}
+		} else {
+			if err := m.reconcileCleanupEnterpriseCluster(cluster); err != nil {
+				errList.AddErrors(errors.Wrapf(err, "failed to reconcile cleanup enterprise cluster %s", cluster.ClusterID))
+			}
 		}
 	}
 
@@ -93,6 +99,16 @@ func (m *CleanupClustersManager) processCleanupClusters() error {
 	}
 
 	return errList
+}
+
+func (m *CleanupClustersManager) reconcileCleanupEnterpriseCluster(cluster api.Cluster) error {
+	glog.Infof("Removing Enterprise Dataplane cluster %s fleetshard service account", cluster.ClusterID)
+	serviceAccountRemovalErr := m.kasFleetshardOperatorAddon.RemoveServiceAccount(cluster)
+	if serviceAccountRemovalErr != nil {
+		return errors.Wrapf(serviceAccountRemovalErr, "failed to removed Dataplane cluster %s fleetshard service account", cluster.ClusterID)
+	}
+	glog.Infof("Hard deleting the Enterprise Dataplane cluster %s from the database", cluster.ClusterID)
+	return m.clusterService.HardDeleteByClusterID(cluster.ClusterID)
 }
 
 func (m *CleanupClustersManager) reconcileCleanupCluster(cluster api.Cluster) error {
@@ -110,9 +126,5 @@ func (m *CleanupClustersManager) reconcileCleanupCluster(cluster api.Cluster) er
 	}
 
 	glog.Infof("Soft deleting the Dataplane cluster %s from the database", cluster.ClusterID)
-	deleteError := m.clusterService.DeleteByClusterID(cluster.ClusterID)
-	if deleteError != nil {
-		return errors.Wrapf(deleteError, "failed to soft delete Dataplane cluster %s from the database", cluster.ClusterID)
-	}
-	return nil
+	return m.clusterService.DeleteByClusterID(cluster.ClusterID)
 }

@@ -61,6 +61,9 @@ var _ Provider = &ProviderMock{}
 //			InstallStrimziFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
 //				panic("mock out the InstallStrimzi method")
 //			},
+//			RemoveResourcesFunc: func(clusterSpec *types.ClusterSpec, syncSetName string) error {
+//				panic("mock out the RemoveResources method")
+//			},
 //		}
 //
 //		// use mockedProvider in code that requires Provider
@@ -109,6 +112,9 @@ type ProviderMock struct {
 
 	// InstallStrimziFunc mocks the InstallStrimzi method.
 	InstallStrimziFunc func(clusterSpec *types.ClusterSpec) (bool, error)
+
+	// RemoveResourcesFunc mocks the RemoveResources method.
+	RemoveResourcesFunc func(clusterSpec *types.ClusterSpec, syncSetName string) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -188,6 +194,13 @@ type ProviderMock struct {
 			// ClusterSpec is the clusterSpec argument value.
 			ClusterSpec *types.ClusterSpec
 		}
+		// RemoveResources holds details about calls to the RemoveResources method.
+		RemoveResources []struct {
+			// ClusterSpec is the clusterSpec argument value.
+			ClusterSpec *types.ClusterSpec
+			// SyncSetName is the syncSetName argument value.
+			SyncSetName string
+		}
 	}
 	lockAddIdentityProvider          sync.RWMutex
 	lockApplyResources               sync.RWMutex
@@ -203,6 +216,7 @@ type ProviderMock struct {
 	lockInstallClusterLogging        sync.RWMutex
 	lockInstallKasFleetshard         sync.RWMutex
 	lockInstallStrimzi               sync.RWMutex
+	lockRemoveResources              sync.RWMutex
 }
 
 // AddIdentityProvider calls AddIdentityProviderFunc.
@@ -660,5 +674,41 @@ func (mock *ProviderMock) InstallStrimziCalls() []struct {
 	mock.lockInstallStrimzi.RLock()
 	calls = mock.calls.InstallStrimzi
 	mock.lockInstallStrimzi.RUnlock()
+	return calls
+}
+
+// RemoveResources calls RemoveResourcesFunc.
+func (mock *ProviderMock) RemoveResources(clusterSpec *types.ClusterSpec, syncSetName string) error {
+	if mock.RemoveResourcesFunc == nil {
+		panic("ProviderMock.RemoveResourcesFunc: method is nil but Provider.RemoveResources was just called")
+	}
+	callInfo := struct {
+		ClusterSpec *types.ClusterSpec
+		SyncSetName string
+	}{
+		ClusterSpec: clusterSpec,
+		SyncSetName: syncSetName,
+	}
+	mock.lockRemoveResources.Lock()
+	mock.calls.RemoveResources = append(mock.calls.RemoveResources, callInfo)
+	mock.lockRemoveResources.Unlock()
+	return mock.RemoveResourcesFunc(clusterSpec, syncSetName)
+}
+
+// RemoveResourcesCalls gets all the calls that were made to RemoveResources.
+// Check the length with:
+//
+//	len(mockedProvider.RemoveResourcesCalls())
+func (mock *ProviderMock) RemoveResourcesCalls() []struct {
+	ClusterSpec *types.ClusterSpec
+	SyncSetName string
+} {
+	var calls []struct {
+		ClusterSpec *types.ClusterSpec
+		SyncSetName string
+	}
+	mock.lockRemoveResources.RLock()
+	calls = mock.calls.RemoveResources
+	mock.lockRemoveResources.RUnlock()
 	return calls
 }
