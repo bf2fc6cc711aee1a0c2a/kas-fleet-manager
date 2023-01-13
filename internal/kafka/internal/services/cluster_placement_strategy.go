@@ -165,17 +165,24 @@ func (f *FirstReadyWithCapacity) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cl
 		return nil, errors.Wrapf(getInstanceSizeErr, "failed to get kafka instance size for cluster with criteria '%v'", criteria)
 	}
 
-	// Find first ready cluster that has remaining capacity (total streaming unit used by existing and requested kafka is within the cluster maxUnit limit)
 	for _, cluster := range clusters {
-		currentStreamingUnitsUsed := streamingUnitCountPerRegionList.GetStreamingUnitCountForClusterAndInstanceType(cluster.ClusterID, kafka.InstanceType)
-		capacityInfo := cluster.RetrieveDynamicCapacityInfo()
-		maxStreamingUnits := capacityInfo[kafka.InstanceType].MaxUnits
-
-		if currentStreamingUnitsUsed+instanceSize.CapacityConsumed <= int(maxStreamingUnits) {
-			return cluster, nil
+		if cluster.ClusterType == api.ManagedDataPlaneClusterType.String() {
+			availableCluster := f.isManagedClusterNotFull(cluster, streamingUnitCountPerRegionList, kafka, instanceSize)
+			if availableCluster {
+				return cluster, nil
+			}
 		}
 	}
 
 	// no cluster found
 	return nil, nil
+}
+
+func (f *FirstReadyWithCapacity) isManagedClusterNotFull(cluster *api.Cluster, streamingUnitCountPerRegionList KafkaStreamingUnitCountPerClusterList,
+	kafka *dbapi.KafkaRequest, instanceSize *config.KafkaInstanceSize) bool {
+	currentStreamingUnitsUsed := streamingUnitCountPerRegionList.GetStreamingUnitCountForClusterAndInstanceType(cluster.ClusterID, kafka.InstanceType)
+	capacityInfo := cluster.RetrieveDynamicCapacityInfo()
+	maxStreamingUnits := capacityInfo[kafka.InstanceType].MaxUnits
+
+	return currentStreamingUnitsUsed+instanceSize.CapacityConsumed <= int(maxStreamingUnits)
 }

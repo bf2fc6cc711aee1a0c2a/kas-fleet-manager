@@ -4,11 +4,13 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	clusterMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	kafkaMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 
 	"github.com/onsi/gomega"
@@ -35,6 +37,8 @@ func TestEnterpriseClustersList(t *testing.T) {
 	nonAuthAccount := h.NewAccount("", "", "", "")
 	nonAuthCtx := h.NewAuthenticatedContext(nonAuthAccount, nil)
 
+	dynamicCapacityInfoString := "{\"standard\":{\"max_nodes\":1,\"max_units\":3,\"remaining_units\":3}}"
+
 	cluster := clusterMocks.BuildCluster(func(cluster *api.Cluster) {
 		cluster.Meta = api.Meta{
 			ID: api.NewID(),
@@ -45,6 +49,7 @@ func TestEnterpriseClustersList(t *testing.T) {
 		cluster.ProviderSpec = api.JSON{}
 		cluster.ClusterSpec = api.JSON{}
 		cluster.ClusterID = api.NewID()
+		cluster.DynamicCapacityInfo = api.JSON([]byte(dynamicCapacityInfoString))
 	})
 
 	otherOrgCluster := clusterMocks.BuildCluster(func(cluster *api.Cluster) {
@@ -57,6 +62,7 @@ func TestEnterpriseClustersList(t *testing.T) {
 		cluster.OrganizationID = "99999999"
 		cluster.ClusterType = api.EnterpriseDataPlaneClusterType.String()
 		cluster.Status = api.ClusterReady
+		cluster.DynamicCapacityInfo = api.JSON{}
 	})
 
 	db := test.TestServices.DBFactory.New()
@@ -84,4 +90,10 @@ func TestEnterpriseClustersList(t *testing.T) {
 	if resp2 != nil {
 		defer resp2.Body.Close()
 	}
+
+	checkMetricsError := common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityAvailable, "3", api.StandardTypeSupport.String(), cluster.ClusterID, cluster.Region, cluster.CloudProvider)
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
+
+	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityMax, "3", api.StandardTypeSupport.String(), cluster.ClusterID, cluster.Region, cluster.CloudProvider)
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
 }

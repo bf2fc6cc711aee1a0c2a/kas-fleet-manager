@@ -1892,7 +1892,7 @@ func Test_validateEnterpriseClusterEligibleForDeregistration(t *testing.T) {
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return &api.Cluster{
 							OrganizationID: mocks.DefaultOrganisationId,
-							ClusterType:    "enterprise",
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
 						}, nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
@@ -1911,7 +1911,7 @@ func Test_validateEnterpriseClusterEligibleForDeregistration(t *testing.T) {
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return &api.Cluster{
 							OrganizationID: mocks.DefaultOrganisationId,
-							ClusterType:    "enterprise",
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
 						}, nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
@@ -1936,7 +1936,7 @@ func Test_validateEnterpriseClusterEligibleForDeregistration(t *testing.T) {
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return &api.Cluster{
 							OrganizationID: mocks.DefaultOrganisationId,
-							ClusterType:    "enterprise",
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
 						}, nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
@@ -1960,7 +1960,7 @@ func Test_validateEnterpriseClusterEligibleForDeregistration(t *testing.T) {
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return &api.Cluster{
 							OrganizationID: mocks.DefaultOrganisationId,
-							ClusterType:    "enterprise",
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
 						}, nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
@@ -1980,7 +1980,7 @@ func Test_validateEnterpriseClusterEligibleForDeregistration(t *testing.T) {
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return &api.Cluster{
 							OrganizationID: mocks.DefaultOrganisationId,
-							ClusterType:    "enterprise",
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
 						}, nil
 					},
 				},

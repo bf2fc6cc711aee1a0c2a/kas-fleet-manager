@@ -346,10 +346,12 @@ func Test_standardDynamicScaleDownProcessor_ShouldScaleDown(t *testing.T) {
 					},
 					kafkaStreamingUnitCountPerClusterList: services.KafkaStreamingUnitCountPerClusterList{
 						services.KafkaStreamingUnitCountPerCluster{
-							Status: api.ClusterReady.String(),
+							Status:      api.ClusterReady.String(),
+							ClusterType: api.ManagedDataPlaneClusterType.String(),
 						},
 						services.KafkaStreamingUnitCountPerCluster{
 							Status:        api.ClusterReady.String(),
+							ClusterType:   api.ManagedDataPlaneClusterType.String(),
 							Count:         0,
 							Region:        "region",
 							CloudProvider: "cp",
@@ -362,6 +364,7 @@ func Test_standardDynamicScaleDownProcessor_ShouldScaleDown(t *testing.T) {
 						},
 						services.KafkaStreamingUnitCountPerCluster{
 							Status:        api.ClusterReady.String(),
+							ClusterType:   api.ManagedDataPlaneClusterType.String(),
 							Count:         0,
 							Region:        "region",
 							CloudProvider: "cp",
@@ -587,8 +590,9 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
 						return services.KafkaStreamingUnitCountPerClusterList{
 							services.KafkaStreamingUnitCountPerCluster{
-								Count:  0,
-								Status: api.ClusterAccepted.String(),
+								Count:       0,
+								ClusterType: api.ManagedDataPlaneClusterType.String(),
+								Status:      api.ClusterAccepted.String(),
 							},
 						}, nil
 					},
@@ -695,8 +699,9 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
 						return services.KafkaStreamingUnitCountPerClusterList{
 							services.KafkaStreamingUnitCountPerCluster{
-								Count:  0,
-								Status: api.ClusterAccepted.String(),
+								Count:       0,
+								ClusterType: api.ManagedDataPlaneClusterType.String(),
+								Status:      api.ClusterAccepted.String(),
 							},
 						}, nil
 					},
@@ -720,13 +725,15 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
 						return services.KafkaStreamingUnitCountPerClusterList{
 							services.KafkaStreamingUnitCountPerCluster{
-								Status:    api.ClusterReady.String(),
-								ClusterId: "other-cluster-id",
-								Count:     4,
-								MaxUnits:  4,
+								Status:      api.ClusterReady.String(),
+								ClusterType: api.ManagedDataPlaneClusterType.String(),
+								ClusterId:   "other-cluster-id",
+								Count:       4,
+								MaxUnits:    4,
 							},
 							services.KafkaStreamingUnitCountPerCluster{
 								Status:        api.ClusterReady.String(),
+								ClusterType:   api.ManagedDataPlaneClusterType.String(),
 								Count:         0,
 								Region:        "region",
 								CloudProvider: "cp",
@@ -736,6 +743,7 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 							},
 							services.KafkaStreamingUnitCountPerCluster{
 								Status:        api.ClusterReady.String(),
+								ClusterType:   api.ManagedDataPlaneClusterType.String(),
 								Count:         0,
 								Region:        "region",
 								CloudProvider: "cp",
@@ -745,6 +753,7 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 							},
 							services.KafkaStreamingUnitCountPerCluster{
 								Status:        api.ClusterReady.String(),
+								ClusterType:   api.ManagedDataPlaneClusterType.String(),
 								Count:         0,
 								Region:        "region",
 								CloudProvider: "cp",
@@ -754,6 +763,7 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 							},
 							services.KafkaStreamingUnitCountPerCluster{
 								Status:        api.ClusterReady.String(),
+								ClusterType:   api.ManagedDataPlaneClusterType.String(),
 								Count:         0,
 								Region:        "region",
 								CloudProvider: "cp",
@@ -763,6 +773,7 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 							},
 							services.KafkaStreamingUnitCountPerCluster{
 								Status:        api.ClusterReady.String(),
+								ClusterType:   api.ManagedDataPlaneClusterType.String(),
 								Count:         0,
 								Region:        "region",
 								CloudProvider: "cp",
@@ -772,6 +783,7 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 							},
 							services.KafkaStreamingUnitCountPerCluster{
 								Status:        api.ClusterReady.String(),
+								ClusterType:   api.ManagedDataPlaneClusterType.String(),
 								Count:         0,
 								Region:        "region",
 								CloudProvider: "cp",
@@ -857,13 +869,15 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
 						return services.KafkaStreamingUnitCountPerClusterList{
 							services.KafkaStreamingUnitCountPerCluster{
-								Status:    api.ClusterReady.String(),
-								ClusterId: "other-cluster-id",
-								Count:     4,
-								MaxUnits:  4,
+								Status:      api.ClusterReady.String(),
+								ClusterType: api.ManagedDataPlaneClusterType.String(),
+								ClusterId:   "other-cluster-id",
+								Count:       4,
+								MaxUnits:    4,
 							},
 							services.KafkaStreamingUnitCountPerCluster{
 								Status:        api.ClusterReady.String(),
+								ClusterType:   api.ManagedDataPlaneClusterType.String(),
 								Count:         0,
 								Region:        "region",
 								CloudProvider: "cp",
@@ -873,6 +887,7 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 							},
 							services.KafkaStreamingUnitCountPerCluster{
 								Status:        api.ClusterReady.String(),
+								ClusterType:   api.ManagedDataPlaneClusterType.String(),
 								Count:         0,
 								Region:        "region",
 								CloudProvider: "cp",
@@ -882,6 +897,7 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 							},
 							services.KafkaStreamingUnitCountPerCluster{
 								Status:        api.ClusterReady.String(),
+								ClusterType:   api.ManagedDataPlaneClusterType.String(),
 								Count:         0,
 								Region:        "region",
 								CloudProvider: "cp",
@@ -891,6 +907,7 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 							},
 							services.KafkaStreamingUnitCountPerCluster{
 								Status:        api.ClusterReady.String(),
+								ClusterType:   api.ManagedDataPlaneClusterType.String(),
 								Count:         0,
 								Region:        "region",
 								CloudProvider: "cp",
@@ -900,6 +917,7 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 							},
 							services.KafkaStreamingUnitCountPerCluster{
 								Status:        api.ClusterReady.String(),
+								ClusterType:   api.ManagedDataPlaneClusterType.String(),
 								Count:         0,
 								Region:        "region",
 								CloudProvider: "cp",
@@ -986,6 +1004,7 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 						return services.KafkaStreamingUnitCountPerClusterList{
 							services.KafkaStreamingUnitCountPerCluster{
 								Status:        api.ClusterReady.String(),
+								ClusterType:   api.ManagedDataPlaneClusterType.String(),
 								Count:         0,
 								Region:        "region",
 								CloudProvider: "cp",
@@ -995,6 +1014,7 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 							},
 							services.KafkaStreamingUnitCountPerCluster{
 								Status:        api.ClusterReady.String(),
+								ClusterType:   api.ManagedDataPlaneClusterType.String(),
 								Count:         0,
 								Region:        "region",
 								CloudProvider: "cp",
