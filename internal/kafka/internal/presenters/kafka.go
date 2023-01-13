@@ -46,7 +46,6 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 
 	var ingressThroughputPerSec, egressThroughputPerSec, maxDataRetentionPeriod string
 	var totalMaxConnections, maxPartitions, maxConnectionAttemptsPerSec int
-	var expiresAt *time.Time
 	if kafkaConfig != nil {
 		instanceSize, err := kafkaConfig.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
 		if err != nil {
@@ -58,10 +57,12 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 			maxPartitions = instanceSize.MaxPartitions
 			maxDataRetentionPeriod = instanceSize.MaxDataRetentionPeriod
 			maxConnectionAttemptsPerSec = instanceSize.MaxConnectionAttemptsPerSec
-			if instanceSize.LifespanSeconds != nil {
-				expiresAt = kafkaRequest.GetExpirationTime(*instanceSize.LifespanSeconds)
-			}
 		}
+	}
+
+	var expiresAt *time.Time
+	if kafkaRequest.ExpiresAt.Valid {
+		expiresAt = &kafkaRequest.ExpiresAt.Time
 	}
 
 	displayName, err := getDisplayName(kafkaRequest.InstanceType, kafkaConfig)
