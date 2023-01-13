@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"net/http"
+	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
@@ -23,16 +25,20 @@ import (
 type adminKafkaHandler struct {
 	kafkaService   services.KafkaService
 	accountService account.AccountService
-	providerConfig *config.ProviderConfig
 	clusterService services.ClusterService
+
+	providerConfig *config.ProviderConfig
+	kafkaConfig    *config.KafkaConfig
 }
 
-func NewAdminKafkaHandler(kafkaService services.KafkaService, accountService account.AccountService, providerConfig *config.ProviderConfig, clusterService services.ClusterService) *adminKafkaHandler {
+func NewAdminKafkaHandler(kafkaService services.KafkaService, accountService account.AccountService, providerConfig *config.ProviderConfig, clusterService services.ClusterService, kafkaConfig *config.KafkaConfig) *adminKafkaHandler {
 	return &adminKafkaHandler{
 		kafkaService:   kafkaService,
 		accountService: accountService,
-		providerConfig: providerConfig,
 		clusterService: clusterService,
+
+		providerConfig: providerConfig,
+		kafkaConfig:    kafkaConfig,
 	}
 }
 
@@ -108,7 +114,6 @@ func (h adminKafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
-
 	id := mux.Vars(r)["id"]
 	ctx := r.Context()
 	kafkaRequest, err := h.kafkaService.Get(ctx, id)
@@ -156,20 +161,7 @@ func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 				return nil
 			},
 			validateVersionsCompatibility(h, kafkaRequest, &kafkaUpdateReq),
-			func() *errors.ServiceError { // Validate Suspended parameter
-				// Kafka can only be suspended when its in a 'ready' state
-				// If Kafka is already in a 'suspending' or 'suspended' state, the request is still valid. However,
-				// no changes will be applied to the status of the Kafka instance.
-				if kafkaUpdateReq.Suspended != nil && *kafkaUpdateReq.Suspended {
-					if kafkaRequest.Status == constants.KafkaRequestStatusReady.String() ||
-						kafkaRequest.Status == constants.KafkaRequestStatusSuspended.String() ||
-						kafkaRequest.Status == constants.KafkaRequestStatusSuspending.String() {
-						return nil
-					}
-					return errors.New(errors.ErrorValidation, "kafka instance with a status of %q cannot be suspended. Kafka instances can only be suspended in the following states: [%q]", kafkaRequest.Status, constants.KafkaRequestStatusReady)
-				}
-				return nil
-			},
+			h.validateUpdateKafkaSuspended(kafkaRequest, &kafkaUpdateReq),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
@@ -222,4 +214,59 @@ func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+func (h *adminKafkaHandler) validateUpdateKafkaSuspended(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *private.KafkaUpdateRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		if kafkaUpdateReq.Suspended == nil {
+			return nil
+		}
+
+		if *kafkaUpdateReq.Suspended {
+			return h.validateUpdateKafkaCanBeSuspended(kafkaRequest, kafkaUpdateReq)()
+		} else {
+			return h.validateUpdateKafkaCanBeResumed(kafkaRequest, kafkaUpdateReq)()
+		}
+	}
+}
+
+func (h *adminKafkaHandler) validateUpdateKafkaCanBeSuspended(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *private.KafkaUpdateRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		suspendableStates := []string{constants.KafkaRequestStatusReady.String()}
+		isSuspendableState := arrays.Contains(suspendableStates, kafkaRequest.Status)
+		if !isSuspendableState {
+			return errors.New(errors.ErrorValidation, "kafka instance with a status of %q cannot be suspended. Kafka instances can only be suspended in the following states: %s", kafkaRequest.Status, suspendableStates)
+		}
+		return nil
+	}
+}
+
+func (h *adminKafkaHandler) validateUpdateKafkaCanBeResumed(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *private.KafkaUpdateRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		resumableStates := []string{constants.KafkaRequestStatusSuspended.String()}
+		isResumableState := arrays.Contains(resumableStates, kafkaRequest.Status)
+		if !isResumableState {
+			return errors.New(errors.ErrorValidation, "kafka instance with a status of %q cannot be resumed. Kafka instances can only be resumed in the following states: %s", kafkaRequest.Status, resumableStates)
+		}
+
+		kafkaRequestHasExpirationSet := kafkaRequest.ExpiresAt.Valid
+		if !kafkaRequestHasExpirationSet {
+			return nil
+		}
+
+		timeNow := time.Now()
+		kafkaBillingModelConfig, err := h.kafkaConfig.GetBillingModelByID(kafkaRequest.InstanceType, kafkaRequest.ActualKafkaBillingModel)
+		if err != nil {
+			return errors.ToServiceError(err)
+		}
+		gracePeriodDays := kafkaBillingModelConfig.GracePeriodDays
+		durationGracePeriodDays := time.Duration(gracePeriodDays*86400) * time.Second
+		startOfGracePeriod := kafkaRequest.ExpiresAt.Time.Add(-durationGracePeriodDays)
+		isWithinOrAfterGracePeriod := timeNow.After(startOfGracePeriod)
+		if isWithinOrAfterGracePeriod {
+			return errors.New(errors.ErrorValidation, "kafka instance with a status of %q cannot be resumed due to the instance is suspended and it is within its grace period: start of grace period: %s ", kafkaRequest.Status, startOfGracePeriod)
+		}
+
+		return nil
+	}
 }
