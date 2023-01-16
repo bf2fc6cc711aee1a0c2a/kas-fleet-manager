@@ -167,8 +167,8 @@ func (f *FirstReadyWithCapacity) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cl
 
 	for _, cluster := range clusters {
 		if cluster.ClusterType == api.ManagedDataPlaneClusterType.String() {
-			availableCluster := f.isManagedClusterNotFull(cluster, streamingUnitCountPerRegionList, kafka, instanceSize)
-			if availableCluster {
+			clusterNotFull := f.isManagedClusterNotFull(cluster, streamingUnitCountPerRegionList, kafka, instanceSize)
+			if clusterNotFull {
 				return cluster, nil
 			}
 		}
