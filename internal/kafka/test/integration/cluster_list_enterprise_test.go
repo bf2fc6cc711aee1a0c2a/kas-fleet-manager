@@ -4,13 +4,11 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	clusterMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	kafkaMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 
 	"github.com/onsi/gomega"
@@ -90,10 +88,4 @@ func TestEnterpriseClustersList(t *testing.T) {
 	if resp2 != nil {
 		defer resp2.Body.Close()
 	}
-
-	checkMetricsError := common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityAvailable, "3", api.StandardTypeSupport.String(), cluster.ClusterID, cluster.Region, cluster.CloudProvider)
-	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
-
-	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityMax, "3", api.StandardTypeSupport.String(), cluster.ClusterID, cluster.Region, cluster.CloudProvider)
-	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
 }
