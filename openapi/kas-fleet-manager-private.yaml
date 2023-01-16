@@ -483,6 +483,15 @@ components:
           description: "Data plane cluster agent spec"
           type: object
           properties:
+            net:
+              description: Indicates data plane cluster network configuration
+              type: object
+              required:
+                - private
+              properties:
+                private:
+                  type: boolean
+                  description: Indicates whether the network configuration is private or not  
             capacity:
               description: A map of supported instance type to configured nodes size
               type: object

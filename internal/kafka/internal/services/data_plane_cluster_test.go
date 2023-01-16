@@ -366,7 +366,8 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 				clusterService: &ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return &api.Cluster{
-							DynamicCapacityInfo: api.JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
+							AccessKafkasViaPrivateNetwork: true,
+							DynamicCapacityInfo:           api.JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
 						}, nil
 					},
 				},
@@ -387,6 +388,9 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 					Tag:         "test-tag",
 				},
 				DynamicCapacityInfo: map[string]api.DynamicCapacityInfo{},
+				NetworkConfiguration: dbapi.DataPlaneClusterConfigNetwork{
+					Private: true,
+				},
 			},
 		},
 		{
@@ -395,7 +399,8 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 				clusterService: &ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return &api.Cluster{
-							DynamicCapacityInfo: api.JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
+							AccessKafkasViaPrivateNetwork: false,
+							DynamicCapacityInfo:           api.JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
 						}, nil
 					},
 				},
@@ -414,6 +419,9 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 					Channel:     "test-channel",
 					Repository:  "test-repo",
 					Tag:         "test-tag",
+				},
+				NetworkConfiguration: dbapi.DataPlaneClusterConfigNetwork{
+					Private: false,
 				},
 				DynamicCapacityInfo: map[string]api.DynamicCapacityInfo{
 					"key1": {

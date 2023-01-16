@@ -396,6 +396,8 @@ components:
       description: Configuration for the data plane cluster agent
       example:
         spec:
+          net:
+            private: true
           observability:
             channel: channel
             tag: tag
@@ -655,6 +657,16 @@ components:
           type: string
         router:
           type: string
+    DataplaneClusterAgentConfig_spec_net:
+      description: Indicates data plane cluster network configuration
+      example:
+        private: true
+      properties:
+        private:
+          description: Indicates whether the network configuration is private or not
+          type: boolean
+      required:
+      - private
     DataplaneClusterAgentConfig_spec_capacity:
       description: The reported capacity object
       example:
@@ -683,6 +695,8 @@ components:
     DataplaneClusterAgentConfig_spec:
       description: Data plane cluster agent spec
       example:
+        net:
+          private: true
         observability:
           channel: channel
           tag: tag
@@ -692,6 +706,8 @@ components:
           key:
             maxNodes: 0
       properties:
+        net:
+          $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec_net'
         capacity:
           additionalProperties:
             $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec_capacity'
