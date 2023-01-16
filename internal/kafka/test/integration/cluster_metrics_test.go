@@ -76,13 +76,71 @@ func TestClusterCapacityUsedMetric(t *testing.T) {
 	checkMetricsError := common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityUsed, metricValue, kafka.InstanceType, kafka.ClusterID, kafka.Region, kafka.CloudProvider)
 	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
 
-	// now delete the kafka and make verify that the capacity used goes down from "1" to "0"
+	// now delete the kafka and verify that the capacity used goes down from "1" to "0"
 	err = db.Unscoped().Delete(kafka).Error
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	// now verify that the metric value has gone down to "0" after the kafka deletion
 	metricValue = "0"
 	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityUsed, metricValue, kafka.InstanceType, kafka.ClusterID, kafka.Region, kafka.CloudProvider)
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
+
+	// enterprise data plane cluster capacity metrics
+
+	dynamicCapacityInfoString := "{\"standard\":{\"max_nodes\":1,\"max_units\":3,\"remaining_units\":3}}"
+
+	enterpriseCluster := clusterMocks.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.OrganizationID = kafkaMocks.DefaultOrganisationId
+		cluster.ClusterType = api.EnterpriseDataPlaneClusterType.String()
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterID = api.NewID()
+		cluster.DynamicCapacityInfo = api.JSON([]byte(dynamicCapacityInfoString))
+	})
+
+	enterpriseKafka := kafkaMocks.BuildKafkaRequest(kafkaMocks.WithPredefinedTestValues(), func(kr *dbapi.KafkaRequest) {
+		kr.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		kr.Region = cluster.Region
+		kr.CloudProvider = cluster.CloudProvider
+		kr.SizeId = "x1"
+		kr.OrganisationId = enterpriseCluster.OrganizationID
+		kr.InstanceType = types.STANDARD.String()
+		kr.ClusterID = enterpriseCluster.ClusterID
+		kr.DesiredKafkaBillingModel = "enterprise"
+	})
+
+	err = db.Create(enterpriseCluster).Error
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	err = db.Create(enterpriseKafka).Error
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityAvailable, "2", api.StandardTypeSupport.String(), enterpriseCluster.ClusterID, enterpriseCluster.Region, enterpriseCluster.CloudProvider)
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
+
+	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityMax, "3", api.StandardTypeSupport.String(), enterpriseCluster.ClusterID, enterpriseCluster.Region, enterpriseCluster.CloudProvider)
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
+
+	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityUsed, "1", api.StandardTypeSupport.String(), enterpriseCluster.ClusterID, enterpriseCluster.Region, enterpriseCluster.CloudProvider)
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
+
+	// delete the enterprise kafka and confirm that the capacity information is updated
+	err = db.Unscoped().Delete(enterpriseKafka).Error
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityAvailable, "3", api.StandardTypeSupport.String(), enterpriseCluster.ClusterID, enterpriseCluster.Region, enterpriseCluster.CloudProvider)
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
+
+	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityMax, "3", api.StandardTypeSupport.String(), enterpriseCluster.ClusterID, enterpriseCluster.Region, enterpriseCluster.CloudProvider)
+	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
+
+	checkMetricsError = common.WaitForMetricToBePresent(h, t, metrics.ClusterStatusCapacityUsed, "0", api.StandardTypeSupport.String(), enterpriseCluster.ClusterID, enterpriseCluster.Region, enterpriseCluster.CloudProvider)
 	g.Expect(checkMetricsError).NotTo(gomega.HaveOccurred())
 }
 
