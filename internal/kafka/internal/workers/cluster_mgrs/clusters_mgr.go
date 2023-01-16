@@ -294,6 +294,13 @@ func (c *ClusterManager) processProvisionedClusters() []error {
 				errs = append(errs, errors.Wrapf(err, "failed to reconcile provisioned cluster %s", provisionedCluster.ClusterID))
 			}
 		} else {
+			// create or update sync set
+			syncSetErr := c.reconcileClusterResources(provisionedCluster)
+			if syncSetErr != nil {
+				errs = append(errs, errors.Wrapf(syncSetErr, "failed to create or update resource set of provisioned %s cluster %s", api.EnterpriseDataPlaneClusterType.String(), provisionedCluster.ID))
+			}
+
+			// update provisioned cluster status
 			provisionedCluster.Status = api.ClusterStatus(api.ClusterWaitingForKasFleetShardOperator.String())
 			updateErr := c.ClusterService.Update(provisionedCluster)
 			if updateErr != nil {
@@ -327,7 +334,13 @@ func (c *ClusterManager) processReadyClusters() []error {
 				errs = append(errs, errors.Wrapf(recErr, "failed to reconcile ready cluster %s", readyCluster.ClusterID))
 			}
 		} else {
-			glog.V(10).Infof("skipping reconciliation of ready %s cluster with ClusterID = %s", api.EnterpriseDataPlaneClusterType.String(), readyCluster.ClusterID)
+			// create or update sync set
+			syncSetErr := c.reconcileClusterResources(readyCluster)
+			if syncSetErr != nil {
+				errs = append(errs, errors.Wrapf(syncSetErr, "failed to create or update resource set of ready %s cluster %s", api.EnterpriseDataPlaneClusterType.String(), readyCluster.ID))
+			} else {
+				glog.V(10).Infof("resource set created or updated for %s cluster with id %s", api.EnterpriseDataPlaneClusterType.String(), readyCluster.ClusterID)
+			}
 		}
 	}
 	return errs
@@ -353,7 +366,13 @@ func (c *ClusterManager) processWaitingForKasFleetshardOperatorClusters() []erro
 				errs = append(errs, errors.Wrapf(err, "failed to reconcile waiting for Kas Fleetshard Operator cluster %s", waitingCluster.ClusterID))
 			}
 		} else {
-			glog.V(10).Infof("skipping reconciliation of waiting for Kas Fleetshard Operator %s cluster with ClusterID = %s", api.EnterpriseDataPlaneClusterType.String(), waitingCluster.ClusterID)
+			// create or update sync set
+			syncSetErr := c.reconcileClusterResources(waitingCluster)
+			if syncSetErr != nil {
+				errs = append(errs, errors.Wrapf(syncSetErr, "failed to create or update resource set of %s cluster %s waiting for kas fleetshard operator", api.EnterpriseDataPlaneClusterType.String(), waitingCluster.ID))
+			} else {
+				glog.V(10).Infof("resource set created or updated for %s cluster with id %s", api.EnterpriseDataPlaneClusterType.String(), waitingCluster.ClusterID)
+			}
 		}
 	}
 
@@ -407,7 +426,7 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 }
 
 // reconcileClusterInstanceType checks wether a cluster has an instance type, if not, set to the instance type provided in the manual cluster configuration.
-// If the cluster does not exists, assume the cluster supports both instance types.
+// If the cluster does not exist, assume the cluster supports both instance types.
 func (c *ClusterManager) reconcileClusterInstanceType(cluster api.Cluster) error {
 	logger.Logger.Infof("reconciling cluster = %s instance type", cluster.ClusterID)
 	supportedInstanceType := api.AllInstanceTypeSupport.String()
@@ -650,7 +669,7 @@ func (c *ClusterManager) reconcileClusterLoggingOperator(provisionedCluster api.
 
 // reconcileClusterWithConfig reconciles clusters within the dataplane-cluster-configuration file.
 // New clusters will be registered if it is not yet in the database.
-// A cluster will be deprovisioned if it is in the database but not in the coreConfig file (unless its an enterprise OSD cluster)
+// A cluster will be deprovisioned if it is in the database but not in the coreConfig file (unless it's an enterprise OSD cluster)
 func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	if !c.DataplaneClusterConfig.IsDataPlaneManualScalingEnabled() {
 		glog.Infoln("manual cluster configuration reconciliation is skipped as it is disabled")
@@ -725,17 +744,30 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 }
 
 func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet {
-	r := []interface{}{
-		c.buildReadOnlyGroupResource(),
-		c.buildDedicatedReaderClusterRoleBindingResource(),
-		c.buildKafkaSREGroupResource(),
-		c.buildKafkaSreClusterRoleBindingResource(),
-		c.buildObservabilityNamespaceResource(),
-		c.buildObservatoriumDexSecretResource(),
-		c.buildObservatoriumSSOSecretResource(),
-		c.buildObservabilityCatalogSourceResource(),
-		c.buildObservabilityOperatorGroupResource(),
-		c.buildObservabilitySubscriptionResource(),
+	var r []interface{}
+	switch cluster.ClusterType {
+	case api.EnterpriseDataPlaneClusterType.String():
+		r = append(r,
+			c.buildObservabilityNamespaceResource(),
+			c.buildObservatoriumDexSecretResource(),
+			c.buildObservatoriumSSOSecretResource(),
+			c.buildObservabilityCatalogSourceResource(),
+			c.buildObservabilityOperatorGroupResource(),
+			c.buildObservabilitySubscriptionResource(),
+		)
+	default:
+		r = append(r,
+			c.buildReadOnlyGroupResource(),
+			c.buildDedicatedReaderClusterRoleBindingResource(),
+			c.buildKafkaSREGroupResource(),
+			c.buildKafkaSreClusterRoleBindingResource(),
+			c.buildObservabilityNamespaceResource(),
+			c.buildObservatoriumDexSecretResource(),
+			c.buildObservatoriumSSOSecretResource(),
+			c.buildObservabilityCatalogSourceResource(),
+			c.buildObservabilityOperatorGroupResource(),
+			c.buildObservabilitySubscriptionResource(),
+		)
 	}
 	strimziNamespace := strimziAddonNamespace
 	if c.OCMConfig.StrimziOperatorAddonID == "managed-kafka-qe" {
