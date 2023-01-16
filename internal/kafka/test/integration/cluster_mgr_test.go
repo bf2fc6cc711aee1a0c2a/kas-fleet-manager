@@ -284,6 +284,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 		cluster.Region = mocks.MockCluster.Region().ID()
 		cluster.ProviderSpec = api.JSON{}
 		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterType = api.ManagedDataPlaneClusterType.String()
 		cluster.Status = api.ClusterProvisioning
 	})
 
@@ -330,6 +331,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 		cluster.Status = api.ClusterReady
 		cluster.ProviderSpec = api.JSON{}
 		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterType = api.ManagedDataPlaneClusterType.String()
 		cluster.AvailableStrimziVersions = api.JSON(mockclusters.AvailableStrimziVersions)
 		cluster.DynamicCapacityInfo = api.JSON([]byte(dynamicCapacityInfoString))
 	})

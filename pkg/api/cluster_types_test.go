@@ -988,7 +988,7 @@ func Test_ClusterType_String(t *testing.T) {
 		{
 			name:        "returns cluster type string",
 			clusterType: enterpriseType,
-			want:        "enterprise",
+			want:        EnterpriseDataPlaneClusterType.String(),
 		},
 	}
 

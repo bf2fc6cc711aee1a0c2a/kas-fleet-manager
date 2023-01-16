@@ -408,6 +408,7 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 						return []*api.Cluster{
 							{
 								ClusterID:           mockkafkas.DefaultClusterID,
+								ClusterType:         api.ManagedDataPlaneClusterType.String(),
 								DynamicCapacityInfo: api.JSON([]byte(`{"standard":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
 							},
 						}, nil
@@ -416,6 +417,7 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 						return KafkaStreamingUnitCountPerClusterList{
 							{
 								ClusterId:    mockkafkas.DefaultClusterID,
+								ClusterType:  api.ManagedDataPlaneClusterType.String(),
 								InstanceType: types.STANDARD.String(),
 								Count:        0,
 							},
@@ -449,6 +451,7 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 			},
 			want: &api.Cluster{
 				ClusterID:           mockkafkas.DefaultClusterID,
+				ClusterType:         api.ManagedDataPlaneClusterType.String(),
 				DynamicCapacityInfo: api.JSON([]byte(`{"standard":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
 			},
 			wantErr: nil,

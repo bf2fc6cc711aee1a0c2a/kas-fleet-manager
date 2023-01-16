@@ -35,6 +35,8 @@ func TestEnterpriseClustersList(t *testing.T) {
 	nonAuthAccount := h.NewAccount("", "", "", "")
 	nonAuthCtx := h.NewAuthenticatedContext(nonAuthAccount, nil)
 
+	dynamicCapacityInfoString := "{\"standard\":{\"max_nodes\":1,\"max_units\":3,\"remaining_units\":3}}"
+
 	cluster := clusterMocks.BuildCluster(func(cluster *api.Cluster) {
 		cluster.Meta = api.Meta{
 			ID: api.NewID(),
@@ -45,6 +47,7 @@ func TestEnterpriseClustersList(t *testing.T) {
 		cluster.ProviderSpec = api.JSON{}
 		cluster.ClusterSpec = api.JSON{}
 		cluster.ClusterID = api.NewID()
+		cluster.DynamicCapacityInfo = api.JSON([]byte(dynamicCapacityInfoString))
 	})
 
 	otherOrgCluster := clusterMocks.BuildCluster(func(cluster *api.Cluster) {
@@ -57,6 +60,7 @@ func TestEnterpriseClustersList(t *testing.T) {
 		cluster.OrganizationID = "99999999"
 		cluster.ClusterType = api.EnterpriseDataPlaneClusterType.String()
 		cluster.Status = api.ClusterReady
+		cluster.DynamicCapacityInfo = api.JSON{}
 	})
 
 	db := test.TestServices.DBFactory.New()

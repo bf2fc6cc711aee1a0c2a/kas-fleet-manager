@@ -1,8 +1,8 @@
 ---
 #- A list of clusters for kas fleet manager
 #- The `cluster_id` field can not be empty
-#- All clusters in kas fleet manager DB already but are missing in the list will be marked as
-#  'deprovisioning' and will later be deleted.
+#- All non-enterprise (cluster_type != "enterprise") clusters in kas fleet manager DB already but are missing in the list will be marked as
+#  'deprovisioning' and will later be deleted. Enterprise clusters are not included in handling this configuration
 #- This list is ordered, any new cluster should be appended at the end.
 #e.g.:
 #clusters:

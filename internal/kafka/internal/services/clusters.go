@@ -712,6 +712,7 @@ type KafkaStreamingUnitCountPerCluster struct {
 	CloudProvider string
 	MaxUnits      int32
 	Status        string
+	ClusterType   string
 }
 
 func (k KafkaStreamingUnitCountPerCluster) isSame(kafkaPerRegionFromDB *KafkaPerClusterCount) bool {
@@ -763,6 +764,7 @@ type ClusterSelection struct {
 	SupportedInstanceType string
 	DynamicCapacityInfo   api.JSON
 	Status                string
+	ClusterType           string
 }
 
 func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (KafkaStreamingUnitCountPerClusterList, error) {
@@ -770,8 +772,7 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 	var clusters []*ClusterSelection
 	dbConn := c.connectionFactory.New().
 		Model(&api.Cluster{}).
-		Where("status != ?", api.ClusterFailed).
-		Where("cluster_type != ?", api.EnterpriseDataPlaneClusterType.String())
+		Where("status != ?", api.ClusterFailed)
 
 	if err := dbConn.Scan(&clusters).Error; err != nil {
 		return nil, errors.Wrap(err, "failed to list data plane clusters")
@@ -808,6 +809,7 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 				Count:         0,
 				MaxUnits:      maxUnits,
 				Status:        clusterSelection.Status,
+				ClusterType:   clusterSelection.ClusterType,
 			})
 		}
 	}

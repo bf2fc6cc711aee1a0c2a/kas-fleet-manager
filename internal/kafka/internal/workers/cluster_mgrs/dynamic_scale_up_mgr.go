@@ -77,6 +77,8 @@ func (m *DynamicScaleUpManager) Reconcile() []error {
 	return errList.ToErrorSlice()
 }
 
+// Note. "enterprise" clusters are not taken into consideration when
+// scaling up/ down with dynamic scaling turned on
 func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
 	var errList fleeterrors.ErrorList
 	kafkaStreamingUnitCountPerClusterList, err := m.ClusterService.FindStreamingUnitCountByClusterAndInstanceType()
@@ -92,6 +94,7 @@ func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
 					provider:         provider.Name,
 					region:           region.Name,
 					instanceTypeName: supportedInstanceTypeName,
+					clusterType:      api.ManagedDataPlaneClusterType.String(),
 				}
 				supportedInstanceTypeConfig := region.SupportedInstanceTypes[supportedInstanceTypeName]
 				var dynamicScaleUpProcessor dynamicScaleUpProcessor = &standardDynamicScaleUpProcessor{
@@ -129,17 +132,19 @@ func (m *DynamicScaleUpManager) processDynamicScaleUpReconcileEvent() error {
 
 // supportedInstanceTypeLocator is a data structure
 // that contains all the information to help locate a
-// supported instance type in a region's cluster
+// supported instance type in a region's cluster of a given cluster type
 type supportedInstanceTypeLocator struct {
 	provider         string
 	region           string
 	instanceTypeName string
+	clusterType      string
 }
 
 func (l *supportedInstanceTypeLocator) Equal(other supportedInstanceTypeLocator) bool {
 	return l.provider == other.provider &&
 		l.region == other.region &&
-		l.instanceTypeName == other.instanceTypeName
+		l.instanceTypeName == other.instanceTypeName &&
+		l.clusterType == other.clusterType
 }
 
 // dynamicScaleUpExecutor is able to perform dynamic ScaleUp execution actions
@@ -364,7 +369,10 @@ type instanceTypeConsumptionSummaryCalculator struct {
 }
 
 // Calculate returns a instanceTypeConsumptionSummary containing a consumption
-// summary for the provided supportedInstanceTypeLocator
+// summary for the provided supportedInstanceTypeLocator.
+// NOTE - this function will only take into account clusters whose locator matches
+// specified supportedInstanceTypeLocator
+//
 // For the calculation of the max streaming units capacity:
 //   - Clusters in deprovisioning and cleanup state are excluded, as
 //     clusters into those states don't accept kafka instances anymore.
@@ -398,6 +406,7 @@ func (i *instanceTypeConsumptionSummaryCalculator) Calculate() (instanceTypeCons
 			provider:         kafkaStreamingUnitCountPerCluster.CloudProvider,
 			region:           kafkaStreamingUnitCountPerCluster.Region,
 			instanceTypeName: kafkaStreamingUnitCountPerCluster.InstanceType,
+			clusterType:      kafkaStreamingUnitCountPerCluster.ClusterType,
 		}
 
 		if !i.locator.Equal(currLocator) {

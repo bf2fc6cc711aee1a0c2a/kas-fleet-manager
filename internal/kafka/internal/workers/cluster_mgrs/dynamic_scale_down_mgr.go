@@ -163,6 +163,9 @@ func (m *DynamicScaleDownManager) createAMapOfProcessedClusters(kafkaStreamingUn
 	var processedClusters map[string]processed = map[string]processed{}
 
 	for i, kafkaStreamingUnitCountPerCluster := range kafkaStreamingUnitCountPerClusterList {
+		if kafkaStreamingUnitCountPerCluster.ClusterType != api.ManagedDataPlaneClusterType.String() {
+			continue
+		}
 		clusterID := kafkaStreamingUnitCountPerCluster.ClusterId
 		existing, ok := processedClusters[clusterID]
 
@@ -328,6 +331,7 @@ func (p *standardDynamicScaleDownProcessor) isScaleUpNeededAfterCandidateCluster
 			provider:         suCount.CloudProvider,
 			region:           suCount.Region,
 			instanceTypeName: suCount.InstanceType,
+			clusterType:      api.ManagedDataPlaneClusterType.String(),
 		}
 
 		instanceTypeConfig, ok := p.regionsSupportedInstanceType[suCount.InstanceType]

@@ -1,5 +1,8 @@
 # This file contains the configuration for cloud providers supported by KAS Fleet Manager
 # KAS Fleet Manager will allow for Kafkas to be created using the cloud provider(s) and region(s) listed here.
+# 
+# Note that enterprise clusters registered via /api/kafkas_mgmt/v1/clusters endpoint (cluster_type="enterprise") are not taken into consideration 
+# when using this configuration and limits defined here are not applicable for kafkas to be created on enterprise clusters
 #
 # supported_instance_type: This contains a map of Kafka instance types supported
 # by the cloud provider and region. KAS Fleet Manager will not allow you

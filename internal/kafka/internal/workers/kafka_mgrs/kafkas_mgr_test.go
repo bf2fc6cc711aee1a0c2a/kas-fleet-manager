@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	"github.com/onsi/gomega"
@@ -57,7 +58,7 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should return an error if setClusterStatusCapacityMetrics returns an error",
+			name: "should return an error if updateClusterStatusCapacityMetrics returns an error",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
@@ -289,7 +290,7 @@ func TestKafkaManager_setKafkaStatusCountMetric(t *testing.T) {
 	}
 }
 
-func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
+func TestKafkaManager_updateClusterStatusCapacityMetrics(t *testing.T) {
 	type fields struct {
 		clusterService         services.ClusterService
 		dataplaneClusterConfig config.DataplaneClusterConfig
@@ -442,6 +443,52 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "should successfully assign metrics for enterprise clusters",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
+						return services.KafkaStreamingUnitCountPerClusterList{
+							{
+								Region:        "us-east-1",
+								InstanceType:  "standard",
+								ClusterId:     "a",
+								Count:         5,
+								CloudProvider: "aws",
+								ClusterType:   api.EnterpriseDataPlaneClusterType.String(),
+							},
+						}, nil
+					},
+				},
+				dataplaneClusterConfig: config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.ManualScaling,
+					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
+						dpMock.BuildManualCluster("standard"),
+					}),
+				},
+				cloudProviders: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: []config.Provider{
+							{
+								Name:    "aws",
+								Default: true,
+								Regions: []config.Region{
+									{
+										Name:    "us-east-1",
+										Default: true,
+										SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
+											"standard":  {Limit: &cloudProviderStandardLimit},
+											"developer": {Limit: nil},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "should successfully assign metrics for autoscaling mode",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
@@ -495,7 +542,7 @@ func TestKafkaManager_setClusterStatusCapacityMetrics(t *testing.T) {
 				cloudProviders:         &tt.fields.cloudProviders,
 			}
 
-			g.Expect(k.setClusterStatusCapacityMetrics() != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(k.updateClusterStatusCapacityMetrics() != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -950,6 +997,167 @@ func TestKafkaManager_calculateAvailableAndMaxCapacityForDynamicScaling(t *testi
 			count := tt.expected[result.Region][result.InstanceType]
 			g.Expect(result.Count).To(gomega.Equal(count.available))
 			g.Expect(result.MaxUnits).To(gomega.Equal(count.max))
+		})
+	}
+}
+
+// calculateAvailableAndMadCapacityForEnterpriseClusters
+func TestKafkaManager_calculateAvailableAndMadCapacityForEnterpriseClusters(t *testing.T) {
+	type args struct {
+		streamingUnitCountPerRegion []services.KafkaStreamingUnitCountPerCluster
+	}
+
+	type fields struct {
+		kafkaService           services.KafkaService
+		dataplaneClusterConfig config.DataplaneClusterConfig
+		cloudProviders         config.ProviderConfig
+	}
+
+	type counts struct {
+		available int32
+		max       int32
+	}
+
+	tests := []struct {
+		name     string
+		args     args
+		fields   fields
+		expected map[string]map[string]counts
+	}{
+		{
+			name: "successfully returns max and available capacity for enterprise clusters",
+			args: args{
+				streamingUnitCountPerRegion: []services.KafkaStreamingUnitCountPerCluster{
+					{
+						Region:        "us-east-1",
+						InstanceType:  "standard",
+						ClusterId:     "cluster-id",
+						Count:         9,
+						MaxUnits:      10,
+						CloudProvider: "aws",
+						ClusterType:   api.EnterpriseDataPlaneClusterType.String(),
+					},
+				},
+			},
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					DeprovisionKafkaForUsersFunc: nil,
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
+				},
+				dataplaneClusterConfig: config.DataplaneClusterConfig{
+					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
+						dpMock.BuildManualCluster("standard"),
+					}),
+				},
+				cloudProviders: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: []config.Provider{
+							{
+								Name:    "aws",
+								Default: true,
+								Regions: []config.Region{
+									{
+										Name:    "us-east-1",
+										Default: true,
+										SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
+											"standard": {Limit: &cloudProviderStandardLimit},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			// 10 total capacity
+			// no cloud provider limits
+			// 9 instances used,
+			// ==> expect 1 available and max 10
+			expected: map[string]map[string]counts{
+				"us-east-1": {
+					"standard": counts{
+						available: 1,
+						max:       10,
+					},
+				},
+			},
+		},
+		{
+			name: "should return empty result if no enterprise clusters are found",
+			args: args{
+				streamingUnitCountPerRegion: []services.KafkaStreamingUnitCountPerCluster{
+					{
+						Region:        "us-east-1",
+						InstanceType:  "standard",
+						ClusterId:     "cluster-id",
+						Count:         9,
+						MaxUnits:      10,
+						CloudProvider: "aws",
+						ClusterType:   api.ManagedDataPlaneClusterType.String(),
+					},
+				},
+			},
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					DeprovisionKafkaForUsersFunc: nil,
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{}, nil
+					},
+				},
+				dataplaneClusterConfig: config.DataplaneClusterConfig{
+					ClusterConfig: config.NewClusterConfig([]config.ManualCluster{
+						dpMock.BuildManualCluster("standard"),
+					}),
+				},
+				cloudProviders: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: []config.Provider{
+							{
+								Name:    "aws",
+								Default: true,
+								Regions: []config.Region{
+									{
+										Name:    "us-east-1",
+										Default: true,
+										SupportedInstanceTypes: map[string]config.InstanceTypeConfig{
+											"standard": {Limit: &cloudProviderStandardLimit},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]map[string]counts{},
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			t.Parallel()
+			k := &KafkaManager{
+				kafkaService:           tt.fields.kafkaService,
+				dataplaneClusterConfig: &tt.fields.dataplaneClusterConfig,
+				cloudProviders:         &tt.fields.cloudProviders,
+			}
+
+			result := k.calculateAvailableAndMadCapacityForEnterpriseClusters(tt.args.streamingUnitCountPerRegion)
+
+			g.Expect(len(result)).To(gomega.Equal(len(tt.expected)))
+
+			if len(result) > 0 {
+				for _, res := range result {
+					count := tt.expected[res.Region][res.InstanceType]
+					g.Expect(res.Count).To(gomega.Equal(count.available))
+					g.Expect(res.MaxUnits).To(gomega.Equal(count.max))
+				}
+			}
 		})
 	}
 }

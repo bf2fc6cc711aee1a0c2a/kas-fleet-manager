@@ -153,6 +153,7 @@ func Test_standardDynamicScaleUpProcessor_ShouldScaleUp(t *testing.T) {
 							Count:         8,
 							MaxUnits:      10,
 							Status:        api.ClusterReady.String(),
+							ClusterType:   locator.clusterType,
 						},
 					}
 				},
@@ -254,6 +255,7 @@ func Test_standardDynamicScaleUpProcessor_ShouldScaleUp(t *testing.T) {
 						Count:         1,
 						MaxUnits:      1,
 						Status:        api.ClusterProvisioning.String(),
+						ClusterType:   locator.clusterType,
 					}
 					res = append(res, clusterBeingScaledInfo)
 					return res
@@ -772,6 +774,7 @@ func newTestHelperBaseSupportedInstanceTypeLocator() supportedInstanceTypeLocato
 		provider:         "p1",
 		region:           "r1",
 		instanceTypeName: "t1",
+		clusterType:      "c1",
 	}
 }
 func newTestHelperBaseKafkaStreamingUnitCountPerClusterList() services.KafkaStreamingUnitCountPerClusterList {
@@ -784,6 +787,7 @@ func newTestHelperBaseKafkaStreamingUnitCountPerClusterList() services.KafkaStre
 			Count:         1,
 			MaxUnits:      2,
 			Status:        api.ClusterReady.String(),
+			ClusterType:   locator.clusterType,
 		},
 		services.KafkaStreamingUnitCountPerCluster{
 			CloudProvider: locator.provider,
@@ -792,6 +796,17 @@ func newTestHelperBaseKafkaStreamingUnitCountPerClusterList() services.KafkaStre
 			Count:         4,
 			MaxUnits:      6,
 			Status:        api.ClusterReady.String(),
+			ClusterType:   locator.clusterType,
+		},
+		// should be ignored in capacity calculations
+		services.KafkaStreamingUnitCountPerCluster{
+			CloudProvider: locator.provider,
+			Region:        locator.region,
+			InstanceType:  locator.instanceTypeName,
+			Count:         4,
+			MaxUnits:      6,
+			Status:        api.ClusterReady.String(),
+			ClusterType:   api.EnterpriseDataPlaneClusterType.String(),
 		},
 	}
 }
@@ -831,6 +846,7 @@ func Test_supportedInstanceTypeLocator_Equal(t *testing.T) {
 					provider:         "p2",
 					region:           "r1",
 					instanceTypeName: "t1",
+					clusterType:      "c1",
 				},
 			},
 			want: false,
@@ -845,6 +861,7 @@ func Test_supportedInstanceTypeLocator_Equal(t *testing.T) {
 					provider:         "p1",
 					region:           "r2",
 					instanceTypeName: "t1",
+					clusterType:      "c1",
 				},
 			},
 			want: false,
@@ -859,6 +876,22 @@ func Test_supportedInstanceTypeLocator_Equal(t *testing.T) {
 					provider:         "p1",
 					region:           "r1",
 					instanceTypeName: "t2",
+					clusterType:      "c1",
+				},
+			},
+			want: false,
+		},
+		{
+			name: "locators with a different cluster type name are not equal",
+			fields: fields{
+				locator: newTestHelperBaseSupportedInstanceTypeLocator(),
+			},
+			args: args{
+				locator: supportedInstanceTypeLocator{
+					provider:         "p1",
+					region:           "r1",
+					instanceTypeName: "t1",
+					clusterType:      "c2",
 				},
 			},
 			want: false,
@@ -1015,6 +1048,7 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						Count:         0,
 						MaxUnits:      0,
 						Status:        api.ClusterAccepted.String(),
+						ClusterType:   locator.clusterType,
 					}
 					res = append(res, clusterBeingScaledInfo)
 					return res
@@ -1046,6 +1080,7 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						Count:         0,
 						MaxUnits:      0,
 						Status:        api.ClusterWaitingForKasFleetShardOperator.String(),
+						ClusterType:   locator.clusterType,
 					}
 					res = append(res, clusterBeingScaledInfo)
 					return res
@@ -1077,6 +1112,7 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						Count:         0,
 						MaxUnits:      0,
 						Status:        api.ClusterProvisioning.String(),
+						ClusterType:   locator.clusterType,
 					}
 					res = append(res, clusterBeingScaledInfo)
 					return res
@@ -1108,6 +1144,7 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						Count:         0,
 						MaxUnits:      0,
 						Status:        api.ClusterProvisioned.String(),
+						ClusterType:   locator.clusterType,
 					}
 					res = append(res, clusterBeingScaledInfo)
 					return res
@@ -1180,6 +1217,7 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						Count:         0,
 						MaxUnits:      30,
 						Status:        api.ClusterDeprovisioning.String(),
+						ClusterType:   locator.clusterType,
 					}
 					res = append(res, clusterBeingDeprovisionedInfo)
 					return res
@@ -1211,6 +1249,7 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						Count:         0,
 						MaxUnits:      30,
 						Status:        api.ClusterCleanup.String(),
+						ClusterType:   locator.clusterType,
 					}
 					res = append(res, clusterBeingDeprovisionedInfo)
 					return res
@@ -1246,6 +1285,7 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 						Count:         0,
 						MaxUnits:      30,
 						Status:        api.ClusterCleanup.String(),
+						ClusterType:   locator.clusterType,
 					}
 					res = append(res, clusterBeingDeprovisionedInfo)
 					return res
@@ -1270,6 +1310,7 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 							Count:         0,
 							MaxUnits:      30,
 							Status:        api.ClusterCleanup.String(),
+							ClusterType:   locator.clusterType,
 						},
 						services.KafkaStreamingUnitCountPerCluster{
 							CloudProvider: locator.provider,
@@ -1278,6 +1319,7 @@ func Test_instanceTypeConsumptionSummaryCalculator_Calculate(t *testing.T) {
 							Count:         0,
 							MaxUnits:      30,
 							Status:        api.ClusterDeprovisioning.String(),
+							ClusterType:   locator.clusterType,
 						},
 					}
 				},
