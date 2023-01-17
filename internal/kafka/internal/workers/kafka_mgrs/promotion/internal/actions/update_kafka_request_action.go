@@ -1,10 +1,13 @@
 package actions
 
 import (
+	"database/sql"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers/kafka_mgrs/promotion/chain"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/golang/glog"
+	"time"
 )
 
 var _ chain.ReconcileAction[PromotionContext] = &UpdateKafkaRequestAction{}
@@ -30,6 +33,7 @@ func NewUpdateKafkaRequestAction(kafkaService services.KafkaService) chain.Recon
 }
 
 func (u UpdateKafkaRequestAction) PerformJob(kafkaRequest *dbapi.KafkaRequest, currentResult chain.ActionResult[PromotionContext]) (chain.ActionResult[PromotionContext], bool, error) {
+	glog.Infof("cluster with ID '%s' promoted from '%s' to '%s'. Updating the database info", kafkaRequest.ClusterID, kafkaRequest.ActualKafkaBillingModel, kafkaRequest.DesiredKafkaBillingModel)
 	// gorm ignores zero values, so to zero `PromotionStatus` and `PromotionDetails` we need to use a map
 	updates := map[string]any{}
 	updates["promotion_status"] = ""
@@ -37,6 +41,11 @@ func (u UpdateKafkaRequestAction) PerformJob(kafkaRequest *dbapi.KafkaRequest, c
 	updates["actual_kafka_billing_model"] = kafkaRequest.DesiredKafkaBillingModel
 	// current result must have the subscription id at this point
 	updates["subscription_id"] = currentResult.Value().SubscriptionID
+
+	updates["expires_at"] = sql.NullTime{
+		Time:  time.Time{},
+		Valid: false,
+	}
 
 	err := u.kafkaService.Updates(kafkaRequest, updates)
 	if err != nil {

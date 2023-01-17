@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
@@ -192,6 +193,10 @@ func TestKafkaPromote_Reconciler(t *testing.T) {
 					kafkaMocks.With(kafkaMocks.DESIRED_KAFKA_BILLING_MODEL, tt.desiredBillingModel),
 					kafkaMocks.With(kafkaMocks.ACTUAL_KAFKA_BILLING_MODEL, tt.actualBillingModel),
 					kafkaMocks.With(kafkaMocks.PROMOTION_STATUS, "promoting"),
+					kafkaMocks.WithExpiresAt(sql.NullTime{
+						Time:  time.Now().AddDate(0, 0, 5),
+						Valid: true,
+					}),
 				),
 			}
 
@@ -224,6 +229,10 @@ func TestKafkaPromote_Reconciler(t *testing.T) {
 				g.Expect(promotedKafka.DesiredKafkaBillingModel).To(gomega.Equal(tt.desiredBillingModel))
 				g.Expect(promotedKafka.PromotionStatus).To(gomega.BeEmpty())
 				g.Expect(promotedKafka.PromotionDetails).To(gomega.BeEmpty())
+				g.Expect(promotedKafka.ExpiresAt).To(gomega.Equal(sql.NullTime{
+					Time:  time.Time{},
+					Valid: false,
+				}))
 			} else {
 				g.Expect(promotedKafka.PromotionStatus).To(gomega.Equal(dbapi.KafkaPromotionStatusFailed))
 				g.Expect(promotedKafka.PromotionDetails).ToNot(gomega.BeEmpty())
