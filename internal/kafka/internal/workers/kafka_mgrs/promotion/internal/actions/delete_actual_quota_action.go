@@ -7,6 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers/kafka_mgrs/promotion/chain"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/golang/glog"
 )
 
 var _ chain.ReconcileAction[PromotionContext] = &DeleteActualQuotaAction{}
@@ -24,6 +25,7 @@ func NewDeleteActualQuotaAction(kafkaConfig config.KafkaConfig, quotaServiceFact
 }
 
 func (d *DeleteActualQuotaAction) PerformJob(kafkaRequest *dbapi.KafkaRequest, currentResult chain.ActionResult[PromotionContext]) (chain.ActionResult[PromotionContext], bool, error) {
+	glog.Infof("delete, if present, quota for Kafka Billing Model '%s' (cluster ID '%s', subscription ID: '%s')", kafkaRequest.DesiredKafkaBillingModel, kafkaRequest.ClusterID, kafkaRequest.SubscriptionId)
 	res := chain.ActionResult[PromotionContext]{}
 	quotaService, factoryErr := d.quotaServiceFactory.GetQuotaService(api.QuotaType(d.kafkaConfig.Quota.Type))
 	if factoryErr != nil {

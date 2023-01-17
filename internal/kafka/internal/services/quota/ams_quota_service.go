@@ -268,13 +268,21 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *error
 	// will be empty if no marketplace account is used
 	rr.BillingMarketplaceAccount(kafka.BillingCloudAccountId)
 
+	// TODO: temporary workaround. This is to be removed when this issue is implemented: https://issues.redhat.com/browse/SDB-3157
+	getClusterID := func(kafka *dbapi.KafkaRequest) string {
+		if kafka.DesiredKafkaBillingModel == "eval" {
+			return kafkaId + "-eval"
+		}
+		return kafkaId
+	}
+
 	cb, _ := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(kafka.Owner).
 		CloudProviderID(kafka.CloudProvider).
 		ProductID(kafkaBillingModel.AMSProduct).
 		Managed(true).
-		ClusterID(kafkaId).
-		ExternalClusterID(kafkaId).
+		ClusterID(getClusterID(kafka)).
+		ExternalClusterID(getClusterID(kafka)).
 		Disconnected(false).
 		BYOC(false).
 		AvailabilityZone(q.getAMSClusterAuthorizationRequestAvailabilityZone(kafka.MultiAZ)).
