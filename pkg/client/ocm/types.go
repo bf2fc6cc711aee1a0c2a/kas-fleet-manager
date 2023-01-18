@@ -23,3 +23,14 @@ const (
 const (
 	RHOSAKResourceName string = "rhosak"
 )
+
+type AMSRelatedResourceBillingModel string
+
+const (
+	AMSRelatedResourceBillingModelMarketplace AMSRelatedResourceBillingModel = "marketplace"
+	AMSRelatedResourceBillingModelStandard    AMSRelatedResourceBillingModel = "standard"
+)
+
+func (abm AMSRelatedResourceBillingModel) String() string {
+	return string(abm)
+}

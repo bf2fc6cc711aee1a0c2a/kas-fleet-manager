@@ -45,6 +45,10 @@ func (account Account) HasQuotaConfigurationFor(instanceTypeId string, billingMo
 	return hasQuotaConfigurationFor(account.GetGrantedQuota(), instanceTypeId, billingModelID)
 }
 
+func (account Account) GetBillingModel(instanceTypeID string, billingModelID string) (BillingModel, bool) {
+	return getBillingModel(account.GetGrantedQuota(), instanceTypeID, billingModelID)
+}
+
 type AccountList []Account
 
 func (allowedAccounts AccountList) GetByUsername(username string) (Account, bool) {

@@ -532,6 +532,7 @@ type QuotaCostRelatedResourceFilter struct {
 	ResourceName *string
 	ResourceType *string
 	Product      *string
+	BillingModel *string
 }
 
 // IsMatch returns true if all the given properties of the filter matches that of the given related resource.
@@ -540,8 +541,9 @@ func (qcf *QuotaCostRelatedResourceFilter) IsMatch(relatedResource *amsv1.Relate
 	resourceNameMatches := (qcf.ResourceName == nil || relatedResource.ResourceName() == *qcf.ResourceName)
 	resourceTypeMatches := (qcf.ResourceType == nil || relatedResource.ResourceType() == *qcf.ResourceType)
 	productMatches := (qcf.Product == nil || relatedResource.Product() == *qcf.Product)
+	billingModelMatches := (qcf.BillingModel == nil || relatedResource.BillingModel() == *qcf.BillingModel)
 
-	return resourceNameMatches && resourceTypeMatches && productMatches
+	return resourceNameMatches && resourceTypeMatches && productMatches && billingModelMatches
 }
 
 // GetQuotaCosts returns a list of quota cost for the given organizationID.

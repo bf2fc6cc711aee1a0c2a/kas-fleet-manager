@@ -66,6 +66,10 @@ func (org Organisation) HasQuotaConfigurationFor(instanceTypeId string, billingM
 	return hasQuotaConfigurationFor(org.GetGrantedQuota(), instanceTypeId, billingModelID)
 }
 
+func (org Organisation) GetBillingModel(instanceTypeID string, billingModelID string) (BillingModel, bool) {
+	return getBillingModel(org.GetGrantedQuota(), instanceTypeID, billingModelID)
+}
+
 type OrganisationList []Organisation
 
 func (orgList OrganisationList) GetById(Id string) (Organisation, bool) {
