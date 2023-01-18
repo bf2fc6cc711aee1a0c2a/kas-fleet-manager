@@ -1,6 +1,8 @@
 package phase
 
 import (
+	"context"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/looplab/fsm"
@@ -40,7 +42,7 @@ func NewClusterFSM(cluster *dbapi.ConnectorCluster) *ClusterFSM {
 func (c *ClusterFSM) Perform(operation ClusterOperation) (bool, *errors.ServiceError) {
 	// make sure FSM phase is current
 	c.fsm.SetState(string(c.Cluster.Status.Phase))
-	if err := c.fsm.Event(string(operation)); err != nil {
+	if err := c.fsm.Event(context.TODO(), string(operation)); err != nil {
 		switch err.(type) {
 		case fsm.NoTransitionError:
 			return false, nil

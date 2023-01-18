@@ -1,6 +1,8 @@
 package phase
 
 import (
+	"context"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/looplab/fsm"
@@ -56,7 +58,7 @@ func NewNamespaceFSM(cluster *dbapi.ConnectorCluster, namespace *dbapi.Connector
 // first return value is true if the phase was changed and
 // second value is an error if operation is not permitted in namespace's present phase
 func (c *NamespaceFSM) Perform(operation NamespaceOperation) (bool, *errors.ServiceError) {
-	if err := c.fsm.Event(string(operation)); err != nil {
+	if err := c.fsm.Event(context.TODO(), string(operation)); err != nil {
 		switch err.(type) {
 		case fsm.NoTransitionError:
 			return false, nil
