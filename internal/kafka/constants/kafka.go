@@ -126,3 +126,7 @@ func GetAllStatuses() []string {
 func GetSuspendedStatuses() []string {
 	return []string{KafkaRequestStatusSuspending.String(), KafkaRequestStatusSuspended.String()}
 }
+
+func GetDeletingStatuses() []string {
+	return []string{KafkaRequestStatusDeprovision.String(), KafkaRequestStatusDeleting.String()}
+}
