@@ -1,17 +1,24 @@
 package kafka_mgrs
 
 import (
+	"database/sql"
+	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	serviceErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
+
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -118,6 +125,13 @@ func (k *KafkaManager) Reconcile() []error {
 	if updateErr != nil {
 		encounteredErrors = append(encounteredErrors, updateErr)
 		return encounteredErrors
+	}
+
+	// reconciles expires_at field for kafka instances
+	updateExpiresAtErrors := k.reconcileKafkaExpiresAt(kafkas)
+	if updateExpiresAtErrors != nil {
+		wrappedError := errors.Wrap(updateExpiresAtErrors, "failed to update expires_at for kafka instances")
+		encounteredErrors = append(encounteredErrors, wrappedError)
 	}
 
 	for _, kafka := range kafkas {
@@ -373,4 +387,117 @@ func (k *KafkaManager) updateClusterStatusCapacityMaxMetric(c services.KafkaStre
 
 func (k *KafkaManager) updateZeroValueOfKafkaRequestsExpiredAt() error {
 	return k.kafkaService.UpdateZeroValueOfKafkaRequestsExpiredAt()
+}
+
+func (k *KafkaManager) reconcileKafkaExpiresAt(kafkas dbapi.KafkaList) serviceErr.ErrorList {
+	logger.Logger.Infof("reconciling expiration date for kafka instances")
+	var svcErrors serviceErr.ErrorList
+	subscriptionStatusByOrgAndBillingModel := map[string]bool{}
+
+	for _, kafka := range kafkas {
+		logger.Logger.Infof("reconciling expires_at for kafka instance %q", kafka.ID)
+
+		// skip update when Kafka is marked for deletion or is already being deleted
+		if arrays.Contains(constants.GetDeletingStatuses(), kafka.Status) {
+			logger.Logger.Infof("kafka %q is in %q state, skipping expires_at reconciliation", kafka.ID, kafka.Status)
+			continue
+		}
+
+		instanceSize, err := k.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+		if err != nil {
+			svcErrors = append(svcErrors, errors.Wrapf(err,
+				"failed to get kafka instance size for %q with instance type %q and size id %q",
+				kafka.ID, kafka.InstanceType, kafka.SizeId,
+			))
+			continue
+		}
+
+		// If lifespan seconds is not defined, expiration is determined based on the user/organisation's active subscription
+		if instanceSize.LifespanSeconds == nil {
+			logger.Logger.Infof("checking quota entitlement status for Kafka instance %q", kafka.ID)
+			orgBillingModelID := fmt.Sprintf("%s-%s", kafka.OrganisationId, kafka.ActualKafkaBillingModel)
+			active, ok := subscriptionStatusByOrgAndBillingModel[orgBillingModelID]
+			if !ok {
+				isActive, err := k.kafkaService.IsQuotaEntitlementActive(kafka)
+				if err != nil {
+					svcErrors = append(svcErrors, errors.Wrapf(err, "failed to get quota entitlement status of kafka instance %q", kafka.ID))
+					continue
+				}
+				subscriptionStatusByOrgAndBillingModel[orgBillingModelID] = isActive
+				active = isActive
+			}
+
+			if err := k.updateExpiresAtBasedOnQuotaEntitlement(kafka, active); err != nil {
+				svcErrors = append(svcErrors, errors.Wrapf(err, "failed to update expires_at value based on quota entitlement for kafka instance %q", kafka.ID))
+			}
+		} else {
+			// any Kafka instance types with lifespan seconds defined will have their expires_at value set on creation.
+			// this is only temporary to ensure that the expires_at value is set for any Kafka instances created during the rollout of this change.
+			if err := k.updateExpiresAtBasedOnLifespanSeconds(kafka, *instanceSize); err != nil {
+				svcErrors = append(svcErrors, errors.Wrapf(err, "failed to update expires_at value based on lifespanSeconds for kafka instance %q", kafka.ID))
+			}
+		}
+	}
+
+	return svcErrors
+}
+
+// Updates expires_at field of the given Kafka instance based on the user/organisation's quota entitlement status
+func (k *KafkaManager) updateExpiresAtBasedOnQuotaEntitlement(kafka *dbapi.KafkaRequest, isQuotaEntitlementActive bool) error {
+	// if quota entitlement is active, ensure expires_at is set to null
+	if isQuotaEntitlementActive && kafka.ExpiresAt.Valid {
+		logger.Logger.Infof("updating expiration date of kafka instance %q to NULL", kafka.ID)
+		return k.updateKafkaExpirationDate(kafka, nil)
+	}
+
+	// if quota entitlement is not active and expires_at is not already set, set its value based on the current time and grace period allowance
+	// note that there is a temporary check for zero value of time.Time for cases where the kafka instance expires_at value
+	// hasn't been updated to null yet after migration/rollout. This additional check can be removed once all Kafka instances
+	// has been successfully migrated to the new expires_at type.
+	if !isQuotaEntitlementActive && (!kafka.ExpiresAt.Valid || kafka.ExpiresAt.Time.IsZero()) {
+		billingModel, err := k.kafkaConfig.GetBillingModelByID(kafka.InstanceType, kafka.ActualKafkaBillingModel)
+		if err != nil {
+			return err
+		}
+
+		// set expires_at to now + grace period days
+		expiresAtTime := time.Now().AddDate(0, 0, billingModel.GracePeriodDays)
+		logger.Logger.Infof("quota entitlement for kafka instance %q is no longer active, updating expires_at to %q", kafka.ID, expiresAtTime.Format(time.RFC1123Z))
+		return k.updateKafkaExpirationDate(kafka, &expiresAtTime)
+	}
+
+	logger.Logger.Infof("no expires_at changes needed for kafka %q, skipping update", kafka.ID)
+	return nil
+}
+
+// Updates expires_at field based on the lifespan seconds configured per Kafka instance type/size
+func (k *KafkaManager) updateExpiresAtBasedOnLifespanSeconds(kafka *dbapi.KafkaRequest, instanceSize config.KafkaInstanceSize) error {
+	// note that there is a temporary check for zero value of time.Time in cases where the kafka instance expires_at value
+	// hasn't been updated to null yet after migration/rollout. This additional check can be removed once all Kafka instances
+	// has been successfully migrated to the new expires_at type
+	if !kafka.ExpiresAt.Valid || kafka.ExpiresAt.Time.IsZero() {
+		// set expires_at to created_at + lifespanSeconds
+		expiresAtTime := kafka.CreatedAt.Add(time.Duration(*instanceSize.LifespanSeconds) * time.Second)
+		logger.Logger.Infof("lifespanSeconds defined for Kafka %q, updating expires_at to %q as it is not yet set", kafka.ID, expiresAtTime.Format(time.RFC1123Z))
+		return k.updateKafkaExpirationDate(kafka, &expiresAtTime)
+	}
+
+	logger.Logger.Infof("lifespanSeconds defined for Kafka %q but expires_at is already set, skipping update", kafka.ID)
+	return nil
+}
+
+// updates the expires_at field for the given Kafka instance
+func (k *KafkaManager) updateKafkaExpirationDate(kafka *dbapi.KafkaRequest, expiresAtTime *time.Time) error {
+	var expiresAt sql.NullTime
+	if expiresAtTime != nil {
+		expiresAt = sql.NullTime{Time: *expiresAtTime, Valid: true}
+	}
+
+	if err := k.kafkaService.Updates(kafka, map[string]interface{}{
+		"expires_at": expiresAt,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
