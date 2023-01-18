@@ -273,14 +273,20 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	clusterRouter := apiV1Router.PathPrefix("/clusters").Subrouter()
 	clusterRouter.Use(enterpriseClusterMiddleware)
 	clusterRouter.HandleFunc("", clusterHandler.RegisterEnterpriseCluster).
-		Name(logger.NewLogEvent("register-enterprise-cluster", "register enterprise cluster").ToString()).
+		Name(logger.NewLogEvent("register-enterprise-cluster", "register enterprise data plane cluster").ToString()).
 		Methods(http.MethodPost)
 	clusterRouter.HandleFunc("", clusterHandler.List).
-		Name(logger.NewLogEvent("list-enterprise-clusters", "list enterprise clusters").ToString()).
+		Name(logger.NewLogEvent("list-enterprise-clusters", "list enterprise data plane clusters").ToString()).
 		Methods(http.MethodGet)
 	clusterRouter.HandleFunc("/{id}", clusterHandler.DeregisterEnterpriseCluster).
-		Name(logger.NewLogEvent("deregister-enterprise-cluster", "deregister enterprise cluster by id").ToString()).
+		Name(logger.NewLogEvent("deregister-enterprise-cluster", "deregister enterprise data plane cluster by ID").ToString()).
 		Methods(http.MethodDelete)
+	clusterRouter.HandleFunc("/{id}", clusterHandler.Get).
+		Name(logger.NewLogEvent("get-enterprise-cluster", "get an enterprise data plane cluster by ID").ToString()).
+		Methods(http.MethodGet)
+	clusterRouter.HandleFunc("/{id}/addon_parameters", clusterHandler.GetEnterpriseClusterWithAddonParams).
+		Name(logger.NewLogEvent("get-enterprise-cluster-addon-parameters", "get addon parameters of an enterprise data plane cluster by ID").ToString()).
+		Methods(http.MethodGet)
 
 	return nil
 }

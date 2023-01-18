@@ -102,7 +102,7 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			return presenters.PresentEnterpriseClusterRegistrationResponse(*clusterRequest, fsoParams)
+			return presenters.PresentEnterpriseClusterWithAddonParams(*clusterRequest, fsoParams)
 		},
 	}
 
@@ -173,4 +173,70 @@ func (h clusterHandler) DeregisterEnterpriseCluster(w http.ResponseWriter, r *ht
 		},
 	}
 	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)
+}
+
+func (h clusterHandler) Get(w http.ResponseWriter, r *http.Request) {
+	clusterID := mux.Vars(r)["id"]
+	ctx := r.Context()
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.ValidateClusterId(&clusterID, "cluster id"),
+			ValidateKafkaClaims(ctx, ValidateOrganisationId()),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			// error checked in the validate, no need to check again
+			claims, _ := getClaims(ctx)
+			orgID, _ := claims.GetOrgId()
+
+			cluster, err := h.clusterService.FindClusterByID(clusterID)
+			if err != nil {
+				return nil, err
+			}
+
+			if cluster == nil || cluster.OrganizationID != orgID || cluster.ClusterType != api.EnterpriseDataPlaneClusterType.String() {
+				return nil, errors.NotFound("enterprise data plane cluster with id='%v' not found within organization: %s", clusterID, orgID)
+			}
+
+			return presenters.PresentEnterpriseCluster(*cluster), nil
+		},
+	}
+	handlers.HandleGet(w, r, cfg)
+}
+
+func (h clusterHandler) GetEnterpriseClusterWithAddonParams(w http.ResponseWriter, r *http.Request) {
+	clusterID := mux.Vars(r)["id"]
+	ctx := r.Context()
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.ValidateClusterId(&clusterID, "cluster id"),
+			ValidateKafkaClaims(ctx, ValidateOrganisationId()),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			// error checked in the validate, no need to check again
+			claims, _ := getClaims(ctx)
+			orgID, _ := claims.GetOrgId()
+
+			if !claims.IsOrgAdmin() {
+				return nil, errors.New(errors.ErrorUnauthorized, "non admin user not authorized to perform this action")
+			}
+
+			cluster, err := h.clusterService.FindClusterByID(clusterID)
+			if err != nil {
+				return nil, err
+			}
+
+			if cluster == nil || cluster.OrganizationID != orgID || cluster.ClusterType != api.EnterpriseDataPlaneClusterType.String() {
+				return nil, errors.NotFound("enterprise data plane cluster with id='%v' not found within organization: %s", clusterID, orgID)
+			}
+
+			fsoParams, svcErr := h.kasFleetshardOperatorAddon.GetAddonParams(cluster)
+
+			if svcErr != nil {
+				return nil, svcErr
+			}
+
+			return presenters.PresentEnterpriseClusterWithAddonParams(*cluster, fsoParams)
+		},
+	}
+	handlers.HandleGet(w, r, cfg)
 }
