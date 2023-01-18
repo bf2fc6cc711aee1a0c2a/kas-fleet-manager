@@ -7,7 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
-func PresentEnterpriseClusterRegistrationResponse(cluster api.Cluster, fleetShardParams services.ParameterList) (public.EnterpriseClusterRegistrationResponse, *errors.ServiceError) {
+func PresentEnterpriseClusterWithAddonParams(cluster api.Cluster, fleetShardParams services.ParameterList) (public.EnterpriseClusterWithAddonParameters, *errors.ServiceError) {
 
 	fsoParams := []public.FleetshardParameter{}
 
@@ -20,7 +20,7 @@ func PresentEnterpriseClusterRegistrationResponse(cluster api.Cluster, fleetShar
 
 	reference := PresentReference(cluster.ClusterID, cluster)
 
-	c := public.EnterpriseClusterRegistrationResponse{
+	c := public.EnterpriseClusterWithAddonParameters{
 		Id:                            cluster.ClusterID,
 		ClusterId:                     cluster.ClusterID,
 		Status:                        cluster.Status.String(),

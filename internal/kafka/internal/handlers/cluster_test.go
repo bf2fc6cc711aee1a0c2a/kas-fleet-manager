@@ -41,6 +41,7 @@ var (
 			"is_org_admin": false,
 		},
 	})
+	entClusterID = "1234abcd1234abcd1234abcd1234abcd"
 )
 
 func Test_RegisterEnterpriseCluster(t *testing.T) {
@@ -59,7 +60,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		fields         fields
 		args           args
 		wantStatusCode int
-		want           *public.EnterpriseClusterRegistrationResponse
+		want           *public.EnterpriseClusterWithAddonParameters
 	}{
 		{
 			name: "should return an error if body is empty",
@@ -258,7 +259,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				},
 			},
 			wantStatusCode: http.StatusOK,
-			want: &public.EnterpriseClusterRegistrationResponse{
+			want: &public.EnterpriseClusterWithAddonParameters{
 				Status:                        api.ClusterAccepted.String(),
 				ClusterId:                     validLengthClusterId,
 				Id:                            validLengthClusterId,
@@ -300,7 +301,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				},
 			},
 			wantStatusCode: http.StatusOK,
-			want: &public.EnterpriseClusterRegistrationResponse{
+			want: &public.EnterpriseClusterWithAddonParameters{
 				Status:                        api.ClusterAccepted.String(),
 				ClusterId:                     validLengthClusterId,
 				Id:                            validLengthClusterId,
@@ -329,7 +330,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 			defer resp.Body.Close()
 			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 			if tt.wantStatusCode == http.StatusOK {
-				cluster := &public.EnterpriseClusterRegistrationResponse{}
+				cluster := &public.EnterpriseClusterWithAddonParameters{}
 				err := json.NewDecoder(resp.Body).Decode(&cluster)
 				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(cluster).To(gomega.Equal(tt.want))
@@ -427,7 +428,6 @@ func Test_ListEnterpriseClusters(t *testing.T) {
 }
 
 func Test_DeregisterEnterpriseCLuster(t *testing.T) {
-	entClusterID := "1234abcd1234abcd1234abcd1234abcd"
 	type fields struct {
 		clusterService services.ClusterService
 	}
@@ -662,6 +662,323 @@ func Test_DeregisterEnterpriseCLuster(t *testing.T) {
 			req = mux.SetURLVars(req, map[string]string{"id": entClusterID})
 			h.DeregisterEnterpriseCluster(rw, req)
 			resp := rw.Result()
+			resp.Body.Close()
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
+		})
+	}
+}
+
+func Test_GetEnterpriseCluster(t *testing.T) {
+	type fields struct {
+		clusterService services.ClusterService
+	}
+
+	type args struct {
+		ctx context.Context
+	}
+
+	tests := []struct {
+		name           string
+		fields         fields
+		args           args
+		wantStatusCode int
+		want           public.EnterpriseCluster
+	}{
+		{
+			name:   "should fail if organization ID is not available within context",
+			fields: fields{},
+			args: args{
+				ctx: context.TODO(),
+			},
+			wantStatusCode: http.StatusForbidden,
+		},
+		{
+			name: "should fail if attempt to find cluster with provided clusterID returns an error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, errors.GeneralError("failed to find cluster")
+					},
+				},
+			},
+			args: args{
+				ctx: nonAdminCtxWithClaims,
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name: "should fail if cluster with given ID cannot be found",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+			},
+			args: args{
+				ctx: nonAdminCtxWithClaims,
+			},
+			wantStatusCode: http.StatusNotFound,
+		},
+		{
+			name: "should not return found cluster if its from different organization ID",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: "98765432",
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: nonAdminCtxWithClaims,
+			},
+			wantStatusCode: http.StatusNotFound,
+		},
+		{
+			name: "should not return found cluster if its not an enterprise cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: mocks.DefaultOrganisationId,
+							ClusterType:    api.ManagedDataPlaneClusterType.String(),
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: nonAdminCtxWithClaims,
+			},
+			wantStatusCode: http.StatusNotFound,
+		},
+		{
+			name: "should successfully return enterprise cluster for a user of the same org",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: mocks.DefaultOrganisationId,
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
+							ClusterID:      entClusterID,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: nonAdminCtxWithClaims,
+			},
+			wantStatusCode: http.StatusOK,
+			want: public.EnterpriseCluster{
+				ClusterId: entClusterID,
+				Id:        entClusterID,
+				Kind:      "Cluster",
+				Href:      fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", entClusterID),
+			},
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			h := NewClusterHandler(nil, tt.fields.clusterService)
+			req, rw := GetHandlerParams("GET", "/{id}", nil, t)
+			req = mux.SetURLVars(req, map[string]string{"id": entClusterID})
+			req = req.WithContext(tt.args.ctx)
+			h.Get(rw, req)
+			resp := rw.Result()
+			if tt.wantStatusCode == http.StatusOK {
+				cluster := public.EnterpriseCluster{}
+				err := json.NewDecoder(resp.Body).Decode(&cluster)
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(cluster).To(gomega.Equal(tt.want))
+			}
+			resp.Body.Close()
+			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
+		})
+	}
+}
+
+func Test_GetEnterpriseClusterWithAddonParams(t *testing.T) {
+	type fields struct {
+		clusterService             services.ClusterService
+		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+	}
+
+	type args struct {
+		ctx context.Context
+	}
+
+	tests := []struct {
+		name           string
+		fields         fields
+		args           args
+		wantStatusCode int
+		want           public.EnterpriseClusterWithAddonParameters
+	}{
+		{
+			name:   "should fail if organization ID is not available within context",
+			fields: fields{},
+			args: args{
+				ctx: context.TODO(),
+			},
+			wantStatusCode: http.StatusForbidden,
+		},
+		{
+			name:   "should fail if attempting to hit the endpoint with non-admin user",
+			fields: fields{},
+			args: args{
+				ctx: nonAdminCtxWithClaims,
+			},
+			wantStatusCode: http.StatusForbidden,
+		},
+		{
+			name: "should fail if attempt to find cluster with provided clusterID returns an error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, errors.GeneralError("failed to find cluster")
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name: "should fail if cluster with given ID cannot be found",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+			},
+			wantStatusCode: http.StatusNotFound,
+		},
+		{
+			name: "should not return found cluster if its from different organization ID",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: "98765432",
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+			},
+			wantStatusCode: http.StatusNotFound,
+		},
+		{
+			name: "should not return found cluster if its not an enterprise cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: mocks.DefaultOrganisationId,
+							ClusterType:    api.ManagedDataPlaneClusterType.String(),
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+			},
+			wantStatusCode: http.StatusNotFound,
+		},
+		{
+			name: "should fail if GetAddonParams returns an error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: mocks.DefaultOrganisationId,
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
+						}, nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					GetAddonParamsFunc: func(cluster *api.Cluster) (services.ParameterList, *errors.ServiceError) {
+						return nil, errors.GeneralError("failed to get addons")
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name: "should successfully return enterprise cluster for admin user of the same org",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							ClusterID:      entClusterID,
+							OrganizationID: mocks.DefaultOrganisationId,
+							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
+						}, nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					GetAddonParamsFunc: func(cluster *api.Cluster) (services.ParameterList, *errors.ServiceError) {
+						return services.ParameterList{
+							{
+								Id:    "some-id",
+								Value: "value",
+							},
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: ctxWithClaims,
+			},
+			wantStatusCode: http.StatusOK,
+			want: public.EnterpriseClusterWithAddonParameters{
+				ClusterId: entClusterID,
+				Id:        entClusterID,
+				Kind:      "Cluster",
+				Href:      fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", entClusterID),
+				FleetshardParameters: []public.FleetshardParameter{
+					{
+						Id:    "some-id",
+						Value: "value",
+					},
+				},
+			},
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			h := NewClusterHandler(tt.fields.kasFleetshardOperatorAddon, tt.fields.clusterService)
+			req, rw := GetHandlerParams("GET", "/{id}/addon_parameters", nil, t)
+			req = mux.SetURLVars(req, map[string]string{"id": entClusterID})
+			req = req.WithContext(tt.args.ctx)
+			h.GetEnterpriseClusterWithAddonParams(rw, req)
+			resp := rw.Result()
+			if tt.wantStatusCode == http.StatusOK {
+				cluster := public.EnterpriseClusterWithAddonParameters{}
+				err := json.NewDecoder(resp.Body).Decode(&cluster)
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(cluster).To(gomega.Equal(tt.want))
+			}
 			resp.Body.Close()
 			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 		})

@@ -26,10 +26,10 @@ func Test_PresentEnterpriseClusterRegistrationResponse(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want public.EnterpriseClusterRegistrationResponse
+		want public.EnterpriseClusterWithAddonParameters
 	}{
 		{
-			name: "should successfully convert api.Cluster to EnterpriseClusterRegistrationResponse",
+			name: "should successfully convert api.Cluster to EnterpriseClusterWithAddons",
 			args: args{
 				cluster: api.Cluster{
 					ClusterID:                     clusterId,
@@ -43,7 +43,7 @@ func Test_PresentEnterpriseClusterRegistrationResponse(t *testing.T) {
 					},
 				},
 			},
-			want: public.EnterpriseClusterRegistrationResponse{
+			want: public.EnterpriseClusterWithAddonParameters{
 				Id:                            clusterId,
 				ClusterId:                     clusterId,
 				Status:                        status.String(),
@@ -65,7 +65,7 @@ func Test_PresentEnterpriseClusterRegistrationResponse(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			g.Expect(PresentEnterpriseClusterRegistrationResponse(tt.args.cluster, tt.args.fleetShardParams)).To(gomega.Equal(tt.want))
+			g.Expect(PresentEnterpriseClusterWithAddonParams(tt.args.cluster, tt.args.fleetShardParams)).To(gomega.Equal(tt.want))
 		})
 	}
 }

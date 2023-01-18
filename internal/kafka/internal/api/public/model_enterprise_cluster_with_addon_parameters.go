@@ -10,8 +10,8 @@
 
 package public
 
-// EnterpriseClusterRegistrationResponse Enterprise cluster registration endpoint response
-type EnterpriseClusterRegistrationResponse struct {
+// EnterpriseClusterWithAddonParameters Enterprise cluster with addon parameters
+type EnterpriseClusterWithAddonParameters struct {
 	Id   string `json:"id"`
 	Kind string `json:"kind"`
 	Href string `json:"href"`
