@@ -22,4 +22,9 @@ type QuotaService interface {
 	DeleteQuotaForBillingModel(subscriptionId string, kafkaBillingModel config.KafkaBillingModel) *errors.ServiceError
 	// ValidateBillingAccount validates if a billing account is contained in the quota cost response
 	ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError
+	// IsQuotaEntitlementActive checks if the user/organisation have an active entitlement to the quota used by the
+	// given Kafka instance.
+	// It returns true if the user has an active quota entitlement and false if not.
+	// It returns false and an error if it encounters any issues while trying to check the quota entitlement status
+	IsQuotaEntitlementActive(kafka *dbapi.KafkaRequest) (bool, error)
 }
