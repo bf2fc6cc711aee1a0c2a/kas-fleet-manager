@@ -206,23 +206,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 		Name(logger.NewLogEvent("list-regions", "list cloud provider regions").ToString()).
 		Methods(http.MethodGet)
 
-	v1Metadata := api.VersionMetadata{
-		ID:          "v1",
-		Collections: v1Collections,
-	}
-	apiMetadata := api.Metadata{
-		ID: "kafkas_mgmt",
-		Versions: []api.VersionMetadata{
-			v1Metadata,
-		},
-	}
-	apiRouter.HandleFunc("", apiMetadata.ServeHTTP).Methods(http.MethodGet)
-	apiRouter.Use(coreHandlers.MetricsMiddleware)
-	apiRouter.Use(db.TransactionMiddleware(s.DB))
-	apiRouter.Use(gorillaHandlers.CompressHandler)
-
-	apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
-
 	// /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region}
 	apiV1SupportedKafkaInstanceTypesRouter := apiV1Router.PathPrefix("/instance_types/{cloud_provider}/{cloud_region}").Subrouter()
 	apiV1SupportedKafkaInstanceTypesRouter.HandleFunc("", supportedKafkaInstanceTypesHandler.ListSupportedKafkaInstanceTypes).
@@ -231,6 +214,30 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	apiV1SupportedKafkaInstanceTypesRouter.Use(requireIssuer)
 	apiV1SupportedKafkaInstanceTypesRouter.Use(requireOrgID)
 	apiV1SupportedKafkaInstanceTypesRouter.Use(authorizeMiddleware)
+
+	// /api/kafkas_mgmt/v1/clusters/
+	v1Collections = append(v1Collections, api.CollectionMetadata{
+		ID:   "clusters",
+		Kind: "EnterpriseClusterList",
+	})
+	clusterHandler := handlers.NewClusterHandler(s.KasFleetshardOperatorAddon, s.ClusterService)
+	clusterRouter := apiV1Router.PathPrefix("/clusters").Subrouter()
+	clusterRouter.Use(enterpriseClusterMiddleware)
+	clusterRouter.HandleFunc("", clusterHandler.RegisterEnterpriseCluster).
+		Name(logger.NewLogEvent("register-enterprise-cluster", "register enterprise data plane cluster").ToString()).
+		Methods(http.MethodPost)
+	clusterRouter.HandleFunc("", clusterHandler.List).
+		Name(logger.NewLogEvent("list-enterprise-clusters", "list enterprise data plane clusters").ToString()).
+		Methods(http.MethodGet)
+	clusterRouter.HandleFunc("/{id}", clusterHandler.DeregisterEnterpriseCluster).
+		Name(logger.NewLogEvent("deregister-enterprise-cluster", "deregister enterprise data plane cluster by ID").ToString()).
+		Methods(http.MethodDelete)
+	clusterRouter.HandleFunc("/{id}", clusterHandler.Get).
+		Name(logger.NewLogEvent("get-enterprise-cluster", "get an enterprise data plane cluster by ID").ToString()).
+		Methods(http.MethodGet)
+	clusterRouter.HandleFunc("/{id}/addon_parameters", clusterHandler.GetEnterpriseClusterWithAddonParams).
+		Name(logger.NewLogEvent("get-enterprise-cluster-addon-parameters", "get addon parameters of an enterprise data plane cluster by ID").ToString()).
+		Methods(http.MethodGet)
 
 	// /agent-clusters/{id}
 	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
@@ -251,6 +258,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, s.Keycloak.GetRealmConfig().ValidIssuerURI, "id", s.ClusterService)
 
+	// /api/kafkas_mgmt/v1/admin/kafkas
 	adminKafkaHandler := handlers.NewAdminKafkaHandler(s.Kafka, s.AccountService, s.ProviderConfig, s.ClusterService)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.Keycloak.GetConfig().AdminAPISSORealm.ValidIssuerURI}, errors.ErrorNotFound))
@@ -269,24 +277,22 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 		Name(logger.NewLogEvent("admin-update-kafka", "[admin] update kafka by id").ToString()).
 		Methods(http.MethodPatch)
 
-	clusterHandler := handlers.NewClusterHandler(s.KasFleetshardOperatorAddon, s.ClusterService)
-	clusterRouter := apiV1Router.PathPrefix("/clusters").Subrouter()
-	clusterRouter.Use(enterpriseClusterMiddleware)
-	clusterRouter.HandleFunc("", clusterHandler.RegisterEnterpriseCluster).
-		Name(logger.NewLogEvent("register-enterprise-cluster", "register enterprise data plane cluster").ToString()).
-		Methods(http.MethodPost)
-	clusterRouter.HandleFunc("", clusterHandler.List).
-		Name(logger.NewLogEvent("list-enterprise-clusters", "list enterprise data plane clusters").ToString()).
-		Methods(http.MethodGet)
-	clusterRouter.HandleFunc("/{id}", clusterHandler.DeregisterEnterpriseCluster).
-		Name(logger.NewLogEvent("deregister-enterprise-cluster", "deregister enterprise data plane cluster by ID").ToString()).
-		Methods(http.MethodDelete)
-	clusterRouter.HandleFunc("/{id}", clusterHandler.Get).
-		Name(logger.NewLogEvent("get-enterprise-cluster", "get an enterprise data plane cluster by ID").ToString()).
-		Methods(http.MethodGet)
-	clusterRouter.HandleFunc("/{id}/addon_parameters", clusterHandler.GetEnterpriseClusterWithAddonParams).
-		Name(logger.NewLogEvent("get-enterprise-cluster-addon-parameters", "get addon parameters of an enterprise data plane cluster by ID").ToString()).
-		Methods(http.MethodGet)
+	// /api/kafkas_mgmt/v1
+	v1Metadata := api.VersionMetadata{
+		ID:          "v1",
+		Collections: v1Collections,
+	}
+	apiMetadata := api.Metadata{
+		ID: "kafkas_mgmt",
+		Versions: []api.VersionMetadata{
+			v1Metadata,
+		},
+	}
+	apiRouter.HandleFunc("", apiMetadata.ServeHTTP).Methods(http.MethodGet)
+	apiRouter.Use(coreHandlers.MetricsMiddleware)
+	apiRouter.Use(db.TransactionMiddleware(s.DB))
+	apiRouter.Use(gorillaHandlers.CompressHandler)
 
+	apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
 	return nil
 }

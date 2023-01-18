@@ -32,7 +32,7 @@ func TestKafkaCreate_Metadata(t *testing.T) {
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "g.Unable to retrieve version metadata:  %v", err)
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 	g.Expect(version.Href).To(gomega.ContainSubstring("/v1"))
-	g.Expect(version.Collections).To(gomega.HaveLen(3))
+	g.Expect(version.Collections).To(gomega.HaveLen(4))
 
 	/*  Unable to test for a specific version as for now due to the debug package issue: https://github.com/golang/go/issues/33976,
 	TODO when the issue is resolved.

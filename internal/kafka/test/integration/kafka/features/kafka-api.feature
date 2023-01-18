@@ -66,6 +66,11 @@ Feature: expose a public api to manage kafka clusters
             "href": "/api/kafkas_mgmt/v1/cloud_providers",
             "id": "cloud_providers",
             "kind": "CloudProviderList"
+          },
+          {
+            "href": "/api/kafkas_mgmt/v1/clusters",
+            "id": "clusters",
+            "kind": "EnterpriseClusterList"
           }
         ],
         "href": "/api/kafkas_mgmt/v1",
@@ -75,31 +80,3 @@ Feature: expose a public api to manage kafka clusters
       }
       """
 
-    When I GET path "/v1/"
-    Then the response code should be 200
-    And the response should match json:
-      """
-      {
-        "collections": [
-          {
-            "href": "/api/kafkas_mgmt/v1/kafkas",
-            "id": "kafkas",
-            "kind": "KafkaList"
-          },
-          {
-            "href": "/api/kafkas_mgmt/v1/service_accounts",
-            "id": "service_accounts",
-            "kind": "ServiceAccountList"
-          },
-          {
-            "href": "/api/kafkas_mgmt/v1/cloud_providers",
-            "id": "cloud_providers",
-            "kind": "CloudProviderList"
-          }
-        ],
-        "href": "/api/kafkas_mgmt/v1",
-        "id": "v1",
-        "kind": "APIVersion",
-        "server_version": ""
-      }
-      """
