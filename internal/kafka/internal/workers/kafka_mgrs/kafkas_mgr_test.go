@@ -1,7 +1,10 @@
 package kafka_mgrs
 
 import (
+	"database/sql"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"testing"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -165,6 +168,299 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 			}
 
 			g.Expect(len(k.Reconcile()) > 0).To(gomega.Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
+	type updateStatusCall struct {
+		count  int
+		status constants.KafkaStatus
+	}
+
+	type fields struct {
+		kafkaService            *services.KafkaServiceMock
+		clusterService          services.ClusterService
+		dataplaneClusterConfig  config.DataplaneClusterConfig
+		cloudProviders          config.ProviderConfig
+		accessControlListConfig *acl.AccessControlListConfig
+		kafkaConfig             config.KafkaConfig
+	}
+	tests := []struct {
+		name             string
+		fields           fields
+		wantErr          bool
+		updateStatusCall updateStatusCall
+	}{
+		{
+			name: "should suspend kafka in grace period",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						k := dbapi.KafkaRequest{
+							ClusterID:               "123-cluster-123",
+							Name:                    "test-cluster",
+							InstanceType:            types.STANDARD.String(),
+							Status:                  constants.KafkaRequestStatusAccepted.String(),
+							ActualKafkaBillingModel: "eval",
+							ExpiresAt: sql.NullTime{
+								Time:  time.Now().AddDate(0, 0, +2),
+								Valid: true,
+							},
+						}
+						return dbapi.KafkaList{&k}, nil
+					},
+					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
+						return []services.KafkaStatusCount{}, nil
+					},
+					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
+						return nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
+						return services.KafkaStreamingUnitCountPerClusterList{}, nil
+					},
+				},
+				dataplaneClusterConfig:  *config.NewDataplaneClusterConfig(),
+				accessControlListConfig: acl.NewAccessControlListConfig(),
+				kafkaConfig: func() config.KafkaConfig {
+					cfg := config.NewKafkaConfig()
+					_ = cfg.ReadFiles()
+					return *cfg
+				}(),
+			},
+			wantErr: false,
+			updateStatusCall: updateStatusCall{
+				count:  1,
+				status: constants.KafkaRequestStatusSuspending,
+			},
+		},
+		{
+			name: "should ignore expired kafkas",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						k := dbapi.KafkaRequest{
+							ClusterID:               "123-cluster-123",
+							Name:                    "test-cluster",
+							InstanceType:            types.STANDARD.String(),
+							Status:                  constants.KafkaRequestStatusAccepted.String(),
+							ActualKafkaBillingModel: "eval",
+							ExpiresAt: sql.NullTime{
+								Time:  time.Now().AddDate(0, 0, -1),
+								Valid: true,
+							},
+						}
+						return dbapi.KafkaList{&k}, nil
+					},
+					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
+						return []services.KafkaStatusCount{}, nil
+					},
+					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
+						return nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
+						return services.KafkaStreamingUnitCountPerClusterList{}, nil
+					},
+				},
+				dataplaneClusterConfig:  *config.NewDataplaneClusterConfig(),
+				accessControlListConfig: acl.NewAccessControlListConfig(),
+				kafkaConfig: func() config.KafkaConfig {
+					cfg := config.NewKafkaConfig()
+					_ = cfg.ReadFiles()
+					return *cfg
+				}(),
+			},
+			wantErr: false,
+			updateStatusCall: updateStatusCall{
+				count: 0,
+			},
+		},
+		{
+			name: "should ignore kafkas in unsupported status",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						k := dbapi.KafkaRequest{
+							ClusterID:               "123-cluster-123",
+							Name:                    "test-cluster",
+							InstanceType:            types.STANDARD.String(),
+							Status:                  constants.KafkaRequestStatusSuspended.String(),
+							ActualKafkaBillingModel: "eval",
+							ExpiresAt: sql.NullTime{
+								Time:  time.Now().AddDate(0, 0, +3),
+								Valid: true,
+							},
+						}
+						return dbapi.KafkaList{&k}, nil
+					},
+					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
+						return []services.KafkaStatusCount{}, nil
+					},
+					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
+						return nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
+						return services.KafkaStreamingUnitCountPerClusterList{}, nil
+					},
+				},
+				dataplaneClusterConfig:  *config.NewDataplaneClusterConfig(),
+				accessControlListConfig: acl.NewAccessControlListConfig(),
+				kafkaConfig: func() config.KafkaConfig {
+					cfg := config.NewKafkaConfig()
+					_ = cfg.ReadFiles()
+					return *cfg
+				}(),
+			},
+			wantErr: false,
+			updateStatusCall: updateStatusCall{
+				count: 0,
+			},
+		},
+		{
+			name: "should ignore kafkas that are not in a grace period",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						k := dbapi.KafkaRequest{
+							ClusterID:               "123-cluster-123",
+							Name:                    "test-cluster",
+							InstanceType:            types.STANDARD.String(),
+							Status:                  constants.KafkaRequestStatusReady.String(),
+							ActualKafkaBillingModel: "eval",
+							ExpiresAt: sql.NullTime{
+								Time:  time.Now().AddDate(0, 0, +10),
+								Valid: true,
+							},
+						}
+						return dbapi.KafkaList{&k}, nil
+					},
+					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
+						return []services.KafkaStatusCount{}, nil
+					},
+					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
+						return nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
+						return services.KafkaStreamingUnitCountPerClusterList{}, nil
+					},
+				},
+				dataplaneClusterConfig:  *config.NewDataplaneClusterConfig(),
+				accessControlListConfig: acl.NewAccessControlListConfig(),
+				kafkaConfig: func() config.KafkaConfig {
+					cfg := config.NewKafkaConfig()
+					_ = cfg.ReadFiles()
+					return *cfg
+				}(),
+			},
+			wantErr: false,
+			updateStatusCall: updateStatusCall{
+				count: 0,
+			},
+		},
+		{
+			name: "should ignore kafkas that never expire",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						k := dbapi.KafkaRequest{
+							ClusterID:               "123-cluster-123",
+							Name:                    "test-cluster",
+							InstanceType:            types.STANDARD.String(),
+							Status:                  constants.KafkaRequestStatusReady.String(),
+							ActualKafkaBillingModel: "eval",
+							ExpiresAt: sql.NullTime{
+								Time:  time.Time{},
+								Valid: false,
+							},
+						}
+						return dbapi.KafkaList{&k}, nil
+					},
+					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
+						return []services.KafkaStatusCount{}, nil
+					},
+					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
+						return nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
+						return services.KafkaStreamingUnitCountPerClusterList{}, nil
+					},
+				},
+				dataplaneClusterConfig:  *config.NewDataplaneClusterConfig(),
+				accessControlListConfig: acl.NewAccessControlListConfig(),
+				kafkaConfig: func() config.KafkaConfig {
+					cfg := config.NewKafkaConfig()
+					_ = cfg.ReadFiles()
+					return *cfg
+				}(),
+			},
+			wantErr: false,
+			updateStatusCall: updateStatusCall{
+				count: 0,
+			},
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			k := &KafkaManager{
+				kafkaService:            tt.fields.kafkaService,
+				clusterService:          tt.fields.clusterService,
+				dataplaneClusterConfig:  &tt.fields.dataplaneClusterConfig,
+				accessControlListConfig: tt.fields.accessControlListConfig,
+				cloudProviders:          &tt.fields.cloudProviders,
+				kafkaConfig:             &tt.fields.kafkaConfig,
+			}
+
+			//k.Reconcile()
+			g.Expect(len(k.Reconcile()) > 0).To(gomega.Equal(tt.wantErr))
+			g.Expect(tt.fields.kafkaService.UpdateStatusCalls()).To(gomega.HaveLen(tt.updateStatusCall.count))
+			if tt.updateStatusCall.count > 0 {
+				g.Expect(tt.fields.kafkaService.UpdateStatusCalls()[0].Status).To(gomega.BeEquivalentTo(tt.updateStatusCall.status))
+			}
+
 		})
 	}
 }
