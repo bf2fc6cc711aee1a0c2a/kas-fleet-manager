@@ -7,7 +7,7 @@ import (
 
 func getBillingModel(grantedQuota QuotaList, instanceTypeId string, billingModelID string) (BillingModel, bool) {
 	if idx, instanceType := arrays.FindFirst(grantedQuota, func(x Quota) bool { return shared.StringEqualsIgnoreCase(x.InstanceTypeID, instanceTypeId) }); idx != -1 {
-		if idx, bm := arrays.FindFirst(instanceType.GetKafkaBillingModels(), func(bm BillingModel) bool { return shared.StringEqualsIgnoreCase(bm.Id, billingModelID) }); idx != -1 {
+		if bm, ok := instanceType.GetKafkaBillingModelByID(billingModelID); ok {
 			return bm, true
 		}
 	}

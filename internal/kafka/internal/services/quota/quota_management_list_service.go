@@ -25,6 +25,14 @@ type QuotaManagementListService struct {
 	kafkaConfig         *config.KafkaConfig
 }
 
+func (q QuotaManagementListService) ReserveQuotaIfNotAlreadyReserved(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
+	return q.ReserveQuota(kafka)
+}
+
+func (q QuotaManagementListService) DeleteQuotaForBillingModel(subscriptionId string, kafkaBillingModel config.KafkaBillingModel) *errors.ServiceError {
+	return nil // NOOP
+}
+
 var _ services.QuotaService = &QuotaManagementListService{}
 
 func (q QuotaManagementListService) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
@@ -70,6 +78,7 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest) (str
 	if err != nil {
 		return "", err
 	}
+
 	// TODO: find a better place to set this instead of this side effect
 	kafka.DesiredKafkaBillingModel = billingModelID
 
@@ -161,6 +170,14 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest) (str
 // 7) if [6] fails, return the first defined billing model
 func (q QuotaManagementListService) detectBillingModel(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 	if kafka.DesiredKafkaBillingModel != "" {
+		instanceType, err := q.kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafka.InstanceType)
+		if err != nil {
+			return "", errors.InstanceTypeNotSupported("invalid instance type '%s'", instanceType.Id)
+		}
+		_, err = instanceType.GetKafkaSupportedBillingModelByID(kafka.DesiredKafkaBillingModel)
+		if err != nil {
+			return "", errors.InsufficientQuotaError("invalid billing model '%s'", kafka.DesiredKafkaBillingModel)
+		}
 		return kafka.DesiredKafkaBillingModel, nil
 	}
 	if kafka.InstanceType == types.DEVELOPER.String() {

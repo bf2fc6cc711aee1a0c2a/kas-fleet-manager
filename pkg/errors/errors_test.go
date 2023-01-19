@@ -145,7 +145,7 @@ func Test_NewWithCause(t *testing.T) {
 			args: args{
 				reason: internalServerCause,
 			},
-			want: &ServiceError{ErrorGeneral, "unspecified error", http.StatusInternalServerError, nil},
+			want: &ServiceError{ErrorGeneral, "unspecified error", http.StatusInternalServerError, nil, false},
 		},
 		{
 			name: "should return a service error if the cause is not nil",
@@ -153,7 +153,7 @@ func Test_NewWithCause(t *testing.T) {
 				reason: internalServerCause,
 				cause:  GeneralError(genericErrorMessage),
 			},
-			want: &ServiceError{ErrorGeneral, "unspecified error", http.StatusInternalServerError, GeneralError("")},
+			want: &ServiceError{ErrorGeneral, "unspecified error", http.StatusInternalServerError, GeneralError(""), false},
 		},
 		{
 			name: "should return a service error where there is no stack trace",
@@ -161,7 +161,7 @@ func Test_NewWithCause(t *testing.T) {
 				reason: internalServerCause,
 				cause:  &errorWithoutStackTrace{},
 			},
-			want: &ServiceError{ErrorGeneral, "unspecified error", http.StatusInternalServerError, errors.WithStack(&errorWithoutStackTrace{})},
+			want: &ServiceError{ErrorGeneral, "unspecified error", http.StatusInternalServerError, errors.WithStack(&errorWithoutStackTrace{}), false},
 		},
 	}
 
