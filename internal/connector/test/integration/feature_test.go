@@ -52,6 +52,7 @@ func TestMain(m *testing.M) {
 
 	helper, teardown = test.NewHelperWithHooksAndDBsetup(t, ocmServer,
 		[]string{"INSERT INTO connector_types (id, name, checksum) VALUES ('OldConnectorTypeId', 'Old Connector Type', 'fakeChecksum1')",
+			"INSERT INTO connector_type_labels (connector_type_id, label) VALUES ('OldConnectorTypeId', 'old_connector_type_label')",
 			"INSERT INTO connector_types (id, name, checksum) VALUES ('OldConnectorTypeStillInUseId', 'Old Connector Type still in use', 'fakeChecksum2')",
 			"INSERT INTO connectors (id, name, connector_type_id) VALUES ('ConnectorUsingOldTypeId', 'Connector using old type', 'OldConnectorTypeStillInUseId')",
 			"INSERT INTO connector_types (id, name, checksum) VALUES ('log_sink_0.1', 'Log Sink', 'fakeChecksum')",
