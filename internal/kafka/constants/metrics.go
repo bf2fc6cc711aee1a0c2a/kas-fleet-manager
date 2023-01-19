@@ -9,6 +9,8 @@ const (
 	KafkaControllerKafkacontrollerOfflinePartitionsCountDesc = "Attribute exposed for management (kafka.controller<type=KafkaController, name=OfflinePartitionsCount><>Value)"
 	KafkaControllerKafkacontrollerGlobalPartitionCountDesc   = "Attribute exposed for management (kafka.controller<type=KafkaController, name=GlobalPartitionCount><>Value)"
 	KafkaTopicKafkaLogLogSizeSumDesc                         = "Attribute exposed for management (kafka.log<type=Log, name=Size, topic=__consumer_offsets, partition=18><>Value)"
+	KafkaTopicPartitionLogSizeBytesDesc                      = "Size in bytes of each topic partition on each kafka broker"
+	KafkaBrokerPartitionLogSizeBytesTop50Desc                = "Sizes in bytes of the top 50 topic partitions for each kafka broker"
 	KafkaBrokerQuotaSoftlimitbytesDesc                       = "Attribute exposed for management (io.strimzi.kafka.quotas<type=StorageChecker, name=SoftLimitBytes><>Value)"
 	KafkaBrokerQuotaHardlimitbytesDesc                       = "Attribute exposed for management (io.strimzi.kafka.quotas<type=StorageChecker, name=HardLimitBytes><>Value)"
 	KafkaBrokerQuotaTotalstorageusedbytesDesc                = "Attribute exposed for management (io.strimzi.kafka.quotas<type=StorageChecker, name=TotalStorageUsedBytes><>Value)"
@@ -84,6 +86,20 @@ func GetMetricsMetaData() map[string]MetricsMetadata {
 			Type:           prometheus.GaugeValue,
 			TypeName:       "GAUGE",
 			VariableLabels: []string{"topic"},
+		},
+		"kas_topic_partition_log_size_bytes": {
+			Name:           "kas_topic_partition_log_size_bytes",
+			Help:           KafkaTopicPartitionLogSizeBytesDesc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       prometheus.GaugeMetricTypePtr.String(),
+			VariableLabels: []string{"broker_id", "partition_id", "topic_name", "statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
+		},
+		"kas_broker_partition_log_size_bytes_top50": {
+			Name:           "kas_broker_partition_log_size_bytes_top50",
+			Help:           KafkaBrokerPartitionLogSizeBytesTop50Desc,
+			Type:           prometheus.GaugeValue,
+			TypeName:       prometheus.GaugeMetricTypePtr.String(),
+			VariableLabels: []string{"broker_id", "partition_id", "topic_name", "statefulset_kubernetes_io_pod_name", "strimzi_io_cluster"},
 		},
 		"kafka_broker_quota_softlimitbytes": {
 			Name:           "kafka_broker_quota_softlimitbytes",

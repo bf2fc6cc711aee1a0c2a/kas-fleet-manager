@@ -143,6 +143,14 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 			`kafka_topic:kafka_log_log_size:sum`,
 			fmt.Sprintf(`%s, namespace=~'%s'`, privateTopicFilter, namespace),
 		},
+		{
+			`kas_topic_partition_log_size_bytes`,
+			fmt.Sprintf(`%s, namespace=~'%s'`, privateTopicFilter, namespace),
+		},
+		{
+			`kas_broker_partition_log_size_bytes_top50`,
+			fmt.Sprintf(`namespace=~'%s'`, namespace),
+		},
 		//Check metrics for all traffic in/out
 		{
 			`kafka_namespace:haproxy_server_bytes_in_total:rate5m`,
