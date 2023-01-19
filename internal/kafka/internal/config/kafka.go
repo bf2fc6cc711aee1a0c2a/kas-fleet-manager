@@ -10,14 +10,9 @@ import (
 )
 
 type KafkaConfig struct {
-	KafkaTLSCert                   string
-	KafkaTLSCertFile               string
-	KafkaTLSKey                    string
-	KafkaTLSKeyFile                string
-	EnableKafkaExternalCertificate bool
-	EnableKafkaCNAMERegistration   bool
-	KafkaDomainName                string
-	BrowserUrl                     string
+	EnableKafkaCNAMERegistration bool
+	KafkaDomainName              string
+	BrowserUrl                   string
 
 	KafkaLifespan          *KafkaLifespanConfig
 	Quota                  *KafkaQuotaConfig
@@ -29,24 +24,18 @@ type KafkaConfig struct {
 
 func NewKafkaConfig() *KafkaConfig {
 	return &KafkaConfig{
-		KafkaTLSCertFile:               "secrets/kafka-tls.crt",
-		KafkaTLSKeyFile:                "secrets/kafka-tls.key",
-		EnableKafkaExternalCertificate: false,
-		EnableKafkaCNAMERegistration:   false,
-		EnableKafkaOwnerConfig:         false,
-		KafkaDomainName:                "kafka.bf2.dev",
-		KafkaLifespan:                  NewKafkaLifespanConfig(),
-		Quota:                          NewKafkaQuotaConfig(),
-		SupportedInstanceTypes:         NewKafkaSupportedInstanceTypesConfig(),
-		KafkaOwnerListFile:             "config/kafka-owner-list.yaml",
-		BrowserUrl:                     "http://localhost:8080/",
+		EnableKafkaCNAMERegistration: false,
+		EnableKafkaOwnerConfig:       false,
+		KafkaDomainName:              "kafka.bf2.dev",
+		KafkaLifespan:                NewKafkaLifespanConfig(),
+		Quota:                        NewKafkaQuotaConfig(),
+		SupportedInstanceTypes:       NewKafkaSupportedInstanceTypesConfig(),
+		KafkaOwnerListFile:           "config/kafka-owner-list.yaml",
+		BrowserUrl:                   "http://localhost:8080/",
 	}
 }
 
 func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&c.KafkaTLSCertFile, "kafka-tls-cert-file", c.KafkaTLSCertFile, "File containing kafka certificate")
-	fs.StringVar(&c.KafkaTLSKeyFile, "kafka-tls-key-file", c.KafkaTLSKeyFile, "File containing kafka certificate private key")
-	fs.BoolVar(&c.EnableKafkaExternalCertificate, "enable-kafka-external-certificate", c.EnableKafkaExternalCertificate, "Enable custom certificate for Kafka TLS")
 	fs.BoolVar(&c.EnableKafkaCNAMERegistration, "enable-kafka-cname-registration", c.EnableKafkaCNAMERegistration, "Enable custom CNAME registration for Kafka instances")
 	fs.BoolVar(&c.KafkaLifespan.EnableDeletionOfExpiredKafka, "enable-deletion-of-expired-kafka", c.KafkaLifespan.EnableDeletionOfExpiredKafka, "Enable the deletion of kafkas when its life span has expired")
 	fs.StringVar(&c.KafkaDomainName, "kafka-domain-name", c.KafkaDomainName, "The domain name to use for Kafka instances")
@@ -60,24 +49,16 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *KafkaConfig) ReadFiles() error {
-	err := shared.ReadFileValueString(c.KafkaTLSCertFile, &c.KafkaTLSCert)
+	err := shared.ReadYamlFile(c.SupportedInstanceTypes.ConfigurationFile, &c.SupportedInstanceTypes.Configuration)
 	if err != nil {
 		return err
 	}
-	err = shared.ReadFileValueString(c.KafkaTLSKeyFile, &c.KafkaTLSKey)
-	if err != nil {
-		return err
-	}
+
 	if c.EnableKafkaOwnerConfig {
 		err = shared.ReadYamlFile(c.KafkaOwnerListFile, &c.KafkaOwnerList)
 		if err != nil {
 			return err
 		}
-	}
-
-	err = shared.ReadYamlFile(c.SupportedInstanceTypes.ConfigurationFile, &c.SupportedInstanceTypes.Configuration)
-	if err != nil {
-		return err
 	}
 
 	return nil

@@ -1,6 +1,7 @@
 package cluster_mgrs
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafka_tls_certificate_management"
 	dpMock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -35,10 +37,12 @@ var (
 		Status: api.ClusterAccepted,
 	}
 	readyCluster = api.Cluster{
-		Status: api.ClusterReady,
+		Status:      api.ClusterReady,
+		ClusterType: api.ManagedDataPlaneClusterType.String(),
 	}
 	clusterWaitingForKasFleetShardOperator = api.Cluster{
-		Status: api.ClusterWaitingForKasFleetShardOperator,
+		Status:      api.ClusterWaitingForKasFleetShardOperator,
+		ClusterType: api.ManagedDataPlaneClusterType.String(),
 	}
 	keycloakRealmConfig = keycloak.KeycloakRealmConfig{
 		ValidIssuerURI: "https://foo.bar",
@@ -48,18 +52,22 @@ var (
 		ClusterType: api.EnterpriseDataPlaneClusterType.String(),
 	}
 	provisioningCluster = api.Cluster{
-		Status: api.ClusterProvisioning,
+		Status:      api.ClusterProvisioning,
+		ClusterType: api.ManagedDataPlaneClusterType.String(),
 	}
 	enterpriseProvisioningCluster = api.Cluster{
 		Status:      api.ClusterProvisioning,
 		ClusterType: api.EnterpriseDataPlaneClusterType.String(),
+		ClusterDNS:  "some-cluster-dns",
 	}
 	provisionedCluster = api.Cluster{
-		Status: api.ClusterProvisioned,
+		Status:      api.ClusterProvisioned,
+		ClusterType: api.ManagedDataPlaneClusterType.String(),
 	}
 	enterpriseProvisionedCluster = api.Cluster{
 		Status:      api.ClusterProvisioned,
 		ClusterType: api.EnterpriseDataPlaneClusterType.String(),
+		ClusterDNS:  "some-cluster-dns",
 	}
 	observabilityConfig = &observatorium.ObservabilityConfiguration{
 		DexUrl:                             "http://dummy",
@@ -623,13 +631,14 @@ func TestClusterManager_processProvisioningClusters(t *testing.T) {
 
 func TestClusterManager_processProvisionedClusters(t *testing.T) {
 	type fields struct {
-		clusterService             services.ClusterService
-		osdIdpKeycloakService      sso.OSDKeycloakService
-		dataplaneClusterConfig     *config.DataplaneClusterConfig
-		supportedProviders         *config.ProviderConfig
-		observabilityConfiguration *observatorium.ObservabilityConfiguration
-		agentOperator              services.KasFleetshardOperatorAddon
-		providerFactory            clusters.ProviderFactory
+		clusterService                       services.ClusterService
+		osdIdpKeycloakService                sso.OSDKeycloakService
+		dataplaneClusterConfig               *config.DataplaneClusterConfig
+		supportedProviders                   *config.ProviderConfig
+		observabilityConfiguration           *observatorium.ObservabilityConfiguration
+		agentOperator                        services.KasFleetshardOperatorAddon
+		providerFactory                      clusters.ProviderFactory
+		kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 	}
 	tests := []struct {
 		name    string
@@ -737,6 +746,14 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 						return true, services.ParameterList{}, nil
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{TLSCertRef: "some-crt-ref", TLSKeyRef: "some-key-ref"}, nil
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+				},
 			},
 			wantErr: false,
 		},
@@ -745,11 +762,22 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 			fields: fields{
 				observabilityConfiguration: observabilityConfig,
 				dataplaneClusterConfig:     dataplaneClusterConfig,
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{TLSCertRef: "some-crt-ref", TLSKeyRef: "some-key-ref"}, nil
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+				},
 				clusterService: &services.ClusterServiceMock{
 					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{
 							enterpriseProvisionedCluster,
 						}, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
 					},
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
@@ -766,6 +794,14 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 			fields: fields{
 				observabilityConfiguration: observabilityConfig,
 				dataplaneClusterConfig:     dataplaneClusterConfig,
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{TLSCertRef: "some-crt-ref", TLSKeyRef: "some-key-ref"}, nil
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+				},
 				clusterService: &services.ClusterServiceMock{
 					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{
@@ -773,6 +809,9 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 						}, nil
 					},
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
 					},
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
@@ -804,6 +843,11 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 						return nil
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+				},
 			},
 			wantErr: true,
 		},
@@ -815,14 +859,18 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService:             tt.fields.clusterService,
-					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
-					DataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
-					SupportedProviders:         tt.fields.supportedProviders,
-					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
-					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
-					KasFleetshardOperatorAddon: tt.fields.agentOperator,
-					ProviderFactory:            tt.fields.providerFactory,
+					ClusterService:                       tt.fields.clusterService,
+					OsdIdpKeycloakService:                tt.fields.osdIdpKeycloakService,
+					DataplaneClusterConfig:               tt.fields.dataplaneClusterConfig,
+					SupportedProviders:                   tt.fields.supportedProviders,
+					ObservabilityConfiguration:           tt.fields.observabilityConfiguration,
+					OCMConfig:                            &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					KasFleetshardOperatorAddon:           tt.fields.agentOperator,
+					ProviderFactory:                      tt.fields.providerFactory,
+					KafkaTLSCertificateManagementService: tt.fields.kafkaTLSCertificateManagementService,
+					KafkaConfig: &config.KafkaConfig{
+						KafkaDomainName: "some-domain-name",
+					},
 				},
 			}
 			g.Expect(len(c.processProvisionedClusters()) > 0).To(gomega.Equal(tt.wantErr))
@@ -887,11 +935,12 @@ func TestClusterManager_processReadyClusters(t *testing.T) {
 
 func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 	type fields struct {
-		clusterService             services.ClusterService
-		dataplaneClusterConfig     *config.DataplaneClusterConfig
-		osdIdpKeycloakService      sso.OSDKeycloakService
-		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
-		observabilityConfiguration *observatorium.ObservabilityConfiguration
+		clusterService                       services.ClusterService
+		dataplaneClusterConfig               *config.DataplaneClusterConfig
+		osdIdpKeycloakService                sso.OSDKeycloakService
+		kasFleetshardOperatorAddon           services.KasFleetshardOperatorAddon
+		observabilityConfiguration           *observatorium.ObservabilityConfiguration
+		kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 	}
 
 	type args struct {
@@ -926,6 +975,14 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 					},
 				},
 				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+				},
 			},
 			args: args{
 				cluster: readyCluster,
@@ -949,6 +1006,14 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 					},
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
+					},
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
 					},
 				},
 				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
@@ -980,6 +1045,14 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "", apiErrors.GeneralError("failed to register osd cluster client in sso")
+					},
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
 					},
 				},
 				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
@@ -1024,6 +1097,64 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 						return nil, apiErrors.GeneralError("failed to reconcile params")
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should fail if certificate management fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, errors.New("some errors")
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &clusterWaitingForKasFleetShardOperator, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+				},
 				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
 			},
 			args: args{
@@ -1038,6 +1169,17 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 					EnableReadyDataPlaneClustersReconcile: true,
 					DataPlaneClusterScalingType:           config.ManualScaling,
 					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{
+							TLSCertRef: "some-crt-ref",
+							TLSKeyRef:  "some-key-ref",
+						}, nil
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
@@ -1081,12 +1223,16 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService:             tt.fields.clusterService,
-					DataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
-					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
-					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
-					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
-					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
+					ClusterService:                       tt.fields.clusterService,
+					DataplaneClusterConfig:               tt.fields.dataplaneClusterConfig,
+					OCMConfig:                            &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					OsdIdpKeycloakService:                tt.fields.osdIdpKeycloakService,
+					KasFleetshardOperatorAddon:           tt.fields.kasFleetshardOperatorAddon,
+					ObservabilityConfiguration:           tt.fields.observabilityConfiguration,
+					KafkaTLSCertificateManagementService: tt.fields.kafkaTLSCertificateManagementService,
+					KafkaConfig: &config.KafkaConfig{
+						KafkaDomainName: "some-domaine",
+					},
 				},
 			}
 			g.Expect(c.reconcileReadyCluster(tt.args.cluster) != nil).To(gomega.Equal(tt.wantErr))
@@ -1096,11 +1242,12 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 
 func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testing.T) {
 	type fields struct {
-		clusterService             services.ClusterService
-		dataplaneClusterConfig     *config.DataplaneClusterConfig
-		osdIdpKeycloakService      sso.OSDKeycloakService
-		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
-		observabilityConfiguration *observatorium.ObservabilityConfiguration
+		clusterService                       services.ClusterService
+		dataplaneClusterConfig               *config.DataplaneClusterConfig
+		osdIdpKeycloakService                sso.OSDKeycloakService
+		kasFleetshardOperatorAddon           services.KasFleetshardOperatorAddon
+		observabilityConfiguration           *observatorium.ObservabilityConfiguration
+		kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 	}
 
 	type args struct {
@@ -1129,6 +1276,11 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 					},
 					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
+					},
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
 					},
 				},
 				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
@@ -1161,6 +1313,11 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "", apiErrors.GeneralError("failed to register osd cluster client in sso")
+					},
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
 					},
 				},
 				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
@@ -1205,6 +1362,61 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 						return nil, apiErrors.GeneralError("failed to reconcile params")
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should fail if certificate management fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.ManualScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, errors.New("some errors")
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &clusterWaitingForKasFleetShardOperator, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					ReconcileParametersFunc: func(cluster api.Cluster) (services.ParameterList, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+				},
 				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
 			},
 			args: args{
@@ -1219,6 +1431,17 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 					EnableReadyDataPlaneClustersReconcile: true,
 					DataPlaneClusterScalingType:           config.ManualScaling,
 					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{
+							TLSCertRef: "some-crt-ref",
+							TLSKeyRef:  "some-key-ref",
+						}, nil
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return false
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
@@ -1262,12 +1485,16 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService:             tt.fields.clusterService,
-					DataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
-					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
-					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
-					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
-					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
+					ClusterService:                       tt.fields.clusterService,
+					DataplaneClusterConfig:               tt.fields.dataplaneClusterConfig,
+					OCMConfig:                            &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					OsdIdpKeycloakService:                tt.fields.osdIdpKeycloakService,
+					KasFleetshardOperatorAddon:           tt.fields.kasFleetshardOperatorAddon,
+					ObservabilityConfiguration:           tt.fields.observabilityConfiguration,
+					KafkaTLSCertificateManagementService: tt.fields.kafkaTLSCertificateManagementService,
+					KafkaConfig: &config.KafkaConfig{
+						KafkaDomainName: "some-domaine",
+					},
 				},
 			}
 			g.Expect(c.reconcileWaitingForKasFleetshardOperatorCluster(tt.args.cluster) != nil).To(gomega.Equal(tt.wantErr))
@@ -1277,12 +1504,13 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 
 func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 	type fields struct {
-		clusterService             services.ClusterService
-		dataplaneClusterConfig     *config.DataplaneClusterConfig
-		osdIdpKeycloakService      sso.OSDKeycloakService
-		observabilityConfiguration *observatorium.ObservabilityConfiguration
-		agentOperator              services.KasFleetshardOperatorAddon
-		providerFactory            clusters.ProviderFactory
+		clusterService                       services.ClusterService
+		dataplaneClusterConfig               *config.DataplaneClusterConfig
+		osdIdpKeycloakService                sso.OSDKeycloakService
+		observabilityConfiguration           *observatorium.ObservabilityConfiguration
+		agentOperator                        services.KasFleetshardOperatorAddon
+		providerFactory                      clusters.ProviderFactory
+		kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 	}
 
 	type args struct {
@@ -1336,6 +1564,11 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 					},
 					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
 						return &keycloakRealmConfig
+					},
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
 					},
 				},
 				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
@@ -1386,6 +1619,14 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 						return true, services.ParameterList{}, nil
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return false
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+				},
 				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
 			},
 			args: args{
@@ -1434,10 +1675,79 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 						return true, services.ParameterList{}, nil
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return false
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+				},
 				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{}, fmt.Errorf("test error")
+					},
+				},
+			},
+			args: args{
+				cluster: readyCluster,
+			},
+			wantErr: true,
+		},
+		{
+			name: "should fail if certificate management fails",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableReadyDataPlaneClustersReconcile: true,
+					DataPlaneClusterScalingType:           config.AutoScaling,
+					ClusterConfig:                         &config.ClusterConfig{},
+				},
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						return nil
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test", nil
+					},
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return &clusterWaitingForKasFleetShardOperator, nil
+					},
+					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
+					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloakRealmConfig
+					},
+				},
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
+						return true, services.ParameterList{}, nil
+					},
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, errors.New("some error")
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return false
+					},
+				},
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{}, nil
 					},
 				},
 			},
@@ -1487,6 +1797,14 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 						return true, services.ParameterList{}, nil
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+				},
 				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
 			},
 			args: args{
@@ -1522,6 +1840,17 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 						return nil
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{
+							TLSCertRef: "some-crt-ref",
+							TLSKeyRef:  "some-key-ref",
+						}, nil
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return false
+					},
+				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
@@ -1550,13 +1879,17 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService:             tt.fields.clusterService,
-					DataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
-					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
-					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
-					KasFleetshardOperatorAddon: tt.fields.agentOperator,
-					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
-					ProviderFactory:            tt.fields.providerFactory,
+					ClusterService:                       tt.fields.clusterService,
+					DataplaneClusterConfig:               tt.fields.dataplaneClusterConfig,
+					OCMConfig:                            &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					OsdIdpKeycloakService:                tt.fields.osdIdpKeycloakService,
+					KasFleetshardOperatorAddon:           tt.fields.agentOperator,
+					ObservabilityConfiguration:           tt.fields.observabilityConfiguration,
+					ProviderFactory:                      tt.fields.providerFactory,
+					KafkaTLSCertificateManagementService: tt.fields.kafkaTLSCertificateManagementService,
+					KafkaConfig: &config.KafkaConfig{
+						KafkaDomainName: "some-domaine",
+					},
 				},
 			}
 			g.Expect(c.reconcileProvisionedCluster(tt.args.cluster) != nil).To(gomega.Equal(tt.wantErr))
@@ -1566,11 +1899,12 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 
 func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testing.T) {
 	type fields struct {
-		clusterService             services.ClusterService
-		dataplaneClusterConfig     *config.DataplaneClusterConfig
-		observabilityConfiguration *observatorium.ObservabilityConfiguration
-		osdIdpKeycloakService      sso.OSDKeycloakService
-		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+		clusterService                       services.ClusterService
+		dataplaneClusterConfig               *config.DataplaneClusterConfig
+		observabilityConfiguration           *observatorium.ObservabilityConfiguration
+		osdIdpKeycloakService                sso.OSDKeycloakService
+		kasFleetshardOperatorAddon           services.KasFleetshardOperatorAddon
+		kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 	}
 	tests := []struct {
 		name    string
@@ -1589,7 +1923,7 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 			wantErr: true,
 		},
 		{
-			name: "should return an error if it occurs during processing ready clusters",
+			name: "should return an error if it occurs during processing waiting for kas-fleetshard clusters",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
@@ -1597,8 +1931,19 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 							clusterWaitingForKasFleetShardOperator,
 						}, nil
 					},
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("some errors")
+					},
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
 						return apiErrors.GeneralError("failed to apply resources")
+					},
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return false
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
 					},
 				},
 				dataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
@@ -1628,6 +1973,14 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 						return nil
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{TLSCertRef: "some-crt-ref", TLSKeyRef: "some-key-ref"}, nil
+					},
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return false
+					},
+				},
 				osdIdpKeycloakService: &sso.OSDKeycloakServiceMock{
 					RegisterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
@@ -1654,12 +2007,16 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 			g := gomega.NewWithT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService:             tt.fields.clusterService,
-					DataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
-					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
-					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
-					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
-					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
+					ClusterService:                       tt.fields.clusterService,
+					DataplaneClusterConfig:               tt.fields.dataplaneClusterConfig,
+					ObservabilityConfiguration:           tt.fields.observabilityConfiguration,
+					OCMConfig:                            &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					OsdIdpKeycloakService:                tt.fields.osdIdpKeycloakService,
+					KasFleetshardOperatorAddon:           tt.fields.kasFleetshardOperatorAddon,
+					KafkaTLSCertificateManagementService: tt.fields.kafkaTLSCertificateManagementService,
+					KafkaConfig: &config.KafkaConfig{
+						KafkaDomainName: "some-domain-name",
+					},
 				},
 			}
 			g.Expect(len(c.processWaitingForKasFleetshardOperatorClusters()) > 0).To(gomega.Equal(tt.wantErr))

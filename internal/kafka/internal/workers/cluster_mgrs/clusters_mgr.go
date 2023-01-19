@@ -1,6 +1,7 @@
 package cluster_mgrs
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
@@ -10,6 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafka_tls_certificate_management"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
@@ -19,6 +21,7 @@ import (
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 	"github.com/google/uuid"
@@ -103,16 +106,18 @@ type ClusterManager struct {
 
 type ClusterManagerOptions struct {
 	di.Inject
-	Reconciler                 workers.Reconciler
-	OCMConfig                  *ocm.OCMConfig
-	ObservabilityConfiguration *observatorium.ObservabilityConfiguration
-	DataplaneClusterConfig     *config.DataplaneClusterConfig
-	SupportedProviders         *config.ProviderConfig
-	ClusterService             services.ClusterService
-	CloudProvidersService      services.CloudProvidersService
-	KasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
-	OsdIdpKeycloakService      sso.OsdKeycloakService
-	ProviderFactory            clusters.ProviderFactory
+	Reconciler                           workers.Reconciler
+	OCMConfig                            *ocm.OCMConfig
+	KafkaConfig                          *config.KafkaConfig
+	ObservabilityConfiguration           *observatorium.ObservabilityConfiguration
+	DataplaneClusterConfig               *config.DataplaneClusterConfig
+	SupportedProviders                   *config.ProviderConfig
+	ClusterService                       services.ClusterService
+	CloudProvidersService                services.CloudProvidersService
+	KasFleetshardOperatorAddon           services.KasFleetshardOperatorAddon
+	OsdIdpKeycloakService                sso.OsdKeycloakService
+	ProviderFactory                      clusters.ProviderFactory
+	KafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 }
 
 type processor func() []error
@@ -286,28 +291,11 @@ func (c *ClusterManager) processProvisionedClusters() []error {
 
 	// process each local provisioned cluster and apply necessary terraforming.
 	for _, provisionedCluster := range provisionedClusters {
-		if provisionedCluster.ClusterType != api.EnterpriseDataPlaneClusterType.String() {
-			glog.V(10).Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
-			metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterProvisioned)
-			err := c.reconcileProvisionedCluster(provisionedCluster)
-			if err != nil {
-				errs = append(errs, errors.Wrapf(err, "failed to reconcile provisioned cluster %s", provisionedCluster.ClusterID))
-			}
-		} else {
-			// create or update sync set
-			syncSetErr := c.reconcileClusterResources(provisionedCluster)
-			if syncSetErr != nil {
-				errs = append(errs, errors.Wrapf(syncSetErr, "failed to create or update resource set of provisioned %s cluster %s", api.EnterpriseDataPlaneClusterType.String(), provisionedCluster.ID))
-			}
-
-			// update provisioned cluster status
-			provisionedCluster.Status = api.ClusterStatus(api.ClusterWaitingForKasFleetShardOperator.String())
-			updateErr := c.ClusterService.Update(provisionedCluster)
-			if updateErr != nil {
-				errs = append(errs, errors.Wrapf(updateErr, "failed to update status of provisioned %s cluster %s", api.EnterpriseDataPlaneClusterType.String(), provisionedCluster.ID))
-			} else {
-				glog.V(10).Infof("changed status of provisioned %s cluster with ClusterID = %s to %s", api.EnterpriseDataPlaneClusterType.String(), provisionedCluster.ClusterID, api.ClusterWaitingForKasFleetShardOperator.String())
-			}
+		glog.V(10).Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
+		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterProvisioned)
+		err := c.reconcileProvisionedCluster(provisionedCluster)
+		if err != nil {
+			errs = append(errs, errors.Wrapf(err, "failed to reconcile provisioned cluster %s", provisionedCluster.ClusterID))
 		}
 	}
 
@@ -326,23 +314,13 @@ func (c *ClusterManager) processReadyClusters() []error {
 	}
 
 	for _, readyCluster := range readyClusters {
-		if readyCluster.ClusterType != api.EnterpriseDataPlaneClusterType.String() {
-			glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
-			recErr := c.reconcileReadyCluster(readyCluster)
-
-			if recErr != nil {
-				errs = append(errs, errors.Wrapf(recErr, "failed to reconcile ready cluster %s", readyCluster.ClusterID))
-			}
-		} else {
-			// create or update sync set
-			syncSetErr := c.reconcileClusterResources(readyCluster)
-			if syncSetErr != nil {
-				errs = append(errs, errors.Wrapf(syncSetErr, "failed to create or update resource set of ready %s cluster %s", api.EnterpriseDataPlaneClusterType.String(), readyCluster.ID))
-			} else {
-				glog.V(10).Infof("resource set created or updated for %s cluster with id %s", api.EnterpriseDataPlaneClusterType.String(), readyCluster.ClusterID)
-			}
+		glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
+		err := c.reconcileReadyCluster(readyCluster)
+		if err != nil {
+			errs = append(errs, errors.Wrapf(err, "failed to reconcile ready cluster %s", readyCluster.ClusterID))
 		}
 	}
+
 	return errs
 }
 
@@ -358,21 +336,11 @@ func (c *ClusterManager) processWaitingForKasFleetshardOperatorClusters() []erro
 
 	// process each local waiting cluster and apply necessary terraforming.
 	for _, waitingCluster := range waitingClusters {
-		if waitingCluster.ClusterType != api.EnterpriseDataPlaneClusterType.String() {
-			glog.V(10).Infof("waiting for Kas Fleetshard Operator cluster ClusterID = %s", waitingCluster.ClusterID)
-			metrics.UpdateClusterStatusSinceCreatedMetric(waitingCluster, api.ClusterWaitingForKasFleetShardOperator)
-			err := c.reconcileWaitingForKasFleetshardOperatorCluster(waitingCluster)
-			if err != nil {
-				errs = append(errs, errors.Wrapf(err, "failed to reconcile waiting for Kas Fleetshard Operator cluster %s", waitingCluster.ClusterID))
-			}
-		} else {
-			// create or update sync set
-			syncSetErr := c.reconcileClusterResources(waitingCluster)
-			if syncSetErr != nil {
-				errs = append(errs, errors.Wrapf(syncSetErr, "failed to create or update resource set of %s cluster %s waiting for kas fleetshard operator", api.EnterpriseDataPlaneClusterType.String(), waitingCluster.ID))
-			} else {
-				glog.V(10).Infof("resource set created or updated for %s cluster with id %s", api.EnterpriseDataPlaneClusterType.String(), waitingCluster.ClusterID)
-			}
+		glog.V(10).Infof("waiting for Kas Fleetshard Operator cluster ClusterID = %s", waitingCluster.ClusterID)
+		metrics.UpdateClusterStatusSinceCreatedMetric(waitingCluster, api.ClusterWaitingForKasFleetShardOperator)
+		err := c.reconcileWaitingForKasFleetshardOperatorCluster(waitingCluster)
+		if err != nil {
+			errs = append(errs, errors.Wrapf(err, "failed to reconcile waiting for Kas Fleetshard Operator cluster %s", waitingCluster.ClusterID))
 		}
 	}
 
@@ -385,43 +353,79 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 		return nil
 	}
 
-	if cluster.ClusterType == api.EnterpriseDataPlaneClusterType.String() {
-		glog.Infof("Reconcile of %s ready clusters is disabled. Skipped reconcile of ready ClusterID '%s'", api.EnterpriseDataPlaneClusterType.String(), cluster.ClusterID)
+	var err error
+	err = c.reconcileClusterBaseKafkasDomainName(cluster)
+	if err != nil {
+		return errors.WithMessagef(err, "failed to reconcile base domain name of deployed kafkas for ready cluster %q", cluster.ClusterID)
+	}
+
+	if err := c.reconcileClusterResources(cluster); err != nil {
+		return errors.WithMessagef(err, "failed to reconcile ready cluster resources %q", cluster.ClusterID)
+	}
+
+	err = c.reconcileClusterCertificates(cluster)
+	if err != nil {
+		return errors.WithMessagef(err, "failed to reconcile ready cluster %q certificates", cluster.ClusterID)
+	}
+
+	if cluster.ClusterType == api.ManagedDataPlaneClusterType.String() {
+		err = c.reconcileClusterInstanceType(cluster)
+		if err != nil {
+			return errors.WithMessagef(err, "failed to reconcile instance type ready cluster %q", cluster.ClusterID)
+		}
+
+		err = c.reconcileDynamicCapacityInfo(cluster)
+		if err != nil {
+			return errors.WithMessagef(err, "failed to reconcile dynamic capacity info for ready cluster %q", cluster.ClusterID)
+		}
+
+		err = c.reconcileClusterDNS(cluster)
+		if err != nil {
+			return errors.WithMessagef(err, "failed to reconcile cluster dns of ready cluster %q", cluster.ClusterID)
+		}
+
+		err = c.reconcileClusterIdentityProvider(cluster)
+		if err != nil {
+			return errors.WithMessagef(err, "failed to reconcile identity provider of ready cluster %q", cluster.ClusterID)
+		}
+
+		err = c.reconcileKasFleetshardOperator(cluster)
+		if err != nil {
+			return errors.WithMessagef(err, "failed to reconcile Kas Fleetshard Operator of ready cluster %q:", cluster.ClusterID)
+		}
+	}
+
+	return nil
+}
+
+// reconcileClusterBaseKafkasDomainName sets the base domain name of deployed kafkas from the configuration if it is not already set.
+func (c *ClusterManager) reconcileClusterBaseKafkasDomainName(cluster api.Cluster) error {
+	logger.Logger.Infof("reconciling cluster = %s kafka domain name", cluster.ClusterID)
+	if !c.KafkaTLSCertificateManagementService.IsAutomaticCertificateManagementEnabled() {
+		logger.Logger.Infof("certificate management running in manual mode. Skipping reconciling base domain for kafkas for cluster %q", cluster.ClusterID)
 		return nil
 	}
 
-	var err error
+	if cluster.BaseKafkasDomainName != "" {
+		logger.Logger.Infof("kafka domain name for cluster %q already set", cluster.ClusterID)
+		return nil
+	}
 
-	err = c.reconcileClusterInstanceType(cluster)
+	// we want to continue using the shared wildcard certificate under the kafka domain for already existing ready clusters.
+	// See ADR-89 https://github.com/bf2fc6cc711aee1a0c2a/architecture/blob/main/_adr/89/index.adoc for more info
+	if cluster.Status == api.ClusterReady && cluster.ClusterType == api.ManagedDataPlaneClusterType.String() {
+		cluster.BaseKafkasDomainName = c.KafkaConfig.KafkaDomainName
+	} else {
+		// use the domain format provided by ADR-89 https://github.com/bf2fc6cc711aee1a0c2a/architecture/blob/main/_adr/89/index.adoc
+		cluster.BaseKafkasDomainName = fmt.Sprintf("%s.%s", cluster.ClusterID, c.KafkaConfig.KafkaDomainName)
+	}
+
+	err := c.ClusterService.Update(cluster)
 	if err != nil {
-		return errors.WithMessagef(err, "failed to reconcile instance type ready cluster %s: %s", cluster.ClusterID, err.Error())
+		return errors.Wrapf(err, "failed to update base domain name of deployed kafkas in database for cluster %q", cluster.ClusterID)
 	}
 
-	err = c.reconcileDynamicCapacityInfo(cluster)
-	if err != nil {
-		return errors.WithMessagef(err, "failed to reconcile dynamic capacity info for ready cluster %s: %s", cluster.ClusterID, err.Error())
-	}
-
-	// resources update if needed
-	if err := c.reconcileClusterResources(cluster); err != nil {
-		return errors.WithMessagef(err, "failed to reconcile ready cluster resources %s ", cluster.ClusterID)
-	}
-
-	err = c.reconcileClusterDNS(cluster)
-	if err != nil {
-		return errors.WithMessagef(err, "failed to reconcile cluster dns of ready cluster %s: %s", cluster.ClusterID, err.Error())
-	}
-
-	err = c.reconcileClusterIdentityProvider(cluster)
-	if err != nil {
-		return errors.WithMessagef(err, "failed to reconcile identity provider of ready cluster %s: %s", cluster.ClusterID, err.Error())
-	}
-
-	err = c.reconcileKasFleetshardOperator(cluster)
-	if err != nil {
-		return errors.WithMessagef(err, "failed to reconcile Kas Fleetshard Operator of ready cluster %s: %s", cluster.ClusterID, err.Error())
-	}
-
+	logger.Logger.Infof("kafka domain name for cluster %q successful updated", cluster.ClusterID)
 	return nil
 }
 
@@ -497,33 +501,29 @@ func (c *ClusterManager) reconcileDynamicCapacityInfo(cluster api.Cluster) error
 }
 
 func (c *ClusterManager) reconcileWaitingForKasFleetshardOperatorCluster(cluster api.Cluster) error {
+	if err := c.reconcileClusterBaseKafkasDomainName(cluster); err != nil {
+		return errors.WithMessagef(err, "failed to reconcile waiting for Kas Fleetshard Operator cluster base domain name of deployed kafkas %q", cluster.ClusterID)
+	}
+
 	if err := c.reconcileClusterResources(cluster); err != nil {
-		return errors.WithMessagef(err, "failed to reconcile  waiting for Kas Fleetshard Operator cluster resources '%s'", cluster.ClusterID)
+		return errors.WithMessagef(err, "failed to reconcile waiting for Kas Fleetshard Operator cluster resources '%s'", cluster.ClusterID)
 	}
 
-	if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
-		return errors.WithMessagef(err, "failed to reconcile identity provider of waiting for Kas Fleetshard Operator cluster %s: %s", cluster.ClusterID, err.Error())
+	if cluster.ClusterType == api.ManagedDataPlaneClusterType.String() {
+		if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
+			return errors.WithMessagef(err, "failed to reconcile identity provider of waiting for Kas Fleetshard Operator cluster %s: %s", cluster.ClusterID, err.Error())
+		}
+
+		if err := c.reconcileKasFleetshardOperator(cluster); err != nil {
+			return errors.WithMessagef(err, "failed to reconcile Kas Fleetshard Operator of waiting for Kas Fleetshard Operator cluster %s: %s", cluster.ClusterID, err.Error())
+		}
 	}
 
-	if err := c.reconcileKasFleetshardOperator(cluster); err != nil {
-		return errors.WithMessagef(err, "failed to reconcile Kas Fleetshard Operator of waiting for Kas Fleetshard Operator cluster %s: %s", cluster.ClusterID, err.Error())
-	}
-
-	return nil
+	return c.reconcileClusterCertificates(cluster)
 }
 
 func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {
-	machinePoolsReconciled, err := c.reconcileClusterMachinePools(cluster)
-	if err != nil {
-		return err
-	}
-	glog.V(10).Infof("status of Machine Pools reconciling is %v", machinePoolsReconciled)
-
 	if err := c.reconcileClusterDNS(cluster); err != nil {
-		return err
-	}
-
-	if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
 		return err
 	}
 
@@ -533,12 +533,36 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 		return errors.WithMessagef(syncSetErr, "failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
 	}
 
-	addonsReconciled, addOnErr := c.reconcileAddonOperator(cluster)
-	if addOnErr != nil {
-		return errors.WithMessagef(addOnErr, "failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
+	if err := c.reconcileClusterBaseKafkasDomainName(cluster); err != nil {
+		return errors.WithMessagef(err, "failed to reconcile base domain name of deployed kafkas for provisioned cluster %q", cluster.ClusterID)
 	}
 
-	if machinePoolsReconciled && addonsReconciled {
+	if err := c.reconcileClusterCertificates(cluster); err != nil {
+		return errors.WithMessagef(err, "failed to reconcile provisioned cluster %q certificates", cluster.ClusterID)
+	}
+
+	provisionedClusterReconciled := true
+
+	if cluster.ClusterType == api.ManagedDataPlaneClusterType.String() {
+		if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
+			return err
+		}
+
+		addonsReconciled, addOnErr := c.reconcileAddonOperator(cluster)
+		if addOnErr != nil {
+			return errors.WithMessagef(addOnErr, "failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
+		}
+
+		machinePoolsReconciled, err := c.reconcileClusterMachinePools(cluster)
+		if err != nil {
+			return err
+		}
+		glog.V(10).Infof("status of Machine Pools reconciling is %v", machinePoolsReconciled)
+
+		provisionedClusterReconciled = machinePoolsReconciled && addonsReconciled
+	}
+
+	if provisionedClusterReconciled {
 		glog.V(0).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForKasFleetShardOperator, cluster.ClusterID)
 		if err := c.ClusterService.
 			UpdateStatus(cluster, api.ClusterWaitingForKasFleetShardOperator); err != nil {
@@ -1218,5 +1242,22 @@ func (c *ClusterManager) setClusterProviderResourceQuotaMetrics() error {
 		metrics.UpdateClusterProviderResourceQuotaConsumed(q.ID, api.ClusterProviderOCM.String(), q.Consumed)
 		metrics.UpdateClusterProviderResourceQuotaMaxAllowedMetric(q.ID, api.ClusterProviderOCM.String(), q.MaxAllowed)
 	}
+	return nil
+}
+
+func (c *ClusterManager) reconcileClusterCertificates(cluster api.Cluster) error {
+	certManagementOutput, err := c.KafkaTLSCertificateManagementService.ManageCertificate(context.Background(), cluster.BaseKafkasDomainName)
+	if err != nil {
+		return errors.Wrapf(err, "failed to manage cluster %q certificates", cluster.ClusterID)
+	}
+
+	cluster.BaseKafkasDomainTLSCrtRef = certManagementOutput.TLSCertRef
+	cluster.BaseKafkasDomainTLSKeyRef = certManagementOutput.TLSKeyRef
+
+	srvErr := c.ClusterService.Update(cluster)
+	if srvErr != nil {
+		return errors.Wrapf(srvErr, "failed to update cluster %q certificate referrences", cluster.ClusterID)
+	}
+
 	return nil
 }

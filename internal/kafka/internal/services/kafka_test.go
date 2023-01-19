@@ -17,6 +17,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafka_tls_certificate_management"
 	mocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
@@ -3190,11 +3191,14 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 		})
 	}
 }
+
 func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 	type fields struct {
-		connectionFactory *db.ConnectionFactory
-		keycloakService   sso.KeycloakService
-		kafkaConfig       *config.KafkaConfig
+		connectionFactory                    *db.ConnectionFactory
+		keycloakService                      sso.KeycloakService
+		clusterService                       ClusterService
+		kafkaConfig                          *config.KafkaConfig
+		kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 	}
 	type args struct {
 		clusterID string
@@ -3206,16 +3210,15 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 			SizeId:       "x1",
 		},
 	}
-	managedkafkaCR, _ := buildManagedKafkaCR(
+	managedkafkaCRWithoutCerts, _ := buildManagedKafkaCR(
 		&dbapi.KafkaRequest{
 			ClusterID:    testClusterID,
 			InstanceType: "developer",
 			SizeId:       "x1",
 		},
 		&config.KafkaConfig{
-			EnableKafkaExternalCertificate: true,
-			EnableKafkaCNAMERegistration:   true,
-			SupportedInstanceTypes:         &kafkaSupportedInstanceTypesConfig,
+			EnableKafkaCNAMERegistration: true,
+			SupportedInstanceTypes:       &kafkaSupportedInstanceTypesConfig,
 		},
 		&sso.KeycloakServiceMock{
 			GetConfigFunc: func() *keycloak.KeycloakConfig {
@@ -3226,20 +3229,47 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
 				return &keycloak.KeycloakRealmConfig{}
 			},
-		})
+		}, kafka_tls_certificate_management.Certificate{}, false)
+
+	managedkafkaCRWithCert, _ := buildManagedKafkaCR(
+		&dbapi.KafkaRequest{
+			ClusterID:    testClusterID,
+			InstanceType: "developer",
+			SizeId:       "x1",
+		},
+		&config.KafkaConfig{
+			EnableKafkaCNAMERegistration: true,
+			SupportedInstanceTypes:       &kafkaSupportedInstanceTypesConfig,
+		},
+		&sso.KeycloakServiceMock{
+			GetConfigFunc: func() *keycloak.KeycloakConfig {
+				return &keycloak.KeycloakConfig{
+					EnableAuthenticationOnKafka: true,
+				}
+			},
+			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+				return &keycloak.KeycloakRealmConfig{}
+			},
+		}, kafka_tls_certificate_management.Certificate{TLSCert: "crt-cert", TLSKey: "key-cert"}, true)
 
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
 		want    []managedkafka.ManagedKafka
-		wantErr *errors.ServiceError
+		wantErr bool
 		setupFn func()
 	}{
 		{
-			name: "should return the kafka by cluster id",
+			name: "should return the kafka by cluster id when external certificate is disabled",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsKafkaExternalCertificateEnabledFunc: func() bool {
+						return false
+					},
+					GetCertificateFunc: nil, // assign to nil as it should never be called
+				},
 				keycloakService: &sso.KeycloakServiceMock{
 					GetConfigFunc: func() *keycloak.KeycloakConfig {
 						return &keycloak.KeycloakConfig{
@@ -3251,16 +3281,111 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: true,
-					EnableKafkaCNAMERegistration:   true,
-					SupportedInstanceTypes:         &kafkaSupportedInstanceTypesConfig,
+					EnableKafkaCNAMERegistration: true,
+					SupportedInstanceTypes:       &kafkaSupportedInstanceTypesConfig,
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: nil, // setting to nil as it should never be called
 				},
 			},
 			args: args{
 				clusterID: testClusterID,
 			},
-			wantErr: nil,
-			want:    []managedkafka.ManagedKafka{*managedkafkaCR},
+			wantErr: false,
+			want:    []managedkafka.ManagedKafka{*managedkafkaCRWithoutCerts},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
+				response := converters.ConvertKafkaRequestList(kafkaRequestList)
+				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "should return the kafka by cluster id when external certificate is enabled",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsKafkaExternalCertificateEnabledFunc: func() bool {
+						return true
+					},
+					GetCertificateFunc: func(ctx context.Context, request kafka_tls_certificate_management.GetCertificateRequest) (kafka_tls_certificate_management.Certificate, error) {
+						return kafka_tls_certificate_management.Certificate{
+							TLSCert: "crt-cert",
+							TLSKey:  "key-cert",
+						}, nil
+					},
+				},
+				keycloakService: &sso.KeycloakServiceMock{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloak.KeycloakRealmConfig{}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaCNAMERegistration: true,
+					SupportedInstanceTypes:       &kafkaSupportedInstanceTypesConfig,
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{ClusterID: clusterID}, nil
+					},
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			wantErr: false,
+			want:    []managedkafka.ManagedKafka{*managedkafkaCRWithCert},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
+				response := converters.ConvertKafkaRequestList(kafkaRequestList)
+				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "should return an error when fetching certificates fails",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsKafkaExternalCertificateEnabledFunc: func() bool {
+						return true
+					},
+					GetCertificateFunc: func(ctx context.Context, request kafka_tls_certificate_management.GetCertificateRequest) (kafka_tls_certificate_management.Certificate, error) {
+						return kafka_tls_certificate_management.Certificate{}, fmt.Errorf("some error")
+					},
+				},
+				keycloakService: &sso.KeycloakServiceMock{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloak.KeycloakRealmConfig{}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaCNAMERegistration: true,
+					SupportedInstanceTypes:       &kafkaSupportedInstanceTypesConfig,
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{ClusterID: clusterID}, nil
+					},
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			wantErr: true,
+			want:    nil,
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
@@ -3277,13 +3402,15 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			k := &kafkaService{
-				connectionFactory: tt.fields.connectionFactory,
-				keycloakService:   tt.fields.keycloakService,
-				kafkaConfig:       tt.fields.kafkaConfig,
+				connectionFactory:                    tt.fields.connectionFactory,
+				keycloakService:                      tt.fields.keycloakService,
+				kafkaConfig:                          tt.fields.kafkaConfig,
+				kafkaTLSCertificateManagementService: tt.fields.kafkaTLSCertificateManagementService,
+				clusterService:                       tt.fields.clusterService,
 			}
 			got, err := k.GetManagedKafkaByClusterID(tt.args.clusterID)
 			g.Expect(got).To(gomega.Equal(tt.want))
-			g.Expect(err).To(gomega.Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -3351,9 +3478,8 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: true,
-					EnableKafkaCNAMERegistration:   true,
-					SupportedInstanceTypes:         &kafkaSupportedInstanceTypesConfig,
+					EnableKafkaCNAMERegistration: true,
+					SupportedInstanceTypes:       &kafkaSupportedInstanceTypesConfig,
 				},
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					NodePrewarmingConfig: config.NodePrewarmingConfig{
@@ -3959,17 +4085,18 @@ func Test_kafkaService_GetCNAMERecordStatus(t *testing.T) {
 
 func Test_NewKafkaService(t *testing.T) {
 	type args struct {
-		connectionFactory        *db.ConnectionFactory
-		clusterService           ClusterService
-		keycloakService          sso.KafkaKeycloakService
-		kafkaConfig              *config.KafkaConfig
-		dataplaneClusterConfig   *config.DataplaneClusterConfig
-		awsConfig                *config.AWSConfig
-		quotaServiceFactory      QuotaServiceFactory
-		awsClientFactory         aws.ClientFactory
-		authorizationService     authorization.Authorization
-		providerConfig           *config.ProviderConfig
-		clusterPlacementStrategy ClusterPlacementStrategy
+		connectionFactory                    *db.ConnectionFactory
+		clusterService                       ClusterService
+		keycloakService                      sso.KafkaKeycloakService
+		kafkaConfig                          *config.KafkaConfig
+		dataplaneClusterConfig               *config.DataplaneClusterConfig
+		awsConfig                            *config.AWSConfig
+		quotaServiceFactory                  QuotaServiceFactory
+		awsClientFactory                     aws.ClientFactory
+		authorizationService                 authorization.Authorization
+		providerConfig                       *config.ProviderConfig
+		clusterPlacementStrategy             ClusterPlacementStrategy
+		kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 	}
 	tests := []struct {
 		name string
@@ -3979,28 +4106,30 @@ func Test_NewKafkaService(t *testing.T) {
 		{
 			name: "should return the kafka service",
 			args: args{
-				connectionFactory:        &db.ConnectionFactory{},
-				clusterService:           &ClusterServiceMock{},
-				keycloakService:          &sso.KeycloakServiceMock{},
-				kafkaConfig:              &config.KafkaConfig{},
-				dataplaneClusterConfig:   &config.DataplaneClusterConfig{},
-				awsConfig:                &config.AWSConfig{},
-				quotaServiceFactory:      &QuotaServiceFactoryMock{},
-				awsClientFactory:         &aws.MockClientFactory{},
-				providerConfig:           &config.ProviderConfig{},
-				clusterPlacementStrategy: &ClusterPlacementStrategyMock{},
+				connectionFactory:                    &db.ConnectionFactory{},
+				clusterService:                       &ClusterServiceMock{},
+				keycloakService:                      &sso.KeycloakServiceMock{},
+				kafkaConfig:                          &config.KafkaConfig{},
+				dataplaneClusterConfig:               &config.DataplaneClusterConfig{},
+				awsConfig:                            &config.AWSConfig{},
+				quotaServiceFactory:                  &QuotaServiceFactoryMock{},
+				awsClientFactory:                     &aws.MockClientFactory{},
+				providerConfig:                       &config.ProviderConfig{},
+				clusterPlacementStrategy:             &ClusterPlacementStrategyMock{},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{},
 			},
 			want: &kafkaService{
-				connectionFactory:        &db.ConnectionFactory{},
-				clusterService:           &ClusterServiceMock{},
-				keycloakService:          &sso.KeycloakServiceMock{},
-				kafkaConfig:              &config.KafkaConfig{},
-				dataplaneClusterConfig:   &config.DataplaneClusterConfig{},
-				awsConfig:                &config.AWSConfig{},
-				quotaServiceFactory:      &QuotaServiceFactoryMock{},
-				awsClientFactory:         &aws.MockClientFactory{},
-				providerConfig:           &config.ProviderConfig{},
-				clusterPlacementStrategy: &ClusterPlacementStrategyMock{},
+				connectionFactory:                    &db.ConnectionFactory{},
+				clusterService:                       &ClusterServiceMock{},
+				keycloakService:                      &sso.KeycloakServiceMock{},
+				kafkaConfig:                          &config.KafkaConfig{},
+				dataplaneClusterConfig:               &config.DataplaneClusterConfig{},
+				awsConfig:                            &config.AWSConfig{},
+				quotaServiceFactory:                  &QuotaServiceFactoryMock{},
+				awsClientFactory:                     &aws.MockClientFactory{},
+				providerConfig:                       &config.ProviderConfig{},
+				clusterPlacementStrategy:             &ClusterPlacementStrategyMock{},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{},
 			},
 		},
 	}
@@ -4008,7 +4137,19 @@ func Test_NewKafkaService(t *testing.T) {
 	for _, testcase := range tests {
 		g := gomega.NewWithT(t)
 		tt := testcase
-		g.Expect(NewKafkaService(tt.args.connectionFactory, tt.args.clusterService, tt.args.keycloakService, tt.args.kafkaConfig, tt.args.dataplaneClusterConfig, tt.args.awsConfig, tt.args.quotaServiceFactory, tt.args.awsClientFactory, tt.args.authorizationService, tt.args.providerConfig, tt.args.clusterPlacementStrategy)).To(gomega.Equal(tt.want))
+		g.Expect(NewKafkaService(
+			tt.args.connectionFactory,
+			tt.args.clusterService,
+			tt.args.keycloakService,
+			tt.args.kafkaConfig,
+			tt.args.dataplaneClusterConfig,
+			tt.args.awsConfig,
+			tt.args.quotaServiceFactory,
+			tt.args.awsClientFactory,
+			tt.args.authorizationService,
+			tt.args.providerConfig,
+			tt.args.clusterPlacementStrategy,
+			tt.args.kafkaTLSCertificateManagementService)).To(gomega.Equal(tt.want))
 	}
 }
 
@@ -4082,15 +4223,21 @@ func Test_kafkaService_AssignBootstrapServerHost(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should use external certificate if kafkaconfig specifies",
+			name: "should use create bootstrap server host in kafka domain if kafkaconfig specifies",
 			fields: fields{
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
 					},
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							ClusterID:            clusterID,
+							BaseKafkasDomainName: "some-domain.com",
+						}, nil
+					},
 				},
 				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: true,
+					EnableKafkaCNAMERegistration: true,
 				},
 			},
 			args: args{
@@ -4105,6 +4252,7 @@ func Test_kafkaService_AssignBootstrapServerHost(t *testing.T) {
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
 					},
+					FindClusterByIDFunc: nil, // it should never be called
 				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
@@ -4122,8 +4270,16 @@ func Test_kafkaService_AssignBootstrapServerHost(t *testing.T) {
 				clusterService: test.fields.clusterService,
 				kafkaConfig:    test.fields.kafkaConfig,
 			}
+
+			//set the bootstrap server host as empty, mimicking what really happens
+			test.args.kafkaRequest.BootstrapServerHost = ""
+
 			err := k.AssignBootstrapServerHost(test.args.kafkaRequest)
 			g.Expect(err != nil).To(gomega.Equal(test.wantErr))
+
+			if !test.wantErr {
+				g.Expect(test.args.kafkaRequest.BootstrapServerHost).ToNot(gomega.BeEmpty())
+			}
 		})
 	}
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafka_tls_certificate_management"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
@@ -132,33 +133,40 @@ type KafkaService interface {
 var _ KafkaService = &kafkaService{}
 
 type kafkaService struct {
-	connectionFactory        *db.ConnectionFactory
-	clusterService           ClusterService
-	keycloakService          sso.KeycloakService
-	kafkaConfig              *config.KafkaConfig
-	awsConfig                *config.AWSConfig
-	quotaServiceFactory      QuotaServiceFactory
-	mu                       sync.Mutex
-	awsClientFactory         aws.ClientFactory
-	authService              authorization.Authorization
-	dataplaneClusterConfig   *config.DataplaneClusterConfig
-	providerConfig           *config.ProviderConfig
-	clusterPlacementStrategy ClusterPlacementStrategy
+	connectionFactory                    *db.ConnectionFactory
+	clusterService                       ClusterService
+	keycloakService                      sso.KeycloakService
+	kafkaConfig                          *config.KafkaConfig
+	awsConfig                            *config.AWSConfig
+	quotaServiceFactory                  QuotaServiceFactory
+	mu                                   sync.Mutex
+	awsClientFactory                     aws.ClientFactory
+	authService                          authorization.Authorization
+	dataplaneClusterConfig               *config.DataplaneClusterConfig
+	providerConfig                       *config.ProviderConfig
+	clusterPlacementStrategy             ClusterPlacementStrategy
+	kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService sso.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, providerConfig *config.ProviderConfig, clusterPlacementStrategy ClusterPlacementStrategy) *kafkaService {
+func NewKafkaService(
+	connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService sso.KafkaKeycloakService,
+	kafkaConfig *config.KafkaConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
+	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization,
+	providerConfig *config.ProviderConfig, clusterPlacementStrategy ClusterPlacementStrategy,
+	kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService) *kafkaService {
 	return &kafkaService{
-		connectionFactory:        connectionFactory,
-		clusterService:           clusterService,
-		keycloakService:          keycloakService,
-		kafkaConfig:              kafkaConfig,
-		awsConfig:                awsConfig,
-		quotaServiceFactory:      quotaServiceFactory,
-		awsClientFactory:         awsClientFactory,
-		authService:              authorizationService,
-		dataplaneClusterConfig:   dataplaneClusterConfig,
-		providerConfig:           providerConfig,
-		clusterPlacementStrategy: clusterPlacementStrategy,
+		connectionFactory:                    connectionFactory,
+		clusterService:                       clusterService,
+		keycloakService:                      keycloakService,
+		kafkaConfig:                          kafkaConfig,
+		awsConfig:                            awsConfig,
+		quotaServiceFactory:                  quotaServiceFactory,
+		awsClientFactory:                     awsClientFactory,
+		authService:                          authorizationService,
+		dataplaneClusterConfig:               dataplaneClusterConfig,
+		providerConfig:                       providerConfig,
+		clusterPlacementStrategy:             clusterPlacementStrategy,
+		kafkaTLSCertificateManagementService: kafkaTLSCertificateManagementService,
 	}
 }
 
@@ -828,13 +836,36 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka requests")
 	}
 
+	var certificate kafka_tls_certificate_management.Certificate
+
+	enableKafkaExternalCertificate := k.kafkaTLSCertificateManagementService.IsKafkaExternalCertificateEnabled()
+
+	if enableKafkaExternalCertificate { // only fetch certs when Kafka external certificates is enabled
+		cluster, serviceErr := k.clusterService.FindClusterByID(clusterID)
+		if serviceErr != nil {
+			return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, serviceErr, "failed to find cluster with id: %q", clusterID)
+		}
+		certRequest := kafka_tls_certificate_management.GetCertificateRequest{
+			TLSCertRef: cluster.BaseKafkasDomainTLSCrtRef,
+			TLSKeyRef:  cluster.BaseKafkasDomainTLSKeyRef,
+		}
+
+		var err error
+		certificate, err = k.kafkaTLSCertificateManagementService.GetCertificate(context.Background(), certRequest)
+		if err != nil {
+			return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to find cluster %q certificates", clusterID)
+		}
+
+	}
+
 	var res []managedkafka.ManagedKafka
 	// convert kafka requests to managed kafka
 	for _, kafkaRequest := range kafkaRequestList {
-		mk, err := buildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService)
+		mk, err := buildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService, certificate, enableKafkaExternalCertificate)
 		if err != nil {
 			return nil, err
 		}
+
 		res = append(res, *mk)
 	}
 
@@ -1077,7 +1108,9 @@ func (k *kafkaService) ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, 
 	return results, nil
 }
 
-func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakService sso.KeycloakService) (*managedkafka.ManagedKafka, *errors.ServiceError) {
+func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakService sso.KeycloakService,
+	certificates kafka_tls_certificate_management.Certificate,
+	enableKafkaExternalCertificate bool) (*managedkafka.ManagedKafka, *errors.ServiceError) {
 	k, err := kafkaConfig.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka request")
@@ -1159,10 +1192,10 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		managedKafkaCR.Spec.ServiceAccounts = serviceAccounts
 	}
 
-	if kafkaConfig.EnableKafkaExternalCertificate {
+	if enableKafkaExternalCertificate {
 		managedKafkaCR.Spec.Endpoint.Tls = &managedkafka.TlsSpec{
-			Cert: kafkaConfig.KafkaTLSCert,
-			Key:  kafkaConfig.KafkaTLSKey,
+			Cert: certificates.TLSCert,
+			Key:  certificates.TLSKey,
 		}
 	}
 
@@ -1291,12 +1324,23 @@ func (k *kafkaService) AssignBootstrapServerHost(kafkaRequest *dbapi.KafkaReques
 
 	clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
 
-	if k.kafkaConfig.EnableKafkaCNAMERegistration {
-		// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
-		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, k.kafkaConfig.KafkaDomainName)
-	} else {
+	if !k.kafkaConfig.EnableKafkaCNAMERegistration {
 		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
+		return nil
 	}
+
+	cluster, err := k.clusterService.FindClusterByID(kafkaRequest.ClusterID)
+	if err != nil {
+		return err
+	}
+
+	// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
+	baseDomain := cluster.BaseKafkasDomainName
+	if baseDomain == "" { // fallback to using the domain from the config if the base kafka domain for this cluster has not been migrated yet
+		baseDomain = k.kafkaConfig.KafkaDomainName
+	}
+
+	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, baseDomain)
 
 	return nil
 }

@@ -40,6 +40,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	// start servers
 	zeroDeveloperLimit := 0
 	var dataplaneConfig *config.DataplaneClusterConfig
+
 	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(d *config.DataplaneClusterConfig, p *config.ProviderConfig) {
 		p.ProvidersConfig.SupportedProviders = config.ProviderList{
 			config.Provider{

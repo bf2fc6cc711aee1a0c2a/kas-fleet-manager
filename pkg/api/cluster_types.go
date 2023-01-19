@@ -153,6 +153,13 @@ type Cluster struct {
 	ClusterDNS         string        `json:"cluster_dns"`
 	ClientID           string        `json:"client_id"`
 	ClientSecret       string        `json:"client_secret"`
+
+	// BaseKafkasDomainName is the base domain name for kafkas deployed on this cluster
+	BaseKafkasDomainName string `json:"base_kafkas_domain_name"`
+	// BaseKafkasDomainTLSKeyRef is the key referencing the TLS certificate key (private part of the certificate) for the base kafka domain
+	BaseKafkasDomainTLSKeyRef string `json:"base_kafkas_domain_tls_key_ref"`
+	// BaseKafkasDomainTLSCrtRef is the key referencing the TLS certificate crt (public part of the certificate) for the base kafka domain
+	BaseKafkasDomainTLSCrtRef string `json:"base_kafkas_domain_tls_crt_ref"`
 	// the provider type for the cluster, e.g. OCM, AWS, GCP, Standalone etc
 	ProviderType ClusterProviderType `json:"provider_type"`
 	// store the provider-specific information that can be used to managed the openshift/k8s cluster

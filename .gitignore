@@ -48,6 +48,7 @@ cmd/kas-fleet-manager/kas-fleet-manager
 /secrets/vault.*
 /secrets/ocm-service.*
 /secrets/kafka-tls.*
+/secrets/kafka-tls-certificate-management-acme-issuer-account-key.pem
 /secrets/keycloak-service.*
 /secrets/dx.*
 /secrets/observatorium.*
@@ -59,6 +60,7 @@ cmd/kas-fleet-manager/kas-fleet-manager
 /secrets/redhatsso-service.*
 /secrets/image-pull.dockerconfigjson
 /secrets/gcp.api-credentials
+/secrets/tls/
 
 # cluster details (used for testing)
 /internal/kafka/test/integration/test_cluster.json

@@ -18,6 +18,8 @@ ENV AWS_ACCOUNT_ID <aws_account_id>
 ENV AWS_SECRET_ACCESS_KEY <aws_secret_access_key>
 ENV ROUTE53_ACCESS_KEY <aws_route53_access_key>
 ENV ROUTE53_SECRET_ACCESS_KEY <aws_route53_secret_access_key>
+ENV AWS_SECRET_MANAGER_ACCESS_KEY <aws_secret_manager_access_key>
+ENV AWS_SECRET_MANAGER_SECRET_ACCESS_KEY <aws_secret_manager_secret_access_key>
 ENV OCM_OFFLINE_TOKEN <ocm_offline_token>
 ENV OBSERVATORIUM_CONFIG_ACCESS_TOKEN <observatorium_config_access_token>
 ENV SSO_CLIENT_SECRET <sso_client_secret>

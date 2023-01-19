@@ -17,6 +17,8 @@ ENV SSO_CLIENT_SECRET <sso_client_secret>
 ENV SSO_CLIENT_ID <sso_client_id>
 ENV ROUTE53_ACCESS_KEY <aws_route53_access_key>
 ENV ROUTE53_SECRET_ACCESS_KEY <aws_route53_secret_access_key>
+ENV AWS_SECRET_MANAGER_ACCESS_KEY <aws_secret_manager_access_key>
+ENV AWS_SECRET_MANAGER_SECRET_ACCESS_KEY <aws_secret_manager_secret_access_key>
 ENV KAFKA_TLS_CERT <kafka_tls_cert>
 ENV KAFKA_TLS_KEY <kafka_tls_key>
 ENV OBSERVATORIUM_CONFIG_ACCESS_TOKEN <observatorium_config_access_token>

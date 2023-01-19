@@ -187,6 +187,30 @@ parameters:
   description: Enable the Kafka TLS certificate
   value: "false"
 
+- name: KAFKA_TLS_CERTIFICATE_MANAGEMENT_MUST_STAPLE
+  displayName: The tls certificate management must stample
+  description: The tls certificate management must staple. Adds the must staple TLS extension to the certificate signing request.
+  value: "false"
+
+- name: KAFKA_TLS_CERTIFICATE_MANAGEMENT_STRATEGY
+  displayName: The tls certificate management strategy
+  description: The tls certificate management strategy. Possible options are manual and automaitic.
+  value: "manual"
+
+- name: KAFKA_TLS_CERTIFICATE_MANAGEMENT_STORAGE_TYPE
+  displayName: The tls certificate management storage type.
+  description: The tls certificate management storage type. Available options are in-memory, file and vault.
+  value: "vault"
+
+- name: KAFKA_TLS_CERTIFICATE_MANAGEMENT_EMAIL
+  displayName: The tls certificate management email.
+  description: The tls certificate management email. This is required when strategy is automatic
+
+- name: KAFKA_TLS_CERTIFICATE_MANAGEMENT_RENEWAL_WINDOW_RATIO
+  displayName: The tls certificate management renewal window ratio.
+  description: The tls certificate management renewal window ratio i.e how much of a certificate's lifetime becomes the renewal window
+  value: "0.3333333333"
+
 - name: ENABLE_KAFKA_CNAME_REGISTRATION
   displayName: Enable Kafka CNAME Registration
   description: Enable Kafka DNS CNAME Registration
@@ -595,6 +619,14 @@ parameters:
   description: As a user, one can create up to N defined max developer instances if they do not have quota to create standard instances.
   value: "1"
 
+- name: AWS_SECRET_MANAGER_REGION
+  description: The AWS region of secret manager to use to store secrets
+  value: "us-east-1"
+
+- name: AWS_SECRET_MANAGER_SECRET_PREFIX
+  description: Prefix to use for all secret names in AWS secret manager
+  value: kas-fleet-manager
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -831,6 +863,9 @@ objects:
           - name: tls
             secret:
               secretName: kas-fleet-manager-tls
+          - name: kas-fleet-manager-aws-secret-manager
+            secret:
+              secretName: kas-fleet-manager-aws-secret-manager    
           - name: service
             secret:
               secretName: kas-fleet-manager
@@ -933,6 +968,8 @@ objects:
             volumeMounts:
             - name: tls
               mountPath: /secrets/tls
+            - name: kas-fleet-manager-aws-secret-manager
+              mountPath: /secrets/aws-secret-manager
             - name: service
               mountPath: /secrets/service
             - name: dataplane-certificate
@@ -999,7 +1036,13 @@ objects:
             - serve
             - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
+            - --kafka-tls-certificate-management-acme-issuer-account-key-file=/secrets/dataplane-certificate/kafka-tls-certificate-management-acme-issuer-account-key.pem
             - --enable-kafka-external-certificate=${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}
+            - --kafka-tls-certificate-management-must-staple=${KAFKA_TLS_CERTIFICATE_MANAGEMENT_MUST_STAPLE}
+            - --kafka-tls-certificate-management-strategy=${KAFKA_TLS_CERTIFICATE_MANAGEMENT_STRATEGY}
+            - --kafka-tls-certificate-management-storage-type=${KAFKA_TLS_CERTIFICATE_MANAGEMENT_STORAGE_TYPE}
+            - --kafka-tls-certificate-management-email=${KAFKA_TLS_CERTIFICATE_MANAGEMENT_EMAIL}
+            - --kafka-tls-certificate-management-renewal-window-ratio=${KAFKA_TLS_CERTIFICATE_MANAGEMENT_RENEWAL_WINDOW_RATIO}
             - --enable-kafka-cname-registration=${ENABLE_KAFKA_CNAME_REGISTRATION}
             - --providers-config-file=/config/provider-configuration.yaml
             - --quota-management-list-config-file=/config/quota-management-list-configuration.yaml
@@ -1146,6 +1189,10 @@ objects:
             - --admin-api-sso-realm=${ADMIN_API_SSO_REALM}
             - --admin-authz-config-file=/config/admin-authz-configuration.yaml
             - --enterprise-cluster-registration-access-control-list-config-file=/config/enterprise-cluster-registration-list-config.yaml
+            - --aws-secret-manager-access-key-file=/secrets/aws-secret-manager/aws_access_key_id
+            - --aws-secret-manager-secret-access-key-file=/secrets/aws-secret-manager/aws_secret_access_key
+            - --aws-secret-manager-region=${AWS_SECRET_MANAGER_REGION}
+            - --aws-secret-manager-secret-prefix=${AWS_SECRET_MANAGER_SECRET_PREFIX}
             - -v=${GLOG_V}
             resources:
               requests:

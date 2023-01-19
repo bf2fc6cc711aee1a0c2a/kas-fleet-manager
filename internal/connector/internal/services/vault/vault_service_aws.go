@@ -96,6 +96,7 @@ func (k *awsVaultService) SetSecretString(name string, value string, owningResou
 	} else {
 		metrics.IncreaseVaultServiceSuccessCount("set")
 	}
+
 	return nil
 }
 

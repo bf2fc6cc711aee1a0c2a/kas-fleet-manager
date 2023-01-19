@@ -49,6 +49,8 @@ env:
   AWS_SECRET_ACCESS_KEY: aws_secretaccesskey
   ROUTE53_ACCESS_KEY: aws_route53_access_key
   ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key
+  AWS_SECRET_MANAGER_ACCESS_KEY: aws_secret_manager_access_key
+  AWS_SECRET_MANAGER_SECRET_ACCESS_KEY: aws_secret_manager_secret_access_key
   # Dummy Kafka TLS env variables
   KAFKA_TLS_CERT: kafka_tls_cert
   KAFKA_TLS_KEY: kafka_tls_key
