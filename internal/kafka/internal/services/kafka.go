@@ -16,6 +16,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafka_tls_certificate_management"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
@@ -133,38 +134,48 @@ type KafkaService interface {
 	// It returns true if the user has an active quota entitlement and false if not.
 	// It returns false and an error if it encounters any issues while trying to check the quota entitlement status.
 	IsQuotaEntitlementActive(kafkaRequest *dbapi.KafkaRequest) (bool, error)
+	// ManagedKafkasRoutesTLSCertificate manages tls certificate for the given kafka.
+	// The operation will generate a new certificate if none exists, or renews the existing one
+	ManagedKafkasRoutesTLSCertificate(kafkaRequest *dbapi.KafkaRequest) error
 }
 
 var _ KafkaService = &kafkaService{}
 
 type kafkaService struct {
-	connectionFactory        *db.ConnectionFactory
-	clusterService           ClusterService
-	keycloakService          sso.KeycloakService
-	kafkaConfig              *config.KafkaConfig
-	awsConfig                *config.AWSConfig
-	quotaServiceFactory      QuotaServiceFactory
-	mu                       sync.Mutex
-	awsClientFactory         aws.ClientFactory
-	authService              authorization.Authorization
-	dataplaneClusterConfig   *config.DataplaneClusterConfig
-	providerConfig           *config.ProviderConfig
-	clusterPlacementStrategy ClusterPlacementStrategy
+	connectionFactory                    *db.ConnectionFactory
+	clusterService                       ClusterService
+	keycloakService                      sso.KeycloakService
+	kafkaConfig                          *config.KafkaConfig
+	awsConfig                            *config.AWSConfig
+	quotaServiceFactory                  QuotaServiceFactory
+	mu                                   sync.Mutex
+	awsClientFactory                     aws.ClientFactory
+	authService                          authorization.Authorization
+	dataplaneClusterConfig               *config.DataplaneClusterConfig
+	providerConfig                       *config.ProviderConfig
+	clusterPlacementStrategy             ClusterPlacementStrategy
+	kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService sso.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization, providerConfig *config.ProviderConfig, clusterPlacementStrategy ClusterPlacementStrategy) *kafkaService {
+func NewKafkaService(
+	connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService sso.KafkaKeycloakService,
+	kafkaConfig *config.KafkaConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
+	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization,
+	providerConfig *config.ProviderConfig, clusterPlacementStrategy ClusterPlacementStrategy,
+	kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService) *kafkaService {
 	return &kafkaService{
-		connectionFactory:        connectionFactory,
-		clusterService:           clusterService,
-		keycloakService:          keycloakService,
-		kafkaConfig:              kafkaConfig,
-		awsConfig:                awsConfig,
-		quotaServiceFactory:      quotaServiceFactory,
-		awsClientFactory:         awsClientFactory,
-		authService:              authorizationService,
-		dataplaneClusterConfig:   dataplaneClusterConfig,
-		providerConfig:           providerConfig,
-		clusterPlacementStrategy: clusterPlacementStrategy,
+		connectionFactory:                    connectionFactory,
+		clusterService:                       clusterService,
+		keycloakService:                      keycloakService,
+		kafkaConfig:                          kafkaConfig,
+		awsConfig:                            awsConfig,
+		quotaServiceFactory:                  quotaServiceFactory,
+		awsClientFactory:                     awsClientFactory,
+		authService:                          authorizationService,
+		dataplaneClusterConfig:               dataplaneClusterConfig,
+		providerConfig:                       providerConfig,
+		clusterPlacementStrategy:             clusterPlacementStrategy,
+		kafkaTLSCertificateManagementService: kafkaTLSCertificateManagementService,
 	}
 }
 
@@ -486,7 +497,12 @@ func (k *kafkaService) findADataPlaneClusterToPlaceTheKafka(kafkaRequest *dbapi.
 func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 	kafkaRequest.Namespace = fmt.Sprintf("kafka-%s", strings.ToLower(kafkaRequest.ID))
 
-	err := k.AssignBootstrapServerHost(kafkaRequest)
+	err := k.ManagedKafkasRoutesTLSCertificate(kafkaRequest)
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "error managing certificate for kafka %q", kafkaRequest.ID)
+	}
+
+	err = k.AssignBootstrapServerHost(kafkaRequest)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "error assigning bootstrap server host to kafka %s", kafkaRequest.ID)
 	}
@@ -777,6 +793,14 @@ func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 				return err
 			}
 		}
+
+		// only revoke the certificates if they have been generated and the certificate is not shared among all kafkas
+		if kafkaRequest.HasCertificateInfo() && !kafkaRequest.IsUsingSharedTLSCertificate(k.kafkaConfig) {
+			err = k.kafkaTLSCertificateManagementService.RevokeCertificate(context.Background(), kafkaRequest.KafkasRoutesBaseDomainName, kafka_tls_certificate_management.CessationOfOperation)
+			if err != nil {
+				return errors.NewWithCause(errors.ErrorGeneral, err, "error revoking certificate for the base domain %q of kafka with id %q", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
+			}
+		}
 	}
 
 	// soft delete the kafka request
@@ -881,13 +905,33 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka requests")
 	}
 
+	enableKafkaExternalCertificate := k.kafkaTLSCertificateManagementService.IsKafkaExternalCertificateEnabled()
+
 	var res []managedkafka.ManagedKafka
 	// convert kafka requests to managed kafka
 	for _, kafkaRequest := range kafkaRequestList {
-		mk, err := buildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService)
+		var certificate kafka_tls_certificate_management.Certificate
+
+		if enableKafkaExternalCertificate { // only fetch certs when Kafka external certificates is enabled
+			certRequest := kafka_tls_certificate_management.GetCertificateRequest{
+				TLSCertRef: kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef,
+				TLSKeyRef:  kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef,
+			}
+
+			var err error
+			certificate, err = k.kafkaTLSCertificateManagementService.GetCertificate(context.Background(), certRequest)
+			// TODO - gracefully handle errors so that we do not block reconciliation of others Kafkas
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find kafka %q certificates", kafkaRequest.ID)
+			}
+
+		}
+
+		mk, err := buildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService, certificate, enableKafkaExternalCertificate)
 		if err != nil {
 			return nil, err
 		}
+
 		res = append(res, *mk)
 	}
 
@@ -1130,7 +1174,9 @@ func (k *kafkaService) ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, 
 	return results, nil
 }
 
-func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakService sso.KeycloakService) (*managedkafka.ManagedKafka, *errors.ServiceError) {
+func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakService sso.KeycloakService,
+	certificates kafka_tls_certificate_management.Certificate,
+	enableKafkaExternalCertificate bool) (*managedkafka.ManagedKafka, *errors.ServiceError) {
 	k, err := kafkaConfig.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka request")
@@ -1212,10 +1258,10 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		managedKafkaCR.Spec.ServiceAccounts = serviceAccounts
 	}
 
-	if kafkaConfig.EnableKafkaExternalCertificate {
+	if enableKafkaExternalCertificate {
 		managedKafkaCR.Spec.Endpoint.Tls = &managedkafka.TlsSpec{
-			Cert: kafkaConfig.KafkaTLSCert,
-			Key:  kafkaConfig.KafkaTLSKey,
+			Cert: certificates.TLSCert,
+			Key:  certificates.TLSKey,
 		}
 	}
 
@@ -1337,6 +1383,12 @@ func (k *kafkaService) AssignBootstrapServerHost(kafkaRequest *dbapi.KafkaReques
 		return errors.NewWithCause(errors.ErrorGeneral, replaceErr, "generated host is not valid")
 	}
 
+	// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
+	if k.kafkaConfig.EnableKafkaCNAMERegistration {
+		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, kafkaRequest.KafkasRoutesBaseDomainName)
+		return nil
+	}
+
 	clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
@@ -1344,13 +1396,50 @@ func (k *kafkaService) AssignBootstrapServerHost(kafkaRequest *dbapi.KafkaReques
 
 	clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
 
-	if k.kafkaConfig.EnableKafkaCNAMERegistration {
-		// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
-		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, k.kafkaConfig.KafkaDomainName)
-	} else {
-		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
+	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
+	return nil
+}
+
+func (k *kafkaService) ManagedKafkasRoutesTLSCertificate(kafkaRequest *dbapi.KafkaRequest) error {
+	// Sets the KafkaRequest.KafkasRoutesBaseDomainName if the field is not set.
+	// When the certificate management strategy is manual, the kafka domain name given in the KafkaConfig is used.
+	// When the strategy is automatic, there are three cases:
+	// 1. We use the Kafka domain given in the Kafka config as the base domain for already prepared Kafkas
+	// 2. The base domain name is constructed by concatenating the kafka id and the kafka domain name given in the Kafka config for all standard Kafkas in preparing state i.e Kafkas that do not have the bootstrap server host already set
+	// 3. The base domain name is constructed by concatenating the "trial" and the kafka domain name given in the Kafka config for all developer Kafkas in preparing state i.e Kafkas that do not have the bootstrap server host already set
+	if kafkaRequest.KafkasRoutesBaseDomainName == "" {
+		if !k.kafkaTLSCertificateManagementService.IsAutomaticCertificateManagementEnabled() {
+			kafkaRequest.KafkasRoutesBaseDomainName = k.kafkaConfig.KafkaDomainName
+		} else if kafkaRequest.Status == constants.KafkaRequestStatusAccepted.String() || kafkaRequest.Status == constants.KafkaRequestStatusPreparing.String() {
+			if kafkaRequest.IsADeveloperInstance() {
+				kafkaRequest.KafkasRoutesBaseDomainName = fmt.Sprintf("%s.%s", constants.TrialKafkasDomainShard, k.kafkaConfig.KafkaDomainName)
+			} else {
+				kafkaRequest.KafkasRoutesBaseDomainName = fmt.Sprintf("%s.%s", kafkaRequest.ID, k.kafkaConfig.KafkaDomainName)
+			}
+		} else {
+			kafkaRequest.KafkasRoutesBaseDomainName = k.kafkaConfig.KafkaDomainName
+		}
 	}
 
+	logger.Logger.Infof("starting management of tls certificate for the domain %q of kafka with id %q", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
+
+	certManagementOutput, err := k.kafkaTLSCertificateManagementService.ManageCertificate(context.Background(), kafkaRequest.KafkasRoutesBaseDomainName)
+	if err != nil {
+		return err
+	}
+
+	values := map[string]interface{}{
+		"kafkas_routes_base_domain_name":        kafkaRequest.KafkasRoutesBaseDomainName,
+		"kafkas_routes_base_domain_tls_crt_ref": certManagementOutput.TLSCertRef,
+		"kafkas_routes_base_domain_tls_key_ref": certManagementOutput.TLSKeyRef,
+	}
+
+	dbConn := k.connectionFactory.New().Model(kafkaRequest)
+	if err := dbConn.Updates(values).Error; err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update kafka %q", kafkaRequest.ID)
+	}
+
+	logger.Logger.Infof("management of tls certificate for the domain %q of kafka with id %q successfully finished", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
 	return nil
 }
 

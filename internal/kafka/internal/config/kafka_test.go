@@ -14,16 +14,13 @@ func Test_NewKafkaConfig(t *testing.T) {
 		{
 			name: "should return NewKafkaConfig",
 			want: &KafkaConfig{
-				KafkaTLSCertFile:               "secrets/kafka-tls.crt",
-				KafkaTLSKeyFile:                "secrets/kafka-tls.key",
-				EnableKafkaExternalCertificate: false,
-				KafkaDomainName:                "kafka.bf2.dev",
-				KafkaLifespan:                  NewKafkaLifespanConfig(),
-				Quota:                          NewKafkaQuotaConfig(),
-				BrowserUrl:                     "http://localhost:8080/",
-				SupportedInstanceTypes:         NewKafkaSupportedInstanceTypesConfig(),
-				EnableKafkaOwnerConfig:         false,
-				KafkaOwnerListFile:             "config/kafka-owner-list.yaml",
+				KafkaDomainName:        "kafka.bf2.dev",
+				KafkaLifespan:          NewKafkaLifespanConfig(),
+				Quota:                  NewKafkaQuotaConfig(),
+				BrowserUrl:             "http://localhost:8080/",
+				SupportedInstanceTypes: NewKafkaSupportedInstanceTypesConfig(),
+				EnableKafkaOwnerConfig: false,
+				KafkaOwnerListFile:     "config/kafka-owner-list.yaml",
 			},
 		},
 	}
@@ -55,26 +52,6 @@ func Test_ReadFilesKafkaConfig(t *testing.T) {
 				config: NewKafkaConfig(),
 			},
 			wantErr: false,
-		},
-		{
-			name: "should return an error with misconfigured KafkaTLSCertFile",
-			fields: fields{
-				config: NewKafkaConfig(),
-			},
-			modifyFn: func(config *KafkaConfig) {
-				config.KafkaTLSCertFile = "invalid"
-			},
-			wantErr: true,
-		},
-		{
-			name: "should return an error with misconfigured KafkaTLSKeyFile",
-			fields: fields{
-				config: NewKafkaConfig(),
-			},
-			modifyFn: func(config *KafkaConfig) {
-				config.KafkaTLSKeyFile = "invalid"
-			},
-			wantErr: true,
 		},
 		{
 			name: "should return an error with misconfigured SupportedInstanceTypes",

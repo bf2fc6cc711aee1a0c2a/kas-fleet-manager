@@ -89,6 +89,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //			ListKafkasWithRoutesNotCreatedFunc: func() ([]*dbapi.KafkaRequest, *apiErrors.ServiceError) {
 //				panic("mock out the ListKafkasWithRoutesNotCreated method")
 //			},
+//			ManagedKafkasRoutesTLSCertificateFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
+//				panic("mock out the ManagedKafkasRoutesTLSCertificate method")
+//			},
 //			PrepareKafkaRequestFunc: func(kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError {
 //				panic("mock out the PrepareKafkaRequest method")
 //			},
@@ -182,6 +185,9 @@ type KafkaServiceMock struct {
 
 	// ListKafkasWithRoutesNotCreatedFunc mocks the ListKafkasWithRoutesNotCreated method.
 	ListKafkasWithRoutesNotCreatedFunc func() ([]*dbapi.KafkaRequest, *apiErrors.ServiceError)
+
+	// ManagedKafkasRoutesTLSCertificateFunc mocks the ManagedKafkasRoutesTLSCertificate method.
+	ManagedKafkasRoutesTLSCertificateFunc func(kafkaRequest *dbapi.KafkaRequest) error
 
 	// PrepareKafkaRequestFunc mocks the PrepareKafkaRequest method.
 	PrepareKafkaRequestFunc func(kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError
@@ -312,6 +318,11 @@ type KafkaServiceMock struct {
 		// ListKafkasWithRoutesNotCreated holds details about calls to the ListKafkasWithRoutesNotCreated method.
 		ListKafkasWithRoutesNotCreated []struct {
 		}
+		// ManagedKafkasRoutesTLSCertificate holds details about calls to the ManagedKafkasRoutesTLSCertificate method.
+		ManagedKafkasRoutesTLSCertificate []struct {
+			// KafkaRequest is the kafkaRequest argument value.
+			KafkaRequest *dbapi.KafkaRequest
+		}
 		// PrepareKafkaRequest holds details about calls to the PrepareKafkaRequest method.
 		PrepareKafkaRequest []struct {
 			// KafkaRequest is the kafkaRequest argument value.
@@ -390,6 +401,7 @@ type KafkaServiceMock struct {
 	lockListComponentVersions                    sync.RWMutex
 	lockListKafkasToBePromoted                   sync.RWMutex
 	lockListKafkasWithRoutesNotCreated           sync.RWMutex
+	lockManagedKafkasRoutesTLSCertificate        sync.RWMutex
 	lockPrepareKafkaRequest                      sync.RWMutex
 	lockRegisterKafkaDeprovisionJob              sync.RWMutex
 	lockRegisterKafkaJob                         sync.RWMutex
@@ -1060,6 +1072,38 @@ func (mock *KafkaServiceMock) ListKafkasWithRoutesNotCreatedCalls() []struct {
 	mock.lockListKafkasWithRoutesNotCreated.RLock()
 	calls = mock.calls.ListKafkasWithRoutesNotCreated
 	mock.lockListKafkasWithRoutesNotCreated.RUnlock()
+	return calls
+}
+
+// ManagedKafkasRoutesTLSCertificate calls ManagedKafkasRoutesTLSCertificateFunc.
+func (mock *KafkaServiceMock) ManagedKafkasRoutesTLSCertificate(kafkaRequest *dbapi.KafkaRequest) error {
+	if mock.ManagedKafkasRoutesTLSCertificateFunc == nil {
+		panic("KafkaServiceMock.ManagedKafkasRoutesTLSCertificateFunc: method is nil but KafkaService.ManagedKafkasRoutesTLSCertificate was just called")
+	}
+	callInfo := struct {
+		KafkaRequest *dbapi.KafkaRequest
+	}{
+		KafkaRequest: kafkaRequest,
+	}
+	mock.lockManagedKafkasRoutesTLSCertificate.Lock()
+	mock.calls.ManagedKafkasRoutesTLSCertificate = append(mock.calls.ManagedKafkasRoutesTLSCertificate, callInfo)
+	mock.lockManagedKafkasRoutesTLSCertificate.Unlock()
+	return mock.ManagedKafkasRoutesTLSCertificateFunc(kafkaRequest)
+}
+
+// ManagedKafkasRoutesTLSCertificateCalls gets all the calls that were made to ManagedKafkasRoutesTLSCertificate.
+// Check the length with:
+//
+//	len(mockedKafkaService.ManagedKafkasRoutesTLSCertificateCalls())
+func (mock *KafkaServiceMock) ManagedKafkasRoutesTLSCertificateCalls() []struct {
+	KafkaRequest *dbapi.KafkaRequest
+} {
+	var calls []struct {
+		KafkaRequest *dbapi.KafkaRequest
+	}
+	mock.lockManagedKafkasRoutesTLSCertificate.RLock()
+	calls = mock.calls.ManagedKafkasRoutesTLSCertificate
+	mock.lockManagedKafkasRoutesTLSCertificate.RUnlock()
 	return calls
 }
 

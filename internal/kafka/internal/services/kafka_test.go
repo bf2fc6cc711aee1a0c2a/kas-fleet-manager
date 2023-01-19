@@ -18,6 +18,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafka_tls_certificate_management"
 	mocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
@@ -449,10 +450,11 @@ func Test_kafkaService_GetByID(t *testing.T) {
 
 func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 	type fields struct {
-		connectionFactory *db.ConnectionFactory
-		clusterService    ClusterService
-		keycloakService   sso.KeycloakService
-		kafkaConfig       *config.KafkaConfig
+		connectionFactory                    *db.ConnectionFactory
+		clusterService                       ClusterService
+		keycloakService                      sso.KeycloakService
+		kafkaConfig                          *config.KafkaConfig
+		kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 	}
 	type args struct {
 		kafkaRequest *dbapi.KafkaRequest
@@ -489,6 +491,14 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return false
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
@@ -503,6 +513,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 		{
 			name: "failed clusterDNS retrieval",
 			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "", errors.GeneralError("test")
@@ -517,10 +528,22 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						}
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return false
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			wantErr: true,
 		},
@@ -542,6 +565,14 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						}
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return false
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
@@ -559,6 +590,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 		{
 			name: "failed SSO client creation",
 			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
@@ -577,16 +609,29 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return nil, errors.FailedToCreateSSOClient("failed to create the sso client")
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return false
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			wantErr: true,
 		},
 		{
 			name: "failed to create canary service account",
 			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
@@ -605,10 +650,22 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						}
 					},
 				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return false
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			wantErr: true,
 		},
@@ -622,11 +679,12 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 			}
 
 			k := &kafkaService{
-				connectionFactory: tt.fields.connectionFactory,
-				clusterService:    tt.fields.clusterService,
-				keycloakService:   tt.fields.keycloakService,
-				kafkaConfig:       tt.fields.kafkaConfig,
-				awsConfig:         config.NewAWSConfig(),
+				connectionFactory:                    tt.fields.connectionFactory,
+				clusterService:                       tt.fields.clusterService,
+				keycloakService:                      tt.fields.keycloakService,
+				kafkaConfig:                          tt.fields.kafkaConfig,
+				awsConfig:                            config.NewAWSConfig(),
+				kafkaTLSCertificateManagementService: tt.fields.kafkaTLSCertificateManagementService,
 			}
 
 			if err := k.PrepareKafkaRequest(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
@@ -739,10 +797,11 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 
 func Test_kafkaService_Delete(t *testing.T) {
 	type fields struct {
-		connectionFactory *db.ConnectionFactory
-		clusterService    ClusterService
-		keycloakService   sso.KeycloakService
-		kafkaConfig       *config.KafkaConfig
+		connectionFactory                    *db.ConnectionFactory
+		clusterService                       ClusterService
+		keycloakService                      sso.KeycloakService
+		kafkaConfig                          *config.KafkaConfig
+		kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 	}
 	type args struct {
 		kafkaRequest *dbapi.KafkaRequest
@@ -854,7 +913,6 @@ func Test_kafkaService_Delete(t *testing.T) {
 			},
 			wantErr: false,
 		},
-
 		{
 			name: "successfully deletes a Kafka request when canary service account is not found",
 			fields: fields{
@@ -884,6 +942,118 @@ func Test_kafkaService_Delete(t *testing.T) {
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
+		{
+			name: "successfully deletes a Kafka request without revoking the shared certificate", // a certificate is considerd shared if kafkaConfig.KafkaDomainName == kafkaRequest.KafkasRoutesBaseDomainName
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				keycloakService: &sso.KeycloakServiceMock{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+					DeleteServiceAccountInternalFunc: func(clientId string) *errors.ServiceError {
+						return &errors.ServiceError{
+							Code: errors.ErrorServiceAccountNotFound,
+						}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					KafkaDomainName: "kafka-base-domain.org",
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					RevokeCertificateFunc: nil, // should never be called
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.ID = testID
+					kafkaRequest.CanaryServiceAccountClientID = "canary-id"
+					kafkaRequest.KafkasRoutesBaseDomainName = "kafka-base-domain.org"
+					kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef = "crt-ref"
+					kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef = "key-ref"
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests" SET "deleted_at"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "successfully deletes a Kafka request when kafka has certificates info generated",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				keycloakService: &sso.KeycloakServiceMock{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+					DeleteServiceAccountInternalFunc: func(clientId string) *errors.ServiceError {
+						return &errors.ServiceError{
+							Code: errors.ErrorServiceAccountNotFound,
+						}
+					},
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					RevokeCertificateFunc: func(ctx context.Context, domain string, reason kafka_tls_certificate_management.CertificateRevocationReason) error {
+						return nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.ID = testID
+					kafkaRequest.CanaryServiceAccountClientID = "canary-id"
+					kafkaRequest.KafkasRoutesBaseDomainName = "bade domain"
+					kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef = "crt-ref"
+					kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef = "key-ref"
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests" SET "deleted_at"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "returns an error when certificate revocation fails",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				keycloakService: &sso.KeycloakServiceMock{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+					DeleteServiceAccountInternalFunc: func(clientId string) *errors.ServiceError {
+						return &errors.ServiceError{
+							Code: errors.ErrorServiceAccountNotFound,
+						}
+					},
+				},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					RevokeCertificateFunc: func(ctx context.Context, domain string, reason kafka_tls_certificate_management.CertificateRevocationReason) error {
+						return fmt.Errorf("cert revocation failed")
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.ID = testID
+					kafkaRequest.CanaryServiceAccountClientID = "canary-id"
+					kafkaRequest.KafkasRoutesBaseDomainName = "bade domain"
+					kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef = "crt-ref"
+					kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef = "key-ref"
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests" SET "deleted_at"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			wantErr: true,
+		},
 	}
 	for _, testcase := range tests {
 		tt := testcase
@@ -893,11 +1063,12 @@ func Test_kafkaService_Delete(t *testing.T) {
 				tt.setupFn()
 			}
 			k := &kafkaService{
-				connectionFactory: tt.fields.connectionFactory,
-				clusterService:    tt.fields.clusterService,
-				keycloakService:   tt.fields.keycloakService,
-				kafkaConfig:       tt.fields.kafkaConfig,
-				awsConfig:         config.NewAWSConfig(),
+				connectionFactory:                    tt.fields.connectionFactory,
+				clusterService:                       tt.fields.clusterService,
+				keycloakService:                      tt.fields.keycloakService,
+				kafkaConfig:                          tt.fields.kafkaConfig,
+				awsConfig:                            config.NewAWSConfig(),
+				kafkaTLSCertificateManagementService: tt.fields.kafkaTLSCertificateManagementService,
 			}
 			err := k.Delete(tt.args.kafkaRequest)
 			if (err != nil) != tt.wantErr {
@@ -3343,11 +3514,14 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 		})
 	}
 }
+
 func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 	type fields struct {
-		connectionFactory *db.ConnectionFactory
-		keycloakService   sso.KeycloakService
-		kafkaConfig       *config.KafkaConfig
+		connectionFactory                    *db.ConnectionFactory
+		keycloakService                      sso.KeycloakService
+		clusterService                       ClusterService
+		kafkaConfig                          *config.KafkaConfig
+		kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 	}
 	type args struct {
 		clusterID string
@@ -3359,16 +3533,15 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 			SizeId:       "x1",
 		},
 	}
-	managedkafkaCR, _ := buildManagedKafkaCR(
+	managedkafkaCRWithoutCerts, _ := buildManagedKafkaCR(
 		&dbapi.KafkaRequest{
 			ClusterID:    testClusterID,
 			InstanceType: "developer",
 			SizeId:       "x1",
 		},
 		&config.KafkaConfig{
-			EnableKafkaExternalCertificate: true,
-			EnableKafkaCNAMERegistration:   true,
-			SupportedInstanceTypes:         &kafkaSupportedInstanceTypesConfig,
+			EnableKafkaCNAMERegistration: true,
+			SupportedInstanceTypes:       &kafkaSupportedInstanceTypesConfig,
 		},
 		&sso.KeycloakServiceMock{
 			GetConfigFunc: func() *keycloak.KeycloakConfig {
@@ -3379,20 +3552,47 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
 				return &keycloak.KeycloakRealmConfig{}
 			},
-		})
+		}, kafka_tls_certificate_management.Certificate{}, false)
+
+	managedkafkaCRWithCert, _ := buildManagedKafkaCR(
+		&dbapi.KafkaRequest{
+			ClusterID:    testClusterID,
+			InstanceType: "developer",
+			SizeId:       "x1",
+		},
+		&config.KafkaConfig{
+			EnableKafkaCNAMERegistration: true,
+			SupportedInstanceTypes:       &kafkaSupportedInstanceTypesConfig,
+		},
+		&sso.KeycloakServiceMock{
+			GetConfigFunc: func() *keycloak.KeycloakConfig {
+				return &keycloak.KeycloakConfig{
+					EnableAuthenticationOnKafka: true,
+				}
+			},
+			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+				return &keycloak.KeycloakRealmConfig{}
+			},
+		}, kafka_tls_certificate_management.Certificate{TLSCert: "crt-cert", TLSKey: "key-cert"}, true)
 
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
 		want    []managedkafka.ManagedKafka
-		wantErr *errors.ServiceError
+		wantErr bool
 		setupFn func()
 	}{
 		{
-			name: "should return the kafka by cluster id",
+			name: "should return the kafka by cluster id when external certificate is disabled",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsKafkaExternalCertificateEnabledFunc: func() bool {
+						return false
+					},
+					GetCertificateFunc: nil, // assign to nil as it should never be called
+				},
 				keycloakService: &sso.KeycloakServiceMock{
 					GetConfigFunc: func() *keycloak.KeycloakConfig {
 						return &keycloak.KeycloakConfig{
@@ -3404,16 +3604,111 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: true,
-					EnableKafkaCNAMERegistration:   true,
-					SupportedInstanceTypes:         &kafkaSupportedInstanceTypesConfig,
+					EnableKafkaCNAMERegistration: true,
+					SupportedInstanceTypes:       &kafkaSupportedInstanceTypesConfig,
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: nil, // setting to nil as it should never be called
 				},
 			},
 			args: args{
 				clusterID: testClusterID,
 			},
-			wantErr: nil,
-			want:    []managedkafka.ManagedKafka{*managedkafkaCR},
+			wantErr: false,
+			want:    []managedkafka.ManagedKafka{*managedkafkaCRWithoutCerts},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
+				response := converters.ConvertKafkaRequestList(kafkaRequestList)
+				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "should return the kafka by cluster id when external certificate is enabled",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsKafkaExternalCertificateEnabledFunc: func() bool {
+						return true
+					},
+					GetCertificateFunc: func(ctx context.Context, request kafka_tls_certificate_management.GetCertificateRequest) (kafka_tls_certificate_management.Certificate, error) {
+						return kafka_tls_certificate_management.Certificate{
+							TLSCert: "crt-cert",
+							TLSKey:  "key-cert",
+						}, nil
+					},
+				},
+				keycloakService: &sso.KeycloakServiceMock{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloak.KeycloakRealmConfig{}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaCNAMERegistration: true,
+					SupportedInstanceTypes:       &kafkaSupportedInstanceTypesConfig,
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{ClusterID: clusterID}, nil
+					},
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			wantErr: false,
+			want:    []managedkafka.ManagedKafka{*managedkafkaCRWithCert},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
+				response := converters.ConvertKafkaRequestList(kafkaRequestList)
+				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+		},
+		{
+			name: "should return an error when fetching certificates fails",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsKafkaExternalCertificateEnabledFunc: func() bool {
+						return true
+					},
+					GetCertificateFunc: func(ctx context.Context, request kafka_tls_certificate_management.GetCertificateRequest) (kafka_tls_certificate_management.Certificate, error) {
+						return kafka_tls_certificate_management.Certificate{}, fmt.Errorf("some error")
+					},
+				},
+				keycloakService: &sso.KeycloakServiceMock{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloak.KeycloakRealmConfig{}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaCNAMERegistration: true,
+					SupportedInstanceTypes:       &kafkaSupportedInstanceTypesConfig,
+				},
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{ClusterID: clusterID}, nil
+					},
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			wantErr: true,
+			want:    nil,
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
@@ -3430,13 +3725,15 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			k := &kafkaService{
-				connectionFactory: tt.fields.connectionFactory,
-				keycloakService:   tt.fields.keycloakService,
-				kafkaConfig:       tt.fields.kafkaConfig,
+				connectionFactory:                    tt.fields.connectionFactory,
+				keycloakService:                      tt.fields.keycloakService,
+				kafkaConfig:                          tt.fields.kafkaConfig,
+				kafkaTLSCertificateManagementService: tt.fields.kafkaTLSCertificateManagementService,
+				clusterService:                       tt.fields.clusterService,
 			}
 			got, err := k.GetManagedKafkaByClusterID(tt.args.clusterID)
 			g.Expect(got).To(gomega.Equal(tt.want))
-			g.Expect(err).To(gomega.Equal(tt.wantErr))
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -3504,9 +3801,8 @@ func Test_kafkaService_GenerateReservedManagedKafkasByClusterID(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: true,
-					EnableKafkaCNAMERegistration:   true,
-					SupportedInstanceTypes:         &kafkaSupportedInstanceTypesConfig,
+					EnableKafkaCNAMERegistration: true,
+					SupportedInstanceTypes:       &kafkaSupportedInstanceTypesConfig,
 				},
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
 					NodePrewarmingConfig: config.NodePrewarmingConfig{
@@ -4112,17 +4408,18 @@ func Test_kafkaService_GetCNAMERecordStatus(t *testing.T) {
 
 func Test_NewKafkaService(t *testing.T) {
 	type args struct {
-		connectionFactory        *db.ConnectionFactory
-		clusterService           ClusterService
-		keycloakService          sso.KafkaKeycloakService
-		kafkaConfig              *config.KafkaConfig
-		dataplaneClusterConfig   *config.DataplaneClusterConfig
-		awsConfig                *config.AWSConfig
-		quotaServiceFactory      QuotaServiceFactory
-		awsClientFactory         aws.ClientFactory
-		authorizationService     authorization.Authorization
-		providerConfig           *config.ProviderConfig
-		clusterPlacementStrategy ClusterPlacementStrategy
+		connectionFactory                    *db.ConnectionFactory
+		clusterService                       ClusterService
+		keycloakService                      sso.KafkaKeycloakService
+		kafkaConfig                          *config.KafkaConfig
+		dataplaneClusterConfig               *config.DataplaneClusterConfig
+		awsConfig                            *config.AWSConfig
+		quotaServiceFactory                  QuotaServiceFactory
+		awsClientFactory                     aws.ClientFactory
+		authorizationService                 authorization.Authorization
+		providerConfig                       *config.ProviderConfig
+		clusterPlacementStrategy             ClusterPlacementStrategy
+		kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
 	}
 	tests := []struct {
 		name string
@@ -4132,28 +4429,30 @@ func Test_NewKafkaService(t *testing.T) {
 		{
 			name: "should return the kafka service",
 			args: args{
-				connectionFactory:        &db.ConnectionFactory{},
-				clusterService:           &ClusterServiceMock{},
-				keycloakService:          &sso.KeycloakServiceMock{},
-				kafkaConfig:              &config.KafkaConfig{},
-				dataplaneClusterConfig:   &config.DataplaneClusterConfig{},
-				awsConfig:                &config.AWSConfig{},
-				quotaServiceFactory:      &QuotaServiceFactoryMock{},
-				awsClientFactory:         &aws.MockClientFactory{},
-				providerConfig:           &config.ProviderConfig{},
-				clusterPlacementStrategy: &ClusterPlacementStrategyMock{},
+				connectionFactory:                    &db.ConnectionFactory{},
+				clusterService:                       &ClusterServiceMock{},
+				keycloakService:                      &sso.KeycloakServiceMock{},
+				kafkaConfig:                          &config.KafkaConfig{},
+				dataplaneClusterConfig:               &config.DataplaneClusterConfig{},
+				awsConfig:                            &config.AWSConfig{},
+				quotaServiceFactory:                  &QuotaServiceFactoryMock{},
+				awsClientFactory:                     &aws.MockClientFactory{},
+				providerConfig:                       &config.ProviderConfig{},
+				clusterPlacementStrategy:             &ClusterPlacementStrategyMock{},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{},
 			},
 			want: &kafkaService{
-				connectionFactory:        &db.ConnectionFactory{},
-				clusterService:           &ClusterServiceMock{},
-				keycloakService:          &sso.KeycloakServiceMock{},
-				kafkaConfig:              &config.KafkaConfig{},
-				dataplaneClusterConfig:   &config.DataplaneClusterConfig{},
-				awsConfig:                &config.AWSConfig{},
-				quotaServiceFactory:      &QuotaServiceFactoryMock{},
-				awsClientFactory:         &aws.MockClientFactory{},
-				providerConfig:           &config.ProviderConfig{},
-				clusterPlacementStrategy: &ClusterPlacementStrategyMock{},
+				connectionFactory:                    &db.ConnectionFactory{},
+				clusterService:                       &ClusterServiceMock{},
+				keycloakService:                      &sso.KeycloakServiceMock{},
+				kafkaConfig:                          &config.KafkaConfig{},
+				dataplaneClusterConfig:               &config.DataplaneClusterConfig{},
+				awsConfig:                            &config.AWSConfig{},
+				quotaServiceFactory:                  &QuotaServiceFactoryMock{},
+				awsClientFactory:                     &aws.MockClientFactory{},
+				providerConfig:                       &config.ProviderConfig{},
+				clusterPlacementStrategy:             &ClusterPlacementStrategyMock{},
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{},
 			},
 		},
 	}
@@ -4161,7 +4460,19 @@ func Test_NewKafkaService(t *testing.T) {
 	for _, testcase := range tests {
 		g := gomega.NewWithT(t)
 		tt := testcase
-		g.Expect(NewKafkaService(tt.args.connectionFactory, tt.args.clusterService, tt.args.keycloakService, tt.args.kafkaConfig, tt.args.dataplaneClusterConfig, tt.args.awsConfig, tt.args.quotaServiceFactory, tt.args.awsClientFactory, tt.args.authorizationService, tt.args.providerConfig, tt.args.clusterPlacementStrategy)).To(gomega.Equal(tt.want))
+		g.Expect(NewKafkaService(
+			tt.args.connectionFactory,
+			tt.args.clusterService,
+			tt.args.keycloakService,
+			tt.args.kafkaConfig,
+			tt.args.dataplaneClusterConfig,
+			tt.args.awsConfig,
+			tt.args.quotaServiceFactory,
+			tt.args.awsClientFactory,
+			tt.args.authorizationService,
+			tt.args.providerConfig,
+			tt.args.clusterPlacementStrategy,
+			tt.args.kafkaTLSCertificateManagementService)).To(gomega.Equal(tt.want))
 	}
 }
 
@@ -4235,7 +4546,7 @@ func Test_kafkaService_AssignBootstrapServerHost(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should use external certificate if kafkaconfig specifies",
+			name: "should use create bootstrap server host in kafka domain if kafkaconfig specifies",
 			fields: fields{
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
@@ -4243,7 +4554,7 @@ func Test_kafkaService_AssignBootstrapServerHost(t *testing.T) {
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: true,
+					EnableKafkaCNAMERegistration: true,
 				},
 			},
 			args: args{
@@ -4258,8 +4569,22 @@ func Test_kafkaService_AssignBootstrapServerHost(t *testing.T) {
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
 					},
+					FindClusterByIDFunc: nil, // it should never be called
 				},
 				kafkaConfig: &config.KafkaConfig{},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return not retrieve cluster DNS and successfully assign the kafka bootstrap server host if EnableKafkaCNAMERegistration is enabled",
+			fields: fields{
+				clusterService: nil, // setting to nil as it should never be called
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaCNAMERegistration: true,
+				},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -4275,8 +4600,16 @@ func Test_kafkaService_AssignBootstrapServerHost(t *testing.T) {
 				clusterService: test.fields.clusterService,
 				kafkaConfig:    test.fields.kafkaConfig,
 			}
+
+			//set the bootstrap server host as empty, mimicking what really happens
+			test.args.kafkaRequest.BootstrapServerHost = ""
+
 			err := k.AssignBootstrapServerHost(test.args.kafkaRequest)
 			g.Expect(err != nil).To(gomega.Equal(test.wantErr))
+
+			if !test.wantErr {
+				g.Expect(test.args.kafkaRequest.BootstrapServerHost).ToNot(gomega.BeEmpty())
+			}
 		})
 	}
 }
@@ -4335,6 +4668,200 @@ func Test_kafkaService_getRoute53RegionFromKafkaRequest(t *testing.T) {
 			res, err := k.getRoute53RegionFromKafkaRequest(tt.args.kafkaRequest)
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			g.Expect(res).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
+func Test_kafkaService_ManagedKafkasRoutesTLSCertificate(t *testing.T) {
+	g := gomega.NewWithT(t)
+	type fields struct {
+		kafkaConfig                          *config.KafkaConfig
+		connectionFactory                    *db.ConnectionFactory
+		kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
+	}
+	type args struct {
+		kafkaRequest *dbapi.KafkaRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "use the kafka domain name from the configuration when generating the certificate if automatic certificate management not enabled",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaDomainName: "some-kafka-domain.bf2.dev",
+				},
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return false
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						g.Expect(domain).To(gomega.Equal("some-kafka-domain.bf2.dev"))
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					KafkasRoutesBaseDomainName: "",
+					Meta: api.Meta{
+						ID: "some-id",
+					},
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			wantErr: false,
+		},
+		{
+			name: "use the kafka domain name from the configuration when generating the certificate if automatic certificate management is enabled and kafka already prepared",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaDomainName: "some-kafka-domain-ready.bf2.dev",
+				},
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						g.Expect(domain).To(gomega.Equal("some-kafka-domain-ready.bf2.dev"))
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					KafkasRoutesBaseDomainName: "",
+					Meta: api.Meta{
+						ID: "some-id",
+					},
+					Status: "ready", // a Kafka with ready status is already prepated
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			wantErr: false,
+		},
+		{
+			name: "concatenate the kafka id and the kafka domain name from the configuration and use the resulting string as the domain when managing the certificate if automatic certificate management is enabled and standard kafka not already prepared",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaDomainName: "some-kafka-domain.bf2.dev",
+				},
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						g.Expect(domain).To(gomega.Equal("123.some-kafka-domain.bf2.dev"))
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						ID: "123",
+					},
+					KafkasRoutesBaseDomainName: "",
+					InstanceType:               types.STANDARD.String(),
+					Status:                     "preparing", // a Kafka with preparing status is not already prepated
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			wantErr: false,
+		},
+		{
+			name: "concatenate the 'trial' and the kafka domain name from the configuration and use the resulting string as the domain when managing the certificate if automatic certificate management is enabled and developer kafka not already prepared",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaDomainName: "some-kafka-domain.bf2.dev",
+				},
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						g.Expect(domain).To(gomega.Equal("trial.some-kafka-domain.bf2.dev"))
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						ID: "123",
+					},
+					KafkasRoutesBaseDomainName: "",
+					InstanceType:               types.DEVELOPER.String(),
+					Status:                     "preparing", // a Kafka with preparing status is not already prepated
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			wantErr: false,
+		},
+		{
+			name: "return an error when certificate management fails",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaDomainName: "some-kafka-domain.bf2.dev",
+				},
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafka_tls_certificate_management.CertificateManagementOutput, error) {
+						return kafka_tls_certificate_management.CertificateManagementOutput{}, fmt.Errorf("some error")
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						ID: "456",
+					},
+					KafkasRoutesBaseDomainName: "",
+					Status:                     "preparing", // a Kafka with preparing status is not already prepated
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`).WithExecException() // should never be called
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(testcase.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			testcase.setupFn()
+			k := &kafkaService{
+				kafkaConfig:                          testcase.fields.kafkaConfig,
+				connectionFactory:                    testcase.fields.connectionFactory,
+				kafkaTLSCertificateManagementService: testcase.fields.kafkaTLSCertificateManagementService,
+			}
+			err := k.ManagedKafkasRoutesTLSCertificate(testcase.args.kafkaRequest)
+			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr))
 		})
 	}
 }

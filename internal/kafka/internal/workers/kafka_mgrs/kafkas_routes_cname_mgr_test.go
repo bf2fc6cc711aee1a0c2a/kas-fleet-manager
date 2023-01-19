@@ -52,8 +52,7 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: true,
-					EnableKafkaCNAMERegistration:   true,
+					EnableKafkaCNAMERegistration: true,
 				},
 			},
 			wantErr: false,
@@ -88,8 +87,7 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: true,
-					EnableKafkaCNAMERegistration:   true,
+					EnableKafkaCNAMERegistration: true,
 				},
 			},
 			wantErr: false,
@@ -122,8 +120,7 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: true,
-					EnableKafkaCNAMERegistration:   true,
+					EnableKafkaCNAMERegistration: true,
 				},
 			},
 			wantErr: true,
@@ -144,8 +141,7 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: false,
-					EnableKafkaCNAMERegistration:   false,
+					EnableKafkaCNAMERegistration: false,
 				},
 			},
 			wantErr: false,
@@ -174,8 +170,7 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: true,
-					EnableKafkaCNAMERegistration:   true,
+					EnableKafkaCNAMERegistration: true,
 				},
 			},
 			wantErr: true,
@@ -189,8 +184,7 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: true,
-					EnableKafkaCNAMERegistration:   true,
+					EnableKafkaCNAMERegistration: true,
 				},
 			},
 			wantErr: true,
@@ -211,8 +205,7 @@ func TestKafkaRoutesCNAMEManager_Reconcile(t *testing.T) {
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: true,
-					EnableKafkaCNAMERegistration:   true,
+					EnableKafkaCNAMERegistration: true,
 				},
 			},
 			wantErr: true,

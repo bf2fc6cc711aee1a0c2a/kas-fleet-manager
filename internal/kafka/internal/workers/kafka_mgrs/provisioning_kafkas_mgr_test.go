@@ -3,6 +3,7 @@ package kafka_mgrs
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -38,14 +39,14 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Should throw an error when updating metrics for reassigning kafka returns an error",
+			name: "Should throw an error when for reassigning kafka returns an error",
 			fields: fields{
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
 					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{
 							ClusterID:                "",
 							AvailableStrimziVersions: mockClusters.AvailableStrimziVersions,
-						}, nil
+						}, fmt.Errorf("some error")
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
@@ -63,6 +64,42 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *svcErrors.ServiceError {
 						return nil
 					},
+					ManagedKafkasRoutesTLSCertificateFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
+						return nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should throw an error when managing kafka tls certificates returns an error",
+			fields: fields{
+				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return &api.Cluster{
+							ClusterID:                "",
+							AvailableStrimziVersions: mockClusters.AvailableStrimziVersions,
+						}, nil
+					},
+				},
+				kafkaService: &services.KafkaServiceMock{
+					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
+						return []*dbapi.KafkaRequest{
+							mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+								kafkaRequest.ClusterID = ""
+								kafkaRequest.Status = constants.KafkaRequestStatusProvisioning.String()
+							}),
+						}, nil
+					},
+					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
+						return nil
+					},
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *svcErrors.ServiceError {
+						return nil
+					},
+					ManagedKafkasRoutesTLSCertificateFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
+						return fmt.Errorf("some errors")
+					},
 				},
 			},
 			wantErr: true,
@@ -79,7 +116,7 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Should not throw an error when updating metrics for returned kafkas list",
+			name: "Should not throw an error when reconciling the provisioning kafka is successful",
 			fields: fields{
 				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
 					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
@@ -104,6 +141,9 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
 						return nil
 					},
+					ManagedKafkasRoutesTLSCertificateFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
+						return nil
+					},
 				},
 			},
 			wantErr: false,
@@ -114,7 +154,7 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-
+			t.Parallel()
 			k := &ProvisioningKafkaManager{
 				kafkaService:             tt.fields.kafkaService,
 				clusterPlacementStrategy: tt.fields.clusterPlacementStrategy,
@@ -394,6 +434,7 @@ func Test_ProvisioningKafkaManager_reassignProvisioningKafka(t *testing.T) {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
+			t.Parallel()
 			k := &ProvisioningKafkaManager{
 				kafkaService:             test.fields.kafkaService,
 				clusterPlacementStrategy: test.fields.clusterPlacementStrategy,
