@@ -671,8 +671,6 @@ func (k *kafkaService) DeprovisionExpiredKafkas() *errors.ServiceError {
 
 	for idx := range existingKafkaRequests {
 		existingKafkaRequest := &existingKafkaRequests[idx]
-		glog.V(10).Infof("Evaluating expiration time of kafka request '%s' with instance type '%s', size ID '%s' and status '%s'", existingKafkaRequest.ID, existingKafkaRequest.InstanceType, existingKafkaRequest.SizeId, existingKafkaRequest.Status)
-
 		shouldBeDeprovisioned := k.kafkaWithExpiresAtShouldBeDeprovisioned(existingKafkaRequest, timeNow)
 		if shouldBeDeprovisioned {
 			kafkasToDeprovisionIDs = append(kafkasToDeprovisionIDs, existingKafkaRequest.ID)
