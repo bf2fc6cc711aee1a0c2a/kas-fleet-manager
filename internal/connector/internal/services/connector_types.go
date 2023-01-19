@@ -286,9 +286,11 @@ func (cts *connectorTypesService) ListLabels(listArgs *services.ListArguments) (
 
 	// execute query
 	result := cts.connectionFactory.New().Model(&dbapi.ConnectorTypeLabel{}).
-		Select("connector_type_labels.label as label, count(distinct id) as count").
+		Select("connector_type_labels.label as label, count(distinct types.id) as count").
+		Joins("LEFT JOIN connector_types AS current_types on connector_type_labels.connector_type_id = current_types.id").
 		Joins("LEFT JOIN (?) AS types on connector_type_labels.connector_type_id = types.id",
-			dbConn.Model(&dbapi.ConnectorType{}).Select("connector_types.id")).
+								dbConn.Model(&dbapi.ConnectorType{}).Select("connector_types.id")).
+		Where("current_types.deleted_at is null"). // select labels for undeleted types
 		Group("connector_type_labels.label").
 		Order("connector_type_labels.label ASC"). // default order label name
 		Find(&resourceList)
