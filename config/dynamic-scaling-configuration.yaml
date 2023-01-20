@@ -2,7 +2,10 @@
 ---
 # The version of OpenShift used during installation of newly auto created data plane clusters.
 # If the value is empty (default) or not defined, then OpenShift Cluster Manager (OCM) will provision the data plane cluster using the latest version. 
-new_data_plane_openshift_version: ""
+# NOTE: temporarily provision new data plane cluster with the latest version of openshift 4.11 available on ocm as the fleetshard operator addon 
+# is currently incompatible with 4.12. 
+# To be set back to an empty string once https://issues.redhat.com/browse/MGDSTRM-10450 is resolved.
+new_data_plane_openshift_version: "openshift-v4.11.22"
 # Whether to auto create a data plane cluster.
 # The value is used to control whether kas-fleet-manager (KFM) should trigger the creation of new data plane clusters.
 # If it is set to false, then KFM will only perform scale up evaluation without triggering scale up i.e a dry run of cluster's creation.
