@@ -23,6 +23,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/segment"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -3970,6 +3971,7 @@ func Test_NewKafkaService(t *testing.T) {
 		authorizationService     authorization.Authorization
 		providerConfig           *config.ProviderConfig
 		clusterPlacementStrategy ClusterPlacementStrategy
+		segmentClient            *segment.SegmentClientFactory
 	}
 	tests := []struct {
 		name string
@@ -3989,6 +3991,7 @@ func Test_NewKafkaService(t *testing.T) {
 				awsClientFactory:         &aws.MockClientFactory{},
 				providerConfig:           &config.ProviderConfig{},
 				clusterPlacementStrategy: &ClusterPlacementStrategyMock{},
+				segmentClient:            &segment.SegmentClientFactory{},
 			},
 			want: &kafkaService{
 				connectionFactory:        &db.ConnectionFactory{},
@@ -4001,6 +4004,7 @@ func Test_NewKafkaService(t *testing.T) {
 				awsClientFactory:         &aws.MockClientFactory{},
 				providerConfig:           &config.ProviderConfig{},
 				clusterPlacementStrategy: &ClusterPlacementStrategyMock{},
+				segmentClient:            &segment.SegmentClientFactory{},
 			},
 		},
 	}
@@ -4008,7 +4012,7 @@ func Test_NewKafkaService(t *testing.T) {
 	for _, testcase := range tests {
 		g := gomega.NewWithT(t)
 		tt := testcase
-		g.Expect(NewKafkaService(tt.args.connectionFactory, tt.args.clusterService, tt.args.keycloakService, tt.args.kafkaConfig, tt.args.dataplaneClusterConfig, tt.args.awsConfig, tt.args.quotaServiceFactory, tt.args.awsClientFactory, tt.args.authorizationService, tt.args.providerConfig, tt.args.clusterPlacementStrategy)).To(gomega.Equal(tt.want))
+		g.Expect(NewKafkaService(tt.args.connectionFactory, tt.args.clusterService, tt.args.keycloakService, tt.args.kafkaConfig, tt.args.dataplaneClusterConfig, tt.args.awsConfig, tt.args.quotaServiceFactory, tt.args.awsClientFactory, tt.args.authorizationService, tt.args.providerConfig, tt.args.clusterPlacementStrategy, tt.args.segmentClient)).To(gomega.Equal(tt.want))
 	}
 }
 

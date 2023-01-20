@@ -68,6 +68,8 @@ func (l LogEvent) ToString() string {
 type UHCLogger interface {
 	V(level int32) UHCLogger
 	Infof(format string, args ...interface{})
+	// Logf is required in order to use it as a logger for the Segment client
+	Logf(format string, args ...interface{})
 	Warningf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 	Error(err error)
@@ -190,6 +192,12 @@ func getUsernameFromClaims(ctx context.Context) string {
 }
 
 func (l *logger) Infof(format string, args ...interface{}) {
+	prefixed := l.prepareLogPrefix(format, args...)
+	glog.V(glog.Level(l.level)).Infof(prefixed)
+}
+
+// Logf is required in order to use it as a logger for the Segment client
+func (l *logger) Logf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.V(glog.Level(l.level)).Infof(prefixed)
 }
