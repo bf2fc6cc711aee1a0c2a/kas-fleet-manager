@@ -13,6 +13,7 @@ var (
 	// sso.redhat.com token claim keys
 	alternateTenantUsernameClaim string = "preferred_username" // same key used in mas-sso tokens
 	tenantUserIdClaim            string = "account_id"
+	clientIDclaim                string = "clientId"
 
 	// mas-sso token claim keys
 	// NOTE: This should be removed once we migrate to sso.redhat.com as it will no longer be needed (TODO: to be removed as part of MGDSTRM-6159)

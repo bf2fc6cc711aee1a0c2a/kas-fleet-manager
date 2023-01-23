@@ -19,8 +19,56 @@ servers:
 tags:
   - name: Agent Clusters
     description: ""
+  - name: observatorium-proxy
+    description: Observatorium proxy related endpoints
 
 paths:
+  # observatorium proxy related endpoints
+  '/api/kafkas_mgmt/v1/obs-proxy-verification/{cluster_external_id}':
+    post:
+      operationId: verifyObservatoriumProxyRequestValid
+      tags:
+        - observatorium-proxy
+      parameters:
+        - in: path
+          name: cluster_external_id
+          description: external cluster ID of a data plane cluster. It has to match the service account details stored in clusters table for that cluster
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: token is valid for provided cluster_external_id
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+          description: auth token is invalid
+        '403':
+          description: token provided in the request does not match cluster_external_id
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                403ForbiddenExample:
+                  $ref: 'kas-fleet-manager.yaml#/components/examples/403Example'
+        '500':
+          description: unexpected error occurred when validating the request
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+      security:
+        - Bearer: [ ]
+
   # Endpoints for data plane communications
   '/api/kafkas_mgmt/v1/agent-clusters/{id}/status':
     put:

@@ -34,11 +34,16 @@ func checkClusterId(clusterIdVar string, authAgentService AuthAgentService) mux.
 				shared.HandleError(request, writer, errors.GeneralError("unable to get clientID for cluster with ID '%s'", clusterId))
 			}
 
-			if clientId, ok := claims["clientId"].(string); ok {
-				if clientId == savedClientId {
-					next.ServeHTTP(writer, request)
-					return
-				}
+			clientID, err := claims.GetClientID()
+			if err != nil {
+				// deliberately return 404 here so that it will appear as the endpoint doesn't exist if requests are not authorised
+				shared.HandleError(request, writer, errors.NotFound(""))
+				return
+			}
+
+			if clientID == savedClientId {
+				next.ServeHTTP(writer, request)
+				return
 			}
 
 			shared.HandleError(request, writer, errors.NotFound(""))

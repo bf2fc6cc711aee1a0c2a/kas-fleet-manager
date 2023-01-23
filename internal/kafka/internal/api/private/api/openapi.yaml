@@ -15,7 +15,56 @@ servers:
   url: /
 tags:
 - name: Agent Clusters
+- description: Observatorium proxy related endpoints
+  name: observatorium-proxy
 paths:
+  /api/kafkas_mgmt/v1/obs-proxy-verification/{cluster_external_id}:
+    post:
+      operationId: verifyObservatoriumProxyRequestValid
+      parameters:
+      - description: external cluster ID of a data plane cluster. It has to match
+          the service account details stored in clusters table for that cluster
+        explode: false
+        in: path
+        name: cluster_external_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          description: token is valid for provided cluster_external_id
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403ForbiddenExample":
+                  $ref: '#/components/examples/403Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: token provided in the request does not match cluster_external_id
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: unexpected error occurred when validating the request
+      security:
+      - Bearer: []
+      tags:
+      - observatorium-proxy
   /api/kafkas_mgmt/v1/agent-clusters/{id}/status:
     put:
       operationId: updateAgentClusterStatus
@@ -253,6 +302,30 @@ components:
         code: KAFKAS-MGMT-21
         reason: Bad request
         operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
+    "401Example":
+      value:
+        id: "11"
+        kind: Error
+        href: /api/kafkas_mgmt/v1/errors/11
+        code: KAFKAS-MGMT-11
+        reason: 'Unable to verify JWT token: Required authorization token not found'
+        operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+    "403Example":
+      value:
+        id: "4"
+        kind: Error
+        href: /api/kafkas_mgmt/v1/errors/4
+        code: KAFKAS-MGMT-4
+        reason: User 'foo-bar' is not authorized to access the service.
+        operation_id: 1lY3UiEhznXBpWPfI2lNejpd4YC
+    "500Example":
+      value:
+        id: "9"
+        kind: Error
+        href: /api/kafkas_mgmt/v1/errors/9
+        code: KAFKAS-MGMT-9
+        reason: Unspecified error
+        operation_id: 1ieELvF9jMQY6YghfM9gGRsHvEW
     "404Example":
       value:
         id: "7"
