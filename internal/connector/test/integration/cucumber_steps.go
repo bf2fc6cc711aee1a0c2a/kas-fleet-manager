@@ -177,12 +177,12 @@ func (s *extender) updateConnectorCatalogOfTypeAndChannelWithShardMetadata(conne
 	return nil
 }
 
-func (s *extender) iDeleteUnusedAndNotInCatalogConnectorTypes() error {
+func (s *extender) iDeleteOrDeprecateRemovedTypes() error {
 	var service services.ConnectorTypesService
 	if err := s.Suite.Helper.Env.ServiceContainer.Resolve(&service); err != nil {
 		return err
 	}
-	if err := service.DeleteUnusedAndNotInCatalog(); err != nil {
+	if err := service.DeleteOrDeprecateRemovedTypes(); err != nil {
 		return err
 	}
 	return nil
@@ -198,7 +198,7 @@ func init() {
 		ctx.Step(`^update connector catalog of type "([^"]*)" and channel "([^"]*)" with shard metadata:$`, e.updateConnectorCatalogOfTypeAndChannelWithShardMetadata)
 		ctx.Step(`I remember keycloak client for cleanup with clientID: \${([^"]*)}$`, e.rememberKeycloakClientForCleanup)
 		ctx.Step(`I can forget keycloak clientID: \${([^"]*)}$`, e.forgetKeycloakClientForCleanup)
-		ctx.Step(`^I delete the unused and not in catalog connector types$`, e.iDeleteUnusedAndNotInCatalogConnectorTypes)
+		ctx.Step(`^I delete or deprecate types not in latest connector catalog$`, e.iDeleteOrDeprecateRemovedTypes)
 
 		ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 			e.deleteKeycloakClients(sc, err)

@@ -23,6 +23,8 @@ type ConnectorType struct {
 	Channels []Channel `json:"channels,omitempty"`
 	// A description of the connector.
 	Description string `json:"description,omitempty"`
+	// Connector type is deprecated and removed from the catalog.
+	Deprecated bool `json:"deprecated,omitempty"`
 	// URL to an icon of the connector.
 	IconHref string `json:"icon_href,omitempty"`
 	// Labels used to categorize the connector
