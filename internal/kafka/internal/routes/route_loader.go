@@ -258,6 +258,14 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, s.Keycloak.GetRealmConfig().ValidIssuerURI, "id", s.ClusterService)
 
+	// observatorium proxy endpoints
+	observatoriumProxyHandler := handlers.NewObservatoriumProxyHandler(s.ClusterService)
+	observatoriumProxyRouter := apiV1Router.PathPrefix("/obs-proxy-verification").Subrouter()
+	observatoriumProxyRouter.HandleFunc("/{cluster_external_id}", observatoriumProxyHandler.ValidateTokenAndExternalClusterID).
+		Name(logger.NewLogEvent("validate-observatorium-proxy-token", "validate observatorium proxy token and cluster external id").ToString()).
+		Methods(http.MethodPost)
+	observatoriumProxyRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.Keycloak.GetRealmConfig().ValidIssuerURI}, errors.ErrorNotFound))
+
 	// /api/kafkas_mgmt/v1/admin/kafkas
 	adminKafkaHandler := handlers.NewAdminKafkaHandler(s.Kafka, s.AccountService, s.ProviderConfig, s.ClusterService)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -24,6 +25,13 @@ func (c *KFMClaims) GetAccountId() (string, error) {
 		return (*c)[tenantUserIdClaim].(string), nil
 	}
 	return "", fmt.Errorf("can't find '%s' attribute in claims", tenantUserIdClaim)
+}
+
+func (c *KFMClaims) GetClientID() (string, error) {
+	if (*c)[clientIDclaim] != nil {
+		return (*c)[clientIDclaim].(string), nil
+	}
+	return "", fmt.Errorf("can't find '%s' attribute in claims", clientIDclaim)
 }
 
 func (c *KFMClaims) GetOrgId() (string, error) {

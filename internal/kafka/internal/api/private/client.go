@@ -49,6 +49,8 @@ type APIClient struct {
 	// API Services
 
 	AgentClustersApi *AgentClustersApiService
+
+	ObservatoriumProxyApi *ObservatoriumProxyApiService
 }
 
 type service struct {
@@ -68,6 +70,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 
 	// API Services
 	c.AgentClustersApi = (*AgentClustersApiService)(&c.common)
+	c.ObservatoriumProxyApi = (*ObservatoriumProxyApiService)(&c.common)
 
 	return c
 }

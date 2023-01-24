@@ -402,6 +402,12 @@ func Test_FindCluster(t *testing.T) {
 		Status:   testStatus,
 	}
 
+	externalID := "34a47b83-e09a-42cd-9332-08dd77b84d53"
+
+	externalClusterIDcriteria := FindClusterCriteria{
+		ExternalID: externalID,
+	}
+
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
@@ -455,6 +461,25 @@ func Test_FindCluster(t *testing.T) {
 			want: mocks.BuildCluster(nil),
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "clusters"`).WithReply(converters.ConvertCluster(mocks.BuildCluster(nil)))
+			},
+		},
+		{
+			name: "successful retrieval of a cluster when passing external ID",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				criteria: externalClusterIDcriteria,
+			},
+			want: mocks.BuildCluster(func(cluster *api.Cluster) {
+				cluster.ExternalID = externalID
+			}),
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "clusters"`).WithReply(converters.ConvertCluster(
+					mocks.BuildCluster(func(cluster *api.Cluster) {
+						cluster.ExternalID = externalID
+					}),
+				))
 			},
 		},
 	}
@@ -1309,6 +1334,13 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 		MultiAZ:  true,
 		Status:   api.ClusterReady,
 	}
+
+	externalID := "34a47b83-e09a-42cd-9332-08dd77b84d53"
+
+	externalClusterIDcriteria := FindClusterCriteria{
+		ExternalID: externalID,
+	}
+
 	var clusters []*api.Cluster
 	clusters = append(clusters, &api.Cluster{ClusterID: "test01", Status: api.ClusterReady, Meta: api.Meta{
 		DeletedAt: gorm.DeletedAt{
@@ -1355,6 +1387,25 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 			},
 			want:    clusters,
 			wantErr: false,
+		},
+		{
+			name: "successful retrieval of all clusters when passing external ID to the find criteria",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				criteria: externalClusterIDcriteria,
+			},
+			want: []*api.Cluster{mocks.BuildCluster(func(cluster *api.Cluster) {
+				cluster.ExternalID = externalID
+			})},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "clusters"`).WithReply(converters.ConvertClusters([]*api.Cluster{
+					mocks.BuildCluster(func(cluster *api.Cluster) {
+						cluster.ExternalID = externalID
+					}),
+				}))
+			},
 		},
 	}
 

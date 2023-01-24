@@ -301,6 +301,7 @@ type FindClusterCriteria struct {
 	MultiAZ               bool
 	Status                api.ClusterStatus
 	SupportedInstanceType string
+	ExternalID            string
 }
 
 func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster, error) {
@@ -313,6 +314,7 @@ func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster,
 		Region:        criteria.Region,
 		MultiAZ:       criteria.MultiAZ,
 		Status:        criteria.Status,
+		ExternalID:    criteria.ExternalID,
 	}
 
 	// filter by supported instance type
@@ -486,13 +488,14 @@ func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cl
 	dbConn := c.connectionFactory.New().
 		Model(&api.Cluster{})
 
-	var cluster []*api.Cluster
+	var clusters []*api.Cluster
 
 	clusterDetails := &api.Cluster{
 		CloudProvider: criteria.Provider,
 		Region:        criteria.Region,
 		MultiAZ:       criteria.MultiAZ,
 		Status:        criteria.Status,
+		ExternalID:    criteria.ExternalID,
 	}
 
 	// filter by supported instance type
@@ -503,14 +506,14 @@ func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cl
 	// They are mostly the same as the library we use (xid) does take the generation timestamp into consideration,
 	// However, it only down to the level of seconds. This means that if a few records are created at almost the same time,
 	// the order is not guaranteed. So use the `created_at` column will provider better consistency.
-	if err := dbConn.Where(clusterDetails).Order("created_at asc").Scan(&cluster).Error; err != nil {
+	if err := dbConn.Where(clusterDetails).Order("created_at asc").Scan(&clusters).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err
 	}
 
-	return cluster, nil
+	return clusters, nil
 }
 
 func (c clusterService) UpdateMultiClusterStatus(clusterIDs []string, status api.ClusterStatus) *apiErrors.ServiceError {
