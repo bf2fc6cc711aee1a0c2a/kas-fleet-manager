@@ -50,7 +50,7 @@ type MachinePoolRequest struct {
 	Replicas           int
 	ClusterID          string
 	NodeLabels         map[string]string
-	NodeTaints         []CluserNodeTaint
+	NodeTaints         []ClusterNodeTaint
 }
 
 type MachinePoolInfo struct {
@@ -62,7 +62,7 @@ type MachinePoolInfo struct {
 	Replicas           int
 	ClusterID          string
 	NodeLabels         map[string]string
-	NodeTaints         []CluserNodeTaint
+	NodeTaints         []ClusterNodeTaint
 }
 
 type MachinePoolAutoScaling struct {
@@ -70,7 +70,7 @@ type MachinePoolAutoScaling struct {
 	MaxNodes int
 }
 
-type CluserNodeTaint struct {
+type ClusterNodeTaint struct {
 	Effect string
 	Key    string
 	Value  string

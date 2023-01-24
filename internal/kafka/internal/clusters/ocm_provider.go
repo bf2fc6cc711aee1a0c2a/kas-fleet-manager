@@ -377,9 +377,9 @@ func (o *OCMProvider) GetMachinePool(clusterID string, id string) (*types.Machin
 		return nil, nil
 	}
 
-	var nodeTaints []types.CluserNodeTaint
+	var nodeTaints []types.ClusterNodeTaint
 	for _, ocmNodeTaint := range ocmMachinePool.Taints() {
-		nodeTaint := types.CluserNodeTaint{
+		nodeTaint := types.ClusterNodeTaint{
 			Effect: ocmNodeTaint.Effect(),
 			Key:    ocmNodeTaint.Key(),
 			Value:  ocmNodeTaint.Value(),

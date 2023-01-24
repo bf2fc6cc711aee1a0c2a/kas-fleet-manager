@@ -1048,13 +1048,13 @@ func (c *ClusterManager) buildMachinePoolRequest(machinePoolID string, supported
 	machinePoolLabels := map[string]string{
 		kafkaInstanceProfileType: supportedInstanceType,
 	}
-	machinePoolTaint := types.CluserNodeTaint{
+	machinePoolTaint := types.ClusterNodeTaint{
 		Effect: "NoExecute",
 		Key:    kafkaInstanceProfileType,
 		Value:  supportedInstanceType,
 	}
 
-	machinePoolTaints := []types.CluserNodeTaint{machinePoolTaint}
+	machinePoolTaints := []types.ClusterNodeTaint{machinePoolTaint}
 	machinePool := &types.MachinePoolRequest{
 		ID:                 machinePoolID,
 		InstanceSize:       dynamicScalingConfig.ComputeMachineType,
