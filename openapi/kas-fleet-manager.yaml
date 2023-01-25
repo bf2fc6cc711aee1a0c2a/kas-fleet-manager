@@ -685,7 +685,8 @@ paths:
         '500':
           content:
             application/json:
-              schema: { }
+              schema:
+                $ref: '#/components/schemas/Error'
               examples:
                 500Example:
                   $ref: '#/components/examples/500Example'
@@ -731,7 +732,8 @@ paths:
         '500':
           content:
             application/json:
-              schema: { }
+              schema:
+                $ref: '#/components/schemas/Error'
               examples:
                 500Example:
                   $ref: '#/components/examples/500Example'
