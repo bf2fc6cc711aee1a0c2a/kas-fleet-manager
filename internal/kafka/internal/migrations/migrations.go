@@ -93,9 +93,9 @@ var migrations = []*gormigrate.Migration{
 	addDefaultValueForClusterTypeColumn(),
 	addKafkaPromotionFields(),
 	removeWronglyCreatedEnterpriseClusterInProd(),
+	addAccessKafkasViaPrivateNetworkColumnInClustersTable(),
 	addKafkaPromoteWorkerInLeaderLeases(),
 	updateExpiresAtZeroValueFromKafkaRequests(),
-	addAccessKafkasViaPrivateNetworkColumnInClustersTable(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

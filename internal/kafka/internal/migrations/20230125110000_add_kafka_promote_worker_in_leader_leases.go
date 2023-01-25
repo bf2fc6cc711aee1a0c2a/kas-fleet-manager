@@ -10,7 +10,7 @@ import (
 func addKafkaPromoteWorkerInLeaderLeases() *gormigrate.Migration {
 	leaderLeaseType := "promoting_kafka"
 	return &gormigrate.Migration{
-		ID: "20221219154830",
+		ID: "20230125110000",
 		Migrate: func(tx *gorm.DB) error {
 			if err := tx.Create(&api.LeaderLease{Expires: &db.KafkaAdditionalLeasesExpireTime, LeaseType: leaderLeaseType, Leader: api.NewID()}).Error; err != nil {
 				return err
