@@ -13,7 +13,7 @@ func updateExpiresAtZeroValueFromKafkaRequests() *gormigrate.Migration {
 	zeroTime := time.Time{}
 
 	return &gormigrate.Migration{
-		ID: "20230109140000",
+		ID: "20230125120000",
 		Migrate: func(tx *gorm.DB) error {
 			err := tx.Table("kafka_requests").Where("expires_at = ?", zeroTime).Where("deleted_at IS NULL").Update("expires_at", nullTime).Error
 			if err != nil {
