@@ -26,6 +26,11 @@ paths:
   # observatorium proxy related endpoints
   '/api/kafkas_mgmt/v1/obs-proxy-verification/{cluster_external_id}':
     post:
+      description: |-
+        this endpoint is used to check whether a token sent from a data plane cluster matches the data plane cluster details
+        obtained from the clusters table that correspond to the "cluster_external_id" value sent in the url path.
+        If there is a match, the 200 response is sent, which indicates that the token can be used to send metrics for the
+        corresponding data plane cluster via the observatorium proxy
       operationId: verifyObservatoriumProxyRequestValid
       tags:
         - observatorium-proxy

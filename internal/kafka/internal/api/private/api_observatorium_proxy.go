@@ -27,6 +27,7 @@ type ObservatoriumProxyApiService service
 
 /*
 VerifyObservatoriumProxyRequestValid Method for VerifyObservatoriumProxyRequestValid
+this endpoint is used to check whether a token sent from a data plane cluster matches the data plane cluster details obtained from the clusters table that correspond to the \&quot;cluster_external_id\&quot; value sent in the url path. If there is a match, the 200 response is sent, which indicates that the token can be used to send metrics for the corresponding data plane cluster via the observatorium proxy
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param clusterExternalId external cluster ID of a data plane cluster. It has to match the service account details stored in clusters table for that cluster
 */
