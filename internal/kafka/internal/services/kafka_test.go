@@ -452,7 +452,6 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 		clusterService    ClusterService
 		keycloakService   sso.KeycloakService
 		kafkaConfig       *config.KafkaConfig
-		kafkaService      KafkaService
 	}
 	type args struct {
 		kafkaRequest *dbapi.KafkaRequest
@@ -489,11 +488,6 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
-				kafkaService: &KafkaServiceMock{
-					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
-						return nil
-					},
-				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
@@ -522,11 +516,6 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						}
 					},
 				},
-				kafkaService: &KafkaServiceMock{
-					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
-						return nil
-					},
-				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
@@ -550,11 +539,6 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 								ClientID: "test",
 							},
 						}
-					},
-				},
-				kafkaService: &KafkaServiceMock{
-					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
-						return nil
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{},
@@ -592,11 +576,6 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return nil, errors.FailedToCreateSSOClient("failed to create the sso client")
 					},
 				},
-				kafkaService: &KafkaServiceMock{
-					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
-						return nil
-					},
-				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
@@ -623,11 +602,6 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 							},
 							EnableAuthenticationOnKafka: true,
 						}
-					},
-				},
-				kafkaService: &KafkaServiceMock{
-					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
-						return nil
 					},
 				},
 				kafkaConfig: &config.KafkaConfig{},
