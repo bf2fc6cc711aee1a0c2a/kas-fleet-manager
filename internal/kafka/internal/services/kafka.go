@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"gorm.io/gorm"
@@ -28,7 +27,6 @@ import (
 	"github.com/golang/glog"
 
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
-	v1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/aws-sdk-go/service/route53"
@@ -848,7 +846,7 @@ func (k *kafkaService) GenerateReservedManagedKafkasByClusterID(clusterID string
 		return nil, svcErr
 	}
 	if cluster == nil {
-		return nil, apiErrors.GeneralError("failed to generate reserved managed kafkas for clusterID %s: clusterID not found", clusterID)
+		return nil, errors.GeneralError("failed to generate reserved managed kafkas for clusterID %s: clusterID not found", clusterID)
 	}
 	if cluster.Status != api.ClusterReady {
 		logger.Logger.Warningf("ClusterID '%s' is not ready. Its status is '%s'. Returning an empty list of reserved managed kafkas", clusterID, cluster.Status)
@@ -857,10 +855,10 @@ func (k *kafkaService) GenerateReservedManagedKafkasByClusterID(clusterID string
 
 	latestStrimziVersion, err := cluster.GetLatestAvailableAndReadyStrimziVersion()
 	if err != nil {
-		return nil, errors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to generate reserved managed kafkas for clusterID %s: error finding ready strimzi versions", clusterID)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to generate reserved managed kafkas for clusterID %s: error finding ready strimzi versions", clusterID)
 	}
 	if latestStrimziVersion == nil {
-		return nil, apiErrors.GeneralError("failed to generate reserved managed kafkas for clusterID %s: no ready strimzi versions found", clusterID)
+		return nil, errors.GeneralError("failed to generate reserved managed kafkas for clusterID %s: no ready strimzi versions found", clusterID)
 	}
 
 	supportedInstanceTypes := cluster.GetSupportedInstanceTypes()
@@ -1084,9 +1082,9 @@ func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 	}
 
 	labels := map[string]string{
-		"bf2.org/kafkaInstanceProfileQuotaConsumed": strconv.Itoa(k.QuotaConsumed),
-		"bf2.org/kafkaInstanceProfileType":          kafkaRequest.InstanceType,
-		v1.ManagedKafkaBf2SuspendedLabelKey:         fmt.Sprintf("%t", arrays.Contains(constants.GetSuspendedStatuses(), kafkaRequest.Status)),
+		"bf2.org/kafkaInstanceProfileQuotaConsumed":   strconv.Itoa(k.QuotaConsumed),
+		"bf2.org/kafkaInstanceProfileType":            kafkaRequest.InstanceType,
+		managedkafka.ManagedKafkaBf2SuspendedLabelKey: fmt.Sprintf("%t", arrays.Contains(constants.GetSuspendedStatuses(), kafkaRequest.Status)),
 	}
 
 	managedKafkaCR := &managedkafka.ManagedKafka{
