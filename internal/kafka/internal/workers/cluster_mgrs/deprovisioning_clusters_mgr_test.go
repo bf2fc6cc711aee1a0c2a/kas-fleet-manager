@@ -208,7 +208,7 @@ func TestDeprovisioningClustersManager_processDeprovisioningClusters(t *testing.
 			wantErr: false,
 		},
 		{
-			name: "should skip deletion for enterprise clusters",
+			name: "should process deprovisioning enterprise clusters",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
@@ -216,7 +216,18 @@ func TestDeprovisioningClustersManager_processDeprovisioningClusters(t *testing.
 							enterpriseDeprovisionCluster,
 						}, nil
 					},
-					// FindNonEmptyClusterByID, Delete and UpdateStatus functions should never be called for enterprise cluster
+					FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+					RemoveResourcesFunc: func(cluster *api.Cluster, syncSetName string) *apiErrors.ServiceError {
+						return nil
+					},
 				},
 				dataplaneClusterConfig: autoScalingDataPlaneConfig,
 			},
@@ -238,6 +249,72 @@ func TestDeprovisioningClustersManager_processDeprovisioningClusters(t *testing.
 			} else {
 				g.Expect(err).To(gomega.HaveOccurred())
 			}
+		})
+	}
+}
+
+func TestDeprovisioningClustersManager_reconcileDeprovisioningEnterpriseCluster(t *testing.T) {
+	type fields struct {
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		wantErr bool
+	}{
+		{
+			name: "should succeed reconciling enterprise cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return false, nil
+					},
+					RemoveResourcesFunc: func(cluster *api.Cluster, syncSetName string) *apiErrors.ServiceError {
+						return nil
+					},
+					FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should fail reconciling enterprise cluster when deleting the SyncSet fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+						return false, nil
+					},
+					RemoveResourcesFunc: func(cluster *api.Cluster, syncSetName string) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("error deleting SyncSet")
+					},
+					FindNonEmptyClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			c := &DeprovisioningClustersManager{
+				clusterService: tt.fields.clusterService,
+			}
+
+			err := c.reconcileDeprovisioningEnterpriseCluster(&tt.arg)
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

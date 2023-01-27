@@ -445,7 +445,7 @@ func validateEnterpriseClusterEligibleForDeregistration(ctx context.Context, clu
 }
 
 // validateEnterpriseClusterHasNoKafkas requires a cluster to be empty, thus having no kafka instances
-func validateEnterpriseClusterHasNoKafkas(ctx context.Context, clusterID string, clusterService services.ClusterService) handlers.Validate {
+func validateEnterpriseClusterHasNoKafkas(clusterID string, clusterService services.ClusterService) handlers.Validate {
 	return func() *errors.ServiceError {
 		instanceCounts, err := clusterService.FindKafkaInstanceCount([]string{clusterID})
 		if err != nil {

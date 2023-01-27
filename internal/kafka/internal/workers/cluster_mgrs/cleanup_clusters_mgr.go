@@ -108,7 +108,11 @@ func (m *CleanupClustersManager) reconcileCleanupEnterpriseCluster(cluster api.C
 		return errors.Wrapf(serviceAccountRemovalErr, "failed to removed Dataplane cluster %s fleetshard service account", cluster.ClusterID)
 	}
 	glog.Infof("Hard deleting the Enterprise Dataplane cluster %s from the database", cluster.ClusterID)
-	return m.clusterService.HardDeleteByClusterID(cluster.ClusterID)
+	deleteError := m.clusterService.HardDeleteByClusterID(cluster.ClusterID)
+	if deleteError != nil {
+		return errors.Wrapf(deleteError, "failed to hard delete Dataplane cluster %s from the database", cluster.ClusterID)
+	}
+	return nil
 }
 
 func (m *CleanupClustersManager) reconcileCleanupCluster(cluster api.Cluster) error {
@@ -126,5 +130,9 @@ func (m *CleanupClustersManager) reconcileCleanupCluster(cluster api.Cluster) er
 	}
 
 	glog.Infof("Soft deleting the Dataplane cluster %s from the database", cluster.ClusterID)
-	return m.clusterService.DeleteByClusterID(cluster.ClusterID)
+	deleteError := m.clusterService.DeleteByClusterID(cluster.ClusterID)
+	if deleteError != nil {
+		return errors.Wrapf(deleteError, "failed to soft delete Dataplane cluster %s from the database", cluster.ClusterID)
+	}
+	return nil
 }

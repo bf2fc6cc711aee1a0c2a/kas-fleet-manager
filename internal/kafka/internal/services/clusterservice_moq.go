@@ -46,7 +46,7 @@ var _ ClusterService = &ClusterServiceMock{}
 //			DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
 //				panic("mock out the DeleteByClusterID method")
 //			},
-//			DeregisterClusterJobFunc: func(clusterId string) *apiErrors.ServiceError {
+//			DeregisterClusterJobFunc: func(clusterID string) *apiErrors.ServiceError {
 //				panic("mock out the DeregisterClusterJob method")
 //			},
 //			FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
@@ -75,6 +75,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //			},
 //			GetExternalIDFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 //				panic("mock out the GetExternalID method")
+//			},
+//			HardDeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+//				panic("mock out the HardDeleteByClusterID method")
 //			},
 //			InstallClusterLoggingFunc: func(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError) {
 //				panic("mock out the InstallClusterLogging method")
@@ -144,7 +147,7 @@ type ClusterServiceMock struct {
 	DeleteByClusterIDFunc func(clusterID string) *apiErrors.ServiceError
 
 	// DeregisterClusterJobFunc mocks the DeregisterClusterJob method.
-	DeregisterClusterJobFunc func(clusterId string) *apiErrors.ServiceError
+	DeregisterClusterJobFunc func(clusterID string) *apiErrors.ServiceError
 
 	// FindAllClustersFunc mocks the FindAllClusters method.
 	FindAllClustersFunc func(criteria FindClusterCriteria) ([]*api.Cluster, error)
@@ -172,6 +175,9 @@ type ClusterServiceMock struct {
 
 	// GetExternalIDFunc mocks the GetExternalID method.
 	GetExternalIDFunc func(clusterID string) (string, *apiErrors.ServiceError)
+
+	// HardDeleteByClusterIDFunc mocks the HardDeleteByClusterID method.
+	HardDeleteByClusterIDFunc func(clusterID string) *apiErrors.ServiceError
 
 	// InstallClusterLoggingFunc mocks the InstallClusterLogging method.
 	InstallClusterLoggingFunc func(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError)
@@ -259,8 +265,8 @@ type ClusterServiceMock struct {
 		}
 		// DeregisterClusterJob holds details about calls to the DeregisterClusterJob method.
 		DeregisterClusterJob []struct {
-			// ClusterId is the clusterId argument value.
-			ClusterId string
+			// ClusterID is the clusterID argument value.
+			ClusterID string
 		}
 		// FindAllClusters holds details about calls to the FindAllClusters method.
 		FindAllClusters []struct {
@@ -302,6 +308,11 @@ type ClusterServiceMock struct {
 		}
 		// GetExternalID holds details about calls to the GetExternalID method.
 		GetExternalID []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+		}
+		// HardDeleteByClusterID holds details about calls to the HardDeleteByClusterID method.
+		HardDeleteByClusterID []struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
@@ -400,6 +411,7 @@ type ClusterServiceMock struct {
 	lockGetClientID                                    sync.RWMutex
 	lockGetClusterDNS                                  sync.RWMutex
 	lockGetExternalID                                  sync.RWMutex
+	lockHardDeleteByClusterID                          sync.RWMutex
 	lockInstallClusterLogging                          sync.RWMutex
 	lockInstallStrimzi                                 sync.RWMutex
 	lockIsStrimziKafkaVersionAvailableInCluster        sync.RWMutex
@@ -683,19 +695,19 @@ func (mock *ClusterServiceMock) DeleteByClusterIDCalls() []struct {
 }
 
 // DeregisterClusterJob calls DeregisterClusterJobFunc.
-func (mock *ClusterServiceMock) DeregisterClusterJob(clusterId string) *apiErrors.ServiceError {
+func (mock *ClusterServiceMock) DeregisterClusterJob(clusterID string) *apiErrors.ServiceError {
 	if mock.DeregisterClusterJobFunc == nil {
 		panic("ClusterServiceMock.DeregisterClusterJobFunc: method is nil but ClusterService.DeregisterClusterJob was just called")
 	}
 	callInfo := struct {
-		ClusterId string
+		ClusterID string
 	}{
-		ClusterId: clusterId,
+		ClusterID: clusterID,
 	}
 	mock.lockDeregisterClusterJob.Lock()
 	mock.calls.DeregisterClusterJob = append(mock.calls.DeregisterClusterJob, callInfo)
 	mock.lockDeregisterClusterJob.Unlock()
-	return mock.DeregisterClusterJobFunc(clusterId)
+	return mock.DeregisterClusterJobFunc(clusterID)
 }
 
 // DeregisterClusterJobCalls gets all the calls that were made to DeregisterClusterJob.
@@ -703,10 +715,10 @@ func (mock *ClusterServiceMock) DeregisterClusterJob(clusterId string) *apiError
 //
 //	len(mockedClusterService.DeregisterClusterJobCalls())
 func (mock *ClusterServiceMock) DeregisterClusterJobCalls() []struct {
-	ClusterId string
+	ClusterID string
 } {
 	var calls []struct {
-		ClusterId string
+		ClusterID string
 	}
 	mock.lockDeregisterClusterJob.RLock()
 	calls = mock.calls.DeregisterClusterJob
@@ -994,6 +1006,38 @@ func (mock *ClusterServiceMock) GetExternalIDCalls() []struct {
 	mock.lockGetExternalID.RLock()
 	calls = mock.calls.GetExternalID
 	mock.lockGetExternalID.RUnlock()
+	return calls
+}
+
+// HardDeleteByClusterID calls HardDeleteByClusterIDFunc.
+func (mock *ClusterServiceMock) HardDeleteByClusterID(clusterID string) *apiErrors.ServiceError {
+	if mock.HardDeleteByClusterIDFunc == nil {
+		panic("ClusterServiceMock.HardDeleteByClusterIDFunc: method is nil but ClusterService.HardDeleteByClusterID was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	mock.lockHardDeleteByClusterID.Lock()
+	mock.calls.HardDeleteByClusterID = append(mock.calls.HardDeleteByClusterID, callInfo)
+	mock.lockHardDeleteByClusterID.Unlock()
+	return mock.HardDeleteByClusterIDFunc(clusterID)
+}
+
+// HardDeleteByClusterIDCalls gets all the calls that were made to HardDeleteByClusterID.
+// Check the length with:
+//
+//	len(mockedClusterService.HardDeleteByClusterIDCalls())
+func (mock *ClusterServiceMock) HardDeleteByClusterIDCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	mock.lockHardDeleteByClusterID.RLock()
+	calls = mock.calls.HardDeleteByClusterID
+	mock.lockHardDeleteByClusterID.RUnlock()
 	return calls
 }
 

@@ -147,7 +147,7 @@ func (h clusterHandler) DeregisterEnterpriseCluster(w http.ResponseWriter, r *ht
 			handlers.ValidateAsyncEnabled(r, "deleting enterprise cluster"),
 			ValidateKafkaClaims(ctx, ValidateOrganisationId()),
 			validateEnterpriseClusterEligibleForDeregistration(ctx, clusterID, h.clusterService),
-			validateEnterpriseClusterHasNoKafkas(ctx, clusterID, h.clusterService),
+			validateEnterpriseClusterHasNoKafkas(clusterID, h.clusterService),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			return nil, h.clusterService.DeregisterClusterJob(clusterID)

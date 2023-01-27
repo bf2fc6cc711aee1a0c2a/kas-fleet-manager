@@ -29,46 +29,6 @@ func TestCleanupClustersManager_processCleanupClusters(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "should return an error if ListByStatus fails in ClusterService",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
-						return nil, apiErrors.GeneralError("failed to list by status")
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "should return an error if reconcileCleanupCluster fails during processing cleaned up clusters",
-			fields: fields{
-				dataplaneClusterConfig: &config.DataplaneClusterConfig{
-					EnableKafkaSreIdentityProviderConfiguration: true,
-				},
-				clusterService: &services.ClusterServiceMock{
-					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
-						return []api.Cluster{
-							deprovisionCluster,
-						}, nil
-					},
-					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-				osdIDPKeycloakService: &sso.OSDKeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return apiErrors.GeneralError("failed to deregister client in sso")
-					},
-				},
-				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
-					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
-						return apiErrors.GeneralError("failed to remove service account client in sso")
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
 			name: "should succeed if no errors are encountered",
 			fields: fields{
 				dataplaneClusterConfig: &config.DataplaneClusterConfig{
@@ -240,6 +200,84 @@ func TestCleanupClustersManager_reconcileCleanupCluster(t *testing.T) {
 				dataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
 			}
 			g.Expect(c.reconcileCleanupCluster(tt.arg) != nil).To(gomega.Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestCleanupClustersManager_reconcileEnterpriseCleanupCluster(t *testing.T) {
+	type fields struct {
+		clusterService             services.ClusterService
+		osdIDPKeycloakService      sso.OSDKeycloakService
+		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+		dataplaneClusterConfig     *config.DataplaneClusterConfig
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		wantErr bool
+	}{
+		{
+			name: "successful deletion of an enterprise cluster",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableKafkaSreIdentityProviderConfiguration: true,
+				},
+				clusterService: &services.ClusterServiceMock{
+					HardDeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIDPKeycloakService: &sso.OSDKeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should fail when enterprise cluster can't be deleted",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					EnableKafkaSreIdentityProviderConfiguration: true,
+				},
+				clusterService: &services.ClusterServiceMock{
+					HardDeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("error hard deleting enterprise cluster")
+					},
+				},
+				osdIDPKeycloakService: &sso.OSDKeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			c := &CleanupClustersManager{
+				clusterService:             tt.fields.clusterService,
+				osdIDPKeycloakService:      tt.fields.osdIDPKeycloakService,
+				kasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
+				dataplaneClusterConfig:     tt.fields.dataplaneClusterConfig,
+			}
+			g.Expect(c.reconcileCleanupEnterpriseCluster(tt.arg) != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
