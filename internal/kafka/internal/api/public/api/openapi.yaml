@@ -2076,12 +2076,7 @@ components:
           type: integer
         total:
           type: integer
-        items:
-          items:
-            $ref: '#/components/schemas/ObjectReference'
-          type: array
       required:
-      - items
       - kind
       - page
       - size
@@ -2546,6 +2541,8 @@ components:
           items:
             $ref: '#/components/schemas/Error'
           type: array
+      required:
+      - items
     KafkaRequest_allOf:
       example: '{"$ref":"#/components/examples/KafkaRequestExample"}'
       properties:
@@ -2654,6 +2651,8 @@ components:
             allOf:
             - $ref: '#/components/schemas/KafkaRequest'
           type: array
+      required:
+      - items
     EnterpriseClusterList_allOf:
       example: '{"kind":"ClusterList","page":"1","size":"1","total":"1","item":{"$ref":"#/components/examples/EnterpriseClusterExample"}}'
       properties:
@@ -2662,6 +2661,8 @@ components:
             allOf:
             - $ref: '#/components/schemas/EnterpriseCluster'
           type: array
+      required:
+      - items
     EnterpriseCluster_allOf:
       properties:
         access_kafkas_via_private_network:
@@ -2694,6 +2695,8 @@ components:
             allOf:
             - $ref: '#/components/schemas/SupportedKafkaInstanceType'
           type: array
+      required:
+      - items
     CloudProviderList_allOf:
       example: '{"kind":"CloudProviderList","page":"1","size":"1","total":"1","item":{"$ref":"#/components/examples/CloudProviderExample"}}'
       properties:
@@ -2702,6 +2705,8 @@ components:
             allOf:
             - $ref: '#/components/schemas/CloudProvider'
           type: array
+      required:
+      - items
     CloudRegionList_allOf:
       example: '{"kind":"CloudRegionList","page":"1","size":"1","total":"1","item":{"$ref":"#/components/examples/CloudRegionExample"}}'
       properties:
@@ -2710,6 +2715,8 @@ components:
             allOf:
             - $ref: '#/components/schemas/CloudRegion'
           type: array
+      required:
+      - items
     ServiceAccount_allOf:
       example: '{"$ref":"#/components/examples/ServiceAccountExample"}'
       properties:
