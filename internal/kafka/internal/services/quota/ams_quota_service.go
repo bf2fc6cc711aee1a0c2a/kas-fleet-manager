@@ -71,8 +71,8 @@ func (q amsQuotaService) newBaseQuotaReservedResourceBuilder(kafka *dbapi.KafkaR
 // with an AMS ReservedResource. The set of Billing models shown/accepted is
 // different between them
 var supportedAMSRelatedResourceBillingModels = map[string]struct{}{
-	string(amsv1.BillingModelMarketplace): {},
-	string(amsv1.BillingModelStandard):    {},
+	ocm.AMSRelatedResourceBillingModelMarketplace.String(): {},
+	ocm.AMSRelatedResourceBillingModelStandard.String():    {},
 }
 
 // checks if the requested billing model (pre-paid vs. consumption based) matches with the model returned from AMS
