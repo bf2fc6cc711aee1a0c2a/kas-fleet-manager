@@ -31,7 +31,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.3 // indirect
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/onsi/gomega v1.24.2
+	github.com/onsi/gomega v1.26.0
 	github.com/openshift-online/ocm-sdk-go v0.1.311
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/operator-framework/api v0.17.1
