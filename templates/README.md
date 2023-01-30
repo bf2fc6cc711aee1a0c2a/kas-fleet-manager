@@ -22,7 +22,7 @@ TLS is used by default for the route. No port is specified, all ports are allowe
 
 `templates/db-template.yml`
 
-This template deploys a simple postgresl-9.4 database deployment with a TLS-enabled service.
+This template deploys a simple postgres v12 database deployment with a TLS-enabled service.
 
 ## Secrets template
 
