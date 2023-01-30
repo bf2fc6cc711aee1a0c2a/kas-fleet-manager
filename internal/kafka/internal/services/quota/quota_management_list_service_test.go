@@ -2,23 +2,24 @@ package quota
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/quota/internal/test"
 	"net/http"
 	"testing"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
-	"gorm.io/gorm"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/quota/internal/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
+
 	"github.com/onsi/gomega"
 	mocket "github.com/selvatico/go-mocket"
+	"gorm.io/gorm"
 )
 
 func Test_QuotaManagementListCheckQuota(t *testing.T) {
@@ -588,6 +589,201 @@ func Test_DefaultQuotaServiceFactory_GetQuotaService(t *testing.T) {
 			quotaService, err := factory.GetQuotaService(tt.args.quotaType)
 			g.Expect(quotaService).To(gomega.BeNil())
 			g.Expect(err).To(gomega.Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestQuotaManagementListService_IsQuotaEntitlementActive(t *testing.T) {
+	type fields struct {
+		quotaManagementList *quota_management.QuotaManagementListConfig
+	}
+	type args struct {
+		kafka *dbapi.KafkaRequest
+	}
+
+	expiredDate := quota_management.ExpirationDate(time.Now().AddDate(0, 0, -1))
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    bool
+		wantErr bool
+	}{
+		{
+			name: "return true if org has an active quota entitlement",
+			fields: fields{
+				quotaManagementList: &quota_management.QuotaManagementListConfig{
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						Organisations: quota_management.OrganisationList{
+							quota_management.Organisation{
+								Id:      "org-id",
+								AnyUser: true,
+								GrantedQuota: quota_management.QuotaList{
+									{
+										InstanceTypeID: "instance-type-1",
+										KafkaBillingModels: quota_management.BillingModelList{
+											{
+												Id:                  "kafka-billing-model-1",
+												MaxAllowedInstances: 1,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				kafka: &dbapi.KafkaRequest{
+					OrganisationId:          "org-id",
+					ActualKafkaBillingModel: "kafka-billing-model-1",
+					InstanceType:            "instance-type-1",
+				},
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "return false if quota entitled to an organisation but user is not registered to that organisation",
+			fields: fields{
+				quotaManagementList: &quota_management.QuotaManagementListConfig{
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						Organisations: quota_management.OrganisationList{
+							quota_management.Organisation{
+								Id:      "org-id",
+								AnyUser: false,
+								RegisteredUsers: quota_management.AccountList{
+									{
+										Username: "user-1",
+									},
+								},
+								GrantedQuota: quota_management.QuotaList{
+									{
+										InstanceTypeID: "instance-type-1",
+										KafkaBillingModels: quota_management.BillingModelList{
+											{
+												Id:                  "kafka-billing-model-1",
+												MaxAllowedInstances: 1,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				kafka: &dbapi.KafkaRequest{
+					OrganisationId:          "org-id",
+					ActualKafkaBillingModel: "kafka-billing-model-1",
+					InstanceType:            "instance-type-1",
+					Owner:                   "unregistered-user",
+				},
+			},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "return false if quota is not entitled to the organisation or user",
+			fields: fields{
+				quotaManagementList: &quota_management.QuotaManagementListConfig{
+					QuotaList: quota_management.RegisteredUsersListConfiguration{},
+				},
+			},
+			args: args{
+				kafka: &dbapi.KafkaRequest{
+					OrganisationId:          "org-id",
+					ActualKafkaBillingModel: "kafka-billing-model-1",
+					InstanceType:            "instance-type-1",
+					Owner:                   "user-1",
+				},
+			},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "return true if user has an active quota entitlement",
+			fields: fields{
+				quotaManagementList: &quota_management.QuotaManagementListConfig{
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						ServiceAccounts: quota_management.AccountList{
+							{
+								Username: "user-1",
+								GrantedQuota: quota_management.QuotaList{
+									{
+										InstanceTypeID: "instance-type-1",
+										KafkaBillingModels: quota_management.BillingModelList{
+											{
+												Id:                  "kafka-billing-model-1",
+												MaxAllowedInstances: 1,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				kafka: &dbapi.KafkaRequest{
+					OrganisationId:          "org-id",
+					ActualKafkaBillingModel: "kafka-billing-model-1",
+					InstanceType:            "instance-type-1",
+					Owner:                   "user-1",
+				},
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "return false if quota entitled to an individual user is expired",
+			fields: fields{
+				quotaManagementList: &quota_management.QuotaManagementListConfig{
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						ServiceAccounts: quota_management.AccountList{
+							{
+								Username: "user-1",
+								GrantedQuota: quota_management.QuotaList{
+									{
+										InstanceTypeID: "instance-type-1",
+										KafkaBillingModels: quota_management.BillingModelList{
+											{
+												Id:                  "kafka-billing-model-1",
+												MaxAllowedInstances: 1,
+												ExpirationDate:      &expiredDate,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				kafka: &dbapi.KafkaRequest{
+					OrganisationId:          "org-id",
+					ActualKafkaBillingModel: "kafka-billing-model-1",
+					InstanceType:            "instance-type-1",
+					Owner:                   "user-1",
+				},
+			},
+			want:    false,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			factory := NewDefaultQuotaServiceFactory(nil, nil, tt.fields.quotaManagementList, &defaultKafkaConf)
+			quotaService, _ := factory.GetQuotaService(api.QuotaManagementListQuotaType)
+
+			got, err := quotaService.IsQuotaEntitlementActive(tt.args.kafka)
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
 }
