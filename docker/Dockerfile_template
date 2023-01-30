@@ -1,4 +1,4 @@
-FROM quay.io/app-sre/postgres
+FROM quay.io/app-sre/postgres:12.13
 
 ENV POSTGRES_PASSWORD foobar-bizz-buzz
 ENV POSTGRES_USER kas_fleet_manager
