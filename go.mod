@@ -8,7 +8,6 @@ require (
 	github.com/aws/aws-sdk-go v1.44.189
 	github.com/aws/aws-secretsmanager-caching-go v1.1.0
 	github.com/blang/semver/v4 v4.0.0
-	github.com/bxcodec/faker/v3 v3.8.1
 	github.com/cucumber/godog v0.12.6
 	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/docker/go-healthcheck v0.1.0
@@ -16,6 +15,7 @@ require (
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/getsentry/sentry-go v0.17.0
 	github.com/ghodss/yaml v1.0.0
+	github.com/go-faker/faker/v4 v4.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-playground/validator/v10 v10.11.1
 	github.com/go-resty/resty/v2 v2.7.0
