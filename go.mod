@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.175
 	github.com/aws/aws-secretsmanager-caching-go v1.1.0
 	github.com/blang/semver/v4 v4.0.0
-	github.com/bxcodec/faker/v3 v3.8.0
+	github.com/bxcodec/faker/v3 v3.8.1
 	github.com/cucumber/godog v0.12.6
 	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/docker/go-healthcheck v0.1.0
