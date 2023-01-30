@@ -747,29 +747,31 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet {
 	var r []interface{}
 	switch cluster.ClusterType {
-	case api.EnterpriseDataPlaneClusterType.String():
-		r = append(r,
-			c.buildObservabilityNamespaceResource(),
-			c.buildObservatoriumDexSecretResource(),
-			c.buildObservatoriumSSOSecretResource(),
-			c.buildObservabilityCatalogSourceResource(),
-			c.buildObservabilityOperatorGroupResource(),
-			c.buildObservabilitySubscriptionResource(),
-		)
-	default:
+	case api.ManagedDataPlaneClusterType.String():
 		r = append(r,
 			c.buildReadOnlyGroupResource(),
 			c.buildDedicatedReaderClusterRoleBindingResource(),
 			c.buildKafkaSREGroupResource(),
 			c.buildKafkaSreClusterRoleBindingResource(),
-			c.buildObservabilityNamespaceResource(),
-			c.buildObservatoriumDexSecretResource(),
-			c.buildObservatoriumSSOSecretResource(),
-			c.buildObservabilityCatalogSourceResource(),
-			c.buildObservabilityOperatorGroupResource(),
-			c.buildObservabilitySubscriptionResource(),
 		)
 	}
+
+	r = append(r, c.buildObservabilityNamespaceResource())
+
+	if c.ObservabilityConfiguration.ObservabilityCloudWatchLoggingConfig.CloudwatchLoggingEnabled {
+		r = append(r,
+			c.buildObservabilityCloudwatchLoggingCredentialsSecret(),
+		)
+	}
+
+	r = append(r,
+		c.buildObservatoriumDexSecretResource(),
+		c.buildObservatoriumSSOSecretResource(),
+		c.buildObservabilityCatalogSourceResource(),
+		c.buildObservabilityOperatorGroupResource(),
+		c.buildObservabilitySubscriptionResource(),
+	)
+
 	strimziNamespace := strimziAddonNamespace
 	if c.OCMConfig.StrimziOperatorAddonID == "managed-kafka-qe" {
 		strimziNamespace = strimziQEAddonNamespace
@@ -825,6 +827,25 @@ func (c *ClusterManager) buildObservabilityNamespaceResource() *k8sCoreV1.Namesp
 		ObjectMeta: metav1.ObjectMeta{
 			Name: observabilityNamespace,
 		},
+	}
+}
+
+func (c *ClusterManager) buildObservabilityCloudwatchLoggingCredentialsSecret() *k8sCoreV1.Secret {
+	stringDataMap := map[string]string{
+		"aws_access_key_id":     c.ObservabilityConfiguration.ObservabilityCloudWatchLoggingConfig.Credentials.AccessKey,
+		"aws_secret_access_key": c.ObservabilityConfiguration.ObservabilityCloudWatchLoggingConfig.Credentials.SecretAccessKey,
+	}
+	return &k8sCoreV1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: metav1.SchemeGroupVersion.Version,
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      c.ObservabilityConfiguration.ObservabilityCloudWatchLoggingConfig.K8sCredentialsSecretName,
+			Namespace: c.ObservabilityConfiguration.ObservabilityCloudWatchLoggingConfig.K8sCredentialsSecretNamespace,
+		},
+		Type:       k8sCoreV1.SecretTypeOpaque,
+		StringData: stringDataMap,
 	}
 }
 
