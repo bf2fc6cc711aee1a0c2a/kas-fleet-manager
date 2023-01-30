@@ -2,9 +2,10 @@ package kafka_mgrs
 
 import (
 	"database/sql"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -201,6 +202,7 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 							ClusterID:               "123-cluster-123",
 							Name:                    "test-cluster",
 							InstanceType:            types.STANDARD.String(),
+							SizeId:                  "x1",
 							Status:                  constants.KafkaRequestStatusAccepted.String(),
 							ActualKafkaBillingModel: "eval",
 							ExpiresAt: sql.NullTime{
@@ -221,6 +223,9 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 					},
 					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
 						return nil
+					},
+					IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+						return false, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -251,6 +256,7 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 							ClusterID:               "123-cluster-123",
 							Name:                    "test-cluster",
 							InstanceType:            types.STANDARD.String(),
+							SizeId:                  "x1",
 							Status:                  constants.KafkaRequestStatusAccepted.String(),
 							ActualKafkaBillingModel: "eval",
 							ExpiresAt: sql.NullTime{
@@ -271,6 +277,9 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 					},
 					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
 						return nil
+					},
+					IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+						return false, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -300,6 +309,7 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 							ClusterID:               "123-cluster-123",
 							Name:                    "test-cluster",
 							InstanceType:            types.STANDARD.String(),
+							SizeId:                  "x1",
 							Status:                  constants.KafkaRequestStatusSuspended.String(),
 							ActualKafkaBillingModel: "eval",
 							ExpiresAt: sql.NullTime{
@@ -320,6 +330,9 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 					},
 					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
 						return nil
+					},
+					IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+						return false, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -349,6 +362,7 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 							ClusterID:               "123-cluster-123",
 							Name:                    "test-cluster",
 							InstanceType:            types.STANDARD.String(),
+							SizeId:                  "x1",
 							Status:                  constants.KafkaRequestStatusReady.String(),
 							ActualKafkaBillingModel: "eval",
 							ExpiresAt: sql.NullTime{
@@ -369,6 +383,9 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 					},
 					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
 						return nil
+					},
+					IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+						return false, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -398,6 +415,7 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 							ClusterID:               "123-cluster-123",
 							Name:                    "test-cluster",
 							InstanceType:            types.STANDARD.String(),
+							SizeId:                  "x1",
 							Status:                  constants.KafkaRequestStatusReady.String(),
 							ActualKafkaBillingModel: "eval",
 							ExpiresAt: sql.NullTime{
@@ -418,6 +436,9 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 					},
 					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
 						return nil
+					},
+					IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+						return true, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
