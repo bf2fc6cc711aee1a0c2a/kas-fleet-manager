@@ -646,6 +646,9 @@ kafkacert/setup:
 	@echo -n "$(KAFKA_TLS_KEY)" > secrets/kafka-tls.key
 .PHONY:kafkacert/setup
 
+observability/cloudwatchlogs/setup:
+	@echo -n "$${OBSERVABILITY_CLOUDWATCHLOGS_CONFIG}" > secrets/observability-cloudwatchlogs-config.yaml
+
 observatorium/setup:
 	@echo -n "$(OBSERVATORIUM_CONFIG_ACCESS_TOKEN)" > secrets/observability-config-access.token;
 	@echo -n "$(RHSSO_LOGS_CLIENT_ID)" > secrets/rhsso-logs.clientId;
@@ -733,6 +736,7 @@ deploy/secrets:
 		-p OBSERVABILITY_RHSSO_METRICS_SECRET="$(shell ([ -s './secrets/rhsso-metrics.clientSecret' ] && [ -z '${OBSERVABILITY_RHSSO_METRICS_SECRET}' ]) && cat ./secrets/rhsso-metrics.clientSecret || echo '${OBSERVABILITY_RHSSO_METRICS_SECRET}')" \
 		-p OBSERVABILITY_RHSSO_GRAFANA_CLIENT_ID="${OBSERVABILITY_RHSSO_GRAFANA_CLIENT_ID}" \
 		-p OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET="${OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET}" \
+		-p OBSERVABILITY_CLOUDWATCHLOGS_CONFIG="$(shell ([ -s './secrets/observability-cloudwatchlogs-config.yaml' ] && [ -z '${OBSERVABILITY_CLOUDWATCHLOGS_CONFIG}' ]) && cat ./secrets/observability-cloudwatchlogs-config.yaml | base64 -w 0 || echo '${OBSERVABILITY_CLOUDWATCHLOGS_CONFIG}' | base64 -w 0)" \
 		-p REDHAT_SSO_CLIENT_ID="$(shell ([ -s './secrets/redhatsso-service.clientId' ] && [ -z '${REDHAT_SSO_CLIENT_ID}' ]) && cat ./secrets/redhatsso-service.clientId || echo '${REDHAT_SSO_CLIENT_ID}')" \
 		-p REDHAT_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/redhatsso-service.clientSecret' ] && [ -z '${REDHAT_SSO_CLIENT_SECRET}' ]) && cat ./secrets/redhatsso-service.clientSecret || echo '${REDHAT_SSO_CLIENT_SECRET}')" \
 		| $(OC) apply -f - -n $(NAMESPACE)
@@ -812,6 +816,7 @@ deploy/service: ADMIN_API_SSO_BASE_URL ?= "https://auth.redhat.com"
 deploy/service: ADMIN_API_SSO_ENDPOINT_URI ?= "/auth/realms/EmployeeIDP"
 deploy/service: ADMIN_API_SSO_REALM ?= "EmployeeIDP"
 deploy/service: ENTERPRISE_CLUSTER_REGISTRATION_ALLOWED_ORGANIZATIONS ?= "[13640203, 12147054, 13639843, 13785172, 13645369]"
+deploy/service: OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING ?= "false"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until $(OC) get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
@@ -863,6 +868,7 @@ deploy/service: deploy/envoy deploy/route
 		-p OBSERVATORIUM_TOKEN_REFRESHER_URL="http://token-refresher.$(NAMESPACE).svc.cluster.local" \
 		-p OBSERVABILITY_CONFIG_REPO="${OBSERVABILITY_CONFIG_REPO}" \
 		-p OBSERVABILITY_CONFIG_TAG="${OBSERVABILITY_CONFIG_TAG}" \
+		-p OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING="${OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING}" \
 		-p ENABLE_TERMS_ACCEPTANCE="${ENABLE_TERMS_ACCEPTANCE}" \
 		-p ALLOW_DEVELOPER_INSTANCE="${ALLOW_DEVELOPER_INSTANCE}" \
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \

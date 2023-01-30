@@ -111,6 +111,10 @@ This lists the feature flags and their sub-configurations to enable/disable and 
     - `observability-red-hat-sso-metrics-secret-file`[Required]: The path to the file containing the client
     secret for the metrics service account for use with Red Hat SSO.
 
+### Observability CloudWatch Logging
+  - `observability-enable-cloudwatchlogging`:  Enable Observability to deliver data plane logs to AWS CloudWatch
+  - `observability-cloudwatchlogging-config-file-path`: Path to a file containing the configuration for Observability related to AWS CloudWatch Logging in YAML format. Only takes effect when --observability-enable-cloudwatchlogs is set (default "secrets/observability-cloudwatchlogs-config.yaml")
+
 ## OpenShift Cluster Manager
 - **enable-ocm-mock**: Enables use of a mock OCM client.
     - `ocm-mock-mode` [Optional]: Sets the ocm client mock type (default: `stub-server`).

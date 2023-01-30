@@ -136,9 +136,18 @@ guide.
      copy the content for the `config.json` key and paste it to
      `secrets/image-pull.dockerconfigjson` file
 1. Setup the Observability stack secrets
+   * Setup the Observatorium secrets
      ```
      make observatorium/setup
      ```
+   * (optional) If log delivery from Observability to AWS CloudWatch logs is desired, configuring the Observability CloudWatch Logs configuration is needed:
+     ```
+     OBSERVABILITY_CLOUDWATCHLOGS_CONFIG="<config>" make observability/cloudwatchlogs/setup
+     ```
+      Information about the Observability Cloudwatch Logging configuration file can be found in the `secrets/observability-cloudwatchlogs-config.yaml.sample` file.
+
+      To enable Observability AWS CloudWatch logs delivery
+      run KAS FLeet Manager with the `--observability-enable-cloudwatchlogging` flag.
 1. Generate OCM token secret
      ```
      make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
