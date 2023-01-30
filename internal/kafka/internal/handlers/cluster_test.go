@@ -427,7 +427,7 @@ func Test_ListEnterpriseClusters(t *testing.T) {
 	}
 }
 
-func Test_DeregisterEnterpriseCLuster(t *testing.T) {
+func Test_DeregisterEnterpriseCluster(t *testing.T) {
 	type fields struct {
 		clusterService services.ClusterService
 	}
@@ -451,23 +451,12 @@ func Test_DeregisterEnterpriseCLuster(t *testing.T) {
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
-			name:   "should fail if invalid force flag is provided",
-			fields: fields{},
-			args: args{
-				ctx: context.TODO(),
-				queryParams: map[string]string{
-					"async": "true", "force": "No",
-				},
-			},
-			wantStatusCode: http.StatusInternalServerError,
-		},
-		{
 			name:   "should fail if organization ID is not available within context",
 			fields: fields{},
 			args: args{
 				ctx: context.TODO(),
 				queryParams: map[string]string{
-					"async": "true", "force": "false",
+					"async": "true",
 				},
 			},
 			wantStatusCode: http.StatusForbidden,
@@ -484,7 +473,7 @@ func Test_DeregisterEnterpriseCLuster(t *testing.T) {
 			args: args{
 				ctx: ctxWithClaims,
 				queryParams: map[string]string{
-					"async": "true", "force": "false",
+					"async": "true",
 				},
 			},
 			wantStatusCode: http.StatusInternalServerError,
@@ -501,7 +490,7 @@ func Test_DeregisterEnterpriseCLuster(t *testing.T) {
 			args: args{
 				ctx: ctxWithClaims,
 				queryParams: map[string]string{
-					"async": "true", "force": "false",
+					"async": "true",
 				},
 			},
 			wantStatusCode: http.StatusNotFound,
@@ -520,7 +509,7 @@ func Test_DeregisterEnterpriseCLuster(t *testing.T) {
 			args: args{
 				ctx: ctxWithClaims,
 				queryParams: map[string]string{
-					"async": "true", "force": "false",
+					"async": "true",
 				},
 			},
 			wantStatusCode: http.StatusForbidden,
@@ -540,33 +529,45 @@ func Test_DeregisterEnterpriseCLuster(t *testing.T) {
 			args: args{
 				ctx: ctxWithClaims,
 				queryParams: map[string]string{
-					"async": "true", "force": "false",
+					"async": "true",
 				},
 			},
 			wantStatusCode: http.StatusForbidden,
 		},
 		{
-			name: "should successfully trigger deregistration of a cluster when force is set to true and all other preconditions are met",
+			name: "should successfully trigger deregistration of a cluster when all other preconditions are met",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return &api.Cluster{
 							OrganizationID: mocks.DefaultOrganisationId,
 							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
+							ClusterID:      entClusterID,
 						}, nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
+						return []services.ResKafkaInstanceCount{
+							{
+								Clusterid: entClusterID,
+								Count:     0,
+							},
+						}, nil
+					},
+					DeregisterClusterJobFunc: func(clusterID string) *errors.ServiceError {
+						return nil
 					},
 				},
 			},
 			args: args{
 				ctx: ctxWithClaims,
 				queryParams: map[string]string{
-					"async": "true", "force": "true",
+					"async": "true",
 				},
 			},
 			wantStatusCode: http.StatusAccepted,
 		},
 		{
-			name: "should fail when force is set to false and kafka requests are present on cluster to be deregistered",
+			name: "should fail when kafka requests are present on cluster to be deregistered",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
@@ -589,13 +590,13 @@ func Test_DeregisterEnterpriseCLuster(t *testing.T) {
 			args: args{
 				ctx: ctxWithClaims,
 				queryParams: map[string]string{
-					"async": "true", "force": "false",
+					"async": "true",
 				},
 			},
 			wantStatusCode: http.StatusForbidden,
 		},
 		{
-			name: "should fail when force is set to false and FindKafkaInstanceCount returns an error",
+			name: "should fail when FindKafkaInstanceCount returns an error",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
@@ -613,13 +614,13 @@ func Test_DeregisterEnterpriseCLuster(t *testing.T) {
 			args: args{
 				ctx: ctxWithClaims,
 				queryParams: map[string]string{
-					"async": "true", "force": "false",
+					"async": "true",
 				},
 			},
 			wantStatusCode: http.StatusInternalServerError,
 		},
 		{
-			name: "should successfully trigger cluster deregistration when force is set to false and no kafka requests are present on the cluster",
+			name: "should successfully trigger cluster deregistration when no kafka requests are present on the cluster",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
@@ -632,12 +633,15 @@ func Test_DeregisterEnterpriseCLuster(t *testing.T) {
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return nil, nil
 					},
+					DeregisterClusterJobFunc: func(clusterID string) *errors.ServiceError {
+						return nil
+					},
 				},
 			},
 			args: args{
 				ctx: ctxWithClaims,
 				queryParams: map[string]string{
-					"async": "true", "force": "false",
+					"async": "true",
 				},
 			},
 			wantStatusCode: http.StatusAccepted,
