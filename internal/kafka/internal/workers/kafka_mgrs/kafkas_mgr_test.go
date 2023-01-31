@@ -2,24 +2,21 @@ package kafka_mgrs
 
 import (
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	dpMock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
-
-	"github.com/onsi/gomega"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-
-	dpMock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/data_plane"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
+	"github.com/onsi/gomega"
 )
 
 func TestKafkaManager_Reconcile(t *testing.T) {
@@ -147,6 +144,46 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 				dataplaneClusterConfig: *config.NewDataplaneClusterConfig(),
 				accessControlListConfig: &acl.AccessControlListConfig{
 					EnableDenyList: true,
+				},
+				kafkaConfig: *config.NewKafkaConfig(),
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error if reconcileKafkaExpiresAt returns an error",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CountByStatusFunc: func(status []constants.KafkaStatus) ([]services.KafkaStatusCount, error) {
+						return []services.KafkaStatusCount{}, nil
+					},
+					DeprovisionExpiredKafkasFunc: func() *errors.ServiceError {
+						return nil
+					},
+					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
+						return dbapi.KafkaList{
+							{
+								Meta: api.Meta{
+									ID: "test",
+								},
+								Name:         "test",
+								ClusterID:    "test",
+								Status:       constants.KafkaRequestStatusAccepted.String(),
+								InstanceType: "unsupported-instance-type",
+								SizeId:       "unsupported-size-id",
+							},
+						}, nil
+					},
+					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
+						return nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
+						return services.KafkaStreamingUnitCountPerClusterList{}, nil
+					},
+				},
+				accessControlListConfig: &acl.AccessControlListConfig{
+					EnableDenyList: false,
 				},
 				kafkaConfig: *config.NewKafkaConfig(),
 			},
@@ -1487,6 +1524,607 @@ func TestKafkaManager_calculateAvailableAndMadCapacityForEnterpriseClusters(t *t
 					g.Expect(res.MaxUnits).To(gomega.Equal(count.max))
 				}
 			}
+		})
+	}
+}
+
+func TestKafkaManager_reconcileKafkaExpiresAt(t *testing.T) {
+	type fields struct {
+		kafkaService func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock
+		kafkaConfig  *config.KafkaConfig
+	}
+	type args struct {
+		kafkas dbapi.KafkaList
+	}
+
+	tests := []struct {
+		name                  string
+		fields                fields
+		args                  args
+		wantNewExpiresAtValue sql.NullTime
+		wantUpdateCallCount   int
+		wantErrCount          int
+	}{
+		{
+			name: "should skip expires_at reconciliation if kafka instance is in a deprovisioning state",
+			fields: fields{
+				kafkaService: func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock {
+					return &services.KafkaServiceMock{}
+				},
+			},
+			args: args{
+				kafkas: dbapi.KafkaList{
+					{
+						Status: constants.KafkaRequestStatusDeprovision.String(),
+					},
+				},
+			},
+			wantErrCount:          0,
+			wantUpdateCallCount:   0,
+			wantNewExpiresAtValue: sql.NullTime{},
+		},
+		{
+			name: "should skip expires_at reconciliation if kafka instance is in a deleting state",
+			fields: fields{
+				kafkaService: func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock {
+					return &services.KafkaServiceMock{}
+				},
+			},
+			args: args{
+				kafkas: dbapi.KafkaList{
+					{
+						Status: constants.KafkaRequestStatusDeleting.String(),
+					},
+				},
+			},
+			wantErrCount:          0,
+			wantUpdateCallCount:   0,
+			wantNewExpiresAtValue: sql.NullTime{},
+		},
+		{
+			name: "should return an error if it fails to get kafka instance size",
+			fields: fields{
+				kafkaConfig: config.NewKafkaConfig(),
+				kafkaService: func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock {
+					return &services.KafkaServiceMock{}
+				},
+			},
+			args: args{
+				kafkas: dbapi.KafkaList{
+					{
+						InstanceType: "unsupported-instance-type",
+						SizeId:       "unsupported-size",
+						Status:       constants.KafkaRequestStatusReady.String(),
+					},
+				},
+			},
+			wantErrCount:          1,
+			wantUpdateCallCount:   0,
+			wantNewExpiresAtValue: sql.NullTime{},
+		},
+		{
+			name: "should return an error if it fails to check the quota entitlement status",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: "instance-type-1",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id: "x1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				kafkaService: func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock {
+					return &services.KafkaServiceMock{
+						IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+							return false, fmt.Errorf("failed to check quota entitlement status")
+						},
+					}
+				},
+			},
+			args: args{
+				kafkas: dbapi.KafkaList{
+					{
+						InstanceType: "instance-type-1",
+						SizeId:       "x1",
+						Status:       constants.KafkaRequestStatusReady.String(),
+					},
+				},
+			},
+			wantErrCount:          1,
+			wantUpdateCallCount:   0,
+			wantNewExpiresAtValue: sql.NullTime{},
+		},
+		{
+			name: "should update expires_at to null if quota entitlement is active and expires_at has a value",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: "instance-type-1",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id: "x1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				kafkaService: func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock {
+					return &services.KafkaServiceMock{
+						IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+							return true, nil
+						},
+						UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+							*updatedExpiresAt = values["expires_at"].(sql.NullTime)
+							return nil
+						},
+					}
+				},
+			},
+			args: args{
+				kafkas: dbapi.KafkaList{
+					{
+						InstanceType: "instance-type-1",
+						SizeId:       "x1",
+						Status:       constants.KafkaRequestStatusReady.String(),
+						ExpiresAt: sql.NullTime{
+							Time:  time.Now().AddDate(0, 0, 10),
+							Valid: true,
+						},
+					},
+				},
+			},
+			wantNewExpiresAtValue: sql.NullTime{},
+			wantUpdateCallCount:   1,
+			wantErrCount:          0,
+		},
+		{
+			name: "should skip update if quota entitlement is active and expires_at is already null",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: "instance-type-1",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id: "x1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				kafkaService: func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock {
+					return &services.KafkaServiceMock{
+						IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+							return true, nil
+						},
+						UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+							*updatedExpiresAt = values["expires_at"].(sql.NullTime)
+							return nil
+						},
+					}
+				},
+			},
+			args: args{
+				kafkas: dbapi.KafkaList{
+					{
+						InstanceType: "instance-type-1",
+						SizeId:       "x1",
+						Status:       constants.KafkaRequestStatusReady.String(),
+					},
+				},
+			},
+			wantNewExpiresAtValue: sql.NullTime{},
+			wantUpdateCallCount:   0,
+			wantErrCount:          0,
+		},
+		{
+			name: "should update expires_at with grace period if quota entitlement is not active and expires_at is null",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: "instance-type-1",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id: "x1",
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										{
+											ID:              "kafka-bm1",
+											GracePeriodDays: 10,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				kafkaService: func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock {
+					return &services.KafkaServiceMock{
+						IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+							return false, nil
+						},
+						UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+							*updatedExpiresAt = values["expires_at"].(sql.NullTime)
+							return nil
+						},
+					}
+				},
+			},
+			args: args{
+				kafkas: dbapi.KafkaList{
+					{
+						InstanceType:            "instance-type-1",
+						SizeId:                  "x1",
+						Status:                  constants.KafkaRequestStatusReady.String(),
+						ActualKafkaBillingModel: "kafka-bm1",
+					},
+				},
+			},
+			wantNewExpiresAtValue: sql.NullTime{Time: time.Now().AddDate(0, 0, 10), Valid: true},
+			wantUpdateCallCount:   1,
+			wantErrCount:          0,
+		},
+		{
+			name: "should update expires_at without grace period if quota entitlement is not active and expires_at is null",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: "instance-type-1",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id: "x1",
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										{
+											ID: "kafka-bm1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				kafkaService: func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock {
+					return &services.KafkaServiceMock{
+						IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+							return false, nil
+						},
+						UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+							*updatedExpiresAt = values["expires_at"].(sql.NullTime)
+							return nil
+						},
+					}
+				},
+			},
+			args: args{
+				kafkas: dbapi.KafkaList{
+					{
+						InstanceType:            "instance-type-1",
+						SizeId:                  "x1",
+						Status:                  constants.KafkaRequestStatusReady.String(),
+						ActualKafkaBillingModel: "kafka-bm1",
+					},
+				},
+			},
+			wantNewExpiresAtValue: sql.NullTime{Time: time.Now(), Valid: true},
+			wantUpdateCallCount:   1,
+			wantErrCount:          0,
+		},
+		{
+			name: "should update expires_at if quota entitlement is not active and expires_at is set to a zero time value",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: "instance-type-1",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id: "x1",
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										{
+											ID: "kafka-bm1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				kafkaService: func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock {
+					return &services.KafkaServiceMock{
+						IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+							return false, nil
+						},
+						UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+							*updatedExpiresAt = values["expires_at"].(sql.NullTime)
+							return nil
+						},
+					}
+				},
+			},
+			args: args{
+				kafkas: dbapi.KafkaList{
+					{
+						InstanceType:            "instance-type-1",
+						SizeId:                  "x1",
+						Status:                  constants.KafkaRequestStatusReady.String(),
+						ActualKafkaBillingModel: "kafka-bm1",
+						ExpiresAt: sql.NullTime{
+							Time:  time.Time{},
+							Valid: true,
+						},
+					},
+				},
+			},
+			wantNewExpiresAtValue: sql.NullTime{Time: time.Now(), Valid: true},
+			wantUpdateCallCount:   1,
+			wantErrCount:          0,
+		},
+		{
+			name: "should skip update if quota entitlement is not active and expires_at is already set to a non-zero time value",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: "instance-type-1",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id: "x1",
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										{
+											ID: "kafka-bm1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				kafkaService: func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock {
+					return &services.KafkaServiceMock{
+						IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+							return false, nil
+						},
+						UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+							*updatedExpiresAt = values["expires_at"].(sql.NullTime)
+							return nil
+						},
+					}
+				},
+			},
+			args: args{
+				kafkas: dbapi.KafkaList{
+					{
+						InstanceType:            "instance-type-1",
+						SizeId:                  "x1",
+						Status:                  constants.KafkaRequestStatusReady.String(),
+						ActualKafkaBillingModel: "kafka-bm1",
+						ExpiresAt: sql.NullTime{
+							Time:  time.Now(),
+							Valid: true,
+						},
+					},
+				},
+			},
+			wantNewExpiresAtValue: sql.NullTime{},
+			wantUpdateCallCount:   0,
+			wantErrCount:          0,
+		},
+		{
+			name: "should update expires_at based on lifespanSeconds if defined and expires_at is set to null",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: "instance-type-1",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:              "x1",
+											LifespanSeconds: &[]int{172800}[0],
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										{
+											ID: "kafka-bm1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				kafkaService: func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock {
+					return &services.KafkaServiceMock{
+						UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+							*updatedExpiresAt = values["expires_at"].(sql.NullTime)
+							return nil
+						},
+					}
+				},
+			},
+			args: args{
+				kafkas: dbapi.KafkaList{
+					{
+						Meta: api.Meta{
+							CreatedAt: time.Now(),
+						},
+						InstanceType:            "instance-type-1",
+						SizeId:                  "x1",
+						Status:                  constants.KafkaRequestStatusReady.String(),
+						ActualKafkaBillingModel: "kafka-bm1",
+					},
+				},
+			},
+			wantNewExpiresAtValue: sql.NullTime{Time: time.Now().Add(time.Duration(172800) * time.Second), Valid: true},
+			wantUpdateCallCount:   1,
+			wantErrCount:          0,
+		},
+		{
+			name: "should update expires_at based on lifespanSeconds if defined and expires_at is set to a zero time value",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: "instance-type-1",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:              "x1",
+											LifespanSeconds: &[]int{172800}[0],
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										{
+											ID: "kafka-bm1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				kafkaService: func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock {
+					return &services.KafkaServiceMock{
+						UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+							*updatedExpiresAt = values["expires_at"].(sql.NullTime)
+							return nil
+						},
+					}
+				},
+			},
+			args: args{
+				kafkas: dbapi.KafkaList{
+					{
+						Meta: api.Meta{
+							CreatedAt: time.Now(),
+						},
+						InstanceType:            "instance-type-1",
+						SizeId:                  "x1",
+						Status:                  constants.KafkaRequestStatusReady.String(),
+						ActualKafkaBillingModel: "kafka-bm1",
+						ExpiresAt: sql.NullTime{
+							Time:  time.Time{},
+							Valid: true,
+						},
+					},
+				},
+			},
+			wantNewExpiresAtValue: sql.NullTime{Time: time.Now().Add(time.Duration(172800) * time.Second), Valid: true},
+			wantUpdateCallCount:   1,
+			wantErrCount:          0,
+		},
+		{
+			name: "should skip updated based on lifespanSeconds if defined if expires_at is already set",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: "instance-type-1",
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:              "x1",
+											LifespanSeconds: &[]int{172800}[0],
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										{
+											ID: "kafka-bm1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				kafkaService: func(updatedExpiresAt *sql.NullTime) *services.KafkaServiceMock {
+					return &services.KafkaServiceMock{
+						UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+							*updatedExpiresAt = values["expires_at"].(sql.NullTime)
+							return nil
+						},
+					}
+				},
+			},
+			args: args{
+				kafkas: dbapi.KafkaList{
+					{
+						InstanceType:            "instance-type-1",
+						SizeId:                  "x1",
+						Status:                  constants.KafkaRequestStatusReady.String(),
+						ActualKafkaBillingModel: "kafka-bm1",
+						ExpiresAt: sql.NullTime{
+							Time:  time.Now(),
+							Valid: true,
+						},
+					},
+				},
+			},
+			wantNewExpiresAtValue: sql.NullTime{},
+			wantUpdateCallCount:   0,
+			wantErrCount:          0,
+		},
+	}
+	for _, testcase := range tests {
+		tt := testcase
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			t.Parallel()
+			updatedExpiresAt := sql.NullTime{}
+			mockKafkaService := tt.fields.kafkaService(&updatedExpiresAt)
+			k := &KafkaManager{
+				kafkaService: mockKafkaService,
+				kafkaConfig:  tt.fields.kafkaConfig,
+			}
+			err := k.reconcileKafkaExpiresAt(tt.args.kafkas)
+			g.Expect(len(err)).To(gomega.Equal(tt.wantErrCount))
+
+			g.Expect(len(mockKafkaService.UpdatesCalls())).To(gomega.Equal(tt.wantUpdateCallCount), "expected update call count does not match actual")
+			g.Expect(updatedExpiresAt.Valid).To(gomega.Equal(tt.wantNewExpiresAtValue.Valid), "expected expires_at.valid does not match actual")
+
+			// The expires_at value set by checking the quota entitlement status is based on time.Now() captured during reconcile.
+			// Because of this we can't know the exact time of the new expires_at value to do an equality check, however, we can still do comparison
+			// on the year, month and day
+			g.Expect(updatedExpiresAt.Time.Year()).To(gomega.Equal(tt.wantNewExpiresAtValue.Time.Year()), "expected expires_at year does not match actual")
+			g.Expect(updatedExpiresAt.Time.Month()).To(gomega.Equal(tt.wantNewExpiresAtValue.Time.Month()), "expected expires_at month does not match actual")
+			g.Expect(updatedExpiresAt.Time.Day()).To(gomega.Equal(tt.wantNewExpiresAtValue.Time.Day()), "expected expires_at day does not match actual")
 		})
 	}
 }
