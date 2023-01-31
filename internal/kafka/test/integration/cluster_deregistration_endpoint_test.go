@@ -53,10 +53,10 @@ func TestEnterpriseClusterDeregistration(t *testing.T) {
 	// setup pre-requisites to performing requests
 	db := test.TestServices.DBFactory.New()
 
-	id1 := api.NewID()
-	id2 := api.NewID()
-	id3 := api.NewID()
-	nonExistentID := api.NewID()
+	id1 := "12345678901234567890123456789012"
+	id2 := "22345678901234567890123456789012"
+	id3 := "32345678901234567890123456789012"
+	nonExistentID := "42345678901234567890123456789012"
 
 	entCluster := clusterMocks.BuildCluster(func(cluster *api.Cluster) {
 		cluster.Meta = api.Meta{
@@ -89,6 +89,7 @@ func TestEnterpriseClusterDeregistration(t *testing.T) {
 		cluster.OrganizationID = kafkaMocks.DefaultOrganisationId
 		cluster.IdentityProviderID = "some-identity-provider"
 		cluster.ClusterDNS = "apps.example.com"
+		cluster.ExternalID = "69d631de-9b7f-4bc2-bf4f-4d3295a7b25e"
 	})
 
 	registrationPayload := public.EnterpriseOsdClusterPayload{
