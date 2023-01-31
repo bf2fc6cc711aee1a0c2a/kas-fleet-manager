@@ -51,7 +51,6 @@ type ClusterService interface {
 	// DeleteByClusterID will delete the cluster from the database
 	DeleteByClusterID(clusterID string) *apiErrors.ServiceError
 	// HardDeleteByClusterID hard deletes a cluster from the database, no delete flag is set
-	// HardDeleteByClusterID hard deletes a cluster from the database, no delete flag is set
 	HardDeleteByClusterID(clusterID string) *apiErrors.ServiceError
 	// FindNonEmptyClusterByID returns a cluster if it present and it is not empty.
 	// Cluster emptiness is determined by checking whether the cluster contains Kafkas that have been provisioned, are being provisioned on it,
