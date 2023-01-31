@@ -78,7 +78,10 @@ func (m *DeprovisioningClustersManager) processDeprovisioningClusters() error {
 				errList.AddErrors(errors.Wrapf(err, "failed to reconcile deprovisioning cluster %s", cluster.ClusterID))
 			}
 		} else {
-			glog.V(10).Infof("skipping deprovisioning of %s cluster with ClusterID = %s", api.EnterpriseDataPlaneClusterType.String(), cluster.ClusterID)
+			glog.V(10).Infof("deregistering enterprise cluster ClusterID = %s", cluster.ClusterID)
+			if err := m.reconcileDeprovisioningEnterpriseCluster(&cluster); err != nil {
+				errList.AddErrors(errors.Wrapf(err, "failed to reconcile deprovisioning cluster %s", cluster.ClusterID))
+			}
 		}
 	}
 
@@ -87,6 +90,15 @@ func (m *DeprovisioningClustersManager) processDeprovisioningClusters() error {
 	}
 
 	return errList
+}
+
+func (m *DeprovisioningClustersManager) reconcileDeprovisioningEnterpriseCluster(cluster *api.Cluster) error {
+	err := m.clusterService.RemoveResources(cluster, syncsetName)
+	if err != nil {
+		return err
+	}
+
+	return m.clusterService.UpdateStatus(*cluster, api.ClusterCleanup)
 }
 
 func (m *DeprovisioningClustersManager) reconcileDeprovisioningCluster(cluster *api.Cluster) error {

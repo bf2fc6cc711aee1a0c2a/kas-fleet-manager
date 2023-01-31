@@ -24,6 +24,8 @@ type Provider interface {
 	AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error)
 	// ApplyResources apply openshift/k8s resources to the cluster
 	ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error)
+	// RemoveResources uninstalls resources from a cluster
+	RemoveResources(clusterSpec *types.ClusterSpec, syncSetName string) error
 	// GetClusterDNS Get the dns of the cluster
 	GetClusterDNS(clusterSpec *types.ClusterSpec) (string, error)
 	// GetCloudProviders Get the information about supported cloud providers from the cluster provider

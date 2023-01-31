@@ -1799,10 +1799,9 @@ func Test_validateKafkaMachinePoolNodeCount(t *testing.T) {
 func Test_validateEnterpriseClusterEligibleForDeregistration(t *testing.T) {
 	clusterID := "1234abcd1234abcd1234abcd1234abcd"
 	type args struct {
-		ctx             context.Context
-		clusterID       string
-		forceDeleteFlag bool
-		clusterService  services.ClusterService
+		ctx            context.Context
+		clusterID      string
+		clusterService services.ClusterService
 	}
 
 	tests := []struct {
@@ -1883,37 +1882,70 @@ func Test_validateEnterpriseClusterEligibleForDeregistration(t *testing.T) {
 			},
 			want: errors.NotFound("cluster with id='%v' not found", clusterID),
 		},
+	}
+
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(testcase.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			validateFn := validateEnterpriseClusterEligibleForDeregistration(testcase.args.ctx, testcase.args.clusterID, testcase.args.clusterService)
+			err := validateFn()
+			g.Expect(err).To(gomega.Equal(testcase.want))
+		})
+	}
+}
+
+func Test_validateEnterpriseClusterHasNoKafkas(t *testing.T) {
+	clusterID := "1234abcd1234abcd1234abcd1234abcd"
+	type args struct {
+		ctx            context.Context
+		clusterID      string
+		clusterService services.ClusterService
+	}
+
+	tests := []struct {
+		name string
+		args args
+		want *errors.ServiceError
+	}{
 		{
-			name: "should return an error if force is not set to true and FindKafkaInstanceCount returns an error",
+			name: "should succeed if no cluster is found at all",
 			args: args{
-				ctx:       ctxWithClaims,
+				ctx:       context.TODO(),
 				clusterID: clusterID,
 				clusterService: &services.ClusterServiceMock{
-					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return &api.Cluster{
-							OrganizationID: mocks.DefaultOrganisationId,
-							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
-						}, nil
-					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
-						return nil, errors.GeneralError("failed to get kafka instance count")
+						return []services.ResKafkaInstanceCount{}, nil
 					},
 				},
 			},
-			want: errors.GeneralError("KAFKAS-MGMT-9: failed to get kafka instance count"),
+			want: nil,
 		},
 		{
-			name: "should return an error if force is not set to true and FindKafkaInstanceCount contains clusterID and count is not 0",
+			name: "should succeed if cluster with different id contains kafkas",
 			args: args{
-				ctx:       ctxWithClaims,
+				ctx:       context.TODO(),
 				clusterID: clusterID,
 				clusterService: &services.ClusterServiceMock{
-					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return &api.Cluster{
-							OrganizationID: mocks.DefaultOrganisationId,
-							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
+						return []services.ResKafkaInstanceCount{
+							{
+								Clusterid: "different-id",
+								Count:     1,
+							},
 						}, nil
 					},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "should fail if cluster with same id contains kafkas",
+			args: args{
+				ctx:       context.TODO(),
+				clusterID: clusterID,
+				clusterService: &services.ClusterServiceMock{
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
@@ -1924,68 +1956,20 @@ func Test_validateEnterpriseClusterEligibleForDeregistration(t *testing.T) {
 					},
 				},
 			},
-			want: errors.Forbidden("unable to deregister %s cluster with id: %s without explicitly setting 'force:true' due to kafka requests present on this cluster",
-				api.EnterpriseDataPlaneClusterType.String(), clusterID),
+			want: errors.Forbidden("unable to deregister cluster with kafka instances"),
 		},
 		{
-			name: "should not return an error if force is not set to true and FindKafkaInstanceCount contains clusterID and count is 0",
+			name: "should fail if find cluster function fails",
 			args: args{
-				ctx:       ctxWithClaims,
+				ctx:       context.TODO(),
 				clusterID: clusterID,
 				clusterService: &services.ClusterServiceMock{
-					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return &api.Cluster{
-							OrganizationID: mocks.DefaultOrganisationId,
-							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
-						}, nil
-					},
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
-						return []services.ResKafkaInstanceCount{
-							{
-								Clusterid: clusterID,
-								Count:     0,
-							},
-						}, nil
+						return nil, errors.GeneralError("find cluster failed")
 					},
 				},
 			},
-			want: nil,
-		},
-		{
-			name: "should return no error if force is not set to true and FindKafkaInstanceCount returns an empty array",
-			args: args{
-				ctx:       ctxWithClaims,
-				clusterID: clusterID,
-				clusterService: &services.ClusterServiceMock{
-					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return &api.Cluster{
-							OrganizationID: mocks.DefaultOrganisationId,
-							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
-						}, nil
-					},
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
-						return []services.ResKafkaInstanceCount{}, nil
-					},
-				},
-			},
-			want: nil,
-		},
-		{
-			name: "should return no error if force is set to true and other preconditions apart from kafka instances count are met",
-			args: args{
-				ctx:             ctxWithClaims,
-				clusterID:       clusterID,
-				forceDeleteFlag: true,
-				clusterService: &services.ClusterServiceMock{
-					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
-						return &api.Cluster{
-							OrganizationID: mocks.DefaultOrganisationId,
-							ClusterType:    api.EnterpriseDataPlaneClusterType.String(),
-						}, nil
-					},
-				},
-			},
-			want: nil,
+			want: errors.GeneralError(fmt.Sprintf("error querying kafka instances for clusterID: %v", clusterID)),
 		},
 	}
 
@@ -1994,7 +1978,7 @@ func Test_validateEnterpriseClusterEligibleForDeregistration(t *testing.T) {
 		t.Run(testcase.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			validateFn := validateEnterpriseClusterEligibleForDeregistration(testcase.args.ctx, testcase.args.clusterID, testcase.args.forceDeleteFlag, testcase.args.clusterService)
+			validateFn := validateEnterpriseClusterHasNoKafkas(testcase.args.clusterID, testcase.args.clusterService)
 			err := validateFn()
 			g.Expect(err).To(gomega.Equal(testcase.want))
 		})

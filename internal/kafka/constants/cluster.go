@@ -10,6 +10,9 @@ const (
 	// ClusterOperationDelete - OpenShift/k8s cluster delete operation
 	ClusterOperationDelete ClusterOperation = "delete"
 
+	// ClusterOperationHardDelete - OpenShift/k8s cluster hard delete operation
+	ClusterOperationHardDelete ClusterOperation = "hard_delete"
+
 	// The DNS prefixes used for traffic ingress
 	ManagedKafkaIngressDnsNamePrefix = "kas"
 	DefaultIngressDnsNamePrefix      = "apps"

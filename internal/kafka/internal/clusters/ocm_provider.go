@@ -125,6 +125,25 @@ func (o *OCMProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec, identi
 	return nil, nil
 }
 
+// RemoveResources deletes the SyncSet from a cluster. If the SyncSet (or the cluster) is not found, no error is returned
+func (o *OCMProvider) RemoveResources(clusterSpec *types.ClusterSpec, syncSetName string) error {
+	status, err := o.ocmClient.DeleteSyncSet(clusterSpec.InternalID, syncSetName)
+	if err != nil {
+		// the SyncSet may already have been deleted in a previous run and the cluster is
+		// waiting for the resources to be terminated
+		if status == http.StatusNotFound {
+			return nil
+		}
+		return err
+	}
+
+	if status != http.StatusNoContent {
+		return errors.New(fmt.Sprintf("unexpected response code when deleting sync set: %v", status))
+	}
+
+	return nil
+}
+
 func (o *OCMProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
 	existingSyncset, err := o.ocmClient.GetSyncSet(clusterSpec.InternalID, resources.Name)
 	syncSetFound := true
