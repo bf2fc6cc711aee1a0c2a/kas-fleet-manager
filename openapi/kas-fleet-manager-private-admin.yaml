@@ -294,6 +294,7 @@ components:
       allOf:
         - $ref: "kas-fleet-manager.yaml#/components/schemas/List"
         - type: object
+          required: [ items ]
           properties:
             items:
               type: array

@@ -422,12 +422,7 @@ components:
           type: integer
         total:
           type: integer
-        items:
-          items:
-            $ref: '#/components/schemas/ObjectReference'
-          type: array
       required:
-      - items
       - kind
       - page
       - size
@@ -524,6 +519,8 @@ components:
             allOf:
             - $ref: '#/components/schemas/Kafka'
           type: array
+      required:
+      - items
   securitySchemes:
     Bearer:
       bearerFormat: JWT
