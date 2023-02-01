@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	mocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -48,6 +50,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 	type fields struct {
 		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 		clusterService             services.ClusterService
+		providerFactory            clusters.ProviderFactory
 	}
 
 	type args struct {
@@ -68,6 +71,17 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				body: []byte(`{}`),
 				ctx:  context.TODO(),
 			},
+			fields: fields{
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{}, nil
+							},
+						}, nil
+					},
+				},
+			},
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
@@ -76,28 +90,23 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				body: []byte(fmt.Sprintf(`{"cluster_id": "%s"}`, invalidParam)),
 				ctx:  context.TODO(),
 			},
-			wantStatusCode: http.StatusBadRequest,
-		},
-		{
-			name: "should return an error if cluster_external_id is empty",
-			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s"}`, validLengthClusterId)),
-				ctx:  context.TODO(),
-			},
-			wantStatusCode: http.StatusBadRequest,
-		},
-		{
-			name: "should return an error if cluster_external_id is invalid",
-			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_external_id": "%s"}`, validLengthClusterId, invalidParam)),
-				ctx:  context.TODO(),
+			fields: fields{
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{}, nil
+							},
+						}, nil
+					},
+				},
 			},
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
 			name: "should return an error if FindClusterByID returns error other than cluster not found",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_external_id": "%s"}`, validLengthClusterId, validFormatExternalClusterId)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false}`, validLengthClusterId)),
 				ctx:  context.TODO(),
 			},
 			fields: fields{
@@ -106,19 +115,37 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 						return nil, errors.GeneralError("unexpected error")
 					},
 				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{}, nil
+							},
+						}, nil
+					},
+				},
 			},
 			wantStatusCode: http.StatusInternalServerError,
 		},
 		{
 			name: "should return an error if cluster_ingress_dns_name is empty",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_external_id": "%s"}`, validLengthClusterId, validFormatExternalClusterId)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false}`, validLengthClusterId)),
 				ctx:  context.TODO(),
 			},
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return nil, nil
+					},
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{}, nil
+							},
+						}, nil
 					},
 				},
 			},
@@ -127,13 +154,22 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should return an error if cluster_dns_name is invalid",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": true, "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s"}`, validLengthClusterId, validFormatExternalClusterId, invalidParam)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": true, "cluster_ingress_dns_name": "%s"}`, validLengthClusterId, invalidParam)),
 				ctx:  context.TODO(),
 			},
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return nil, nil
+					},
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{}, nil
+							},
+						}, nil
 					},
 				},
 			},
@@ -142,7 +178,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should return an error if kafka_machine_pool_node_count is less than 3",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 2}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 2}`, validLengthClusterId, validDnsName)),
 				ctx:  context.TODO(),
 			},
 			fields: fields{
@@ -151,16 +187,80 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 						return nil, nil
 					},
 				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{}, nil
+							},
+						}, nil
+					},
+				},
 			},
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
 			name: "should return an error if kafka_machine_pool_node_count is not a multiple of 3",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 5}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 5}`, validLengthClusterId, validDnsName)),
 				ctx:  context.TODO(),
 			},
 			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{}, nil
+							},
+						}, nil
+					},
+				},
+			},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name: "should return an error if GetProvider fails",
+			args: args{
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 6}`, validLengthClusterId, validDnsName)),
+				ctx:  context.TODO(),
+			},
+			fields: fields{
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return nil, errors.GeneralError("failed to get ocm provider")
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name: "should return an error if cluster is single AZ",
+			args: args{
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 6}`, validLengthClusterId, validDnsName)),
+				ctx:  context.TODO(),
+			},
+			fields: fields{
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{
+									MultiAZ: false,
+								}, nil
+							},
+						}, nil
+					},
+				},
 				clusterService: &services.ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return nil, nil
@@ -172,7 +272,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should return an error if claims cant be obtained from context",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validDnsName)),
 				ctx:  context.TODO(),
 			},
 			fields: fields{
@@ -181,13 +281,25 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 						return nil, nil
 					},
 				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{
+									MultiAZ:    true,
+									InternalID: validLengthClusterId,
+								}, nil
+							},
+						}, nil
+					},
+				},
 			},
 			wantStatusCode: http.StatusInternalServerError,
 		},
 		{
 			name: "should return an error if GetAddonParams returns an error",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": true, "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": true, "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validDnsName)),
 				ctx:  ctxWithClaims,
 			},
 			fields: fields{
@@ -201,13 +313,25 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 						return nil, errors.GeneralError("failed to get addons")
 					},
 				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{
+									MultiAZ:    true,
+									InternalID: validLengthClusterId,
+								}, nil
+							},
+						}, nil
+					},
+				},
 			},
 			wantStatusCode: http.StatusInternalServerError,
 		},
 		{
 			name: "should return an error if RegisterClusterJob returns an error",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_external_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validDnsName)),
 				ctx:  ctxWithClaims,
 			},
 			fields: fields{
@@ -229,13 +353,25 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 						}, nil
 					},
 				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{
+									MultiAZ:    true,
+									InternalID: validLengthClusterId,
+								}, nil
+							},
+						}, nil
+					},
+				},
 			},
 			wantStatusCode: http.StatusInternalServerError,
 		},
 		{
 			name: "should successfully register enterprise cluster",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "access_kafkas_via_private_network": false, "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": false, "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validDnsName)),
 				ctx:  ctxWithClaims,
 			},
 			fields: fields{
@@ -253,6 +389,20 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 							{
 								Id:    "some-id",
 								Value: "value",
+							},
+						}, nil
+					},
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{
+									MultiAZ:       true,
+									InternalID:    validLengthClusterId,
+									Region:        mocks.DefaultKafkaRequestRegion,
+									CloudProvider: "aws",
+								}, nil
 							},
 						}, nil
 					},
@@ -277,7 +427,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		{
 			name: "should successfully register enterprise cluster if FindClusterByID returns cluster not found error",
 			args: args{
-				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_external_id": "%s", "access_kafkas_via_private_network": true, "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validFormatExternalClusterId, validDnsName)),
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": true, "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validDnsName)),
 				ctx:  ctxWithClaims,
 			},
 			fields: fields{
@@ -295,6 +445,20 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 							{
 								Id:    "some-id",
 								Value: "value",
+							},
+						}, nil
+					},
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{
+									MultiAZ:       true,
+									InternalID:    validLengthClusterId,
+									Region:        mocks.DefaultKafkaRequestRegion,
+									CloudProvider: "aws",
+								}, nil
 							},
 						}, nil
 					},
@@ -322,7 +486,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			h := NewClusterHandler(tt.fields.kasFleetshardOperatorAddon, tt.fields.clusterService)
+			h := NewClusterHandler(tt.fields.kasFleetshardOperatorAddon, tt.fields.clusterService, tt.fields.providerFactory)
 			req, rw := GetHandlerParams("POST", "", bytes.NewBuffer(tt.args.body), t)
 			req = req.WithContext(tt.args.ctx)
 			h.RegisterEnterpriseCluster(rw, req)
@@ -410,7 +574,7 @@ func Test_ListEnterpriseClusters(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			h := NewClusterHandler(nil, tt.fields.clusterService)
+			h := NewClusterHandler(nil, tt.fields.clusterService, nil)
 			req, rw := GetHandlerParams("GET", "", nil, t)
 			req = req.WithContext(tt.args.ctx)
 			h.List(rw, req)
@@ -653,7 +817,7 @@ func Test_DeregisterEnterpriseCluster(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			h := NewClusterHandler(nil, tt.fields.clusterService)
+			h := NewClusterHandler(nil, tt.fields.clusterService, nil)
 			req, rw := GetHandlerParams("DELETE", "/{id}", nil, t)
 			if tt.args.queryParams != nil {
 				q := req.URL.Query()
@@ -789,7 +953,7 @@ func Test_GetEnterpriseCluster(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			h := NewClusterHandler(nil, tt.fields.clusterService)
+			h := NewClusterHandler(nil, tt.fields.clusterService, nil)
 			req, rw := GetHandlerParams("GET", "/{id}", nil, t)
 			req = mux.SetURLVars(req, map[string]string{"id": entClusterID})
 			req = req.WithContext(tt.args.ctx)
@@ -971,7 +1135,7 @@ func Test_GetEnterpriseClusterWithAddonParams(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			h := NewClusterHandler(tt.fields.kasFleetshardOperatorAddon, tt.fields.clusterService)
+			h := NewClusterHandler(tt.fields.kasFleetshardOperatorAddon, tt.fields.clusterService, nil)
 			req, rw := GetHandlerParams("GET", "/{id}/addon_parameters", nil, t)
 			req = mux.SetURLVars(req, map[string]string{"id": entClusterID})
 			req = req.WithContext(tt.args.ctx)

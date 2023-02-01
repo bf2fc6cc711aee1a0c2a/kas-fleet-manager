@@ -28,6 +28,8 @@ type Provider interface {
 	RemoveResources(clusterSpec *types.ClusterSpec, syncSetName string) error
 	// GetClusterDNS Get the dns of the cluster
 	GetClusterDNS(clusterSpec *types.ClusterSpec) (string, error)
+	// GetCluster
+	GetCluster(clusterID string) (types.ClusterSpec, error)
 	// GetCloudProviders Get the information about supported cloud providers from the cluster provider
 	GetCloudProviders() (*types.CloudProviderInfoList, error)
 	// GetCloudProviderRegions Get the regions information for the given cloud provider from the cluster provider

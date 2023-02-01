@@ -69,6 +69,19 @@ func (o *OCMProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec,
 	return result, nil
 }
 
+func (o *OCMProvider) GetCluster(clusterID string) (types.ClusterSpec, error) {
+	cluster, err := o.ocmClient.GetCluster(clusterID)
+	if err != nil {
+		return types.ClusterSpec{}, errors.Wrapf(err, "failed to get cluster %s", clusterID)
+	}
+	return types.ClusterSpec{
+		MultiAZ:       cluster.MultiAZ(),
+		CloudProvider: cluster.CloudProvider().ID(),
+		Region:        cluster.Region().ID(),
+		ExternalID:    cluster.ExternalID(),
+	}, nil
+}
+
 func (o *OCMProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
 	ocmCluster, err := o.ocmClient.GetCluster(spec.InternalID)
 	if err != nil {
