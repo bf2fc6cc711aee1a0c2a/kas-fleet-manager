@@ -37,6 +37,7 @@ type options struct {
 	ConnectorsHandler         *handlers.ConnectorsHandler
 	ConnectorClusterHandler   *handlers.ConnectorClusterHandler
 	ConnectorNamespaceHandler *handlers.ConnectorNamespaceHandler
+	ProcessorsHandler         *handlers.ProcessorsHandler
 	DB                        *db.ConnectionFactory
 	AdminRoleAuthZConfig      *auth.AdminRoleAuthZConfig
 }
@@ -136,6 +137,18 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	}
 	apiV1ConnectorNamespacesRouter.Use(authorizeMiddleware)
 	apiV1ConnectorNamespacesRouter.Use(requireOrgID)
+
+	// /api/connector_mgmt/v1/processors
+	{
+		apiV1ProcessorsRouter := apiV1Router.PathPrefix("/processors").Subrouter()
+		apiV1ProcessorsRouter.HandleFunc("", s.ProcessorsHandler.Create).Methods(http.MethodPost)
+		apiV1ProcessorsRouter.HandleFunc("", s.ProcessorsHandler.List).Methods(http.MethodGet)
+		apiV1ProcessorsRouter.HandleFunc("/{processor_id}", s.ProcessorsHandler.Get).Methods(http.MethodGet)
+		apiV1ProcessorsRouter.HandleFunc("/{processor_id}", s.ProcessorsHandler.Patch).Methods(http.MethodPatch)
+		apiV1ProcessorsRouter.HandleFunc("/{processor_id}", s.ProcessorsHandler.Delete).Methods(http.MethodDelete)
+		apiV1ProcessorsRouter.Use(authorizeMiddleware)
+		apiV1ProcessorsRouter.Use(requireOrgID)
+	}
 
 	// This section adds the API's accessed by the connector agent...
 	{

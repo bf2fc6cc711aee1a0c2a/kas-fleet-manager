@@ -24,6 +24,7 @@ func ConfigProviders(kafkaEnabled bool) di.Option {
 	result := di.Options(
 		di.Provide(config.NewConnectorsConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(config.NewConnectorsQuotaConfig, di.As(new(environments2.ConfigModule))),
+		di.Provide(config.NewProcessorsConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(environments2.Func(serviceProviders)),
 		di.Provide(migrations.New),
 		di.Provide(cmdvault.NewVaultCommand),
@@ -59,6 +60,8 @@ func serviceProviders() di.Option {
 		di.Provide(handlers.NewConnectorTypesHandler),
 		di.Provide(handlers.NewConnectorsHandler),
 		di.Provide(handlers.NewConnectorClusterHandler),
+		di.Provide(handlers.NewProcessorsHandler),
+		di.Provide(services.NewProcessorsService, di.As(new(services.ProcessorsService))),
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(workers.NewConnectorTypeManager, di.As(new(coreWorkers.Worker))),
 		di.Provide(workers.NewClusterManager, di.As(new(coreWorkers.Worker))),

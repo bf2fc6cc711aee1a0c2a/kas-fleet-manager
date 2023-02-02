@@ -126,12 +126,6 @@ type SchemaRegistryConnectionSettings struct {
 	Url              string
 }
 
-type ServiceAccount struct {
-	ClientId        string
-	ClientSecret    string `gorm:"-"`
-	ClientSecretRef string `gorm:"column:client_secret"`
-}
-
 type ConnectorDeploymentOperatorUpgrade struct {
 	ConnectorID     string                    `json:"connector_id,omitempty"`
 	DeploymentID    string                    `json:"deployment_id,omitempty"`

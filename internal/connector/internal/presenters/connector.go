@@ -3,12 +3,10 @@ package presenters
 import (
 	"encoding/json"
 	admin "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	"strings"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
@@ -134,25 +132,6 @@ func PresentConnectorAnnotations(annotations []dbapi.ConnectorAnnotation) map[st
 		res[ann.Key] = ann.Value
 	}
 	return res
-}
-
-func getStatusError(conditions []private.MetaV1Condition) string {
-	var result string
-	for _, c := range conditions {
-		if c.Type == "Ready" {
-			if c.Status == "False" {
-				finalError := c.Message
-				start := strings.Index(c.Message, "error.message")
-				end := strings.Index(c.Message, "failure.count")
-				if start > -1 && end > -1 {
-					finalError = c.Message[start+14 : end]
-				}
-				result = c.Reason + ": " + finalError
-			}
-			break
-		}
-	}
-	return result
 }
 
 func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceError) {
