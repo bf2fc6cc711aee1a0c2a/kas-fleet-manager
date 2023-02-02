@@ -1,15 +1,23 @@
 package observatorium
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/go-playground/validator/v10"
 	"github.com/spf13/pflag"
 )
 
 const (
 	AuthTypeDex = "dex"
 	AuthTypeSso = "redhat"
+)
+
+const (
+	defaultObservabilityCloudwatchCredentialsSecretName      = "clo-cloudwatchlogs-creds"
+	defaultObservabilityCloudwatchCredentialsSecretNamespace = "openshift-logging"
 )
 
 type ObservabilityConfiguration struct {
@@ -54,6 +62,65 @@ type ObservabilityConfiguration struct {
 	ObservabilityConfigChannel         string `json:"observability_config_channel"`
 	ObservabilityConfigAccessToken     string `json:"observability_config_access_token"`
 	ObservabilityConfigAccessTokenFile string `json:"observability_config_access_token_file"`
+
+	// Configuration of AWS CloudWatch Logging for Observability
+	ObservabilityCloudWatchLoggingConfig ObservabilityCloudWatchLoggingConfig
+}
+
+var _ environments.ConfigModule = &ObservabilityConfiguration{}
+var _ environments.ServiceValidator = &ObservabilityConfiguration{}
+
+type ObservabilityCloudWatchLoggingConfig struct {
+	Credentials                   ObservabilityCloudwatchLoggingConfigCredentials `yaml:"aws_iam_credentials" validate:"dive"`
+	K8sCredentialsSecretName      string                                          `yaml:"k8s_credentials_secret_name" validate:"omitempty,oneof=clo-cloudwatchlogs-creds"`
+	K8sCredentialsSecretNamespace string                                          `yaml:"k8s_credentials_secret_namespace" validate:"omitempty,oneof=openshift-logging"`
+	CloudwatchLoggingEnabled      bool                                            `validate:"-"`
+	configFilePath                string                                          `validate:"-"`
+}
+
+func (c *ObservabilityCloudWatchLoggingConfig) validate() error {
+	if !c.CloudwatchLoggingEnabled {
+		return nil
+	}
+
+	validate := validator.New()
+	err := validate.Struct(c)
+	if err != nil {
+		return fmt.Errorf("error validating Observability CloudWatch Logging config: %v", err)
+	}
+
+	return nil
+}
+
+func (c *ObservabilityCloudWatchLoggingConfig) readConfigFile() error {
+	if !c.CloudwatchLoggingEnabled {
+		return nil
+	}
+
+	if c.configFilePath == "" {
+		return fmt.Errorf("error reading observability cloudwatch logging configuration: observability cloudwatch logging credentials file path cannot be empty")
+	}
+
+	err := shared.ReadYamlFile(c.configFilePath, &c)
+	if err != nil {
+		return err
+	}
+	c.setDefaults()
+	return nil
+}
+
+func (c *ObservabilityCloudWatchLoggingConfig) setDefaults() {
+	if c.K8sCredentialsSecretName == "" {
+		c.K8sCredentialsSecretName = defaultObservabilityCloudwatchCredentialsSecretName
+	}
+	if c.K8sCredentialsSecretNamespace == "" {
+		c.K8sCredentialsSecretNamespace = defaultObservabilityCloudwatchCredentialsSecretNamespace
+	}
+}
+
+type ObservabilityCloudwatchLoggingConfigCredentials struct {
+	AccessKey       string `yaml:"aws_access_key" validate:"required"`
+	SecretAccessKey string `yaml:"aws_secret_access_key" validate:"required"`
 }
 
 func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
@@ -89,6 +156,7 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 }
 
 func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
+
 	fs.StringVar(&c.DexUrl, "dex-url", c.DexUrl, "Dex url")
 	fs.StringVar(&c.DexUsername, "dex-username", c.DexUsername, "Dex username")
 	fs.StringVar(&c.DexSecretFile, "dex-secret-file", c.DexSecretFile, "Dex secret file")
@@ -117,6 +185,9 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ObservabilityConfigChannel, "observability-config-channel", c.ObservabilityConfigChannel, "Channel for the observability operator configuration repo")
 	fs.StringVar(&c.ObservabilityConfigAccessTokenFile, "observability-config-access-token-file", c.ObservabilityConfigAccessTokenFile, "File contains the access token to the observability operator configuration repo")
 	fs.StringVar(&c.ObservabilityConfigTag, "observability-config-tag", c.ObservabilityConfigTag, "Tag or branch to use inside the observability configuration repo")
+
+	fs.StringVar(&c.ObservabilityCloudWatchLoggingConfig.configFilePath, "observability-cloudwatchlogging-config-file-path", "secrets/observability-cloudwatchlogs-config.yaml", "Path to a file containing the configuration for Observability related to AWS CloudWatch Logging in YAML format. Only takes effect when --observability-cloudwatchlogging-enable is set")
+	fs.BoolVar(&c.ObservabilityCloudWatchLoggingConfig.CloudwatchLoggingEnabled, "observability-cloudwatchlogging-enable", false, "Enable Observability to deliver data plane logs to AWS CloudWatch")
 }
 
 func (c *ObservabilityConfiguration) ReadFiles() error {
@@ -144,9 +215,22 @@ func (c *ObservabilityConfiguration) ReadFiles() error {
 	}
 
 	if c.ObservabilityConfigAccessToken == "" && c.ObservabilityConfigAccessTokenFile != "" {
-		return shared.ReadFileValueString(c.ObservabilityConfigAccessTokenFile, &c.ObservabilityConfigAccessToken)
+		err := shared.ReadFileValueString(c.ObservabilityConfigAccessTokenFile, &c.ObservabilityConfigAccessToken)
+		if err != nil {
+			return err
+		}
 	}
+
+	err = c.ObservabilityCloudWatchLoggingConfig.readConfigFile()
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (c *ObservabilityConfiguration) Validate(env *environments.Env) error {
+	return c.ObservabilityCloudWatchLoggingConfig.validate()
 }
 
 func (c *ObservabilityConfiguration) ReadObservatoriumConfigFiles() error {

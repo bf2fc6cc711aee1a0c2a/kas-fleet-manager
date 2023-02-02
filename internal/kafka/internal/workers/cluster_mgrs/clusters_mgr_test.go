@@ -2227,67 +2227,74 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 	strimziNamespace := strimziAddonNamespace
 	kasFleetshardNamespace := kasFleetshardAddonNamespace
 
-	resources := []interface{}{
-		&userv1.Group{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: userv1.SchemeGroupVersion.String(),
-				Kind:       "Group",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: mkReadOnlyGroupName,
-			},
-		},
-		&authv1.ClusterRoleBinding{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "rbac.authorization.k8s.io/v1",
-				Kind:       "ClusterRoleBinding",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: mkReadOnlyRoleBindingName,
-			},
-			Subjects: []k8sCoreV1.ObjectReference{
-				{
+	var resources []interface{}
+
+	if cluster.ClusterType == api.ManagedDataPlaneClusterType.String() {
+		resources = append(resources,
+			&userv1.Group{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: userv1.SchemeGroupVersion.String(),
 					Kind:       "Group",
-					APIVersion: "rbac.authorization.k8s.io",
-					Name:       mkReadOnlyGroupName,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: mkReadOnlyGroupName,
 				},
 			},
-			RoleRef: k8sCoreV1.ObjectReference{
-				Kind:       "ClusterRole",
-				Name:       dedicatedReadersRoleBindingName,
-				APIVersion: "rbac.authorization.k8s.io",
-			},
-		},
-		&userv1.Group{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: userv1.SchemeGroupVersion.String(),
-				Kind:       "Group",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: mkSREGroupName,
-			},
-		},
-		&authv1.ClusterRoleBinding{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "rbac.authorization.k8s.io/v1",
-				Kind:       "ClusterRoleBinding",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: mkSRERoleBindingName,
-			},
-			Subjects: []k8sCoreV1.ObjectReference{
-				{
-					Kind:       "Group",
+			&authv1.ClusterRoleBinding{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRoleBinding",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: mkReadOnlyRoleBindingName,
+				},
+				Subjects: []k8sCoreV1.ObjectReference{
+					{
+						Kind:       "Group",
+						APIVersion: "rbac.authorization.k8s.io",
+						Name:       mkReadOnlyGroupName,
+					},
+				},
+				RoleRef: k8sCoreV1.ObjectReference{
+					Kind:       "ClusterRole",
+					Name:       dedicatedReadersRoleBindingName,
 					APIVersion: "rbac.authorization.k8s.io",
-					Name:       mkSREGroupName,
 				},
 			},
-			RoleRef: k8sCoreV1.ObjectReference{
-				Kind:       "ClusterRole",
-				Name:       clusterAdminRoleName,
-				APIVersion: "rbac.authorization.k8s.io",
+			&userv1.Group{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: userv1.SchemeGroupVersion.String(),
+					Kind:       "Group",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: mkSREGroupName,
+				},
 			},
-		},
+			&authv1.ClusterRoleBinding{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "rbac.authorization.k8s.io/v1",
+					Kind:       "ClusterRoleBinding",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: mkSRERoleBindingName,
+				},
+				Subjects: []k8sCoreV1.ObjectReference{
+					{
+						Kind:       "Group",
+						APIVersion: "rbac.authorization.k8s.io",
+						Name:       mkSREGroupName,
+					},
+				},
+				RoleRef: k8sCoreV1.ObjectReference{
+					Kind:       "ClusterRole",
+					Name:       clusterAdminRoleName,
+					APIVersion: "rbac.authorization.k8s.io",
+				},
+			},
+		)
+	}
+
+	resources = append(resources,
 		&k8sCoreV1.Namespace{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
@@ -2296,7 +2303,30 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 			ObjectMeta: metav1.ObjectMeta{
 				Name: observabilityNamespace,
 			},
-		},
+		})
+
+	if observabilityConfig.ObservabilityCloudWatchLoggingConfig.CloudwatchLoggingEnabled {
+		stringDataMap := map[string]string{
+			"aws_access_key_id":     observabilityConfig.ObservabilityCloudWatchLoggingConfig.Credentials.AccessKey,
+			"aws_secret_access_key": observabilityConfig.ObservabilityCloudWatchLoggingConfig.Credentials.SecretAccessKey,
+		}
+		resources = append(resources,
+			&k8sCoreV1.Secret{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: metav1.SchemeGroupVersion.Version,
+					Kind:       "Secret",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      observabilityConfig.ObservabilityCloudWatchLoggingConfig.K8sCredentialsSecretName,
+					Namespace: observabilityConfig.ObservabilityCloudWatchLoggingConfig.K8sCredentialsSecretNamespace,
+				},
+				Type:       k8sCoreV1.SecretTypeOpaque,
+				StringData: stringDataMap,
+			})
+	}
+
+	resources = append(resources,
+
 		&k8sCoreV1.Secret{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: metav1.SchemeGroupVersion.Version,
@@ -2384,7 +2414,8 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				Package:                observabilitySubscriptionName,
 			},
 		},
-	}
+	)
+
 	if cluster.ProviderType == api.ClusterProviderStandalone {
 		strimziNamespace = clusterConfig.StrimziOperatorOLMConfig.Namespace
 		kasFleetshardNamespace = clusterConfig.KasFleetshardOperatorOLMConfig.Namespace
@@ -2449,7 +2480,18 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	const ingressDNS = "foo.bar.example.com"
-	observabilityConfig := buildObservabilityConfig()
+	defaultTestObservabilityConfig := buildObservabilityConfig()
+	testObservabilityConfigWithCloudWatchLoggingEnabled := buildObservabilityConfig()
+	testObservabilityConfigWithCloudWatchLoggingEnabled.ObservabilityCloudWatchLoggingConfig = observatorium.ObservabilityCloudWatchLoggingConfig{
+		CloudwatchLoggingEnabled:      true,
+		K8sCredentialsSecretName:      "mynamespace",
+		K8sCredentialsSecretNamespace: "mysecret",
+		Credentials: observatorium.ObservabilityCloudwatchLoggingConfigCredentials{
+			AccessKey:       "myaccesskey",
+			SecretAccessKey: "mysecretaccesskey",
+		},
+	}
+
 	clusterConfig := config.DataplaneClusterConfig{
 		ImagePullDockerConfigContent: "image-pull-secret-test",
 		StrimziOperatorOLMConfig: config.OperatorInstallationConfig{
@@ -2464,7 +2506,8 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 		},
 	}
 	type fields struct {
-		clusterService services.ClusterService
+		clusterService             services.ClusterService
+		observabilityConfigFactory func() observatorium.ObservabilityConfiguration
 	}
 	tests := []struct {
 		name    string
@@ -2477,26 +2520,44 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
-						want, _ := buildResourceSet(observabilityConfig, clusterConfig, ingressDNS, cluster)
+						want, _ := buildResourceSet(defaultTestObservabilityConfig, clusterConfig, ingressDNS, cluster)
 						g.Expect(resources).To(gomega.Equal(want))
 						return nil
 					},
 				},
+				observabilityConfigFactory: buildObservabilityConfig,
 			},
-			arg: api.Cluster{ClusterID: "test-cluster-id", ProviderType: "ocm"},
+			arg: api.Cluster{ClusterID: "test-cluster-id", ProviderType: "ocm", ClusterType: api.ManagedDataPlaneClusterType.String()},
 		},
 		{
 			name: "test should pass and resourceset should be created for standalone clusters",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
-						want, _ := buildResourceSet(observabilityConfig, clusterConfig, ingressDNS, cluster)
+						want, _ := buildResourceSet(defaultTestObservabilityConfig, clusterConfig, ingressDNS, cluster)
 						g.Expect(resources).To(gomega.Equal(want))
 						return nil
 					},
 				},
+				observabilityConfigFactory: buildObservabilityConfig,
 			},
-			arg: api.Cluster{ClusterID: "test-cluster-id", ProviderType: "standalone"},
+			arg: api.Cluster{ClusterID: "test-cluster-id", ProviderType: "standalone", ClusterType: api.ManagedDataPlaneClusterType.String()},
+		},
+		{
+			name: "test should pass and resourceset should be created for with oservability cloudwatchlogging enabled",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						want, _ := buildResourceSet(testObservabilityConfigWithCloudWatchLoggingEnabled, clusterConfig, ingressDNS, cluster)
+						g.Expect(resources).To(gomega.Equal(want))
+						return nil
+					},
+				},
+				observabilityConfigFactory: func() observatorium.ObservabilityConfiguration {
+					return testObservabilityConfigWithCloudWatchLoggingEnabled
+				},
+			},
+			arg: api.Cluster{ClusterID: "test-cluster-id", ProviderType: "ocm", ClusterType: api.ManagedDataPlaneClusterType.String()},
 		},
 		{
 			name: "should receive error when ApplyResources returns error",
@@ -2506,6 +2567,7 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 						return apiErrors.GeneralError("failed to apply resources")
 					},
 				},
+				observabilityConfigFactory: buildObservabilityConfig,
 			},
 			wantErr: true,
 		},
@@ -2515,11 +2577,12 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
+			obsConfig := tt.fields.observabilityConfigFactory()
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
 					SupportedProviders:         &config.ProviderConfig{},
-					ObservabilityConfiguration: &observabilityConfig,
+					ObservabilityConfiguration: &obsConfig,
 					DataplaneClusterConfig:     &clusterConfig,
 					OCMConfig:                  &ocm.OCMConfig{},
 				},

@@ -59,6 +59,7 @@ cmd/kas-fleet-manager/kas-fleet-manager
 /secrets/redhatsso-service.*
 /secrets/image-pull.dockerconfigjson
 /secrets/gcp.api-credentials
+/secrets/observability-cloudwatchlogs-config.yaml
 
 # cluster details (used for testing)
 /internal/kafka/test/integration/test_cluster.json

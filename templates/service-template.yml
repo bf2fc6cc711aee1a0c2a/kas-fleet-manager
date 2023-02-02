@@ -595,6 +595,11 @@ parameters:
   description: As a user, one can create up to N defined max developer instances if they do not have quota to create standard instances.
   value: "1"
 
+- name: OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING
+  displayName: Enable Observability to deliver data plane logs to AWS CloudWatch
+  description: Enables Observability related AWS CloudWatch Logging. If false, logs from the data plane won't be sent to CloudWatch through Observability
+  value: "false"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -840,6 +845,10 @@ objects:
           - name: rds
             secret:
               secretName: kas-fleet-manager-rds
+          - name: observability-cwl-config
+            secret:
+              secretName: kas-fleet-manager-observability-cwl-config
+            optional: true
           - name: kas-fleet-manager-providers-config
             configMap:
               name: kas-fleet-manager-providers-config
@@ -939,6 +948,8 @@ objects:
               mountPath: /secrets/dataplane-certificate
             - name: kas-fleet-manager-observatorium-configuration-red-hat-sso
               mountPath: /secrets/observatorium
+            - name: observability-cwl-config
+              mountPath: /secrets/observability
             - name: rds
               mountPath: /secrets/rds
             - name: kas-fleet-manager-providers-config
@@ -1040,6 +1051,8 @@ objects:
             - --observability-red-hat-sso-token-refresher-url=${OBSERVATORIUM_TOKEN_REFRESHER_URL}
             - --observability-red-hat-sso-observatorium-gateway=${OBSERVATORIUM_RHSSO_GATEWAY}
             - --observability-red-hat-sso-tenant=${OBSERVATORIUM_RHSSO_TENANT}
+            - --observability-cloudwatchlogging-config-file-path=/secrets/observability/observability-cloudwatchlogs-config.yaml
+            - --observability-cloudwatchlogging-enable=${OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING}
             - --db-host-file=/secrets/rds/db.host
             - --db-port-file=/secrets/rds/db.port
             - --db-user-file=/secrets/rds/db.user
