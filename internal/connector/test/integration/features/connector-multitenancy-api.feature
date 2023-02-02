@@ -6,7 +6,7 @@ Feature: connector namespaces API
   Background:
     Given the path prefix is "/api/connector_mgmt"
 
-    # User for eval organization id 13640210 configured in internal/connector/test/integration/feature_test.go:72
+    # User for eval organization id 13640210 configured in internal/connector/test/integration/feature_test.go:81
     Given an org admin user named "Gru" in organization "13640210"
     Given I store userid for "Gru" as ${gru_user_id}
 

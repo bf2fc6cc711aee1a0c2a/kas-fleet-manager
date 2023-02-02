@@ -16,7 +16,9 @@ func NewTestingEnvLoader() environments.EnvLoader {
 }
 
 func (t TestingEnvLoader) Defaults() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		"processors-enabled": "true",
+	}
 }
 
 // The testing environment is specifically for automated testing

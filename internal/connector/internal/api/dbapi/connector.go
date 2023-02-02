@@ -116,20 +116,9 @@ type ConnectorDeploymentStatus struct {
 	UpgradeAvailable bool
 }
 
-type KafkaConnectionSettings struct {
-	KafkaID         string `gorm:"column:id"`
-	BootstrapServer string
-}
-
 type SchemaRegistryConnectionSettings struct {
 	SchemaRegistryID string `gorm:"column:id"`
 	Url              string
-}
-
-type ServiceAccount struct {
-	ClientId        string
-	ClientSecret    string `gorm:"-"`
-	ClientSecretRef string `gorm:"column:client_secret"`
 }
 
 type ConnectorOperator struct {

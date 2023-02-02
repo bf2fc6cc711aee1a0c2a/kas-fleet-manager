@@ -26,6 +26,7 @@ import (
 	"gorm.io/gorm"
 )
 
+//go:generate moq -out connector_namespaces_moq.go . ConnectorNamespaceService
 type ConnectorNamespaceService interface {
 	Create(ctx context.Context, request *dbapi.ConnectorNamespace) *errors.ServiceError
 	Update(ctx context.Context, request *dbapi.ConnectorNamespace) *errors.ServiceError
