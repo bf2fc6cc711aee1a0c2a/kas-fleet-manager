@@ -187,7 +187,6 @@ func Test_kafkaTLSCertificateManagementService_RevokeCertificate(t *testing.T) {
 				certManagementClient: testcase.fields.certManagementClient,
 				config:               testcase.fields.config,
 			}
-
 			err := certManagementService.RevokeCertificate(context.Background(), testcase.args.domain, testcase.args.reason)
 			g := gomega.NewWithT(t)
 			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr))

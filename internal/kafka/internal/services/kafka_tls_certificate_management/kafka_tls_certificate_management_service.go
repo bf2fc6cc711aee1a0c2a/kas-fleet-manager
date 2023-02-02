@@ -27,27 +27,6 @@ type Certificate struct {
 	TLSKey  string
 }
 
-// CertificateRevocationReason is the reason for the revocation of the certificates.
-// See https://www.rfc-editor.org/rfc/rfc5280#section-5.3.1 for the available reasons
-type CertificateRevocationReason int
-
-const (
-	Unspecified          CertificateRevocationReason = 0
-	KeyCompromise        CertificateRevocationReason = 1
-	CACompromise         CertificateRevocationReason = 2
-	AffiliationChanged   CertificateRevocationReason = 3
-	Superseded           CertificateRevocationReason = 4
-	CessationOfOperation CertificateRevocationReason = 5
-	CertificateHold      CertificateRevocationReason = 6
-	RemoveFromCRL        CertificateRevocationReason = 8
-	PrivilegeWithdrawn   CertificateRevocationReason = 9
-	AACompromise         CertificateRevocationReason = 10
-)
-
-func (reason CertificateRevocationReason) Int() int {
-	return int(reason)
-}
-
 //go:generate moq -out kafka_tls_certificate_management_service_moq.go . KafkaTLSCertificateManagementService
 type KafkaTLSCertificateManagementService interface {
 	// ManageCertificate manages wildcard tls certificate of a given domain automatically.
@@ -158,7 +137,7 @@ func (certManagementService *kafkaTLSCertificateManagementService) RevokeCertifi
 
 	// We revoke the wildcard certificate of the given domain
 	// see ADR-90 https://github.com/bf2fc6cc711aee1a0c2a/architecture/blob/main/_adr/90/index.adoc for context
-	return certManagementService.certManagementClient.RevokeCertificate(ctx, fmt.Sprintf("*.%s", domain), reason.Int())
+	return certManagementService.certManagementClient.RevokeCertificate(ctx, fmt.Sprintf("*.%s", domain), reason.AsInt())
 }
 
 func (certManagementService *kafkaTLSCertificateManagementService) IsKafkaExternalCertificateEnabled() bool {

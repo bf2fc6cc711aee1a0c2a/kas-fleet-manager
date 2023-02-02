@@ -199,6 +199,54 @@ paths:
             application/json:
               schema:
                 $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+  '/api/kafkas_mgmt/v1/admin/kafkas/{id}/revoke_certificate':
+    post:
+      description: Revokes the certificate for the Kafka instance by id
+      parameters:
+        - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
+      security:
+        - Bearer: []
+      operationId: revokeCertificateOfAKafkaById
+      requestBody:
+        description: Kafka certificate revocation request payload. 
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KafkacertificateRevocationRequest'
+        required: true
+      responses:
+        "204":
+          description: Kafka certificate successfully revoked
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+        "401":
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+        "403":
+          description: User is not authorised to access the service
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+        "404":
+          description: No Kafka found with the specified ID
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
 
 components:
   schemas:
@@ -317,6 +365,15 @@ components:
           type: boolean
     SupportedKafkaSizeBytesValueItem:
       $ref: 'kas-fleet-manager.yaml#/components/schemas/SupportedKafkaSizeBytesValueItem'
+    KafkacertificateRevocationRequest:
+      type: object
+      properties:
+        revocation_reason:
+          type: integer
+          description: The certificate revocation reason. See https://www.rfc-editor.org/rfc/rfc5280#section-5.3.1 for the available reasons
+      example:
+        revocation_reason: 1 # key comprosised revocation reason
+        
 
   securitySchemes:
     Bearer:

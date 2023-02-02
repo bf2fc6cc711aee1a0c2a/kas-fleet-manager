@@ -26,6 +26,7 @@
 - method: POST
   roles:
     - "cos-fleet-manager-admin-full"
+    - "kas-fleet-manager-admin-full"
 - method: DELETE
   roles:
     - "kas-fleet-manager-admin-full"
