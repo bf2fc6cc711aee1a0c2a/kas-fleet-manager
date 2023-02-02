@@ -1,7 +1,11 @@
 package dbapi
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -48,17 +52,47 @@ type KafkaRequest struct {
 	RoutesCreated bool `json:"routes_created"`
 	// Namespace is the namespace of the provisioned kafka instance.
 	// We store this in the database to ensure that old kafkas whose namespace contained "owner-<kafka-id>" information will continue to work.
-	Namespace                string `json:"namespace"`
-	ReauthenticationEnabled  bool   `json:"reauthentication_enabled"`
-	RoutesCreationId         string `json:"routes_creation_id"`
-	SizeId                   string `json:"size_id"`
-	BillingCloudAccountId    string `json:"billing_cloud_account_id"`
-	Marketplace              string `json:"marketplace"`
-	ActualKafkaBillingModel  string `json:"actual_kafka_billing_model"`
-	DesiredKafkaBillingModel string `json:"desired_kafka_billing_model"`
+	Namespace                string               `json:"namespace"`
+	ReauthenticationEnabled  bool                 `json:"reauthentication_enabled"`
+	RoutesCreationId         string               `json:"routes_creation_id"`
+	SizeId                   string               `json:"size_id"`
+	BillingCloudAccountId    string               `json:"billing_cloud_account_id"`
+	Marketplace              string               `json:"marketplace"`
+	ActualKafkaBillingModel  string               `json:"actual_kafka_billing_model"`
+	DesiredKafkaBillingModel string               `json:"desired_kafka_billing_model"`
+	PromotionStatus          KafkaPromotionStatus `json:"promotion_status"`
+	PromotionDetails         string               `json:"promotion_details"`
 	// ExpiresAt contains the timestamp of when a Kafka instance is scheduled to expire.
 	// On expiration, the Kafka instance will be marked for deletion, its status will be set to 'deprovision'.
-	ExpiresAt time.Time `json:"expires_at"`
+	ExpiresAt sql.NullTime `json:"expires_at"`
+}
+
+type KafkaPromotionStatus string
+
+const (
+	KafkaPromotionStatusPromoting   KafkaPromotionStatus = "promoting"
+	KafkaPromotionStatusFailed      KafkaPromotionStatus = "failed"
+	KafkaPromotionStatusNoPromotion KafkaPromotionStatus = ""
+)
+
+func (s KafkaPromotionStatus) String() string {
+	return string(s)
+}
+
+func ParseKafkaPromotionStatus(status string) (KafkaPromotionStatus, error) {
+	validPromotionStatuses := map[KafkaPromotionStatus]struct{}{
+		KafkaPromotionStatusPromoting:   {},
+		KafkaPromotionStatusFailed:      {},
+		KafkaPromotionStatusNoPromotion: {},
+	}
+
+	parsedStatus := KafkaPromotionStatus(status)
+	_, ok := validPromotionStatuses[parsedStatus]
+	if !ok {
+		return parsedStatus, fmt.Errorf("cannot parse %q as KafkaPromotionStatus: invalid status", parsedStatus)
+	}
+
+	return parsedStatus, nil
 }
 
 type KafkaList []*KafkaRequest
@@ -108,4 +142,85 @@ func (k *KafkaRequest) SetRoutes(routes []DataPlaneKafkaRoute) error {
 func (k *KafkaRequest) GetExpirationTime(lifespanSeconds int) *time.Time {
 	expireTime := k.CreatedAt.Add(time.Duration(lifespanSeconds) * time.Second)
 	return &expireTime
+}
+
+// The RemainingLifeSpan is the remaining life a kafka instance have before it expires and gets deleted
+type RemainingLifeSpan interface {
+	// Infinite returns whether the Kafka instance has infinite (no expiration) remaining life span
+	Infinite() bool
+
+	// Days returns the number of remaining life span days a Kafka instance has.
+	// The value can be negative if the instance has expired by 1 day or more to indicate how many days ago the instance
+	// has expired, or it can be `-1` if the remaining life is `infinite`.
+	// Caller shouldn't rely on this function returning `-1` to check for infinity, since this function will return `-1`
+	// even when the instance has expired one day ago.
+	// To reliable check for infinity, check the value returned by `Infinite`
+	Days() float64
+
+	// LessThanOrEqual returns whether the remaining number of days is less or equal then the specified one.
+	// If the remaining life is `infinte` this method always returns `false`.
+	LessThanOrEqual(days float64) bool
+}
+
+var _ RemainingLifeSpan = &remainingLifeSpan{}
+
+// remainingLifeSpan is an implementation of the RemainingLifeSpan interface
+type remainingLifeSpan struct {
+	// remainingLifeSpanDays is the number of days before the Kafka instance will be deleted. It is a `float64` to be able to manage fraction of days.
+	remainingLifeSpanDays float64
+	// infinite represent whether the Kafka instance has an expiration
+	infinite bool
+}
+
+func (l *remainingLifeSpan) Infinite() bool {
+	return l.infinite
+}
+
+func (l *remainingLifeSpan) Days() float64 {
+	return l.remainingLifeSpanDays
+}
+
+func (l *remainingLifeSpan) LessThanOrEqual(days float64) bool {
+	if l.infinite {
+		return false
+	}
+	return l.remainingLifeSpanDays <= days
+}
+
+// IsExpired returns whether a kafka is expired and how many days the instance will live before expiring
+func (k *KafkaRequest) IsExpired() (bool, RemainingLifeSpan) {
+	if !k.ExpiresAt.Valid {
+		return false, &remainingLifeSpan{
+			remainingLifeSpanDays: -1,
+			infinite:              true,
+		}
+	}
+
+	now := time.Now()
+	if now.After(k.ExpiresAt.Time) {
+		return true, &remainingLifeSpan{
+			remainingLifeSpanDays: 0,
+			infinite:              false,
+		}
+	}
+
+	remainingLife := k.ExpiresAt.Time.Sub(now)
+	return false, &remainingLifeSpan{
+		remainingLifeSpanDays: remainingLife.Hours() / 24,
+		infinite:              false,
+	}
+}
+
+// CanBeAutomaticallySuspended returns whether the kafka instance can be suspended or not
+// This method is used when the Kafka instance enters its grace period
+func (k *KafkaRequest) CanBeAutomaticallySuspended() bool {
+	validSuspensionStatuses := []string{
+		constants.KafkaRequestStatusAccepted.String(),
+		constants.KafkaRequestStatusPreparing.String(),
+		constants.KafkaRequestStatusReady.String(),
+		constants.KafkaRequestStatusProvisioning.String(),
+		constants.KafkaRequestStatusResuming.String(),
+	}
+
+	return arrays.Contains(validSuspensionStatuses, k.Status)
 }

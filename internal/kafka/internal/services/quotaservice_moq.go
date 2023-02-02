@@ -27,10 +27,19 @@ var _ QuotaService = &QuotaServiceMock{}
 //			DeleteQuotaFunc: func(subscriptionId string) *apiErrors.ServiceError {
 //				panic("mock out the DeleteQuota method")
 //			},
+//			DeleteQuotaForBillingModelFunc: func(subscriptionId string, kafkaBillingModel config.KafkaBillingModel) *apiErrors.ServiceError {
+//				panic("mock out the DeleteQuotaForBillingModel method")
+//			},
+//			IsQuotaEntitlementActiveFunc: func(kafka *dbapi.KafkaRequest) (bool, error) {
+//				panic("mock out the IsQuotaEntitlementActive method")
+//			},
 //			ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError) {
 //				panic("mock out the ReserveQuota method")
 //			},
-//			ValidateBillingAccountFunc: func(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
+//			ReserveQuotaIfNotAlreadyReservedFunc: func(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError) {
+//				panic("mock out the ReserveQuotaIfNotAlreadyReserved method")
+//			},
+//			ValidateBillingAccountFunc: func(organisationId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
 //				panic("mock out the ValidateBillingAccount method")
 //			},
 //		}
@@ -46,11 +55,20 @@ type QuotaServiceMock struct {
 	// DeleteQuotaFunc mocks the DeleteQuota method.
 	DeleteQuotaFunc func(subscriptionId string) *apiErrors.ServiceError
 
+	// DeleteQuotaForBillingModelFunc mocks the DeleteQuotaForBillingModel method.
+	DeleteQuotaForBillingModelFunc func(subscriptionId string, kafkaBillingModel config.KafkaBillingModel) *apiErrors.ServiceError
+
+	// IsQuotaEntitlementActiveFunc mocks the IsQuotaEntitlementActive method.
+	IsQuotaEntitlementActiveFunc func(kafka *dbapi.KafkaRequest) (bool, error)
+
 	// ReserveQuotaFunc mocks the ReserveQuota method.
 	ReserveQuotaFunc func(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError)
 
+	// ReserveQuotaIfNotAlreadyReservedFunc mocks the ReserveQuotaIfNotAlreadyReserved method.
+	ReserveQuotaIfNotAlreadyReservedFunc func(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError)
+
 	// ValidateBillingAccountFunc mocks the ValidateBillingAccount method.
-	ValidateBillingAccountFunc func(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError
+	ValidateBillingAccountFunc func(organisationId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -70,8 +88,25 @@ type QuotaServiceMock struct {
 			// SubscriptionId is the subscriptionId argument value.
 			SubscriptionId string
 		}
+		// DeleteQuotaForBillingModel holds details about calls to the DeleteQuotaForBillingModel method.
+		DeleteQuotaForBillingModel []struct {
+			// SubscriptionId is the subscriptionId argument value.
+			SubscriptionId string
+			// KafkaBillingModel is the kafkaBillingModel argument value.
+			KafkaBillingModel config.KafkaBillingModel
+		}
+		// IsQuotaEntitlementActive holds details about calls to the IsQuotaEntitlementActive method.
+		IsQuotaEntitlementActive []struct {
+			// Kafka is the kafka argument value.
+			Kafka *dbapi.KafkaRequest
+		}
 		// ReserveQuota holds details about calls to the ReserveQuota method.
 		ReserveQuota []struct {
+			// Kafka is the kafka argument value.
+			Kafka *dbapi.KafkaRequest
+		}
+		// ReserveQuotaIfNotAlreadyReserved holds details about calls to the ReserveQuotaIfNotAlreadyReserved method.
+		ReserveQuotaIfNotAlreadyReserved []struct {
 			// Kafka is the kafka argument value.
 			Kafka *dbapi.KafkaRequest
 		}
@@ -81,6 +116,8 @@ type QuotaServiceMock struct {
 			OrganisationId string
 			// InstanceType is the instanceType argument value.
 			InstanceType types.KafkaInstanceType
+			// BillingModelID is the billingModelID argument value.
+			BillingModelID string
 			// BillingCloudAccountId is the billingCloudAccountId argument value.
 			BillingCloudAccountId string
 			// Marketplace is the marketplace argument value.
@@ -89,7 +126,10 @@ type QuotaServiceMock struct {
 	}
 	lockCheckIfQuotaIsDefinedForInstanceType sync.RWMutex
 	lockDeleteQuota                          sync.RWMutex
+	lockDeleteQuotaForBillingModel           sync.RWMutex
+	lockIsQuotaEntitlementActive             sync.RWMutex
 	lockReserveQuota                         sync.RWMutex
+	lockReserveQuotaIfNotAlreadyReserved     sync.RWMutex
 	lockValidateBillingAccount               sync.RWMutex
 }
 
@@ -169,6 +209,74 @@ func (mock *QuotaServiceMock) DeleteQuotaCalls() []struct {
 	return calls
 }
 
+// DeleteQuotaForBillingModel calls DeleteQuotaForBillingModelFunc.
+func (mock *QuotaServiceMock) DeleteQuotaForBillingModel(subscriptionId string, kafkaBillingModel config.KafkaBillingModel) *apiErrors.ServiceError {
+	if mock.DeleteQuotaForBillingModelFunc == nil {
+		panic("QuotaServiceMock.DeleteQuotaForBillingModelFunc: method is nil but QuotaService.DeleteQuotaForBillingModel was just called")
+	}
+	callInfo := struct {
+		SubscriptionId    string
+		KafkaBillingModel config.KafkaBillingModel
+	}{
+		SubscriptionId:    subscriptionId,
+		KafkaBillingModel: kafkaBillingModel,
+	}
+	mock.lockDeleteQuotaForBillingModel.Lock()
+	mock.calls.DeleteQuotaForBillingModel = append(mock.calls.DeleteQuotaForBillingModel, callInfo)
+	mock.lockDeleteQuotaForBillingModel.Unlock()
+	return mock.DeleteQuotaForBillingModelFunc(subscriptionId, kafkaBillingModel)
+}
+
+// DeleteQuotaForBillingModelCalls gets all the calls that were made to DeleteQuotaForBillingModel.
+// Check the length with:
+//
+//	len(mockedQuotaService.DeleteQuotaForBillingModelCalls())
+func (mock *QuotaServiceMock) DeleteQuotaForBillingModelCalls() []struct {
+	SubscriptionId    string
+	KafkaBillingModel config.KafkaBillingModel
+} {
+	var calls []struct {
+		SubscriptionId    string
+		KafkaBillingModel config.KafkaBillingModel
+	}
+	mock.lockDeleteQuotaForBillingModel.RLock()
+	calls = mock.calls.DeleteQuotaForBillingModel
+	mock.lockDeleteQuotaForBillingModel.RUnlock()
+	return calls
+}
+
+// IsQuotaEntitlementActive calls IsQuotaEntitlementActiveFunc.
+func (mock *QuotaServiceMock) IsQuotaEntitlementActive(kafka *dbapi.KafkaRequest) (bool, error) {
+	if mock.IsQuotaEntitlementActiveFunc == nil {
+		panic("QuotaServiceMock.IsQuotaEntitlementActiveFunc: method is nil but QuotaService.IsQuotaEntitlementActive was just called")
+	}
+	callInfo := struct {
+		Kafka *dbapi.KafkaRequest
+	}{
+		Kafka: kafka,
+	}
+	mock.lockIsQuotaEntitlementActive.Lock()
+	mock.calls.IsQuotaEntitlementActive = append(mock.calls.IsQuotaEntitlementActive, callInfo)
+	mock.lockIsQuotaEntitlementActive.Unlock()
+	return mock.IsQuotaEntitlementActiveFunc(kafka)
+}
+
+// IsQuotaEntitlementActiveCalls gets all the calls that were made to IsQuotaEntitlementActive.
+// Check the length with:
+//
+//	len(mockedQuotaService.IsQuotaEntitlementActiveCalls())
+func (mock *QuotaServiceMock) IsQuotaEntitlementActiveCalls() []struct {
+	Kafka *dbapi.KafkaRequest
+} {
+	var calls []struct {
+		Kafka *dbapi.KafkaRequest
+	}
+	mock.lockIsQuotaEntitlementActive.RLock()
+	calls = mock.calls.IsQuotaEntitlementActive
+	mock.lockIsQuotaEntitlementActive.RUnlock()
+	return calls
+}
+
 // ReserveQuota calls ReserveQuotaFunc.
 func (mock *QuotaServiceMock) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError) {
 	if mock.ReserveQuotaFunc == nil {
@@ -201,26 +309,60 @@ func (mock *QuotaServiceMock) ReserveQuotaCalls() []struct {
 	return calls
 }
 
+// ReserveQuotaIfNotAlreadyReserved calls ReserveQuotaIfNotAlreadyReservedFunc.
+func (mock *QuotaServiceMock) ReserveQuotaIfNotAlreadyReserved(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError) {
+	if mock.ReserveQuotaIfNotAlreadyReservedFunc == nil {
+		panic("QuotaServiceMock.ReserveQuotaIfNotAlreadyReservedFunc: method is nil but QuotaService.ReserveQuotaIfNotAlreadyReserved was just called")
+	}
+	callInfo := struct {
+		Kafka *dbapi.KafkaRequest
+	}{
+		Kafka: kafka,
+	}
+	mock.lockReserveQuotaIfNotAlreadyReserved.Lock()
+	mock.calls.ReserveQuotaIfNotAlreadyReserved = append(mock.calls.ReserveQuotaIfNotAlreadyReserved, callInfo)
+	mock.lockReserveQuotaIfNotAlreadyReserved.Unlock()
+	return mock.ReserveQuotaIfNotAlreadyReservedFunc(kafka)
+}
+
+// ReserveQuotaIfNotAlreadyReservedCalls gets all the calls that were made to ReserveQuotaIfNotAlreadyReserved.
+// Check the length with:
+//
+//	len(mockedQuotaService.ReserveQuotaIfNotAlreadyReservedCalls())
+func (mock *QuotaServiceMock) ReserveQuotaIfNotAlreadyReservedCalls() []struct {
+	Kafka *dbapi.KafkaRequest
+} {
+	var calls []struct {
+		Kafka *dbapi.KafkaRequest
+	}
+	mock.lockReserveQuotaIfNotAlreadyReserved.RLock()
+	calls = mock.calls.ReserveQuotaIfNotAlreadyReserved
+	mock.lockReserveQuotaIfNotAlreadyReserved.RUnlock()
+	return calls
+}
+
 // ValidateBillingAccount calls ValidateBillingAccountFunc.
-func (mock *QuotaServiceMock) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
+func (mock *QuotaServiceMock) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
 	if mock.ValidateBillingAccountFunc == nil {
 		panic("QuotaServiceMock.ValidateBillingAccountFunc: method is nil but QuotaService.ValidateBillingAccount was just called")
 	}
 	callInfo := struct {
 		OrganisationId        string
 		InstanceType          types.KafkaInstanceType
+		BillingModelID        string
 		BillingCloudAccountId string
 		Marketplace           *string
 	}{
 		OrganisationId:        organisationId,
 		InstanceType:          instanceType,
+		BillingModelID:        billingModelID,
 		BillingCloudAccountId: billingCloudAccountId,
 		Marketplace:           marketplace,
 	}
 	mock.lockValidateBillingAccount.Lock()
 	mock.calls.ValidateBillingAccount = append(mock.calls.ValidateBillingAccount, callInfo)
 	mock.lockValidateBillingAccount.Unlock()
-	return mock.ValidateBillingAccountFunc(organisationId, instanceType, billingCloudAccountId, marketplace)
+	return mock.ValidateBillingAccountFunc(organisationId, instanceType, billingModelID, billingCloudAccountId, marketplace)
 }
 
 // ValidateBillingAccountCalls gets all the calls that were made to ValidateBillingAccount.
@@ -230,12 +372,14 @@ func (mock *QuotaServiceMock) ValidateBillingAccount(organisationId string, inst
 func (mock *QuotaServiceMock) ValidateBillingAccountCalls() []struct {
 	OrganisationId        string
 	InstanceType          types.KafkaInstanceType
+	BillingModelID        string
 	BillingCloudAccountId string
 	Marketplace           *string
 } {
 	var calls []struct {
 		OrganisationId        string
 		InstanceType          types.KafkaInstanceType
+		BillingModelID        string
 		BillingCloudAccountId string
 		Marketplace           *string
 	}

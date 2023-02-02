@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -104,4 +103,28 @@ func (c *KafkaConfig) GetKafkaInstanceSize(instanceType, sizeId string) (*KafkaI
 		return nil, err
 	}
 	return kafkaInstanceType.GetKafkaInstanceSizeByID(sizeId)
+}
+
+func (c *KafkaConfig) GetBillingModels(instanceType string) ([]KafkaBillingModel, error) {
+	kafkaInstanceType, err := c.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
+	if err != nil {
+		return nil, err
+	}
+
+	return kafkaInstanceType.SupportedBillingModels, nil
+}
+
+func (c *KafkaConfig) GetBillingModelByID(instanceType, billingModelID string) (KafkaBillingModel, error) {
+	kafkaInstanceType, err := c.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
+	if err != nil {
+		return KafkaBillingModel{}, err
+	}
+
+	billingModel, err := kafkaInstanceType.GetKafkaSupportedBillingModelByID(billingModelID)
+
+	if err != nil {
+		return KafkaBillingModel{}, err
+	}
+
+	return *billingModel, nil
 }

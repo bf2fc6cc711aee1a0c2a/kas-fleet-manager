@@ -13,8 +13,18 @@ type QuotaService interface {
 	CheckIfQuotaIsDefinedForInstanceType(username string, externalID string, instanceTypeID types.KafkaInstanceType, kafkaBillingModel config.KafkaBillingModel) (bool, *errors.ServiceError)
 	// ReserveQuota reserves a quota for a user and return the reservation id or an error in case of failure
 	ReserveQuota(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError)
+	// ReserveQuotaIfNotAlreadyReserved reserves a quota for the specified request if the desired quota
+	// has not been already reserved. Returns the id of the newly reserved quota or the id of the existing one
+	ReserveQuotaIfNotAlreadyReserved(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError)
 	// DeleteQuota deletes a reserved quota
 	DeleteQuota(subscriptionId string) *errors.ServiceError
+	// DeleteQuotaForBillingModel deletes a reserved quota only if it is related to the specified billing model, otherwise exits with no error
+	DeleteQuotaForBillingModel(subscriptionId string, kafkaBillingModel config.KafkaBillingModel) *errors.ServiceError
 	// ValidateBillingAccount validates if a billing account is contained in the quota cost response
-	ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError
+	ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError
+	// IsQuotaEntitlementActive checks if the user/organisation have an active entitlement to the quota used by the
+	// given Kafka instance.
+	// It returns true if the user has an active quota entitlement and false if not.
+	// It returns false and an error if it encounters any issues while trying to check the quota entitlement status
+	IsQuotaEntitlementActive(kafka *dbapi.KafkaRequest) (bool, error)
 }

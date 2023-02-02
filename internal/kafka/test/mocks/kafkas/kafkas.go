@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -57,6 +58,8 @@ const (
 	ID
 	DESIRED_KAFKA_BILLING_MODEL
 	ACTUAL_KAFKA_BILLING_MODEL
+	PROMOTION_STATUS
+	PROMOTION_DETAILS
 )
 
 type KafkaAttribute int
@@ -110,6 +113,10 @@ func With(attribute KafkaRequestAttribute, value string) KafkaRequestBuildOption
 			request.DesiredKafkaBillingModel = value
 		case ACTUAL_KAFKA_BILLING_MODEL:
 			request.ActualKafkaBillingModel = value
+		case PROMOTION_STATUS:
+			request.PromotionStatus = dbapi.KafkaPromotionStatus(value)
+		case PROMOTION_DETAILS:
+			request.PromotionDetails = value
 		}
 	}
 }
@@ -141,6 +148,12 @@ func WithMultiAZ(multiaz bool) KafkaRequestBuildOption {
 func WithCreatedAt(createdAt time.Time) KafkaRequestBuildOption {
 	return func(request *dbapi.KafkaRequest) {
 		request.Meta.CreatedAt = createdAt
+	}
+}
+
+func WithExpiresAt(expiresAt sql.NullTime) KafkaRequestBuildOption {
+	return func(request *dbapi.KafkaRequest) {
+		request.ExpiresAt = expiresAt
 	}
 }
 

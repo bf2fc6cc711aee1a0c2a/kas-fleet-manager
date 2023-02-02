@@ -101,3 +101,45 @@ func StringEqualsIgnoreCase[T string | *string](s1 T, s2 T) bool {
 
 	return strings.EqualFold(v1, v2)
 }
+
+// StringHasPrefixIgnoreCase - returns true if s starts with T, ignoring the case
+// Works with both string and *string values.
+func StringHasPrefixIgnoreCase[T string | *string](s T, prefix T) bool {
+	if IsNil(s) || IsNil(prefix) {
+		return false
+	}
+
+	convertToString := func(v T) string {
+		if val, ok := any(v).(string); ok {
+			return val
+		} else {
+			return *any(v).(*string)
+		}
+	}
+
+	valueAsString := strings.ToLower(convertToString(s))
+	prefixAsString := strings.ToLower(convertToString(prefix))
+
+	return strings.HasPrefix(valueAsString, prefixAsString)
+}
+
+// StringHasSuffixIgnoreCase - returns true if s ends with T, ignoring the case
+// Works with both string and *string values.
+func StringHasSuffixIgnoreCase[T string | *string](s T, suffix T) bool {
+	if IsNil(s) || IsNil(suffix) {
+		return false
+	}
+
+	convertToString := func(v T) string {
+		if val, ok := any(v).(string); ok {
+			return val
+		} else {
+			return *any(v).(*string)
+		}
+	}
+
+	valueAsString := strings.ToLower(convertToString(s))
+	prefixAsString := strings.ToLower(convertToString(suffix))
+
+	return strings.HasSuffix(valueAsString, prefixAsString)
+}

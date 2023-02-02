@@ -367,6 +367,258 @@ func Test_StringEqualsIgnoreCasePredicate(t *testing.T) {
 	}
 }
 
+func Test_StringHasPrefixIgnoreCasePredicate(t *testing.T) {
+	type args struct {
+		value  string
+		prefix string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Empty strings",
+			args: args{
+				value:  "",
+				prefix: "",
+			},
+			want: true,
+		},
+		{
+			name: "Empty prefix",
+			args: args{
+				value:  "My string value",
+				prefix: "",
+			},
+			want: true,
+		},
+		{
+			name: "Wrong prefix",
+			args: args{
+				value:  "My string value",
+				prefix: "Wrong prefix",
+			},
+			want: false,
+		},
+		{
+			name: "Good prefix, different case",
+			args: args{
+				value:  "My string value",
+				prefix: "mY sTrInG",
+			},
+			want: true,
+		},
+		{
+			name: "Good prefix, same case",
+			args: args{
+				value:  "My string value",
+				prefix: "My string",
+			},
+			want: true,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			predicate := StringHasPrefixIgnoreCasePredicate(tt.args.value)
+			g.Expect(predicate(tt.args.prefix)).To(gomega.Equal(tt.want), "Failed checking that '%s' has prefix '%s' (ignorecase)", tt.args.value, tt.args.prefix)
+		})
+	}
+}
+
+func Test_StringHasNotPrefixIgnoreCasePredicate(t *testing.T) {
+	type args struct {
+		value  string
+		prefix string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Empty strings",
+			args: args{
+				value:  "",
+				prefix: "",
+			},
+			want: false,
+		},
+		{
+			name: "Empty prefix",
+			args: args{
+				value:  "My string value",
+				prefix: "",
+			},
+			want: false,
+		},
+		{
+			name: "Wrong prefix",
+			args: args{
+				value:  "My string value",
+				prefix: "Wrong prefix",
+			},
+			want: true,
+		},
+		{
+			name: "Good prefix, different case",
+			args: args{
+				value:  "My string value",
+				prefix: "mY sTrInG",
+			},
+			want: false,
+		},
+		{
+			name: "Good prefix, same case",
+			args: args{
+				value:  "My string value",
+				prefix: "My string",
+			},
+			want: false,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			predicate := StringHasNotPrefixIgnoreCasePredicate(tt.args.value)
+			g.Expect(predicate(tt.args.prefix)).To(gomega.Equal(tt.want), "Failed checking that '%s' has not prefix '%s' (ignorecase)", tt.args.value, tt.args.prefix)
+		})
+	}
+}
+
+func Test_StringHasSuffixIgnoreCasePredicate(t *testing.T) {
+	type args struct {
+		value  string
+		suffix string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Empty strings",
+			args: args{
+				value:  "",
+				suffix: "",
+			},
+			want: true,
+		},
+		{
+			name: "Empty suffix",
+			args: args{
+				value:  "My string value",
+				suffix: "",
+			},
+			want: true,
+		},
+		{
+			name: "Wrong suffix",
+			args: args{
+				value:  "My string value",
+				suffix: "Wrong suffix",
+			},
+			want: false,
+		},
+		{
+			name: "Good suffix, different case",
+			args: args{
+				value:  "My string value",
+				suffix: "vAlUe",
+			},
+			want: true,
+		},
+		{
+			name: "Good suffix, same case",
+			args: args{
+				value:  "My string value",
+				suffix: "value",
+			},
+			want: true,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			predicate := StringHasSuffixIgnoreCasePredicate(tt.args.value)
+			g.Expect(predicate(tt.args.suffix)).To(gomega.Equal(tt.want), "Failed checking that '%s' has suffix '%s' (ignorecase)", tt.args.value, tt.args.suffix)
+		})
+	}
+}
+
+func Test_StringHasNotSuffixIgnoreCasePredicate(t *testing.T) {
+	type args struct {
+		value  string
+		suffix string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Empty strings",
+			args: args{
+				value:  "",
+				suffix: "",
+			},
+			want: false,
+		},
+		{
+			name: "Empty suffix",
+			args: args{
+				value:  "My string value",
+				suffix: "",
+			},
+			want: false,
+		},
+		{
+			name: "Wrong suffix",
+			args: args{
+				value:  "My string value",
+				suffix: "Wrong suffix",
+			},
+			want: true,
+		},
+		{
+			name: "Good suffix, different case",
+			args: args{
+				value:  "My string value",
+				suffix: "vAlUe",
+			},
+			want: false,
+		},
+		{
+			name: "Good suffix, same case",
+			args: args{
+				value:  "My string value",
+				suffix: "value",
+			},
+			want: false,
+		},
+	}
+
+	for _, testcase := range tests {
+		tt := testcase
+
+		t.Run(tt.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			predicate := StringHasNotSuffixIgnoreCasePredicate(tt.args.value)
+			g.Expect(predicate(tt.args.suffix)).To(gomega.Equal(tt.want), "Failed checking that '%s' has not suffix '%s' (ignorecase)", tt.args.value, tt.args.suffix)
+		})
+	}
+}
+
 func Test_ComposedPredicate(t *testing.T) {
 	buildStringPointer := func(s string) *string {
 		return &s

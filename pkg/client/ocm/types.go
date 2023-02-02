@@ -24,18 +24,13 @@ const (
 	RHOSAKResourceName string = "rhosak"
 )
 
-func (t KafkaQuotaType) GetProduct() string {
-	if t == StandardQuota {
-		return string(RHOSAKProduct)
-	}
+type AMSRelatedResourceBillingModel string
 
-	return string(RHOSAKTrialProduct)
-}
+const (
+	AMSRelatedResourceBillingModelMarketplace AMSRelatedResourceBillingModel = "marketplace"
+	AMSRelatedResourceBillingModelStandard    AMSRelatedResourceBillingModel = "standard"
+)
 
-func (t KafkaQuotaType) GetResourceName() string {
-	return RHOSAKResourceName
-}
-
-func (t KafkaQuotaType) Equals(t1 KafkaQuotaType) bool {
-	return t1.GetProduct() == t.GetProduct() && t1.GetResourceName() == t.GetResourceName()
+func (abm AMSRelatedResourceBillingModel) String() string {
+	return string(abm)
 }

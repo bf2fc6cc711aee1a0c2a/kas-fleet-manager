@@ -53,7 +53,7 @@ var _ Client = &ClientMock{}
 //			DeleteSyncSetFunc: func(clusterID string, syncsetID string) (int, error) {
 //				panic("mock out the DeleteSyncSet method")
 //			},
-//			FindSubscriptionsFunc: func(query string) (*amsv1.SubscriptionsListResponse, error) {
+//			FindSubscriptionsFunc: func(query string) ([]*amsv1.Subscription, error) {
 //				panic("mock out the FindSubscriptions method")
 //			},
 //			GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
@@ -97,6 +97,12 @@ var _ Client = &ClientMock{}
 //			},
 //			GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
 //				panic("mock out the GetRequiresTermsAcceptance method")
+//			},
+//			GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*amsv1.ReservedResource, error) {
+//				panic("mock out the GetReservedResourcesBySubscriptionID method")
+//			},
+//			GetSubscriptionByIDFunc: func(subscriptionID string) (*amsv1.SubscriptionGetResponse, error) {
+//				panic("mock out the GetSubscriptionByID method")
 //			},
 //			GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
 //				panic("mock out the GetSyncSet method")
@@ -148,7 +154,7 @@ type ClientMock struct {
 	DeleteSyncSetFunc func(clusterID string, syncsetID string) (int, error)
 
 	// FindSubscriptionsFunc mocks the FindSubscriptions method.
-	FindSubscriptionsFunc func(query string) (*amsv1.SubscriptionsListResponse, error)
+	FindSubscriptionsFunc func(query string) ([]*amsv1.Subscription, error)
 
 	// GetAddonFunc mocks the GetAddon method.
 	GetAddonFunc func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
@@ -191,6 +197,12 @@ type ClientMock struct {
 
 	// GetRequiresTermsAcceptanceFunc mocks the GetRequiresTermsAcceptance method.
 	GetRequiresTermsAcceptanceFunc func(username string) (bool, string, error)
+
+	// GetReservedResourcesBySubscriptionIDFunc mocks the GetReservedResourcesBySubscriptionID method.
+	GetReservedResourcesBySubscriptionIDFunc func(subscriptionID string) ([]*amsv1.ReservedResource, error)
+
+	// GetSubscriptionByIDFunc mocks the GetSubscriptionByID method.
+	GetSubscriptionByIDFunc func(subscriptionID string) (*amsv1.SubscriptionGetResponse, error)
 
 	// GetSyncSetFunc mocks the GetSyncSet method.
 	GetSyncSetFunc func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error)
@@ -355,6 +367,16 @@ type ClientMock struct {
 			// Username is the username argument value.
 			Username string
 		}
+		// GetReservedResourcesBySubscriptionID holds details about calls to the GetReservedResourcesBySubscriptionID method.
+		GetReservedResourcesBySubscriptionID []struct {
+			// SubscriptionID is the subscriptionID argument value.
+			SubscriptionID string
+		}
+		// GetSubscriptionByID holds details about calls to the GetSubscriptionByID method.
+		GetSubscriptionByID []struct {
+			// SubscriptionID is the subscriptionID argument value.
+			SubscriptionID string
+		}
 		// GetSyncSet holds details about calls to the GetSyncSet method.
 		GetSyncSet []struct {
 			// ClusterID is the clusterID argument value.
@@ -381,35 +403,37 @@ type ClientMock struct {
 			Syncset *clustersmgmtv1.Syncset
 		}
 	}
-	lockClusterAuthorization            sync.RWMutex
-	lockConnection                      sync.RWMutex
-	lockCreateAddon                     sync.RWMutex
-	lockCreateAddonWithParams           sync.RWMutex
-	lockCreateCluster                   sync.RWMutex
-	lockCreateIdentityProvider          sync.RWMutex
-	lockCreateMachinePool               sync.RWMutex
-	lockCreateSyncSet                   sync.RWMutex
-	lockDeleteCluster                   sync.RWMutex
-	lockDeleteSubscription              sync.RWMutex
-	lockDeleteSyncSet                   sync.RWMutex
-	lockFindSubscriptions               sync.RWMutex
-	lockGetAddon                        sync.RWMutex
-	lockGetCloudProviders               sync.RWMutex
-	lockGetCluster                      sync.RWMutex
-	lockGetClusterDNS                   sync.RWMutex
-	lockGetClusterIngresses             sync.RWMutex
-	lockGetClusterStatus                sync.RWMutex
-	lockGetCurrentAccount               sync.RWMutex
-	lockGetIdentityProviderList         sync.RWMutex
-	lockGetMachinePool                  sync.RWMutex
-	lockGetOrganisationIdFromExternalId sync.RWMutex
-	lockGetQuotaCosts                   sync.RWMutex
-	lockGetQuotaCostsForProduct         sync.RWMutex
-	lockGetRegions                      sync.RWMutex
-	lockGetRequiresTermsAcceptance      sync.RWMutex
-	lockGetSyncSet                      sync.RWMutex
-	lockUpdateAddonParameters           sync.RWMutex
-	lockUpdateSyncSet                   sync.RWMutex
+	lockClusterAuthorization                 sync.RWMutex
+	lockConnection                           sync.RWMutex
+	lockCreateAddon                          sync.RWMutex
+	lockCreateAddonWithParams                sync.RWMutex
+	lockCreateCluster                        sync.RWMutex
+	lockCreateIdentityProvider               sync.RWMutex
+	lockCreateMachinePool                    sync.RWMutex
+	lockCreateSyncSet                        sync.RWMutex
+	lockDeleteCluster                        sync.RWMutex
+	lockDeleteSubscription                   sync.RWMutex
+	lockDeleteSyncSet                        sync.RWMutex
+	lockFindSubscriptions                    sync.RWMutex
+	lockGetAddon                             sync.RWMutex
+	lockGetCloudProviders                    sync.RWMutex
+	lockGetCluster                           sync.RWMutex
+	lockGetClusterDNS                        sync.RWMutex
+	lockGetClusterIngresses                  sync.RWMutex
+	lockGetClusterStatus                     sync.RWMutex
+	lockGetCurrentAccount                    sync.RWMutex
+	lockGetIdentityProviderList              sync.RWMutex
+	lockGetMachinePool                       sync.RWMutex
+	lockGetOrganisationIdFromExternalId      sync.RWMutex
+	lockGetQuotaCosts                        sync.RWMutex
+	lockGetQuotaCostsForProduct              sync.RWMutex
+	lockGetRegions                           sync.RWMutex
+	lockGetRequiresTermsAcceptance           sync.RWMutex
+	lockGetReservedResourcesBySubscriptionID sync.RWMutex
+	lockGetSubscriptionByID                  sync.RWMutex
+	lockGetSyncSet                           sync.RWMutex
+	lockUpdateAddonParameters                sync.RWMutex
+	lockUpdateSyncSet                        sync.RWMutex
 }
 
 // ClusterAuthorization calls ClusterAuthorizationFunc.
@@ -788,7 +812,7 @@ func (mock *ClientMock) DeleteSyncSetCalls() []struct {
 }
 
 // FindSubscriptions calls FindSubscriptionsFunc.
-func (mock *ClientMock) FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error) {
+func (mock *ClientMock) FindSubscriptions(query string) ([]*amsv1.Subscription, error) {
 	if mock.FindSubscriptionsFunc == nil {
 		panic("ClientMock.FindSubscriptionsFunc: method is nil but Client.FindSubscriptions was just called")
 	}
@@ -1282,6 +1306,70 @@ func (mock *ClientMock) GetRequiresTermsAcceptanceCalls() []struct {
 	mock.lockGetRequiresTermsAcceptance.RLock()
 	calls = mock.calls.GetRequiresTermsAcceptance
 	mock.lockGetRequiresTermsAcceptance.RUnlock()
+	return calls
+}
+
+// GetReservedResourcesBySubscriptionID calls GetReservedResourcesBySubscriptionIDFunc.
+func (mock *ClientMock) GetReservedResourcesBySubscriptionID(subscriptionID string) ([]*amsv1.ReservedResource, error) {
+	if mock.GetReservedResourcesBySubscriptionIDFunc == nil {
+		panic("ClientMock.GetReservedResourcesBySubscriptionIDFunc: method is nil but Client.GetReservedResourcesBySubscriptionID was just called")
+	}
+	callInfo := struct {
+		SubscriptionID string
+	}{
+		SubscriptionID: subscriptionID,
+	}
+	mock.lockGetReservedResourcesBySubscriptionID.Lock()
+	mock.calls.GetReservedResourcesBySubscriptionID = append(mock.calls.GetReservedResourcesBySubscriptionID, callInfo)
+	mock.lockGetReservedResourcesBySubscriptionID.Unlock()
+	return mock.GetReservedResourcesBySubscriptionIDFunc(subscriptionID)
+}
+
+// GetReservedResourcesBySubscriptionIDCalls gets all the calls that were made to GetReservedResourcesBySubscriptionID.
+// Check the length with:
+//
+//	len(mockedClient.GetReservedResourcesBySubscriptionIDCalls())
+func (mock *ClientMock) GetReservedResourcesBySubscriptionIDCalls() []struct {
+	SubscriptionID string
+} {
+	var calls []struct {
+		SubscriptionID string
+	}
+	mock.lockGetReservedResourcesBySubscriptionID.RLock()
+	calls = mock.calls.GetReservedResourcesBySubscriptionID
+	mock.lockGetReservedResourcesBySubscriptionID.RUnlock()
+	return calls
+}
+
+// GetSubscriptionByID calls GetSubscriptionByIDFunc.
+func (mock *ClientMock) GetSubscriptionByID(subscriptionID string) (*amsv1.SubscriptionGetResponse, error) {
+	if mock.GetSubscriptionByIDFunc == nil {
+		panic("ClientMock.GetSubscriptionByIDFunc: method is nil but Client.GetSubscriptionByID was just called")
+	}
+	callInfo := struct {
+		SubscriptionID string
+	}{
+		SubscriptionID: subscriptionID,
+	}
+	mock.lockGetSubscriptionByID.Lock()
+	mock.calls.GetSubscriptionByID = append(mock.calls.GetSubscriptionByID, callInfo)
+	mock.lockGetSubscriptionByID.Unlock()
+	return mock.GetSubscriptionByIDFunc(subscriptionID)
+}
+
+// GetSubscriptionByIDCalls gets all the calls that were made to GetSubscriptionByID.
+// Check the length with:
+//
+//	len(mockedClient.GetSubscriptionByIDCalls())
+func (mock *ClientMock) GetSubscriptionByIDCalls() []struct {
+	SubscriptionID string
+} {
+	var calls []struct {
+		SubscriptionID string
+	}
+	mock.lockGetSubscriptionByID.RLock()
+	calls = mock.calls.GetSubscriptionByID
+	mock.lockGetSubscriptionByID.RUnlock()
 	return calls
 }
 

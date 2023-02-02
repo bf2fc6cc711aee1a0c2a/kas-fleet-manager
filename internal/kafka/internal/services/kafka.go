@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 	"sync"
@@ -85,6 +86,7 @@ type KafkaService interface {
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	// Lists all kafkas. As this returns all Kafka requests without need for authentication, this should only be used for internal purposes
 	ListAll() (dbapi.KafkaList, *errors.ServiceError)
+	ListKafkasToBePromoted() ([]*dbapi.KafkaRequest, *errors.ServiceError)
 	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
 	// GenerateReservedManagedKafkasByClusterID returns a list of reserved managed
 	// kafkas for a given clusterID. The number of generated reserved managed
@@ -123,8 +125,19 @@ type KafkaService interface {
 	HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError)
 	// GetAvailableSizesInRegion returns a list of ids of the Kafka instance sizes that can still be created according to the specified criteria
 	GetAvailableSizesInRegion(criteria *FindClusterCriteria) ([]string, *errors.ServiceError)
-	ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError
+	ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError
 	AssignBootstrapServerHost(kafkaRequest *dbapi.KafkaRequest) error
+	// IsQuotaEntitlementActive checks if the user/organisation have an active entitlement to the quota
+	// used by the given Kafka instance.
+	//
+	// It returns true if the user has an active quota entitlement and false if not.
+	// It returns false and an error if it encounters any issues while trying to check the quota entitlement status.
+	IsQuotaEntitlementActive(kafkaRequest *dbapi.KafkaRequest) (bool, error)
+
+	// MGDSTRM-10012 temporarily add method to reconcile updating the zero-value
+	// of ExpiredAt. Remove this method when functionality has been rolled out
+	// to stage and prod
+	UpdateZeroValueOfKafkaRequestsExpiredAt() error
 }
 
 var _ KafkaService = &kafkaService{}
@@ -160,13 +173,13 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService Clu
 	}
 }
 
-func (k *kafkaService) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+func (k *kafkaService) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
 	if factoryErr != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota during billing account validation")
 	}
 
-	return quotaService.ValidateBillingAccount(externalId, instanceType, billingCloudAccountId, marketplace)
+	return quotaService.ValidateBillingAccount(externalId, instanceType, billingModelID, billingCloudAccountId, marketplace)
 }
 
 func (k *kafkaService) HasAvailableCapacityInRegion(kafkaRequest *dbapi.KafkaRequest) (bool, *errors.ServiceError) {
@@ -426,6 +439,18 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 
 	kafkaRequest.KafkaStorageSize = size.MaxDataRetentionSize.String()
 
+	// We intentionally manually set CreatedAt and UpdatedAt instead of letting
+	// gorm do it. The reason for that is that otherwise the ExpiresAt value
+	// would be calculated from a start date potentially earlier than the CreatedAt
+	// time a different value than those. An alternative would be performing
+	// two different database updates but it would be less performant
+	timeNow := dbConn.NowFunc()
+	kafkaRequest.CreatedAt = timeNow
+	kafkaRequest.UpdatedAt = timeNow
+	if size.LifespanSeconds != nil {
+		kafkaRequest.ExpiresAt = sql.NullTime{Time: timeNow.Add(time.Duration(*size.LifespanSeconds) * time.Second), Valid: true}
+	}
+
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a kafka A is created, at the time of creation the quota-type was ams. At some point in the future
 	// the API is restarted this time changing the --quota-type flag to quota-management-list, when kafka A is deleted at this point,
@@ -498,6 +523,28 @@ func (k *kafkaService) ListByStatus(status ...constants.KafkaStatus) ([]*dbapi.K
 
 	if err := dbConn.Model(&dbapi.KafkaRequest{}).Where("status IN (?)", status).Scan(&kafkas).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list by status")
+	}
+
+	return kafkas, nil
+}
+
+func (k *kafkaService) ListKafkasToBePromoted() ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+	dbConn := k.connectionFactory.New()
+
+	validPromotionStatuses := []string{
+		constants.KafkaRequestStatusReady.String(),
+		constants.KafkaRequestStatusSuspended.String(),
+		constants.KafkaRequestStatusResuming.String(),
+	}
+
+	var kafkas []*dbapi.KafkaRequest
+
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).
+		Where("actual_kafka_billing_model <> desired_kafka_billing_model").
+		Where("promotion_status <> ?", dbapi.KafkaPromotionStatusFailed).
+		Where("status in ?", validPromotionStatuses).
+		Scan(&kafkas).Error; err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list kafkas to be promoted")
 	}
 
 	return kafkas, nil
@@ -624,24 +671,24 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 	return nil
 }
 
+func (k *kafkaService) kafkaWithExpiresAtShouldBeDeprovisioned(kafkaRequest *dbapi.KafkaRequest, currentTime time.Time) bool {
+	glog.V(10).Infof("Evaluating expiration time of kafka request '%s' with instance type '%s', size ID '%s' and status '%s'", kafkaRequest.ID, kafkaRequest.InstanceType, kafkaRequest.SizeId, kafkaRequest.Status)
+	if currentTime.After(kafkaRequest.ExpiresAt.Time) {
+		glog.V(10).Infof("Kafka ID '%s' has expired", kafkaRequest.ID)
+		return true
+	}
+
+	glog.V(10).Infof("Kafka ID '%s' has not expired", kafkaRequest.ID)
+
+	return false
+}
+
 func (k *kafkaService) DeprovisionExpiredKafkas() *errors.ServiceError {
 	dbConn := k.connectionFactory.New().Model(&dbapi.KafkaRequest{}).Session(&gorm.Session{})
 
-	var typesWithLifespan []string
-	for _, kafkaInstanceType := range k.kafkaConfig.SupportedInstanceTypes.Configuration.SupportedKafkaInstanceTypes {
-		if kafkaInstanceType.HasAnInstanceSizeWithLifespan() {
-			typesWithLifespan = append(typesWithLifespan, kafkaInstanceType.Id)
-		}
-	}
-
-	if len(typesWithLifespan) == 0 {
-		return nil
-	}
-	glog.V(10).Infof("Kafka instance types with lifespan set: %+v", typesWithLifespan)
-
 	var existingKafkaRequests []dbapi.KafkaRequest
-	db := dbConn.Where("instance_type IN (?)", typesWithLifespan).
-		Where("status NOT IN (?)", kafkaDeletionStatuses).
+	db := dbConn.Where("status NOT IN (?)", kafkaDeletionStatuses).
+		Where("expires_at IS NOT NULL").
 		Scan(&existingKafkaRequests)
 	err := db.Error
 	if err != nil {
@@ -650,22 +697,12 @@ func (k *kafkaService) DeprovisionExpiredKafkas() *errors.ServiceError {
 
 	var kafkasToDeprovisionIDs []string
 	timeNow := time.Now()
-	for _, existingKafkaRequest := range existingKafkaRequests {
-		glog.V(10).Infof("Evaluating expiration time of kafka request '%s' with instance type '%s', ID '%s' and status '%s'", existingKafkaRequest.ID, existingKafkaRequest.InstanceType, existingKafkaRequest.SizeId, existingKafkaRequest.Status)
-		kafkaInstanceSize, err := k.kafkaConfig.GetKafkaInstanceSize(existingKafkaRequest.InstanceType, existingKafkaRequest.SizeId)
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "unable to deprovision expired kafkas")
-		}
-		if kafkaInstanceSize.LifespanSeconds != nil {
-			glog.V(10).Infof("Kafka size associated to kafka ID '%s' has '%d' lifespanSeconds", existingKafkaRequest.ID, *kafkaInstanceSize.LifespanSeconds)
-			expTime := existingKafkaRequest.GetExpirationTime(*kafkaInstanceSize.LifespanSeconds)
-			glog.V(10).Infof("Expiration time of kafka ID '%s' is '%s'", existingKafkaRequest.ID, expTime)
-			if timeNow.After(*expTime) {
-				glog.V(10).Infof("Kafka ID '%s' has expired", existingKafkaRequest.ID)
-				kafkasToDeprovisionIDs = append(kafkasToDeprovisionIDs, existingKafkaRequest.ID)
-			} else {
-				glog.V(10).Infof("Kafka ID '%s' still has not expired", existingKafkaRequest.ID)
-			}
+
+	for idx := range existingKafkaRequests {
+		existingKafkaRequest := &existingKafkaRequests[idx]
+		shouldBeDeprovisioned := k.kafkaWithExpiresAtShouldBeDeprovisioned(existingKafkaRequest, timeNow)
+		if shouldBeDeprovisioned {
+			kafkasToDeprovisionIDs = append(kafkasToDeprovisionIDs, existingKafkaRequest.ID)
 		}
 	}
 
@@ -678,7 +715,7 @@ func (k *kafkaService) DeprovisionExpiredKafkas() *errors.ServiceError {
 			return errors.NewWithCause(errors.ErrorGeneral, err, "unable to deprovision expired kafkas")
 		}
 		if db.RowsAffected >= 1 {
-			glog.Infof("%v kafka_request's lifespans are over their lifespan and have had their status updated to deprovisioning", db.RowsAffected)
+			glog.Infof("%v expired kafka_request's have had their status updated to deprovisioning", db.RowsAffected)
 			var counter int64 = 0
 			for ; counter < db.RowsAffected; counter++ {
 				metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
@@ -1319,4 +1356,23 @@ func (k *kafkaService) getRoute53RegionFromKafkaRequest(kafkaRequest *dbapi.Kafk
 	default:
 		return "", errors.GeneralError("unknown cloud provider: %q", kafkaRequest.CloudProvider)
 	}
+}
+
+func (k *kafkaService) UpdateZeroValueOfKafkaRequestsExpiredAt() error {
+	dbConn := k.connectionFactory.New()
+	zeroTime := time.Time{}
+	nullTime := sql.NullTime{Time: time.Time{}, Valid: false}
+	db := dbConn.Table("kafka_requests").Where("expires_at = ?", zeroTime).Where("deleted_at IS NULL").Update("expires_at", nullTime)
+	glog.Infof("%v kafka_requests had expires_at with the zero-value of time.Time '%v' and have been updated to NULL", db.RowsAffected, zeroTime)
+
+	return db.Error
+}
+
+func (k *kafkaService) IsQuotaEntitlementActive(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
+	if factoryErr != nil {
+		return false, factoryErr
+	}
+
+	return quotaService.IsQuotaEntitlementActive(kafkaRequest)
 }

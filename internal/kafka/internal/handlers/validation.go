@@ -9,14 +9,15 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
+	kafkaConstants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -34,14 +35,29 @@ var ClusterIdLength = 32
 
 const minimunNumberOfNodesForTheKafkaMachinePool = 3
 
-func ValidateBillingModel(kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
+func validateKafkaBillingModel(ctx context.Context, kafkaService services.KafkaService, kafkaConfig *config.KafkaConfig, kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {
-		// the billing model can only be either standard or marketplace
-		billingModel := shared.SafeString(kafkaRequestPayload.BillingModel)
-		if billingModel != "" && billingModel != string(v1.BillingModelStandard) && billingModel != string(v1.BillingModelMarketplace) {
-			return errors.InvalidBillingAccount("invalid billing model: %s, only %v and %v are allowed", billingModel,
-				v1.BillingModelStandard, v1.BillingModelMarketplace)
+		// No explicitly set kafka billing mode is allowed for now, in which case
+		// an implementation-defined default is chosen
+		if shared.StringEmpty(kafkaRequestPayload.BillingModel) {
+			return nil
 		}
+
+		instanceType, _, svcErr := getInstanceTypeAndSize(ctx, kafkaService, kafkaConfig, kafkaRequestPayload)
+		if svcErr != nil {
+			return svcErr
+		}
+
+		instanceTypeConfig, err := kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(instanceType)
+		if err != nil {
+			return errors.ToServiceError(err)
+		}
+
+		_, err = instanceTypeConfig.GetKafkaSupportedBillingModelByID(*kafkaRequestPayload.BillingModel)
+		if err != nil {
+			return errors.ToServiceError(err)
+		}
+
 		return nil
 	}
 }
@@ -71,7 +87,7 @@ func ValidateBillingCloudAccountIdAndMarketplace(ctx context.Context, kafkaServi
 			return errors.NewWithCause(errors.ErrorGeneral, err, "error assigning instance type: %s", err.Error())
 		}
 
-		return kafkaService.ValidateBillingAccount(organisationId, instanceType, *kafkaRequestPayload.BillingCloudAccountId, kafkaRequestPayload.Marketplace)
+		return kafkaService.ValidateBillingAccount(organisationId, instanceType, shared.SafeString(kafkaRequestPayload.BillingModel), shared.SafeString(kafkaRequestPayload.BillingCloudAccountId), kafkaRequestPayload.Marketplace)
 	}
 }
 
@@ -294,7 +310,7 @@ func stringSet(value *string) bool {
 	return value != nil && len(strings.Trim(*value, " ")) > 0
 }
 
-func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService authorization.Authorization, kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *public.KafkaUpdateRequest) handlers.Validate {
+func validateUserIsKafkaOwnerOrOrgAdmin(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) handlers.Validate {
 	return func() *errors.ServiceError {
 		claims, claimsErr := getClaims(ctx)
 		if claimsErr != nil {
@@ -302,12 +318,27 @@ func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService author
 		}
 
 		username, _ := claims.GetUsername()
-		orgId, _ := claims.GetOrgId()
+		orgID, _ := claims.GetOrgId()
 		isOrgAdmin := claims.IsOrgAdmin()
-		// only Kafka owner or organisation admin is allowed to perform the action
-		isOwner := (isOrgAdmin || kafkaRequest.Owner == username) && kafkaRequest.OrganisationId == orgId
-		if !isOwner {
+
+		authorized := kafkaRequest.OrganisationId == orgID && (isOrgAdmin || kafkaRequest.Owner == username)
+		if !authorized {
 			return errors.New(errors.ErrorUnauthorized, "user not authorized to perform this action")
+		}
+		return nil
+	}
+}
+
+func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService authorization.Authorization, kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *public.KafkaUpdateRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		claims, claimsErr := getClaims(ctx)
+		if claimsErr != nil {
+			return claimsErr
+		}
+
+		err := validateUserIsKafkaOwnerOrOrgAdmin(ctx, kafkaRequest)()
+		if err != nil {
+			return err
 		}
 
 		if kafkaUpdateReq.Owner != nil {
@@ -316,6 +347,7 @@ func ValidateKafkaUserFacingUpdateFields(ctx context.Context, authService author
 				return validationError
 			}
 
+			orgId, _ := claims.GetOrgId()
 			userValid, err := authService.CheckUserValid(*kafkaUpdateReq.Owner, orgId)
 			if err != nil {
 				return errors.NewWithCause(errors.ErrorGeneral, err, "unable to update kafka request owner")
@@ -455,6 +487,103 @@ func validateEnterpriseClusterHasNoKafkas(clusterID string, clusterService servi
 		for _, instanceCount := range instanceCounts {
 			if instanceCount.Clusterid == clusterID && instanceCount.Count > 0 {
 				return errors.Forbidden("unable to deregister cluster with kafka instances")
+			}
+		}
+
+		return nil
+	}
+}
+
+func validateNoKafkaPromotionInProgress(kafkaRequest *dbapi.KafkaRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		if kafkaRequest.PromotionStatus == dbapi.KafkaPromotionStatusPromoting {
+			return errors.GeneralError("promotion already in progress. kafka request %q is being promoted from kafka billing %q to %q", kafkaRequest.ID, kafkaRequest.ActualKafkaBillingModel, kafkaRequest.DesiredKafkaBillingModel)
+		}
+
+		return nil
+	}
+}
+
+func validateRequestedKafkaPromotionHasDifferentKafkaBillingModel(kafkaPromoteRequest *public.KafkaPromoteRequest, kafkaRequest *dbapi.KafkaRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		if kafkaPromoteRequest.DesiredKafkaBillingModel == kafkaRequest.ActualKafkaBillingModel {
+			return errors.BadRequest("kafka request %q already has %q kafka billing model", kafkaRequest.ID, kafkaRequest.ActualKafkaBillingModel)
+		}
+
+		return nil
+	}
+}
+
+func validateKafkaRequestToPromoteHasAPromotableActualKafkaBillingModel(kafkaRequest *dbapi.KafkaRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		// TODO improve not referencing hardcoded strings
+		if kafkaRequest.ActualKafkaBillingModel != "eval" {
+			return errors.GeneralError("kafka request %q has a kafka billing model %q. Only kafka requests with a kafka billing model 'eval' can be promoted", kafkaRequest.ID, kafkaRequest.ActualKafkaBillingModel)
+		}
+
+		return nil
+	}
+}
+
+func validateKafkaRequestToPromoteHasAPromotableStatus(kafkaRequest *dbapi.KafkaRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+		acceptedKafkaStatusesForPromotion := []string{
+			kafkaConstants.KafkaRequestStatusReady.String(),
+			kafkaConstants.KafkaRequestStatusSuspended.String(),
+			kafkaConstants.KafkaRequestStatusResuming.String(),
+		}
+
+		found := arrays.Contains(acceptedKafkaStatusesForPromotion, kafkaRequest.Status)
+		if !found {
+			return errors.GeneralError("kafka request %q with status %q cannot be promoted: promotable status are: %+v", kafkaRequest.ID, kafkaRequest.Status, acceptedKafkaStatusesForPromotion)
+		}
+
+		return nil
+	}
+}
+
+func validateKafkaPromoteRequestHasValidDesiredBillingModel(kafkaPromoteRequest *public.KafkaPromoteRequest) handlers.Validate {
+	return func() *errors.ServiceError {
+
+		// TODO improve not referencing hardcoded strings
+		if kafkaPromoteRequest.DesiredKafkaBillingModel != "standard" && kafkaPromoteRequest.DesiredKafkaBillingModel != "marketplace" {
+			return errors.FieldValidationError("desired kafka billing model %q promotion destination is not allowed", kafkaPromoteRequest.DesiredKafkaBillingModel)
+		}
+		return nil
+	}
+}
+
+func validateKafkaPromoteRequestFields(kafkaPromoteRequest *public.KafkaPromoteRequest, kafkaRequest *dbapi.KafkaRequest, kafkaService services.KafkaService, kafkaConfig *config.KafkaConfig, kafkaPromoteValidatorFactory KafkaPromoteValidatorFactory) handlers.Validate {
+	return func() *errors.ServiceError {
+		desiredKafkaBillingModel := kafkaPromoteRequest.DesiredKafkaBillingModel
+
+		svcErr := validateKafkaPromoteRequestHasValidDesiredBillingModel(kafkaPromoteRequest)()
+		if svcErr != nil {
+			return svcErr
+		}
+
+		// Run additional quota type specific promotion validators
+		kafkaPromoteValidator, err := kafkaPromoteValidatorFactory.GetValidator(api.QuotaType(kafkaConfig.Quota.Type))
+		if err != nil {
+			return errors.New(errors.ToServiceError(err).Code, "error performing promotion: %s", err)
+		}
+		kafkaPromoteValidatorRequest := kafkaPromoteValidatorRequest{
+			DesiredKafkaBillingModel:   desiredKafkaBillingModel,
+			DesiredKafkaMarketplace:    kafkaPromoteRequest.DesiredMarketplace,
+			DesiredKafkaCloudAccountID: kafkaPromoteRequest.DesiredBillingCloudAccountId,
+			KafkaInstanceType:          kafkaRequest.InstanceType,
+		}
+		err = kafkaPromoteValidator.Validate(kafkaPromoteValidatorRequest)
+		if err != nil {
+			return errors.New(errors.ToServiceError(err).Code, "error performing promotion: %s", err)
+		}
+
+		// TODO improve not referencing hardcoded strings
+		if kafkaPromoteRequest.DesiredKafkaBillingModel == "marketplace" {
+			kafkaInstanceType := types.KafkaInstanceType(kafkaRequest.InstanceType)
+			svcErr = kafkaService.ValidateBillingAccount(kafkaRequest.OrganisationId, kafkaInstanceType, kafkaPromoteRequest.DesiredKafkaBillingModel, kafkaPromoteRequest.DesiredBillingCloudAccountId, &kafkaPromoteRequest.DesiredMarketplace)
+			if svcErr != nil {
+				return svcErr
 			}
 		}
 

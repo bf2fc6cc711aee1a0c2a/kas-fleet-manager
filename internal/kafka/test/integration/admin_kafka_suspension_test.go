@@ -159,13 +159,12 @@ func TestAdminKafka_KafkaSuspension(t *testing.T) {
 	)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	// updating an already suspended Kafka instance with 'suspended: true' should not change its status
-	privateKafkaReq, resp, err = adminClient.DefaultApi.UpdateKafkaById(adminClientCtx, publicKafkaReq.Id, suspendKafkaRequestPayload)
+	// updating an already suspended Kafka instance with 'suspended: true' should return an error
+	_, resp, err = adminClient.DefaultApi.UpdateKafkaById(adminClientCtx, publicKafkaReq.Id, suspendKafkaRequestPayload)
 	if resp != nil {
 		resp.Body.Close()
 	}
-	g.Expect(err).ToNot(gomega.HaveOccurred())
-	g.Expect(privateKafkaReq.Status).To(gomega.Equal(kafkaconstants.KafkaRequestStatusSuspended.String()))
+	g.Expect(err).To(gomega.HaveOccurred())
 
 	err = checkMetricValues(
 		metricValue{metric: kafkaconstants.KafkaRequestStatusSuspended, value: "1"},

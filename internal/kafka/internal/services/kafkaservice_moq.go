@@ -68,6 +68,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //			HasAvailableCapacityInRegionFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, *apiErrors.ServiceError) {
 //				panic("mock out the HasAvailableCapacityInRegion method")
 //			},
+//			IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+//				panic("mock out the IsQuotaEntitlementActive method")
+//			},
 //			ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *apiErrors.ServiceError) {
 //				panic("mock out the List method")
 //			},
@@ -79,6 +82,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //			},
 //			ListComponentVersionsFunc: func() ([]KafkaComponentVersions, error) {
 //				panic("mock out the ListComponentVersions method")
+//			},
+//			ListKafkasToBePromotedFunc: func() ([]*dbapi.KafkaRequest, *apiErrors.ServiceError) {
+//				panic("mock out the ListKafkasToBePromoted method")
 //			},
 //			ListKafkasWithRoutesNotCreatedFunc: func() ([]*dbapi.KafkaRequest, *apiErrors.ServiceError) {
 //				panic("mock out the ListKafkasWithRoutesNotCreated method")
@@ -98,10 +104,13 @@ var _ KafkaService = &KafkaServiceMock{}
 //			UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *apiErrors.ServiceError) {
 //				panic("mock out the UpdateStatus method")
 //			},
+//			UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
+//				panic("mock out the UpdateZeroValueOfKafkaRequestsExpiredAt method")
+//			},
 //			UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *apiErrors.ServiceError {
 //				panic("mock out the Updates method")
 //			},
-//			ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
+//			ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
 //				panic("mock out the ValidateBillingAccount method")
 //			},
 //			VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError {
@@ -156,6 +165,9 @@ type KafkaServiceMock struct {
 	// HasAvailableCapacityInRegionFunc mocks the HasAvailableCapacityInRegion method.
 	HasAvailableCapacityInRegionFunc func(kafkaRequest *dbapi.KafkaRequest) (bool, *apiErrors.ServiceError)
 
+	// IsQuotaEntitlementActiveFunc mocks the IsQuotaEntitlementActive method.
+	IsQuotaEntitlementActiveFunc func(kafkaRequest *dbapi.KafkaRequest) (bool, error)
+
 	// ListFunc mocks the List method.
 	ListFunc func(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *apiErrors.ServiceError)
 
@@ -167,6 +179,9 @@ type KafkaServiceMock struct {
 
 	// ListComponentVersionsFunc mocks the ListComponentVersions method.
 	ListComponentVersionsFunc func() ([]KafkaComponentVersions, error)
+
+	// ListKafkasToBePromotedFunc mocks the ListKafkasToBePromoted method.
+	ListKafkasToBePromotedFunc func() ([]*dbapi.KafkaRequest, *apiErrors.ServiceError)
 
 	// ListKafkasWithRoutesNotCreatedFunc mocks the ListKafkasWithRoutesNotCreated method.
 	ListKafkasWithRoutesNotCreatedFunc func() ([]*dbapi.KafkaRequest, *apiErrors.ServiceError)
@@ -186,11 +201,14 @@ type KafkaServiceMock struct {
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(id string, status constants.KafkaStatus) (bool, *apiErrors.ServiceError)
 
+	// UpdateZeroValueOfKafkaRequestsExpiredAtFunc mocks the UpdateZeroValueOfKafkaRequestsExpiredAt method.
+	UpdateZeroValueOfKafkaRequestsExpiredAtFunc func() error
+
 	// UpdatesFunc mocks the Updates method.
 	UpdatesFunc func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *apiErrors.ServiceError
 
 	// ValidateBillingAccountFunc mocks the ValidateBillingAccount method.
-	ValidateBillingAccountFunc func(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError
+	ValidateBillingAccountFunc func(externalId string, instanceType types.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError
 
 	// VerifyAndUpdateKafkaAdminFunc mocks the VerifyAndUpdateKafkaAdmin method.
 	VerifyAndUpdateKafkaAdminFunc func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError
@@ -271,6 +289,11 @@ type KafkaServiceMock struct {
 			// KafkaRequest is the kafkaRequest argument value.
 			KafkaRequest *dbapi.KafkaRequest
 		}
+		// IsQuotaEntitlementActive holds details about calls to the IsQuotaEntitlementActive method.
+		IsQuotaEntitlementActive []struct {
+			// KafkaRequest is the kafkaRequest argument value.
+			KafkaRequest *dbapi.KafkaRequest
+		}
 		// List holds details about calls to the List method.
 		List []struct {
 			// Ctx is the ctx argument value.
@@ -288,6 +311,9 @@ type KafkaServiceMock struct {
 		}
 		// ListComponentVersions holds details about calls to the ListComponentVersions method.
 		ListComponentVersions []struct {
+		}
+		// ListKafkasToBePromoted holds details about calls to the ListKafkasToBePromoted method.
+		ListKafkasToBePromoted []struct {
 		}
 		// ListKafkasWithRoutesNotCreated holds details about calls to the ListKafkasWithRoutesNotCreated method.
 		ListKafkasWithRoutesNotCreated []struct {
@@ -321,6 +347,9 @@ type KafkaServiceMock struct {
 			// Status is the status argument value.
 			Status constants.KafkaStatus
 		}
+		// UpdateZeroValueOfKafkaRequestsExpiredAt holds details about calls to the UpdateZeroValueOfKafkaRequestsExpiredAt method.
+		UpdateZeroValueOfKafkaRequestsExpiredAt []struct {
+		}
 		// Updates holds details about calls to the Updates method.
 		Updates []struct {
 			// KafkaRequest is the kafkaRequest argument value.
@@ -334,6 +363,8 @@ type KafkaServiceMock struct {
 			ExternalId string
 			// InstanceType is the instanceType argument value.
 			InstanceType types.KafkaInstanceType
+			// KafkaBillingModelID is the kafkaBillingModelID argument value.
+			KafkaBillingModelID string
 			// BillingCloudAccountId is the billingCloudAccountId argument value.
 			BillingCloudAccountId string
 			// Marketplace is the marketplace argument value.
@@ -361,16 +392,19 @@ type KafkaServiceMock struct {
 	lockGetCNAMERecordStatus                     sync.RWMutex
 	lockGetManagedKafkaByClusterID               sync.RWMutex
 	lockHasAvailableCapacityInRegion             sync.RWMutex
+	lockIsQuotaEntitlementActive                 sync.RWMutex
 	lockList                                     sync.RWMutex
 	lockListAll                                  sync.RWMutex
 	lockListByStatus                             sync.RWMutex
 	lockListComponentVersions                    sync.RWMutex
+	lockListKafkasToBePromoted                   sync.RWMutex
 	lockListKafkasWithRoutesNotCreated           sync.RWMutex
 	lockPrepareKafkaRequest                      sync.RWMutex
 	lockRegisterKafkaDeprovisionJob              sync.RWMutex
 	lockRegisterKafkaJob                         sync.RWMutex
 	lockUpdate                                   sync.RWMutex
 	lockUpdateStatus                             sync.RWMutex
+	lockUpdateZeroValueOfKafkaRequestsExpiredAt  sync.RWMutex
 	lockUpdates                                  sync.RWMutex
 	lockValidateBillingAccount                   sync.RWMutex
 	lockVerifyAndUpdateKafkaAdmin                sync.RWMutex
@@ -831,6 +865,38 @@ func (mock *KafkaServiceMock) HasAvailableCapacityInRegionCalls() []struct {
 	return calls
 }
 
+// IsQuotaEntitlementActive calls IsQuotaEntitlementActiveFunc.
+func (mock *KafkaServiceMock) IsQuotaEntitlementActive(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+	if mock.IsQuotaEntitlementActiveFunc == nil {
+		panic("KafkaServiceMock.IsQuotaEntitlementActiveFunc: method is nil but KafkaService.IsQuotaEntitlementActive was just called")
+	}
+	callInfo := struct {
+		KafkaRequest *dbapi.KafkaRequest
+	}{
+		KafkaRequest: kafkaRequest,
+	}
+	mock.lockIsQuotaEntitlementActive.Lock()
+	mock.calls.IsQuotaEntitlementActive = append(mock.calls.IsQuotaEntitlementActive, callInfo)
+	mock.lockIsQuotaEntitlementActive.Unlock()
+	return mock.IsQuotaEntitlementActiveFunc(kafkaRequest)
+}
+
+// IsQuotaEntitlementActiveCalls gets all the calls that were made to IsQuotaEntitlementActive.
+// Check the length with:
+//
+//	len(mockedKafkaService.IsQuotaEntitlementActiveCalls())
+func (mock *KafkaServiceMock) IsQuotaEntitlementActiveCalls() []struct {
+	KafkaRequest *dbapi.KafkaRequest
+} {
+	var calls []struct {
+		KafkaRequest *dbapi.KafkaRequest
+	}
+	mock.lockIsQuotaEntitlementActive.RLock()
+	calls = mock.calls.IsQuotaEntitlementActive
+	mock.lockIsQuotaEntitlementActive.RUnlock()
+	return calls
+}
+
 // List calls ListFunc.
 func (mock *KafkaServiceMock) List(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *apiErrors.ServiceError) {
 	if mock.ListFunc == nil {
@@ -950,6 +1016,33 @@ func (mock *KafkaServiceMock) ListComponentVersionsCalls() []struct {
 	mock.lockListComponentVersions.RLock()
 	calls = mock.calls.ListComponentVersions
 	mock.lockListComponentVersions.RUnlock()
+	return calls
+}
+
+// ListKafkasToBePromoted calls ListKafkasToBePromotedFunc.
+func (mock *KafkaServiceMock) ListKafkasToBePromoted() ([]*dbapi.KafkaRequest, *apiErrors.ServiceError) {
+	if mock.ListKafkasToBePromotedFunc == nil {
+		panic("KafkaServiceMock.ListKafkasToBePromotedFunc: method is nil but KafkaService.ListKafkasToBePromoted was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockListKafkasToBePromoted.Lock()
+	mock.calls.ListKafkasToBePromoted = append(mock.calls.ListKafkasToBePromoted, callInfo)
+	mock.lockListKafkasToBePromoted.Unlock()
+	return mock.ListKafkasToBePromotedFunc()
+}
+
+// ListKafkasToBePromotedCalls gets all the calls that were made to ListKafkasToBePromoted.
+// Check the length with:
+//
+//	len(mockedKafkaService.ListKafkasToBePromotedCalls())
+func (mock *KafkaServiceMock) ListKafkasToBePromotedCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockListKafkasToBePromoted.RLock()
+	calls = mock.calls.ListKafkasToBePromoted
+	mock.lockListKafkasToBePromoted.RUnlock()
 	return calls
 }
 
@@ -1148,6 +1241,33 @@ func (mock *KafkaServiceMock) UpdateStatusCalls() []struct {
 	return calls
 }
 
+// UpdateZeroValueOfKafkaRequestsExpiredAt calls UpdateZeroValueOfKafkaRequestsExpiredAtFunc.
+func (mock *KafkaServiceMock) UpdateZeroValueOfKafkaRequestsExpiredAt() error {
+	if mock.UpdateZeroValueOfKafkaRequestsExpiredAtFunc == nil {
+		panic("KafkaServiceMock.UpdateZeroValueOfKafkaRequestsExpiredAtFunc: method is nil but KafkaService.UpdateZeroValueOfKafkaRequestsExpiredAt was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockUpdateZeroValueOfKafkaRequestsExpiredAt.Lock()
+	mock.calls.UpdateZeroValueOfKafkaRequestsExpiredAt = append(mock.calls.UpdateZeroValueOfKafkaRequestsExpiredAt, callInfo)
+	mock.lockUpdateZeroValueOfKafkaRequestsExpiredAt.Unlock()
+	return mock.UpdateZeroValueOfKafkaRequestsExpiredAtFunc()
+}
+
+// UpdateZeroValueOfKafkaRequestsExpiredAtCalls gets all the calls that were made to UpdateZeroValueOfKafkaRequestsExpiredAt.
+// Check the length with:
+//
+//	len(mockedKafkaService.UpdateZeroValueOfKafkaRequestsExpiredAtCalls())
+func (mock *KafkaServiceMock) UpdateZeroValueOfKafkaRequestsExpiredAtCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockUpdateZeroValueOfKafkaRequestsExpiredAt.RLock()
+	calls = mock.calls.UpdateZeroValueOfKafkaRequestsExpiredAt
+	mock.lockUpdateZeroValueOfKafkaRequestsExpiredAt.RUnlock()
+	return calls
+}
+
 // Updates calls UpdatesFunc.
 func (mock *KafkaServiceMock) Updates(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *apiErrors.ServiceError {
 	if mock.UpdatesFunc == nil {
@@ -1185,25 +1305,27 @@ func (mock *KafkaServiceMock) UpdatesCalls() []struct {
 }
 
 // ValidateBillingAccount calls ValidateBillingAccountFunc.
-func (mock *KafkaServiceMock) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
+func (mock *KafkaServiceMock) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
 	if mock.ValidateBillingAccountFunc == nil {
 		panic("KafkaServiceMock.ValidateBillingAccountFunc: method is nil but KafkaService.ValidateBillingAccount was just called")
 	}
 	callInfo := struct {
 		ExternalId            string
 		InstanceType          types.KafkaInstanceType
+		KafkaBillingModelID   string
 		BillingCloudAccountId string
 		Marketplace           *string
 	}{
 		ExternalId:            externalId,
 		InstanceType:          instanceType,
+		KafkaBillingModelID:   kafkaBillingModelID,
 		BillingCloudAccountId: billingCloudAccountId,
 		Marketplace:           marketplace,
 	}
 	mock.lockValidateBillingAccount.Lock()
 	mock.calls.ValidateBillingAccount = append(mock.calls.ValidateBillingAccount, callInfo)
 	mock.lockValidateBillingAccount.Unlock()
-	return mock.ValidateBillingAccountFunc(externalId, instanceType, billingCloudAccountId, marketplace)
+	return mock.ValidateBillingAccountFunc(externalId, instanceType, kafkaBillingModelID, billingCloudAccountId, marketplace)
 }
 
 // ValidateBillingAccountCalls gets all the calls that were made to ValidateBillingAccount.
@@ -1213,12 +1335,14 @@ func (mock *KafkaServiceMock) ValidateBillingAccount(externalId string, instance
 func (mock *KafkaServiceMock) ValidateBillingAccountCalls() []struct {
 	ExternalId            string
 	InstanceType          types.KafkaInstanceType
+	KafkaBillingModelID   string
 	BillingCloudAccountId string
 	Marketplace           *string
 } {
 	var calls []struct {
 		ExternalId            string
 		InstanceType          types.KafkaInstanceType
+		KafkaBillingModelID   string
 		BillingCloudAccountId string
 		Marketplace           *string
 	}

@@ -2,8 +2,9 @@ package quota
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
@@ -26,10 +27,18 @@ type QuotaManagementListService struct {
 	kafkaConfig         *config.KafkaConfig
 }
 
+func (q QuotaManagementListService) ReserveQuotaIfNotAlreadyReserved(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
+	return q.ReserveQuota(kafka)
+}
+
+func (q QuotaManagementListService) DeleteQuotaForBillingModel(subscriptionId string, kafkaBillingModel config.KafkaBillingModel) *errors.ServiceError {
+	return nil // NOOP
+}
+
 var _ services.QuotaService = &QuotaManagementListService{}
 
-// ValidateBillingAccount - don't validate billing accounts when using the quota list
-func (q QuotaManagementListService) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+func (q QuotaManagementListService) ValidateBillingAccount(organisationId string, instanceType types.KafkaInstanceType, billingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError {
+	// No need to perform any validation, since billing account is not currently used in quota-list
 	return nil
 }
 
@@ -71,6 +80,7 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest) (str
 	if err != nil {
 		return "", err
 	}
+
 	// TODO: find a better place to set this instead of this side effect
 	kafka.DesiredKafkaBillingModel = billingModelID
 
@@ -162,6 +172,14 @@ func (q QuotaManagementListService) ReserveQuota(kafka *dbapi.KafkaRequest) (str
 // 7) if [6] fails, return the first defined billing model
 func (q QuotaManagementListService) detectBillingModel(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 	if kafka.DesiredKafkaBillingModel != "" {
+		instanceType, err := q.kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafka.InstanceType)
+		if err != nil {
+			return "", errors.InstanceTypeNotSupported("invalid instance type '%s'", instanceType.Id)
+		}
+		_, err = instanceType.GetKafkaSupportedBillingModelByID(kafka.DesiredKafkaBillingModel)
+		if err != nil {
+			return "", errors.InsufficientQuotaError("invalid billing model '%s'", kafka.DesiredKafkaBillingModel)
+		}
 		return kafka.DesiredKafkaBillingModel, nil
 	}
 	if kafka.InstanceType == types.DEVELOPER.String() {
@@ -207,4 +225,37 @@ func (q QuotaManagementListService) detectBillingModel(kafka *dbapi.KafkaRequest
 
 func (q QuotaManagementListService) DeleteQuota(SubscriptionId string) *errors.ServiceError {
 	return nil // NOOP
+}
+
+// Checks if quota used by the given Kafka instance is granted to the organisation/user and
+// if it is active, not expired, in the quota management list configuration
+// Note that organisation will always take priority over individual accounts to mimic the behaviour of
+// quota allowance checks during Kafka creation.
+func (q QuotaManagementListService) IsQuotaEntitlementActive(kafka *dbapi.KafkaRequest) (bool, error) {
+	var billingModel *quota_management.BillingModel
+
+	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetById(kafka.OrganisationId)
+	if orgFound && org.IsUserRegistered(kafka.Owner) {
+		logger.Logger.Infof("user registered by organisation, checking quota entitlement for organisation %q", org.Id)
+		bm, ok := org.GetBillingModel(kafka.InstanceType, kafka.ActualKafkaBillingModel)
+		if ok {
+			billingModel = &bm
+		}
+	} else {
+		logger.Logger.Infof("user is not registered by organisation, checking quota entitlement for %q as an individual account", kafka.Owner)
+		account, accountFound := q.quotaManagementList.QuotaList.ServiceAccounts.GetByUsername(kafka.Owner)
+		if accountFound {
+			bm, ok := account.GetBillingModel(kafka.InstanceType, kafka.ActualKafkaBillingModel)
+			if ok {
+				billingModel = &bm
+			}
+		}
+	}
+
+	// unable to find billing model for the instance type indicates that quota is no longer granted to the org/user
+	if billingModel == nil || billingModel.HasExpired() {
+		return false, nil
+	}
+
+	return true, nil
 }

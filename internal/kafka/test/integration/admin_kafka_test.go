@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"testing"
@@ -428,6 +429,11 @@ func TestAdminKafka_Update(t *testing.T) {
 	suspendingKafkaID := api.NewID()
 	deprovisionKafkaID := api.NewID()
 	deletingKafkaID := api.NewID()
+	evalKafkaWithExpirationDateID := api.NewID()
+	evalKafkaWithExpirationDateID2 := api.NewID()
+	evalKafkaWithoutExpirationDateID := api.NewID()
+	sampleKafkaForUpdateForAllFieldsID := api.NewID()
+	suspendedDeveloperKafkaWithExpirationDateID := api.NewID()
 
 	falseB := false
 	trueB := true
@@ -438,6 +444,13 @@ func TestAdminKafka_Update(t *testing.T) {
 		KafkaIbpVersion:      "2.8.1",
 		MaxDataRetentionSize: "70Gi",
 		Suspended:            &falseB,
+	}
+
+	updateRequestForAuthRoleTests := adminprivate.KafkaUpdateRequest{
+		StrimziVersion:       "strimzi-cluster-operator.v0.25.0-0",
+		KafkaVersion:         "2.8.3",
+		KafkaIbpVersion:      "2.8.1",
+		MaxDataRetentionSize: "70Gi",
 	}
 
 	initialStorageSize := "60Gi"
@@ -511,17 +524,18 @@ func TestAdminKafka_Update(t *testing.T) {
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
-				kafkaID:            sampleKafkaID1,
+				kafkaID:            sampleKafkaForUpdateForAllFieldsID,
 				kafkaUpdateRequest: allFieldsUpdateRequest,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
+				g.Expect(result.Id).To(gomega.Equal(sampleKafkaForUpdateForAllFieldsID))
 				g.Expect(result.DesiredKafkaVersion).To(gomega.Equal(allFieldsUpdateRequest.KafkaVersion))
 				g.Expect(result.DesiredKafkaIbpVersion).To(gomega.Equal(allFieldsUpdateRequest.KafkaIbpVersion))
 				g.Expect(result.DesiredStrimziVersion).To(gomega.Equal(allFieldsUpdateRequest.StrimziVersion))
 				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(allFieldsUpdateRequest.MaxDataRetentionSize))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
 
 				dataRetentionSizeQuantity := config.Quantity(allFieldsUpdateRequest.MaxDataRetentionSize)
 				dataRetentionSizeBytes, convErr := dataRetentionSizeQuantity.ToInt64()
@@ -576,7 +590,7 @@ func TestAdminKafka_Update(t *testing.T) {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{testWriteRole})
 				},
 				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: allFieldsUpdateRequest,
+				kafkaUpdateRequest: updateRequestForAuthRoleTests,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				g.Expect(err).NotTo(gomega.HaveOccurred())
@@ -591,7 +605,7 @@ func TestAdminKafka_Update(t *testing.T) {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 				},
 				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: allFieldsUpdateRequest,
+				kafkaUpdateRequest: updateRequestForAuthRoleTests,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				g.Expect(err).NotTo(gomega.HaveOccurred())
@@ -615,7 +629,7 @@ func TestAdminKafka_Update(t *testing.T) {
 					return ctx
 				},
 				kafkaID:            sampleKafkaID1,
-				kafkaUpdateRequest: allFieldsUpdateRequest,
+				kafkaUpdateRequest: updateRequestForAuthRoleTests,
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				g.Expect(err).To(gomega.HaveOccurred())
@@ -1159,7 +1173,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			},
 		},
 		{
-			name: "should have no effect on kafka status when setting suspended to false on unsuspended kafka",
+			name: "should return an error when trying to resume an already ready kafka",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
@@ -1170,10 +1184,8 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).NotTo(gomega.HaveOccurred())
-				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-				g.Expect(result.Id).To(gomega.Equal(sampleKafkaID1))
-				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusReady.String()))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
 			},
 		},
 		{
@@ -1195,7 +1207,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			},
 		},
 		{
-			name: "should keep suspended kafka status unchanged when passing suspended=true",
+			name: "should return an error when trying to suspend a kafka instance that is already suspended",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
@@ -1206,10 +1218,8 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).NotTo(gomega.HaveOccurred())
-				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-				g.Expect(result.Id).To(gomega.Equal(suspendedKafkaID))
-				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusSuspended.String()))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
 			},
 		},
 		{
@@ -1263,7 +1273,7 @@ func TestAdminKafka_Update(t *testing.T) {
 			},
 		},
 		{
-			name: "should change suspending kafka status to resuming when passing suspended=false",
+			name: "should return an error when trying to resume a kafka that is being suspended",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
 					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
@@ -1274,10 +1284,8 @@ func TestAdminKafka_Update(t *testing.T) {
 				},
 			},
 			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
-				g.Expect(err).NotTo(gomega.HaveOccurred())
-				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
-				g.Expect(result.Id).To(gomega.Equal(suspendingKafkaID))
-				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
 			},
 		},
 		{
@@ -1296,6 +1304,73 @@ func TestAdminKafka_Update(t *testing.T) {
 				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Id).To(gomega.Equal(suspendingKafkaID))
 				g.Expect(result.DeprecatedKafkaStorageSize).To(gomega.Equal(muchBiggerStorageSizeDifferentFormat))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusSuspending.String()))
+			},
+		},
+		{
+			name: "should return an error when trying to resume an instance that is suspended, it has an expiration time set and it is within its grace period",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: evalKafkaWithExpirationDateID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &falseB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).To(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
+			},
+		},
+		{
+			name: "should successfully resume a suspended instance that is suspended but has no expiration date set even if grace period is configured",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: evalKafkaWithoutExpirationDateID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &falseB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
+			},
+		},
+		{
+			name: "should successfully resume a suspended instance that has not reached its expiration date and has no grace period",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: suspendedDeveloperKafkaWithExpirationDateID,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &falseB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
+				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
+			},
+		},
+		{
+			name: "should resume a suspended instance that has an expiration date set but it has not reached that date nor the grace period stage",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
+				},
+				kafkaID: evalKafkaWithExpirationDateID2,
+				kafkaUpdateRequest: adminprivate.KafkaUpdateRequest{
+					Suspended: &falseB,
+				},
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				g.Expect(err).NotTo(gomega.HaveOccurred())
+				g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusOK))
 				g.Expect(result.Status).To(gomega.Equal(constants.KafkaRequestStatusResuming.String()))
 			},
 		},
@@ -1527,36 +1602,142 @@ func TestAdminKafka_Update(t *testing.T) {
 		KafkaStorageSize:       initialStorageSize,
 	}
 
-	if err := db.Create(kafka1).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	sampleKafkaForUpdateForAllFields := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: sampleKafkaForUpdateForAllFieldsID,
+		},
+		MultiAZ:                false,
+		Owner:                  "test-user",
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-kafka1",
+		OrganisationId:         "13640203",
+		Status:                 constants.KafkaRequestStatusSuspended.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualKafkaVersion:     "2.8.1",
+		DesiredKafkaVersion:    "2.8.1",
+		ActualStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:  "2.7.0",
+		DesiredKafkaIBPVersion: "2.7.0",
+		KafkaStorageSize:       initialStorageSize,
 	}
 
-	if err := db.Create(kafka2).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	evalKafkaWithExpirationDate := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: evalKafkaWithExpirationDateID,
+		},
+		MultiAZ:                 false,
+		Owner:                   "test-user",
+		Region:                  "test",
+		CloudProvider:           "test",
+		Name:                    "test-kafka1",
+		OrganisationId:          "13640203",
+		Status:                  constants.KafkaRequestStatusSuspended.String(),
+		ClusterID:               cluster.ClusterID,
+		ActualKafkaVersion:      "2.8.1",
+		DesiredKafkaVersion:     "2.8.1",
+		ActualStrimziVersion:    "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:   "2.7.0",
+		DesiredKafkaIBPVersion:  "2.7.0",
+		KafkaStorageSize:        initialStorageSize,
+		ExpiresAt:               sql.NullTime{Time: time.Now().Add(48 * time.Hour), Valid: true},
+		InstanceType:            "standard",
+		ActualKafkaBillingModel: "eval",
 	}
 
-	if err := db.Create(kafka3).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	evalKafkaWithExpirationDate2 := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: evalKafkaWithExpirationDateID2,
+		},
+		MultiAZ:                 false,
+		Owner:                   "test-user",
+		Region:                  "test",
+		CloudProvider:           "test",
+		Name:                    "test-kafka1",
+		OrganisationId:          "13640203",
+		Status:                  constants.KafkaRequestStatusSuspended.String(),
+		ClusterID:               cluster.ClusterID,
+		ActualKafkaVersion:      "2.8.1",
+		DesiredKafkaVersion:     "2.8.1",
+		ActualStrimziVersion:    "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:   "2.7.0",
+		DesiredKafkaIBPVersion:  "2.7.0",
+		KafkaStorageSize:        initialStorageSize,
+		ExpiresAt:               sql.NullTime{Time: time.Now().Add(240 * time.Hour), Valid: true}, // expire 10 days from now
+		InstanceType:            "standard",
+		ActualKafkaBillingModel: "eval",
 	}
 
-	if err := db.Create(kafka4).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	evalKafkaWithoutExpirationDate := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: evalKafkaWithoutExpirationDateID,
+		},
+		MultiAZ:                 false,
+		Owner:                   "test-user",
+		Region:                  "test",
+		CloudProvider:           "test",
+		Name:                    "test-kafka1",
+		OrganisationId:          "13640203",
+		Status:                  constants.KafkaRequestStatusSuspended.String(),
+		ClusterID:               cluster.ClusterID,
+		ActualKafkaVersion:      "2.8.1",
+		DesiredKafkaVersion:     "2.8.1",
+		ActualStrimziVersion:    "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:   "2.7.0",
+		DesiredKafkaIBPVersion:  "2.7.0",
+		KafkaStorageSize:        initialStorageSize,
+		InstanceType:            "standard",
+		ActualKafkaBillingModel: "eval",
 	}
 
-	if err := db.Create(suspendedKafka).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	suspendedDeveloperKafkaWithExpirationDate := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: suspendedDeveloperKafkaWithExpirationDateID,
+		},
+		MultiAZ:                 false,
+		Owner:                   "test-user",
+		Region:                  "test",
+		CloudProvider:           "test",
+		Name:                    "test-kafka1",
+		OrganisationId:          "13640203",
+		Status:                  constants.KafkaRequestStatusSuspended.String(),
+		ClusterID:               cluster.ClusterID,
+		ActualKafkaVersion:      "2.8.1",
+		DesiredKafkaVersion:     "2.8.1",
+		ActualStrimziVersion:    "strimzi-cluster-operator.v0.24.0-0",
+		DesiredStrimziVersion:   "strimzi-cluster-operator.v0.24.0-0",
+		ActualKafkaIBPVersion:   "2.7.0",
+		DesiredKafkaIBPVersion:  "2.7.0",
+		KafkaStorageSize:        initialStorageSize,
+		ExpiresAt:               sql.NullTime{Time: time.Now().Add(48 * time.Hour), Valid: true},
+		InstanceType:            "developer",
+		ActualKafkaBillingModel: "standard",
 	}
 
-	if err := db.Create(suspendingKafka).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	kafkaInstancesToCreate := []*dbapi.KafkaRequest{
+		kafka1,
+		kafka2,
+		kafka3,
+		kafka4,
+		suspendedKafka,
+		suspendingKafka,
+		deprovisionKafka,
+		deletingKafka,
+		evalKafkaWithExpirationDate,
+		evalKafkaWithExpirationDate2,
+		evalKafkaWithoutExpirationDate,
+		sampleKafkaForUpdateForAllFields,
+		suspendedDeveloperKafkaWithExpirationDate,
 	}
 
-	if err := db.Create(deprovisionKafka).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
-	}
-
-	if err := db.Create(deletingKafka).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	for _, k := range kafkaInstancesToCreate {
+		if err := db.Create(k).Error; err != nil {
+			t.Errorf("failed to create Kafka db record due to error: %v", err)
+		}
 	}
 
 	for _, testcase := range tests {
