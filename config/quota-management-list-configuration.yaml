@@ -25,7 +25,6 @@
 #             Examples:
 #             - CET: 2022-12-06 +01:00
 #             - UTC: 2022-12-06 +00:00
-#           - grace_period_days: when in suspended status, defines after how many days the instance will be deleted. Defaults to 0 (unlimited)
 registered_service_accounts:
   - username: testuser1@example.com
     max_allowed_instances: 3
@@ -79,7 +78,6 @@ registered_service_accounts:
 #       Examples:
 #       - CET: 2022-12-06 +01:00
 #       - UTC: 2022-12-06 +00:00
-#     - grace_period_days: when in suspended status, defines after how many days the instance will be deleted. Defaults to 0 (unlimited)
 registered_users_per_organisation:
     # The Control Plane team
   - id: 13640203

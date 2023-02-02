@@ -30,7 +30,6 @@ var testAccounts = AccountList{
 					BillingModel{
 						Id:                  "eval",
 						ExpirationDate:      func() *ExpirationDate { res := ExpirationDate(time.Now()); return &res }(),
-						GracePeriodDays:     4,
 						MaxAllowedInstances: 50,
 					},
 				},

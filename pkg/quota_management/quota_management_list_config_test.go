@@ -164,7 +164,6 @@ registered_service_accounts:
         kafka_billing_models:
           - id: eval
             expiration_date: %s
-            grace_period_days: %s
 registered_users_per_organisation:
   - id: 13640203
     any_user: true
@@ -176,7 +175,6 @@ registered_users_per_organisation:
           - id: eval
             max_allowed_instances: 5
             expiration_date: %s
-            grace_period_days: %s
 `
 
 func Test_QuotaManagementListConfig_QuotaExpiration(t *testing.T) {
@@ -197,7 +195,7 @@ func Test_QuotaManagementListConfig_QuotaExpiration(t *testing.T) {
 			wantDate1: func() *time.Time { res := time.Date(2023, 1, 30, 0, 0, 0, 0, utcLocation); return &res }(),
 			wantDate2: func() *time.Time { res := time.Date(2023, 1, 30, 0, 0, 0, 0, utcLocation); return &res }(),
 			fields: fields{
-				ConfigFileContent: fmt.Sprintf(testCaseEval, "2023-01-30 +00:00", "3", "2023-01-30 +00:00", "5"),
+				ConfigFileContent: fmt.Sprintf(testCaseEval, "2023-01-30 +00:00", "2023-01-30 +00:00"),
 			},
 		},
 	}

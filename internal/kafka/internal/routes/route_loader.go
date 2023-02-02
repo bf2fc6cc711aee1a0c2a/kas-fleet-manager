@@ -214,23 +214,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 		Name(logger.NewLogEvent("list-regions", "list cloud provider regions").ToString()).
 		Methods(http.MethodGet)
 
-	v1Metadata := api.VersionMetadata{
-		ID:          "v1",
-		Collections: v1Collections,
-	}
-	apiMetadata := api.Metadata{
-		ID: "kafkas_mgmt",
-		Versions: []api.VersionMetadata{
-			v1Metadata,
-		},
-	}
-	apiRouter.HandleFunc("", apiMetadata.ServeHTTP).Methods(http.MethodGet)
-	apiRouter.Use(coreHandlers.MetricsMiddleware)
-	apiRouter.Use(db.TransactionMiddleware(s.DB))
-	apiRouter.Use(gorillaHandlers.CompressHandler)
-
-	apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
-
 	// /api/kafkas_mgmt/v1/instance_types/{cloud_provider}/{cloud_region}
 	apiV1SupportedKafkaInstanceTypesRouter := apiV1Router.PathPrefix("/instance_types/{cloud_provider}/{cloud_region}").Subrouter()
 	apiV1SupportedKafkaInstanceTypesRouter.HandleFunc("", supportedKafkaInstanceTypesHandler.ListSupportedKafkaInstanceTypes).
