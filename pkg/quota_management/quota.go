@@ -6,8 +6,7 @@ import (
 )
 
 var defaultBillingModel = BillingModel{
-	Id:              "standard",
-	GracePeriodDays: 0, // no grace period
+	Id: "standard",
 }
 
 var defaultBillingModels = []BillingModel{defaultBillingModel}
