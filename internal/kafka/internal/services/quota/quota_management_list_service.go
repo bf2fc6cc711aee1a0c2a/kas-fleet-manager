@@ -2,7 +2,9 @@ package quota
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
@@ -223,4 +225,37 @@ func (q QuotaManagementListService) detectBillingModel(kafka *dbapi.KafkaRequest
 
 func (q QuotaManagementListService) DeleteQuota(SubscriptionId string) *errors.ServiceError {
 	return nil // NOOP
+}
+
+// Checks if quota used by the given Kafka instance is granted to the organisation/user and
+// if it is active, not expired, in the quota management list configuration
+// Note that organisation will always take priority over individual accounts to mimic the behaviour of
+// quota allowance checks during Kafka creation.
+func (q QuotaManagementListService) IsQuotaEntitlementActive(kafka *dbapi.KafkaRequest) (bool, error) {
+	var billingModel *quota_management.BillingModel
+
+	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetById(kafka.OrganisationId)
+	if orgFound && org.IsUserRegistered(kafka.Owner) {
+		logger.Logger.Infof("user registered by organisation, checking quota entitlement for organisation %q", org.Id)
+		bm, ok := org.GetBillingModel(kafka.InstanceType, kafka.ActualKafkaBillingModel)
+		if ok {
+			billingModel = &bm
+		}
+	} else {
+		logger.Logger.Infof("user is not registered by organisation, checking quota entitlement for %q as an individual account", kafka.Owner)
+		account, accountFound := q.quotaManagementList.QuotaList.ServiceAccounts.GetByUsername(kafka.Owner)
+		if accountFound {
+			bm, ok := account.GetBillingModel(kafka.InstanceType, kafka.ActualKafkaBillingModel)
+			if ok {
+				billingModel = &bm
+			}
+		}
+	}
+
+	// unable to find billing model for the instance type indicates that quota is no longer granted to the org/user
+	if billingModel == nil || billingModel.HasExpired() {
+		return false, nil
+	}
+
+	return true, nil
 }

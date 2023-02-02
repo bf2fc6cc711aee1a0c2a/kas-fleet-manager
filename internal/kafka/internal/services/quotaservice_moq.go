@@ -30,6 +30,9 @@ var _ QuotaService = &QuotaServiceMock{}
 //			DeleteQuotaForBillingModelFunc: func(subscriptionId string, kafkaBillingModel config.KafkaBillingModel) *apiErrors.ServiceError {
 //				panic("mock out the DeleteQuotaForBillingModel method")
 //			},
+//			IsQuotaEntitlementActiveFunc: func(kafka *dbapi.KafkaRequest) (bool, error) {
+//				panic("mock out the IsQuotaEntitlementActive method")
+//			},
 //			ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError) {
 //				panic("mock out the ReserveQuota method")
 //			},
@@ -54,6 +57,9 @@ type QuotaServiceMock struct {
 
 	// DeleteQuotaForBillingModelFunc mocks the DeleteQuotaForBillingModel method.
 	DeleteQuotaForBillingModelFunc func(subscriptionId string, kafkaBillingModel config.KafkaBillingModel) *apiErrors.ServiceError
+
+	// IsQuotaEntitlementActiveFunc mocks the IsQuotaEntitlementActive method.
+	IsQuotaEntitlementActiveFunc func(kafka *dbapi.KafkaRequest) (bool, error)
 
 	// ReserveQuotaFunc mocks the ReserveQuota method.
 	ReserveQuotaFunc func(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError)
@@ -89,6 +95,11 @@ type QuotaServiceMock struct {
 			// KafkaBillingModel is the kafkaBillingModel argument value.
 			KafkaBillingModel config.KafkaBillingModel
 		}
+		// IsQuotaEntitlementActive holds details about calls to the IsQuotaEntitlementActive method.
+		IsQuotaEntitlementActive []struct {
+			// Kafka is the kafka argument value.
+			Kafka *dbapi.KafkaRequest
+		}
 		// ReserveQuota holds details about calls to the ReserveQuota method.
 		ReserveQuota []struct {
 			// Kafka is the kafka argument value.
@@ -116,6 +127,7 @@ type QuotaServiceMock struct {
 	lockCheckIfQuotaIsDefinedForInstanceType sync.RWMutex
 	lockDeleteQuota                          sync.RWMutex
 	lockDeleteQuotaForBillingModel           sync.RWMutex
+	lockIsQuotaEntitlementActive             sync.RWMutex
 	lockReserveQuota                         sync.RWMutex
 	lockReserveQuotaIfNotAlreadyReserved     sync.RWMutex
 	lockValidateBillingAccount               sync.RWMutex
@@ -230,6 +242,38 @@ func (mock *QuotaServiceMock) DeleteQuotaForBillingModelCalls() []struct {
 	mock.lockDeleteQuotaForBillingModel.RLock()
 	calls = mock.calls.DeleteQuotaForBillingModel
 	mock.lockDeleteQuotaForBillingModel.RUnlock()
+	return calls
+}
+
+// IsQuotaEntitlementActive calls IsQuotaEntitlementActiveFunc.
+func (mock *QuotaServiceMock) IsQuotaEntitlementActive(kafka *dbapi.KafkaRequest) (bool, error) {
+	if mock.IsQuotaEntitlementActiveFunc == nil {
+		panic("QuotaServiceMock.IsQuotaEntitlementActiveFunc: method is nil but QuotaService.IsQuotaEntitlementActive was just called")
+	}
+	callInfo := struct {
+		Kafka *dbapi.KafkaRequest
+	}{
+		Kafka: kafka,
+	}
+	mock.lockIsQuotaEntitlementActive.Lock()
+	mock.calls.IsQuotaEntitlementActive = append(mock.calls.IsQuotaEntitlementActive, callInfo)
+	mock.lockIsQuotaEntitlementActive.Unlock()
+	return mock.IsQuotaEntitlementActiveFunc(kafka)
+}
+
+// IsQuotaEntitlementActiveCalls gets all the calls that were made to IsQuotaEntitlementActive.
+// Check the length with:
+//
+//	len(mockedQuotaService.IsQuotaEntitlementActiveCalls())
+func (mock *QuotaServiceMock) IsQuotaEntitlementActiveCalls() []struct {
+	Kafka *dbapi.KafkaRequest
+} {
+	var calls []struct {
+		Kafka *dbapi.KafkaRequest
+	}
+	mock.lockIsQuotaEntitlementActive.RLock()
+	calls = mock.calls.IsQuotaEntitlementActive
+	mock.lockIsQuotaEntitlementActive.RUnlock()
 	return calls
 }
 

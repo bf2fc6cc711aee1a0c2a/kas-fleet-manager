@@ -2,8 +2,9 @@ package quota
 
 import (
 	"fmt"
-	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
 	"net/http"
+
+	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
@@ -13,6 +14,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/quota/internal/utils"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -69,8 +71,8 @@ func (q amsQuotaService) newBaseQuotaReservedResourceBuilder(kafka *dbapi.KafkaR
 // with an AMS ReservedResource. The set of Billing models shown/accepted is
 // different between them
 var supportedAMSRelatedResourceBillingModels = map[string]struct{}{
-	string(amsv1.BillingModelMarketplace): {},
-	string(amsv1.BillingModelStandard):    {},
+	ocm.AMSRelatedResourceBillingModelMarketplace.String(): {},
+	ocm.AMSRelatedResourceBillingModelStandard.String():    {},
 }
 
 // checks if the requested billing model (pre-paid vs. consumption based) matches with the model returned from AMS
@@ -395,4 +397,97 @@ func (q amsQuotaService) GetSubscriptionByID(subscriptionID string) (*amsv1.Subs
 	}
 
 	return resp.Body(), true, nil
+}
+
+// Checks if an organisation has a SKU entitlement and that entitlement is still active in AMS
+func (q amsQuotaService) IsQuotaEntitlementActive(kafka *dbapi.KafkaRequest) (bool, error) {
+	kafkaBillingModel, err := q.kafkaConfig.GetBillingModelByID(kafka.InstanceType, kafka.ActualKafkaBillingModel)
+	if err != nil {
+		return false, err
+	}
+
+	amsRelatedResourceBillingModel, err := q.getAMSRelatedResourceBillingModel(kafka.SubscriptionId, kafkaBillingModel)
+	if err != nil || shared.StringEmpty(amsRelatedResourceBillingModel) {
+		return false, err
+	}
+
+	orgID, err := q.amsClient.GetOrganisationIdFromExternalId(kafka.OrganisationId)
+	if err != nil {
+		return false, err
+	}
+
+	quotaCostRelatedResourceFilter := ocm.QuotaCostRelatedResourceFilter{
+		ResourceName: &kafkaBillingModel.AMSResource,
+		Product:      &kafkaBillingModel.AMSProduct,
+		BillingModel: &amsRelatedResourceBillingModel,
+	}
+	quotaCosts, err := q.amsClient.GetQuotaCosts(orgID, true, false, quotaCostRelatedResourceFilter)
+	if err != nil {
+		return false, err
+	}
+
+	// SKU not entitled to the organisation
+	if len(quotaCosts) == 0 {
+		logger.Logger.Infof("ams quota cost not found for Kafka instance %q in organisation %q with the following filter: {ResourceName: %q, Product: %q, BillingModel: %q}",
+			kafka.ID, orgID, *quotaCostRelatedResourceFilter.ResourceName, *quotaCostRelatedResourceFilter.Product, *quotaCostRelatedResourceFilter.BillingModel)
+		return false, nil
+	}
+
+	if len(quotaCosts) > 1 {
+		return false, fmt.Errorf("more than 1 quota cost was returned for organisation %q with the following filter: {ResourceName: %q, Product: %q, BillingModel: %q}",
+			orgID, *quotaCostRelatedResourceFilter.ResourceName, *quotaCostRelatedResourceFilter.Product, *quotaCostRelatedResourceFilter.BillingModel)
+	}
+
+	// result will always return one quota for the given org, ams related resource billing model, resource and product for rhosak quotas
+	quotaCost := quotaCosts[0]
+
+	// when a SKU entitlement expires in AMS, the allowed value for that quota cost is set back to 0
+	// if the allowed value is 0 and consumed is greater than this, that denotes that the SKU entitlement
+	// has expired and is no longer active.
+	if quotaCost.Consumed() > quotaCost.Allowed() {
+		if quotaCost.Allowed() == 0 {
+			logger.Logger.Infof("quota no longer entitled for organisation %q (quotaid: %q, consumed: %q, allowed: %q)",
+				orgID, quotaCost.QuotaID(), quotaCost.Consumed(), quotaCost.Allowed())
+			return false, nil
+		}
+		logger.Logger.Warningf("Organisation %q has exceeded their quota allowance (quotaid: %q, consumed %q, allowed: %q",
+			orgID, quotaCost.QuotaID(), quotaCost.Consumed(), quotaCost.Allowed())
+	}
+	return true, nil
+}
+
+// Determine the AMS QuotaCost related resource billing model from the AMS Subscription reserved resource billing model
+// based on the given subscription id and kafka billing model.
+func (q amsQuotaService) getAMSRelatedResourceBillingModel(subscriptionID string, kafkaBillingModel config.KafkaBillingModel) (string, error) {
+	reservedResources, err := q.amsClient.GetReservedResourcesBySubscriptionID(subscriptionID)
+	if err != nil {
+		return "", err
+	}
+
+	for _, rr := range reservedResources {
+		if kafkaBillingModel.AMSResource == rr.ResourceName() {
+			amsBillingModel := string(rr.BillingModel())
+			switch true {
+			case shared.StringEqualsIgnoreCase(amsBillingModel, ocm.AMSRelatedResourceBillingModelMarketplace.String()):
+				// legacy ams billing model marketplace, this will be removed in the future and replaced with cloud specific marketplace billing models
+				// if the kafka billing model supports 'marketplace' or any cloud specific marketplace billing model, return 'marketplace'
+				if kafkaBillingModel.HasSupportForMarketplace() {
+					return ocm.AMSRelatedResourceBillingModelMarketplace.String(), nil
+				}
+			case shared.StringHasPrefixIgnoreCase(amsBillingModel, fmt.Sprintf("%s-", ocm.AMSRelatedResourceBillingModelMarketplace)):
+				// ams billing model is a cloud specific marketplace, i.e. 'marketplace-aws'
+				// if the kafka billing model supports this cloud specific marketplace billing model, return 'marketplace'
+				if kafkaBillingModel.HasSupportForAMSBillingModel(amsBillingModel) {
+					return ocm.AMSRelatedResourceBillingModelMarketplace.String(), nil
+				}
+			case shared.StringEqualsIgnoreCase(amsBillingModel, ocm.AMSRelatedResourceBillingModelStandard.String()):
+				if kafkaBillingModel.HasSupportForStandard() {
+					return ocm.AMSRelatedResourceBillingModelStandard.String(), nil
+				}
+			}
+		}
+	}
+
+	logger.Logger.V(10).Infof("ams related resource billing model not found for subscription %q and kafka billing model %q", subscriptionID, kafkaBillingModel.ID)
+	return "", nil
 }

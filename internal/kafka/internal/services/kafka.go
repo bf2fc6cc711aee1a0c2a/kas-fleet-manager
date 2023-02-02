@@ -129,6 +129,12 @@ type KafkaService interface {
 	GetAvailableSizesInRegion(criteria *FindClusterCriteria) ([]string, *errors.ServiceError)
 	ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *errors.ServiceError
 	AssignBootstrapServerHost(kafkaRequest *dbapi.KafkaRequest) error
+	// IsQuotaEntitlementActive checks if the user/organisation have an active entitlement to the quota
+	// used by the given Kafka instance.
+	//
+	// It returns true if the user has an active quota entitlement and false if not.
+	// It returns false and an error if it encounters any issues while trying to check the quota entitlement status.
+	IsQuotaEntitlementActive(kafkaRequest *dbapi.KafkaRequest) (bool, error)
 
 	// MGDSTRM-10012 temporarily add method to reconcile updating the zero-value
 	// of ExpiredAt. Remove this method when functionality has been rolled out
@@ -1362,4 +1368,13 @@ func (k *kafkaService) UpdateZeroValueOfKafkaRequestsExpiredAt() error {
 	glog.Infof("%v kafka_requests had expires_at with the zero-value of time.Time '%v' and have been updated to NULL", db.RowsAffected, zeroTime)
 
 	return db.Error
+}
+
+func (k *kafkaService) IsQuotaEntitlementActive(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
+	if factoryErr != nil {
+		return false, factoryErr
+	}
+
+	return quotaService.IsQuotaEntitlementActive(kafkaRequest)
 }
