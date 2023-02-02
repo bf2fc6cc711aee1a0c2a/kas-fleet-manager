@@ -454,6 +454,202 @@ paths:
       summary: update the connector namespace status
       tags:
       - Connector Clusters Agent
+  /api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors/deployments:
+    get:
+      description: Returns a list of processor deployments assigned to the cluster.
+      operationId: getClusterAssignedProcessorDeployments
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+      - description: filters the processors to those with a version greater than the
+          given value
+        explode: true
+        in: query
+        name: gt_version
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - description: watch for changes to the resources and return them as a stream
+          of watch events. Specify gt_version to specify the starting point.
+        explode: true
+        in: query
+        name: watch
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessorDeploymentList'
+          description: A list of processors
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns a list of processor deployments assigned to the cluster.
+      tags:
+      - Connector Clusters Agent
+  ? /api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors/deployments/{processor_deployment_id}
+  : get:
+      description: Returns a processor deployment assigned to the cluster.
+      operationId: getClusterAssignedProcessorDeploymentById
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The id of the processor deployment
+        explode: false
+        in: path
+        name: processor_deployment_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessorDeployment'
+          description: A processor deployment
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "410":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: deployment has been deleted
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns a processor deployment assigned to the cluster.
+      tags:
+      - Connector Clusters Agent
+  ? /api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors/deployments/{processor_deployment_id}/status
+  : put:
+      description: update the processor deployment status
+      operationId: updateProcessorDeploymentStatus
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The id of the processor deployment
+        explode: false
+        in: path
+        name: processor_deployment_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessorDeploymentStatus'
+        required: true
+      responses:
+        "200":
+          description: Processor deployment status is updated
+        "400":
+          content:
+            application/json:
+              examples:
+                "400InvalidIdExample":
+                  $ref: '#/components/examples/400InvalidIdExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: id value is not valid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is not valid.
+        "410":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: deployment has been deleted
+      security:
+      - Bearer: []
+      summary: update the processor deployment status
+      tags:
+      - Connector Clusters Agent
 components:
   examples:
     "400InvalidIdExample":
@@ -764,6 +960,80 @@ components:
       - phase
       - version
       type: object
+    ProcessorDeployment:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/ProcessorDeployment_allOf'
+      description: Holds the deployment configuration of a processor
+    ProcessorDeploymentSpec:
+      description: Holds the deployment specification of a processor
+      properties:
+        processor_id:
+          type: string
+        namespace_id:
+          type: string
+        processor_type_id:
+          type: string
+        desired_state:
+          $ref: '#/components/schemas/ProcessorDesiredState'
+        shard_metadata:
+          type: object
+        processor_resource_version:
+          format: int64
+          type: integer
+        kafka:
+          $ref: '#/components/schemas/KafkaConnectionSettings'
+        service_account:
+          $ref: '#/components/schemas/ServiceAccount'
+        definition:
+          type: object
+        error_handler:
+          $ref: '#/components/schemas/ErrorHandler'
+        operator_id:
+          description: an optional operator id that the processor should be run under.
+          type: string
+      type: object
+    ProcessorDeploymentStatus:
+      description: The status of processor deployment
+      example:
+        operators:
+          available:
+            id: id
+            type: type
+            version: version
+          assigned:
+            id: id
+            type: type
+            version: version
+        conditions:
+        - reason: reason
+          last_transition_time: last_transition_time
+          type: type
+          message: message
+          status: status
+        - reason: reason
+          last_transition_time: last_transition_time
+          type: type
+          message: message
+          status: status
+        resource_version: 0
+      properties:
+        phase:
+          $ref: '#/components/schemas/ProcessorState'
+        resource_version:
+          format: int64
+          type: integer
+        operators:
+          $ref: '#/components/schemas/ConnectorDeploymentStatus_operators'
+        conditions:
+          items:
+            $ref: '#/components/schemas/MetaV1Condition'
+          type: array
+      type: object
+    ProcessorDeploymentList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ProcessorDeploymentList_allOf'
     Error:
       nullable: true
       properties:
@@ -965,6 +1235,61 @@ components:
       - deleting
       - deleted
       type: string
+    ProcessorResourceAnnotations:
+      additionalProperties:
+        type: string
+      description: Name-value string annotations for resource
+      type: object
+    ProcessorDesiredState:
+      enum:
+      - ready
+      - stopped
+      - deleted
+      type: string
+    ErrorHandler:
+      default: {}
+      oneOf:
+      - $ref: '#/components/schemas/ErrorHandlerLog'
+      - $ref: '#/components/schemas/ErrorHandlerStop'
+      - $ref: '#/components/schemas/ErrorHandlerDeadLetterQueue'
+      type: object
+    ErrorHandlerLog:
+      additionalProperties: false
+      properties:
+        log:
+          type: object
+      required:
+      - log
+      type: object
+    ErrorHandlerStop:
+      additionalProperties: false
+      properties:
+        stop:
+          type: object
+      required:
+      - stop
+      type: object
+    ErrorHandlerDeadLetterQueue:
+      additionalProperties: false
+      properties:
+        dead_letter_queue:
+          $ref: '#/components/schemas/ErrorHandlerDeadLetterQueue_dead_letter_queue'
+      required:
+      - dead_letter_queue
+      type: object
+    ProcessorState:
+      enum:
+      - preparing
+      - prepared
+      - provisioning
+      - ready
+      - updating
+      - stopped
+      - failed
+      - deprovisioning
+      - deleting
+      - deleted
+      type: string
     ConnectorDeployment_allOf_metadata:
       properties:
         created_at:
@@ -1065,6 +1390,44 @@ components:
       - resource_version
       - status
       - tenant
+    ProcessorDeployment_allOf_metadata:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        resource_version:
+          format: int64
+          type: integer
+        resolved_secrets:
+          type: boolean
+        annotations:
+          additionalProperties:
+            type: string
+          description: Name-value string annotations for resource
+          type: object
+      required:
+      - created_at
+      - resolved_secrets
+      - resource_version
+      - updated_at
+    ProcessorDeployment_allOf:
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ProcessorDeployment_allOf_metadata'
+        spec:
+          $ref: '#/components/schemas/ProcessorDeploymentSpec'
+        status:
+          $ref: '#/components/schemas/ProcessorDeploymentStatus'
+    ProcessorDeploymentList_allOf:
+      properties:
+        items:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/ProcessorDeployment'
+          type: array
     ConnectorNamespaceMeta_allOf:
       properties:
         resource_version:
@@ -1072,6 +1435,13 @@ components:
           type: integer
         quota:
           $ref: '#/components/schemas/ConnectorNamespaceQuota'
+    ErrorHandlerDeadLetterQueue_dead_letter_queue:
+      properties:
+        topic:
+          description: The name of the Kafka topic that serves as a destination for
+            messages which were not processed correctly due to an error.
+          title: Dead Letter Topic Name
+          type: string
   securitySchemes:
     Bearer:
       bearerFormat: JWT

@@ -11,5 +11,6 @@ func NewStageEnvLoader() environments.EnvLoader {
 		"mas-sso-base-url":        "https://identity.api.stage.openshift.com",
 		"mas-sso-realm":           "rhoas",
 		"connector-eval-duration": "48h",
+		"processors-enabled":      "false",
 	}
 }

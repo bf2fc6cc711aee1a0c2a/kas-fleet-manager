@@ -50,6 +50,7 @@ var migrations = []*gormigrate.Migration{
 	renameNamespaceProfileAnnotations("202211280000"),
 	addOrgIDAnnotations("202212050000"),
 	addConnectorTypeDeprecated("202301180000"),
+	addProcessorTables("202302030000"),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

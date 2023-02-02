@@ -37,6 +37,36 @@ func (s *extender) iResetTheVaultCounters() error {
 	return nil
 }
 
+func (s *extender) theVaultInsertCounterShouldBe(expected int64) error {
+	// we can only check the insert count on the TmpVault service impl...
+	var service vault.VaultService
+	if err := s.Suite.Helper.Env.ServiceContainer.Resolve(&service); err != nil {
+		return err
+	}
+
+	if v, ok := service.(*vault.TmpVaultService); ok {
+		actual := v.Counters().Inserts
+		if actual != expected {
+			return fmt.Errorf("vault insert counter does not match expected: %v, actual: %v", expected, actual)
+		}
+	}
+	return nil
+}
+func (s *extender) theVaultUpdateCounterShouldBe(expected int64) error {
+	// we can only check the update count on the TmpVault service impl...
+	var service vault.VaultService
+	if err := s.Suite.Helper.Env.ServiceContainer.Resolve(&service); err != nil {
+		return err
+	}
+
+	if v, ok := service.(*vault.TmpVaultService); ok {
+		actual := v.Counters().Updates
+		if actual != expected {
+			return fmt.Errorf("vault update counter does not match expected: %v, actual: %v", expected, actual)
+		}
+	}
+	return nil
+}
 func (s *extender) theVaultDeleteCounterShouldBe(expected int64) error {
 	// we can only check the delete count on the TmpVault service impl...
 	var service vault.VaultService
@@ -193,6 +223,8 @@ func init() {
 	cucumber.StepModules = append(cucumber.StepModules, func(ctx *godog.ScenarioContext, s *cucumber.TestScenario) {
 		e := &extender{s}
 		ctx.Step(`^get and store access token using the addon parameter response as \${([^"]*)} and clientID as \${([^"]*)}$`, e.getAndStoreAccessTokenUsingTheAddonParameterResponseAs)
+		ctx.Step(`^the vault insert counter should be (\d+)$`, e.theVaultInsertCounterShouldBe)
+		ctx.Step(`^the vault update counter should be (\d+)$`, e.theVaultUpdateCounterShouldBe)
 		ctx.Step(`^the vault delete counter should be (\d+)$`, e.theVaultDeleteCounterShouldBe)
 		ctx.Step(`^I reset the vault counters$`, e.iResetTheVaultCounters)
 		ctx.Step(`^update connector catalog of type "([^"]*)" and channel "([^"]*)" with shard metadata:$`, e.updateConnectorCatalogOfTypeAndChannelWithShardMetadata)

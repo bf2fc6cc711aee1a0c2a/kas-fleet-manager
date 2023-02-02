@@ -29,6 +29,10 @@ const (
 	ConnectorTypeAdminView = "ConnectorTypeAdminView"
 	// KindError is a string identifier for the type api.ServiceError
 	KindError = "Error"
+	// KindProcessor is a string identifier for the type dbapi.Processor
+	KindProcessor = "Processor"
+	// KindProcessorDeployment is a string identifier for the type dbapi.ProcessorDeployment
+	KindProcessorDeployment = "ProcessorDeployment"
 )
 
 func PresentReference(id, obj interface{}) compat.ObjectReference {
@@ -55,6 +59,10 @@ func objectKind(i interface{}) string {
 		return ConnectorTypeAdminView
 	case errors.ServiceError, *errors.ServiceError:
 		return KindError
+	case dbapi.Processor, *dbapi.Processor:
+		return KindProcessor
+	case dbapi.ProcessorDeployment, *dbapi.ProcessorDeployment:
+		return KindProcessorDeployment
 	default:
 		return ""
 	}
@@ -82,6 +90,12 @@ func objectPath(id string, obj interface{}) string {
 		return fmt.Sprintf("/api/connector_mgmt/v1/admin/kafka_connector_clusters/%s/deployments/%s", obj.Spec.ClusterId, id)
 	case dbapi.ConnectorNamespace, *dbapi.ConnectorNamespace:
 		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_namespaces/%s", id)
+	case dbapi.Processor, *dbapi.Processor:
+		return fmt.Sprintf("/api/connector_mgmt/v2alpha1/processors/%s", id)
+	case dbapi.ProcessorDeployment:
+		return fmt.Sprintf("/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/%s/processors/deployments/%s", obj.ClusterID, id)
+	case *dbapi.ProcessorDeployment:
+		return fmt.Sprintf("/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/%s/processors/deployments/%s", obj.ClusterID, id)
 	default:
 		return ""
 	}

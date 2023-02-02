@@ -39,6 +39,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"admin-api-sso-base-url":     "http://127.0.0.1:8180",
 		"admin-api-sso-endpoint-uri": "/auth/realms/rhoas-kafka-sre",
 		"admin-api-sso-realm":        "rhoas-kafka-sre",
+		"processors-enabled":         "true",
 	}
 }
 

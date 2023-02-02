@@ -6,7 +6,7 @@ Feature: connector namespaces API
   Background:
     Given the path prefix is "/api/connector_mgmt"
 
-    # User for eval organization id 13640210 configured in internal/connector/test/integration/feature_test.go:72
+    # User for eval organization id 13640210 configured in internal/connector/test/integration/feature_test.go:81
     Given an org admin user named "Gru" in organization "13640210"
     Given I store userid for "Gru" as ${gru_user_id}
 
@@ -331,13 +331,13 @@ Feature: connector namespaces API
      }
      """
 
-    # Eval namespace should expire and get deleted after 2 seconds as configured in internal/connector/test/integration/feature_test.go:27
+    # Eval namespace should expire and get deleted after 2 seconds as configured in internal/connector/test/integration/feature_test.go:82
     Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_namespaces/" response ".total" selection to match "0"
     And I GET path "/v1/kafka_connector_namespaces/"
     Then the response code should be 200
     And the ".total" selection from the response should match "0"
 
-   # cleanup eval cluster
+    # cleanup eval cluster
     Given I am logged in as "Gru"
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204

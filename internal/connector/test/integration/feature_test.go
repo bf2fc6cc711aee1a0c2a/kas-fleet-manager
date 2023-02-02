@@ -26,6 +26,15 @@ var helper *test.Helper
 var teardown func()
 var opts = cucumber.DefaultOptions()
 
+// See https://go-review.googlesource.com/c/go/+/176098
+// See https://stackoverflow.com/questions/29699982/go-test-flag-flag-provided-but-not-defined
+// This still seems to be a required workaround with 1.19.5 and the gotestsum/godog stack used in RHOC
+var _ = func() bool {
+	flag.String("godog.tags", "", "godog tags")
+	testing.Init()
+	return true
+}()
+
 func init() {
 	godog.BindCommandLineFlags("godog.", &opts)
 }

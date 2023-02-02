@@ -13,5 +13,6 @@ func NewProductionEnvLoader() environments.EnvLoader {
 		"mas-sso-realm":           "rhoas",
 		"mas-sso-base-url":        "https://identity.api.openshift.com",
 		"connector-eval-duration": "48h",
+		"processors-enabled":      "false",
 	}
 }

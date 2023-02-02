@@ -26,6 +26,7 @@ import (
 	"gorm.io/gorm"
 )
 
+//go:generate moq -out connector_namespaces_moq.go . ConnectorNamespaceService
 type ConnectorNamespaceService interface {
 	Create(ctx context.Context, request *dbapi.ConnectorNamespace) *errors.ServiceError
 	Update(ctx context.Context, request *dbapi.ConnectorNamespace) *errors.ServiceError
@@ -564,8 +565,9 @@ func (k *connectorNamespaceService) ReconcileUnusedDeletingNamespaces(_ context.
 		var namespaceIds []string
 		if err := dbConn.Table("connector_namespaces").Select("connector_namespaces.id").
 			Joins("LEFT JOIN connectors ON connectors.namespace_id = connector_namespaces.id").
+			Joins("LEFT JOIN processors ON processors.namespace_id = connector_namespaces.id").
 			Where("connector_namespaces.status_phase = ? AND connector_namespaces.status_version='' AND "+
-				"connector_namespaces.deleted_at IS NULL AND namespace_id IS NULL", dbapi.ConnectorNamespacePhaseDeleting).
+				"connector_namespaces.deleted_at IS NULL AND connectors.namespace_id IS NULL", dbapi.ConnectorNamespacePhaseDeleting).
 			Find(&namespaceIds).Error; err != nil {
 			return services.HandleGetError("Connector namespace",
 				"status_phase", dbapi.ConnectorNamespacePhaseDeleting, err)

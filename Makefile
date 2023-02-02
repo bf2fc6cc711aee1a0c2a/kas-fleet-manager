@@ -384,6 +384,41 @@ test/integration/connector: gotestsum
 				$(TESTFLAGS)
 .PHONY: test/integration/connector
 
+test/integration/connector/api: gotestsum
+	$(GOTESTSUM) --junitfile data/results/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 \
+				./internal/connector/test/integration/... \
+				--godog.tags @api \
+				$(TESTFLAGS)
+.PHONY: test/integration/connector/processors
+
+test/integration/connector/connectors: gotestsum
+	$(GOTESTSUM) --junitfile data/results/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 \
+				./internal/connector/test/integration/... \
+				--godog.tags @connectors \
+				$(TESTFLAGS)
+.PHONY: test/integration/connector/processors
+
+test/integration/connector/connectors/agent: gotestsum
+	$(GOTESTSUM) --junitfile data/results/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 \
+				./internal/connector/test/integration/... \
+				--godog.tags @connectors-agent \
+				$(TESTFLAGS)
+.PHONY: test/integration/connector/connectors/agent
+
+test/integration/connector/connectors/cluster: gotestsum
+	$(GOTESTSUM) --junitfile data/results/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 \
+				./internal/connector/test/integration/... \
+				--godog.tags @connectors-cluster \
+				$(TESTFLAGS)
+.PHONY: test/integration/connector/connectors/cluster
+
+test/integration/connector/processors: gotestsum
+	$(GOTESTSUM) --junitfile data/results/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 \
+				./internal/connector/test/integration/... \
+				--godog.tags @processors \
+				$(TESTFLAGS)
+.PHONY: test/integration/connector/processors
+
 test/integration: test/integration/kafka test/integration/connector
 .PHONY: test/integration
 

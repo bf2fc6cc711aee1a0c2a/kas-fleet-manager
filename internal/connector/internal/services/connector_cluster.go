@@ -45,19 +45,24 @@ type ConnectorClusterService interface {
 	GetClusterIds(query string, args ...interface{}) ([]string, error)
 	GetClusterOrg(id string) (string, *errors.ServiceError)
 	ResetServiceAccount(ctx context.Context, cluster *dbapi.ConnectorCluster) *errors.ServiceError
+
+	ListProcessorDeployments(ctx context.Context, clusterId string, filterChannelUpdates bool, filterOperatorUpdates bool, includeDanglingDeploymentsOnly bool, listArgs *services.ListArguments, gtVersion int64) (dbapi.ProcessorDeploymentList, *api.PagingMeta, *errors.ServiceError)
+	GetProcessorDeployment(ctx context.Context, id string) (*dbapi.ProcessorDeployment, *errors.ServiceError)
+	UpdateProcessorDeploymentStatus(ctx context.Context, status dbapi.ProcessorDeploymentStatus) *errors.ServiceError
 }
 
 var _ ConnectorClusterService = &connectorClusterService{}
 var _ auth.AuthAgentService = &connectorClusterService{}
 
 type connectorClusterService struct {
-	connectionFactory         *db.ConnectionFactory
-	bus                       signalbus.SignalBus
-	connectorTypesService     ConnectorTypesService
-	vaultService              vault.VaultService
-	keycloakService           sso.KafkaKeycloakService
-	connectorsService         ConnectorsService
-	connectorNamespaceService ConnectorNamespaceService
+	connectionFactory           *db.ConnectionFactory
+	bus                         signalbus.SignalBus
+	connectorTypesService       ConnectorTypesService
+	vaultService                vault.VaultService
+	keycloakService             sso.KafkaKeycloakService
+	connectorsService           ConnectorsService
+	connectorNamespaceService   ConnectorNamespaceService
+	processorDeploymentsService ProcessorDeploymentsService
 }
 
 func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService vault.VaultService,
@@ -696,4 +701,16 @@ func (k *connectorClusterService) ResetServiceAccount(ctx context.Context, clust
 		return services.HandleGetError(`Connector cluster`, `id`, cluster.ID, err)
 	}
 	return nil
+}
+
+func (k *connectorClusterService) ListProcessorDeployments(ctx context.Context, clusterId string, filterChannelUpdates bool, filterOperatorUpdates bool, includeDanglingDeploymentsOnly bool, listArgs *services.ListArguments, gtVersion int64) (dbapi.ProcessorDeploymentList, *api.PagingMeta, *errors.ServiceError) {
+	return k.processorDeploymentsService.List(ctx, clusterId, filterChannelUpdates, filterOperatorUpdates, includeDanglingDeploymentsOnly, listArgs, gtVersion)
+}
+
+func (k *connectorClusterService) GetProcessorDeployment(ctx context.Context, id string) (*dbapi.ProcessorDeployment, *errors.ServiceError) {
+	return k.processorDeploymentsService.Get(ctx, id)
+}
+
+func (k *connectorClusterService) UpdateProcessorDeploymentStatus(ctx context.Context, status dbapi.ProcessorDeploymentStatus) *errors.ServiceError {
+	return k.processorDeploymentsService.SaveStatus(ctx, status)
 }

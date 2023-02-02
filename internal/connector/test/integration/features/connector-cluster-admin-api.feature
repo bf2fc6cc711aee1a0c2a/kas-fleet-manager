@@ -1,3 +1,4 @@
+@connectors-cluster
 Feature: connector cluster admin API
 
   Background:

@@ -36,6 +36,7 @@ import (
 	"encoding/json"
 	fmt "fmt"
 	"io"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
 	"time"
 
@@ -251,7 +252,7 @@ func (s *TestScenario) iWaitUpToSecondsForAGETOnPathResponseSelectionToMatch(tim
 
 		select {
 		case <-ctx.Done():
-			return nil
+			return errors.NewTimeoutError(fmt.Sprintf("Wait timed-out looking for '%s' to match '%s'.", selection, expected), 0)
 		default:
 			time.Sleep(time.Duration(timeout * float64(time.Second) / 10.0))
 		}

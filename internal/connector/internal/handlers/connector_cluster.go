@@ -39,6 +39,7 @@ type ConnectorClusterHandler struct {
 	Keycloak           sso.KafkaKeycloakService
 	Connectors         services.ConnectorsService
 	ConnectorNamespace services.ConnectorNamespaceService
+	Processors         services.ProcessorsService
 	Vault              vault.VaultService
 	ServerConfig       *server.ServerConfig
 	AuthZ              authz.AuthZService
@@ -242,11 +243,11 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 	handlers.HandleGet(w, r, cfg)
 }
 
-func (o *ConnectorClusterHandler) buildAddonParams(cluster *dbapi.ConnectorCluster, authTokenURL string) []ocm.Parameter {
+func (h *ConnectorClusterHandler) buildAddonParams(cluster *dbapi.ConnectorCluster, authTokenURL string) []ocm.Parameter {
 	p := []ocm.Parameter{
 		{
 			Id:    "control-plane-base-url",
-			Value: o.ServerConfig.PublicHostURL,
+			Value: h.ServerConfig.PublicHostURL,
 		},
 		{
 			Id:    "cluster-id",
@@ -258,11 +259,11 @@ func (o *ConnectorClusterHandler) buildAddonParams(cluster *dbapi.ConnectorClust
 		},
 		{
 			Id:    "mas-sso-base-url",
-			Value: o.Keycloak.GetRealmConfig().BaseURL,
+			Value: h.Keycloak.GetRealmConfig().BaseURL,
 		},
 		{
 			Id:    "mas-sso-realm",
-			Value: o.Keycloak.GetRealmConfig().Realm,
+			Value: h.Keycloak.GetRealmConfig().Realm,
 		},
 		{
 			Id:    "client-id",
@@ -276,8 +277,8 @@ func (o *ConnectorClusterHandler) buildAddonParams(cluster *dbapi.ConnectorClust
 	return p
 }
 
-func (o *ConnectorClusterHandler) buildTokenURL(cluster *dbapi.ConnectorCluster) (string, error) {
-	u, err := url.Parse(o.Keycloak.GetRealmConfig().TokenEndpointURI)
+func (h *ConnectorClusterHandler) buildTokenURL(cluster *dbapi.ConnectorCluster) (string, error) {
+	u, err := url.Parse(h.Keycloak.GetRealmConfig().TokenEndpointURI)
 	if err != nil {
 		return "", err
 	}

@@ -30,11 +30,12 @@ import (
 )
 
 const (
-	maxKafkaNameLength   = 32
-	maxConnectorIdLength = 32
-	APPLICATION_JSON     = "application/json"
-	JSON_PATCH           = "application/json-patch+json"
-	MERGE_PATCH          = "application/merge-patch+json"
+	maxKafkaNameLength             = 32
+	maxConnectorIdLength           = 32
+	maxProcessorDeploymentIdLength = 32
+	APPLICATION_JSON               = "application/json"
+	JSON_PATCH                     = "application/json-patch+json"
+	MERGE_PATCH                    = "application/merge-patch+json"
 )
 
 type ConnectorsHandler struct {
@@ -47,7 +48,7 @@ type ConnectorsHandler struct {
 }
 
 // this is an initial guess at what operation is being performed in update
-var stateToOperationsMap = map[public.ConnectorDesiredState]phase.ConnectorOperation{
+var connectorStateToOperationsMap = map[public.ConnectorDesiredState]phase.ConnectorOperation{
 	public.CONNECTORDESIREDSTATE_UNASSIGNED: phase.UnassignConnector,
 	public.CONNECTORDESIREDSTATE_READY:      phase.AssignConnector,
 	public.CONNECTORDESIREDSTATE_STOPPED:    phase.StopConnector,
@@ -331,7 +332,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h ConnectorsHandler) getOperation(resource public.Connector, patch public.ConnectorRequest) (phase.ConnectorOperation, *errors.ServiceError) {
-	operation, ok := stateToOperationsMap[patch.DesiredState]
+	operation, ok := connectorStateToOperationsMap[patch.DesiredState]
 	if !ok {
 		return operation, errors.BadRequest("Unsupported patch desired state %s", patch.DesiredState)
 	}
