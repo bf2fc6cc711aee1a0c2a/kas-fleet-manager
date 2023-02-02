@@ -58,6 +58,27 @@ func Test_kafkaTLSCertificateManagementService_GetCertificate(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "returns certificate content from tls certificate configuration when certificate request fields are not defined i.e they are empty",
+			fields: fields{
+				storage: &certmagic.FileStorage{},
+				config: &KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: automaticCertificateManagement,
+					ManualCertificateManagementConfig: ManualCertificateManagementConfig{
+						KafkaTLSCert: "cert",
+						KafkaTLSKey:  "key",
+					},
+				},
+			},
+			args: args{
+				GetCertificateRequest{},
+			},
+			want: Certificate{
+				TLSCert: "cert",
+				TLSKey:  "key",
+			},
+			wantErr: false,
+		},
+		{
 			name: "returns certificate content from storage when in auto mode",
 			fields: fields{
 				storage: storageWithCerts,
@@ -367,6 +388,49 @@ func Test_kafkaTLSCertificateManagementService_IsAutomaticCertificateManagementE
 			g := gomega.NewWithT(t)
 			enabled := certManagementService.IsAutomaticCertificateManagementEnabled()
 			g.Expect(enabled).To(gomega.Equal(testcase.want))
+		})
+	}
+}
+
+func TestGetCertificateRequest_areCertRefsDefined(t *testing.T) {
+	type fields struct {
+		TLSCertRef string
+		TLSKeyRef  string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{
+			name: "returns false if either of the refs is not defined",
+			fields: fields{
+				TLSCertRef: "",
+				TLSKeyRef:  "dsldkslds",
+			},
+			want: false,
+		},
+		{
+			name: "returns true if all the refs are defined",
+			fields: fields{
+				TLSCertRef: "fjkjds",
+				TLSKeyRef:  "dsldkslds",
+			},
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(testcase.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			req := GetCertificateRequest{
+				TLSCertRef: testcase.fields.TLSCertRef,
+				TLSKeyRef:  testcase.fields.TLSKeyRef,
+			}
+			got := req.areCertRefsDefined()
+			g.Expect(got).To(gomega.Equal(testcase.want))
 		})
 	}
 }

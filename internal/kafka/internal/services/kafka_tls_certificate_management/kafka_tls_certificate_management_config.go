@@ -86,7 +86,11 @@ func (c *KafkaTLSCertificateManagementConfig) ReadFiles() error {
 		}
 	}
 
-	if c.CertificateManagementStrategy == manualCertificateManagement && c.EnableKafkaExternalCertificate {
+	// We always read the manual tls certificates irrespective of strategy used.
+	// This is done so that we can default to using the manually provided certificate during the transition from manual to automatic certificate handling.
+	// That is, we want the transition to be a smooth one, without breaking the reconciliation loop between fleet manager and fleetshard sync
+	// for Kafkas that whose certificates information has not been reconcilied internally (populated in the database) by the fleet manager.
+	if c.EnableKafkaExternalCertificate {
 		err := shared.ReadFileValueString(c.ManualCertificateManagementConfig.KafkaTLSCertFile, &c.ManualCertificateManagementConfig.KafkaTLSCert)
 		if err != nil {
 			return err

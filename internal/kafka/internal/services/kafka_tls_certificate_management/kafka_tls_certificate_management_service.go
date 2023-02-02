@@ -21,6 +21,12 @@ type GetCertificateRequest struct {
 	TLSKeyRef  string
 }
 
+// areCertRefsDefined returns true if all certificate references are defined.
+// otherwise returns false
+func (req GetCertificateRequest) areCertRefsDefined() bool {
+	return req.TLSCertRef != "" && req.TLSKeyRef != ""
+}
+
 // Certificate is the content of the certificate
 type Certificate struct {
 	TLSCert string
@@ -37,7 +43,8 @@ type KafkaTLSCertificateManagementService interface {
 
 	// GetCertificate returns the tls certificate given the request.
 	// The certificate is returned from the underlying certificate storage when certificate management is automatic
-	// otherwise, the certificate is returned from the manual tls configuration files
+	// and that the certificate keys are defined i.e non empty string.
+	// Otherwise, the certificate is returned from the manual tls configuration files
 	GetCertificate(ctx context.Context, request GetCertificateRequest) (Certificate, error)
 
 	// RevokeCertificate revoke the certificate of given domain with a given reason
@@ -88,7 +95,7 @@ type kafkaTLSCertificateManagementService struct {
 }
 
 func (certManagementService *kafkaTLSCertificateManagementService) GetCertificate(ctx context.Context, request GetCertificateRequest) (Certificate, error) {
-	if certManagementService.config.CertificateManagementStrategy == manualCertificateManagement {
+	if !certManagementService.IsAutomaticCertificateManagementEnabled() || !request.areCertRefsDefined() {
 		return Certificate{
 			TLSCert: certManagementService.config.ManualCertificateManagementConfig.KafkaTLSCert,
 			TLSKey:  certManagementService.config.ManualCertificateManagementConfig.KafkaTLSKey,
