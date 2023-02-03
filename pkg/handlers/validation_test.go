@@ -537,10 +537,11 @@ func Test_ValidateExternalClusterId(t *testing.T) {
 	}
 }
 
-func Test_ValidateClusterId(t *testing.T) {
+func Test_ValidateNotEmptyClusterId(t *testing.T) {
 	invalidClusterId := "abcd123-4asc-456fdks9485lskd030g"
 	validClusterId := "abcd1234ascd3456fdks9485lskd030g"
 	field := "cluster id"
+	emptyClusterId := ""
 	type args struct {
 		value *string
 		field string
@@ -551,6 +552,13 @@ func Test_ValidateClusterId(t *testing.T) {
 		wantErr         bool
 		expectedErrCode errors.ServiceErrorCode
 	}{
+		{
+			name: "no error thrown if cluster id is nil",
+			args: args{
+				field: field,
+			},
+			wantErr: false,
+		},
 		{
 			name: "no error thrown if cluster id format is valid",
 			args: args{
@@ -568,13 +576,21 @@ func Test_ValidateClusterId(t *testing.T) {
 			wantErr:         true,
 			expectedErrCode: errors.ErrorInvalidClusterId,
 		},
+		{
+			name: "should not throw an error if cluster id is empty",
+			args: args{
+				field: field,
+				value: &emptyClusterId,
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, testcase := range tests {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			err := handlers.ValidateClusterId(tt.args.value, tt.args.field)()
+			err := handlers.ValidateNotEmptyClusterId(tt.args.value, tt.args.field)()
 			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			if err != nil {
 				g.Expect(err.Code).To(gomega.Equal(tt.expectedErrCode))

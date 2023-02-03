@@ -10,7 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	v1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
+	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"sync"
@@ -47,7 +47,7 @@ var _ KafkaService = &KafkaServiceMock{}
 //			DeprovisionKafkaForUsersFunc: func(users []string) *apiErrors.ServiceError {
 //				panic("mock out the DeprovisionKafkaForUsers method")
 //			},
-//			GenerateReservedManagedKafkasByClusterIDFunc: func(clusterID string) ([]v1.ManagedKafka, *apiErrors.ServiceError) {
+//			GenerateReservedManagedKafkasByClusterIDFunc: func(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError) {
 //				panic("mock out the GenerateReservedManagedKafkasByClusterID method")
 //			},
 //			GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *apiErrors.ServiceError) {
@@ -62,7 +62,10 @@ var _ KafkaService = &KafkaServiceMock{}
 //			GetCNAMERecordStatusFunc: func(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error) {
 //				panic("mock out the GetCNAMERecordStatus method")
 //			},
-//			GetManagedKafkaByClusterIDFunc: func(clusterID string) ([]v1.ManagedKafka, *apiErrors.ServiceError) {
+//			GetKafkaSizeCountOfEnterpriseClusterFunc: func(clusterID string) ([]*ClusterSizeCount, error) {
+//				panic("mock out the GetKafkaSizeCountOfEnterpriseCluster method")
+//			},
+//			GetManagedKafkaByClusterIDFunc: func(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError) {
 //				panic("mock out the GetManagedKafkaByClusterID method")
 //			},
 //			HasAvailableCapacityInRegionFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, *apiErrors.ServiceError) {
@@ -145,7 +148,7 @@ type KafkaServiceMock struct {
 	DeprovisionKafkaForUsersFunc func(users []string) *apiErrors.ServiceError
 
 	// GenerateReservedManagedKafkasByClusterIDFunc mocks the GenerateReservedManagedKafkasByClusterID method.
-	GenerateReservedManagedKafkasByClusterIDFunc func(clusterID string) ([]v1.ManagedKafka, *apiErrors.ServiceError)
+	GenerateReservedManagedKafkasByClusterIDFunc func(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError)
 
 	// GetFunc mocks the Get method.
 	GetFunc func(ctx context.Context, id string) (*dbapi.KafkaRequest, *apiErrors.ServiceError)
@@ -159,8 +162,11 @@ type KafkaServiceMock struct {
 	// GetCNAMERecordStatusFunc mocks the GetCNAMERecordStatus method.
 	GetCNAMERecordStatusFunc func(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error)
 
+	// GetKafkaSizeCountOfEnterpriseClusterFunc mocks the GetKafkaSizeCountOfEnterpriseCluster method.
+	GetKafkaSizeCountOfEnterpriseClusterFunc func(clusterID string) ([]*ClusterSizeCount, error)
+
 	// GetManagedKafkaByClusterIDFunc mocks the GetManagedKafkaByClusterID method.
-	GetManagedKafkaByClusterIDFunc func(clusterID string) ([]v1.ManagedKafka, *apiErrors.ServiceError)
+	GetManagedKafkaByClusterIDFunc func(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError)
 
 	// HasAvailableCapacityInRegionFunc mocks the HasAvailableCapacityInRegion method.
 	HasAvailableCapacityInRegionFunc func(kafkaRequest *dbapi.KafkaRequest) (bool, *apiErrors.ServiceError)
@@ -279,6 +285,11 @@ type KafkaServiceMock struct {
 			// KafkaRequest is the kafkaRequest argument value.
 			KafkaRequest *dbapi.KafkaRequest
 		}
+		// GetKafkaSizeCountOfEnterpriseCluster holds details about calls to the GetKafkaSizeCountOfEnterpriseCluster method.
+		GetKafkaSizeCountOfEnterpriseCluster []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+		}
 		// GetManagedKafkaByClusterID holds details about calls to the GetManagedKafkaByClusterID method.
 		GetManagedKafkaByClusterID []struct {
 			// ClusterID is the clusterID argument value.
@@ -390,6 +401,7 @@ type KafkaServiceMock struct {
 	lockGetAvailableSizesInRegion                sync.RWMutex
 	lockGetByID                                  sync.RWMutex
 	lockGetCNAMERecordStatus                     sync.RWMutex
+	lockGetKafkaSizeCountOfEnterpriseCluster     sync.RWMutex
 	lockGetManagedKafkaByClusterID               sync.RWMutex
 	lockHasAvailableCapacityInRegion             sync.RWMutex
 	lockIsQuotaEntitlementActive                 sync.RWMutex
@@ -638,7 +650,7 @@ func (mock *KafkaServiceMock) DeprovisionKafkaForUsersCalls() []struct {
 }
 
 // GenerateReservedManagedKafkasByClusterID calls GenerateReservedManagedKafkasByClusterIDFunc.
-func (mock *KafkaServiceMock) GenerateReservedManagedKafkasByClusterID(clusterID string) ([]v1.ManagedKafka, *apiErrors.ServiceError) {
+func (mock *KafkaServiceMock) GenerateReservedManagedKafkasByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError) {
 	if mock.GenerateReservedManagedKafkasByClusterIDFunc == nil {
 		panic("KafkaServiceMock.GenerateReservedManagedKafkasByClusterIDFunc: method is nil but KafkaService.GenerateReservedManagedKafkasByClusterID was just called")
 	}
@@ -801,8 +813,40 @@ func (mock *KafkaServiceMock) GetCNAMERecordStatusCalls() []struct {
 	return calls
 }
 
+// GetKafkaSizeCountOfEnterpriseCluster calls GetKafkaSizeCountOfEnterpriseClusterFunc.
+func (mock *KafkaServiceMock) GetKafkaSizeCountOfEnterpriseCluster(clusterID string) ([]*ClusterSizeCount, error) {
+	if mock.GetKafkaSizeCountOfEnterpriseClusterFunc == nil {
+		panic("KafkaServiceMock.GetKafkaSizeCountOfEnterpriseClusterFunc: method is nil but KafkaService.GetKafkaSizeCountOfEnterpriseCluster was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	mock.lockGetKafkaSizeCountOfEnterpriseCluster.Lock()
+	mock.calls.GetKafkaSizeCountOfEnterpriseCluster = append(mock.calls.GetKafkaSizeCountOfEnterpriseCluster, callInfo)
+	mock.lockGetKafkaSizeCountOfEnterpriseCluster.Unlock()
+	return mock.GetKafkaSizeCountOfEnterpriseClusterFunc(clusterID)
+}
+
+// GetKafkaSizeCountOfEnterpriseClusterCalls gets all the calls that were made to GetKafkaSizeCountOfEnterpriseCluster.
+// Check the length with:
+//
+//	len(mockedKafkaService.GetKafkaSizeCountOfEnterpriseClusterCalls())
+func (mock *KafkaServiceMock) GetKafkaSizeCountOfEnterpriseClusterCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	mock.lockGetKafkaSizeCountOfEnterpriseCluster.RLock()
+	calls = mock.calls.GetKafkaSizeCountOfEnterpriseCluster
+	mock.lockGetKafkaSizeCountOfEnterpriseCluster.RUnlock()
+	return calls
+}
+
 // GetManagedKafkaByClusterID calls GetManagedKafkaByClusterIDFunc.
-func (mock *KafkaServiceMock) GetManagedKafkaByClusterID(clusterID string) ([]v1.ManagedKafka, *apiErrors.ServiceError) {
+func (mock *KafkaServiceMock) GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError) {
 	if mock.GetManagedKafkaByClusterIDFunc == nil {
 		panic("KafkaServiceMock.GetManagedKafkaByClusterIDFunc: method is nil but KafkaService.GetManagedKafkaByClusterID was just called")
 	}

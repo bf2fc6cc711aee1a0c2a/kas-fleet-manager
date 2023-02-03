@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -8,7 +10,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 type clusterHandler struct {
@@ -35,7 +36,7 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 
 			handlers.ValidateExternalClusterId(&clusterPayload.ClusterExternalId, "external cluster id"),
 
-			handlers.ValidateClusterId(&clusterPayload.ClusterId, "cluster id"),
+			handlers.ValidateNotEmptyClusterId(&clusterPayload.ClusterId, "cluster id"),
 
 			ValidateClusterIdIsUnique(&clusterPayload.ClusterId, h.clusterService),
 
@@ -161,7 +162,7 @@ func (h clusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateClusterId(&clusterID, "cluster id"),
+			handlers.ValidateNotEmptyClusterId(&clusterID, "cluster id"),
 			ValidateKafkaClaims(ctx, ValidateOrganisationId()),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
@@ -189,7 +190,7 @@ func (h clusterHandler) GetEnterpriseClusterWithAddonParams(w http.ResponseWrite
 	ctx := r.Context()
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateClusterId(&clusterID, "cluster id"),
+			handlers.ValidateNotEmptyClusterId(&clusterID, "cluster id"),
 			ValidateKafkaClaims(ctx, ValidateOrganisationId()),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {

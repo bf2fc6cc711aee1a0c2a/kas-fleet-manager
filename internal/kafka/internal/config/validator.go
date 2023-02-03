@@ -51,6 +51,8 @@ func amsProductValidator(fl validator.FieldLevel) bool {
 		return true
 	case string(ocm.RHOSAKEvalProduct):
 		return true
+	case string(ocm.RHOSAKCCProduct):
+		return true
 	default:
 		return false
 	}

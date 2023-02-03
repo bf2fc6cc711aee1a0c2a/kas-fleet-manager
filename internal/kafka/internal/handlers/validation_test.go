@@ -1208,6 +1208,55 @@ func Test_Validation_validateKafkaBillingModel(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "throw an error when the provided kafka billing model is not 'standard' and cluster_id is provided (for enterprise kafka)",
+			arg: args{
+				kafkaRequestPayload: public.KafkaRequestPayload{
+					BillingModel: &[]string{"developer"}[0],
+					ClusterId:    &[]string{"1234abcd1234abcd1234abcd1234abcd"}[0],
+				},
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.STANDARD, nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								config.KafkaInstanceType{
+									Id: types.STANDARD.String(),
+									Sizes: []config.KafkaInstanceSize{
+										config.KafkaInstanceSize{
+											Id: "x1",
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										config.KafkaBillingModel{
+											ID: "marketplace",
+										},
+									},
+								},
+								config.KafkaInstanceType{
+									Id: types.DEVELOPER.String(),
+									Sizes: []config.KafkaInstanceSize{
+										config.KafkaInstanceSize{
+											Id: "x1",
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										config.KafkaBillingModel{
+											ID: "aws",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, testcase := range tests {

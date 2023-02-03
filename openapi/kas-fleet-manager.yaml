@@ -1563,6 +1563,10 @@ components:
           description: billing model to use
           type: string
           nullable: true
+        cluster_id:
+          description: enterprise OSD cluster ID to be used for kafka creation
+          type: string
+          nullable: true
     KafkaPromoteRequest:
       type: object
       properties:
@@ -1630,7 +1634,7 @@ components:
           type: string
           minLength: 1
         ams_product:
-          description: "AMS product to be used. Accepted values: ['RHOSAK', 'RHOSAKTrial', 'RHOSAKEval']"
+          description: "AMS product to be used. Accepted values: ['RHOSAK', 'RHOSAKTrial', 'RHOSAKEval', 'RHOSAKCC']"
           type: string
           minLength: 1
         ams_billing_models:

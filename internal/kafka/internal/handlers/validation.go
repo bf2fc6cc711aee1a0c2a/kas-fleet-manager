@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
+	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
@@ -37,9 +38,16 @@ const minimunNumberOfNodesForTheKafkaMachinePool = 3
 
 func validateKafkaBillingModel(ctx context.Context, kafkaService services.KafkaService, kafkaConfig *config.KafkaConfig, kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {
+		billingModel := shared.SafeString(kafkaRequestPayload.BillingModel)
+		// enterprise kafkas billing model validation
+
+		if !shared.StringEmpty(kafkaRequestPayload.ClusterId) && !shared.StringEqualsIgnoreCase(billingModel, string(v1.BillingModelStandard)) {
+			return errors.InvalidBillingAccount("invalid billing model: %s, only %v is allowed", billingModel,
+				v1.BillingModelStandard)
+		}
 		// No explicitly set kafka billing mode is allowed for now, in which case
 		// an implementation-defined default is chosen
-		if shared.StringEmpty(kafkaRequestPayload.BillingModel) {
+		if billingModel == "" {
 			return nil
 		}
 

@@ -25,6 +25,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 
@@ -604,4 +605,107 @@ func TestKafkaCreate_ValidatePlanParam(t *testing.T) {
 		resp.Body.Close()
 	}
 	g.Expect(err).To(gomega.HaveOccurred(), "error should have occurred when attempting to create kafka unsupported size_id")
+}
+
+func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
+		acl.EnableInstanceLimitControl = false
+	})
+	defer teardown()
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID := "1234abcd1234abcd1234abcd1234abcd"
+	organizationID := "13640203"
+	otherOrganizationID := "99999999"
+
+	cluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.StandardTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = clusterID
+		cluster.Region = mocks.MockCloudRegionID
+		cluster.CloudProvider = mocks.MockCloudProviderID
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.OrganizationID = organizationID
+		cluster.DynamicCapacityInfo = api.JSON([]byte(`{"standard":{"max_nodes":18,"max_units":18,"remaining_units":18}}`))
+	})
+
+	db := h.DBFactory().New()
+	err := db.Create(cluster).Error
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	sameOrgAccount := h.NewAccount("user", "John", "John@abc.com", organizationID)
+	sameOrgCtx := h.NewAuthenticatedContext(sameOrgAccount, nil)
+
+	differentOrgAccount := h.NewAccount("user", "John", "John@abc.com", otherOrganizationID)
+	differentOrgCtx := h.NewAuthenticatedContext(differentOrgAccount, nil)
+
+	billingModel := types.STANDARD.String()
+
+	k := public.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockKafkaName,
+		BillingModel:  &billingModel,
+		ClusterId:     &cluster.ClusterID,
+	}
+
+	kafka, resp, err := client.DefaultApi.CreateKafka(sameOrgCtx, true, k)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	// successful creation of kafka with organization ID matching cluster ID
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "error posting object:  %v", err)
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
+	g.Expect(kafka.InstanceType).To(gomega.Equal(types.STANDARD.String()))
+	g.Expect(kafka.MultiAz).To(gomega.BeTrue())
+	g.Expect(kafka.ExpiresAt).To(gomega.BeNil())
+	g.Expect(kafka.BillingModel).To(gomega.Equal("enterprise"))
+
+	// unsuccessful creation of kafka by a user from non matching organization ID
+	k2 := public.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          "test-kafka-2",
+		ClusterId:     &cluster.ClusterID,
+	}
+
+	// not allowed to create enterprise kafka on a cluster not matching requester's organization ID
+	kafka, resp, err = client.DefaultApi.CreateKafka(differentOrgCtx, true, k2)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).To(gomega.HaveOccurred(), "error should have occurred when attempting to create enterprise kafka against org ID not matching the requester")
+
+	// explicitly setting non standard billing model, which is not allowed when creating enterprise kafkas
+	nonStandardBillingModel := "developer"
+	k3 := public.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockKafkaName,
+		BillingModel:  &nonStandardBillingModel,
+		ClusterId:     &cluster.ClusterID,
+	}
+
+	kafka, resp, err = client.DefaultApi.CreateKafka(sameOrgCtx, true, k3)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).To(gomega.HaveOccurred(), "error should have occurred when attempting to create enterprise kafka with billing model other than standard")
 }

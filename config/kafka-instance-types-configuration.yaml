@@ -10,8 +10,8 @@
 # The following properties are available in each element in the supported_billing_models list:
 #   - [required] id: Identifier for the Kafka billing model. Must be unique among all supported_billing_models
 #   - [required] ams_resource: AMS resource to be used. Accepted values: ['rhosak']
-#   - [required] ams_product: AMS product to be used. Accepted values: ['RHOSAK', 'RHOSAKTrial', 'RHOSAKEval']
-#   - [required] ams_billing_models: List of AMS available billing models: Accepted values: ['marketplace', 'marketplace-rhm', 'marketplace-aws']
+#   - [required] ams_product: AMS product to be used. Accepted values: ['RHOSAK', 'RHOSAKTrial', 'RHOSAKEval', 'RHOSAKCC']
+#   - [required] ams_billing_models: List of AMS available billing models: Accepted values: ['standard', 'marketplace', 'marketplace-rhm', 'marketplace-aws']
 #   - [optional] grace_period_days: The length of time in days when a Kafka instance is set to be in a 'grace period'. Default value: 0, minimum value: 0
 #                                   This configuration only applies to kafka billing models that can be 'promoted' to another kafka billing model. 
 #  
@@ -79,6 +79,11 @@ supported_instance_types:
       ams_billing_models:
       - standard
       grace_period_days: 4
+    - id: enterprise
+      ams_resource: rhosak
+      ams_product: RHOSAKCC
+      ams_billing_models:
+      - standard
     sizes:
     - id: x1
       display_name: "1"

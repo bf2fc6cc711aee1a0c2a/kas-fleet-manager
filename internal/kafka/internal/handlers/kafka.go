@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/gorilla/mux"
 
@@ -49,6 +50,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateKafkaClusterNameIsUnique(&kafkaRequestPayload.Name, h.service, r.Context()),
 			ValidateKafkaClaims(ctx, ValidateUsername(), ValidateOrganisationId()),
 			ValidateCloudProvider(ctx, h.service, &kafkaRequestPayload, h.providerConfig, "creating kafka requests"),
+			handlers.ValidateNotEmptyClusterId(kafkaRequestPayload.ClusterId, "cluster id"),
 			ValidateKafkaPlan(ctx, h.service, h.kafkaConfig, &kafkaRequestPayload),
 			validateKafkaBillingModel(ctx, h.service, h.kafkaConfig, &kafkaRequestPayload),
 			ValidateBillingCloudAccountIdAndMarketplace(ctx, h.service, &kafkaRequestPayload),
@@ -64,6 +66,11 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			convKafka.InstanceType, convKafka.SizeId, _ = getInstanceTypeAndSize(ctx, h.service, h.kafkaConfig, &kafkaRequestPayload)
 
 			convKafka.CloudProvider, convKafka.Region, _ = getCloudProviderAndRegion(ctx, h.service, &kafkaRequestPayload, h.providerConfig)
+
+			// enterprise kafkas should be assigned to specified cluster, if its ID is provided
+			if !shared.StringEmpty(kafkaRequestPayload.ClusterId) {
+				convKafka.ClusterID = *kafkaRequestPayload.ClusterId
+			}
 
 			svcErr := h.service.RegisterKafkaJob(convKafka)
 			if svcErr != nil {

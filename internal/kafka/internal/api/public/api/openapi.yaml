@@ -2234,6 +2234,7 @@ components:
       description: Schema for the request body sent to /kafkas POST
       example:
         reauthentication_enabled: true
+        cluster_id: cluster_id
         marketplace: marketplace
         billing_model: billing_model
         billing_cloud_account_id: billing_cloud_account_id
@@ -2273,6 +2274,10 @@ components:
           type: string
         billing_model:
           description: billing model to use
+          nullable: true
+          type: string
+        cluster_id:
+          description: enterprise OSD cluster ID to be used for kafka creation
           nullable: true
           type: string
       required:
@@ -2346,7 +2351,7 @@ components:
           type: string
         ams_product:
           description: 'AMS product to be used. Accepted values: [''RHOSAK'', ''RHOSAKTrial'',
-            ''RHOSAKEval'']'
+            ''RHOSAKEval'', ''RHOSAKCC'']'
           minLength: 1
           type: string
         ams_billing_models:

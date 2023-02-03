@@ -28,4 +28,6 @@ type KafkaRequestPayload struct {
 	Marketplace *string `json:"marketplace,omitempty"`
 	// billing model to use
 	BillingModel *string `json:"billing_model,omitempty"`
+	// enterprise OSD cluster ID to be used for kafka creation
+	ClusterId *string `json:"cluster_id,omitempty"`
 }
