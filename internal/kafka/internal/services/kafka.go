@@ -442,7 +442,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 		if clusterCapacityUsed < instanceSize.CapacityConsumed {
 			return errors.TooManyKafkaInstancesReached("no available space left on cluster with id: %s for kafka of size: %s", kafkaRequest.ClusterID, kafkaRequest.SizeId)
 		}
-		kafkaRequest.DesiredKafkaBillingModel = "enterprise"
+		kafkaRequest.DesiredKafkaBillingModel = constants.BillingModelEnterprise.String()
 
 	} else {
 		if !k.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
@@ -1434,6 +1434,7 @@ func (k *kafkaService) GetKafkaSizeCountOfEnterpriseCluster(clusterID string) ([
 		Select("size_id, count(1) as Count").
 		Group("size_id").
 		Where("cluster_id = ?", clusterID).
+		Where("status NOT IN (?)", kafkaDeletionStatuses).
 		Scan(&sizeCountPerCluster).Error; err != nil {
 		return nil, errors.GeneralError("failed to get count of sizes of a cluster")
 	}

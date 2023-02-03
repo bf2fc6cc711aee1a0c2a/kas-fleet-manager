@@ -13,7 +13,8 @@ import (
 	"fmt"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	mock "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
+	mockKafkas "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
+	mocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
 )
 
@@ -34,65 +35,65 @@ func TestConvertKafkaRequest(t *testing.T) {
 		{
 			name: "should return converted KafkaRequest from empty db KafkaRequest",
 			args: args{
-				kafkaRequestPayload: *mock.BuildKafkaRequestPayload(nil),
+				kafkaRequestPayload: *mockKafkas.BuildKafkaRequestPayload(nil),
 				dbKafkaRequests:     []*dbapi.KafkaRequest{},
 			},
-			want: mock.BuildKafkaRequest(
-				mock.With(mock.REGION, mock.DefaultKafkaRequestRegion),
-				mock.With(mock.CLOUD_PROVIDER, mock.DefaultKafkaRequestProvider),
-				mock.With(mock.NAME, mock.DefaultKafkaRequestName),
-				mock.WithReauthenticationEnabled(reauthEnabled),
+			want: mockKafkas.BuildKafkaRequest(
+				mockKafkas.With(mockKafkas.REGION, mockKafkas.DefaultKafkaRequestRegion),
+				mockKafkas.With(mockKafkas.CLOUD_PROVIDER, mockKafkas.DefaultKafkaRequestProvider),
+				mockKafkas.With(mockKafkas.NAME, mockKafkas.DefaultKafkaRequestName),
+				mockKafkas.WithReauthenticationEnabled(reauthEnabled),
 			),
 		},
 		{
 			name: "Should return empty kafka request with reauthentication disabled",
 			args: args{
-				kafkaRequestPayload: *mock.BuildKafkaRequestPayload(func(payload *public.KafkaRequestPayload) {
+				kafkaRequestPayload: *mockKafkas.BuildKafkaRequestPayload(func(payload *public.KafkaRequestPayload) {
 					payload.ReauthenticationEnabled = &reauthDisabled
 				}),
-				dbKafkaRequests: []*dbapi.KafkaRequest{mock.BuildKafkaRequest(
-					mock.With(mock.REGION, mock.DefaultKafkaRequestRegion),
-					mock.With(mock.CLOUD_PROVIDER, mock.DefaultKafkaRequestProvider),
-					mock.With(mock.NAME, mock.DefaultKafkaRequestName),
-					mock.WithReauthenticationEnabled(reauthDisabled),
+				dbKafkaRequests: []*dbapi.KafkaRequest{mockKafkas.BuildKafkaRequest(
+					mockKafkas.With(mockKafkas.REGION, mockKafkas.DefaultKafkaRequestRegion),
+					mockKafkas.With(mockKafkas.CLOUD_PROVIDER, mockKafkas.DefaultKafkaRequestProvider),
+					mockKafkas.With(mockKafkas.NAME, mockKafkas.DefaultKafkaRequestName),
+					mockKafkas.WithReauthenticationEnabled(reauthDisabled),
 				)},
 			},
-			want: mock.BuildKafkaRequest(
-				mock.With(mock.REGION, mock.DefaultKafkaRequestRegion),
-				mock.With(mock.CLOUD_PROVIDER, mock.DefaultKafkaRequestProvider),
-				mock.With(mock.NAME, mock.DefaultKafkaRequestName),
-				mock.WithReauthenticationEnabled(reauthDisabled),
+			want: mockKafkas.BuildKafkaRequest(
+				mockKafkas.With(mockKafkas.REGION, mockKafkas.DefaultKafkaRequestRegion),
+				mockKafkas.With(mockKafkas.CLOUD_PROVIDER, mockKafkas.DefaultKafkaRequestProvider),
+				mockKafkas.With(mockKafkas.NAME, mockKafkas.DefaultKafkaRequestName),
+				mockKafkas.WithReauthenticationEnabled(reauthDisabled),
 			),
 		},
 		{
 			name: "should convert and return kafka request from non-empty db kafka request slice with reauth enabled",
 			args: args{
-				kafkaRequestPayload: *mock.BuildKafkaRequestPayload(nil),
-				dbKafkaRequests: []*dbapi.KafkaRequest{mock.BuildKafkaRequest(
-					mock.WithPredefinedTestValues(),
-					mock.WithReauthenticationEnabled(reauthEnabled),
+				kafkaRequestPayload: *mockKafkas.BuildKafkaRequestPayload(nil),
+				dbKafkaRequests: []*dbapi.KafkaRequest{mockKafkas.BuildKafkaRequest(
+					mockKafkas.WithPredefinedTestValues(),
+					mockKafkas.WithReauthenticationEnabled(reauthEnabled),
 				)},
 			},
-			want: mock.BuildKafkaRequest(
-				mock.WithPredefinedTestValues(),
-				mock.WithReauthenticationEnabled(reauthEnabled),
+			want: mockKafkas.BuildKafkaRequest(
+				mockKafkas.WithPredefinedTestValues(),
+				mockKafkas.WithReauthenticationEnabled(reauthEnabled),
 			),
 		},
 		{
 			name: "should convert and return kafka request from empty db kafka request with desired billing model",
 			args: args{
-				kafkaRequestPayload: *mock.BuildKafkaRequestPayload(func(payload *public.KafkaRequestPayload) {
+				kafkaRequestPayload: *mockKafkas.BuildKafkaRequestPayload(func(payload *public.KafkaRequestPayload) {
 					billingModelStr := "mybillingmodel"
 					payload.BillingModel = &billingModelStr
 				}),
 				dbKafkaRequests: []*dbapi.KafkaRequest{},
 			},
-			want: mock.BuildKafkaRequest(
-				mock.With(mock.REGION, mock.DefaultKafkaRequestRegion),
-				mock.With(mock.CLOUD_PROVIDER, mock.DefaultKafkaRequestProvider),
-				mock.With(mock.NAME, mock.DefaultKafkaRequestName),
-				mock.WithReauthenticationEnabled(reauthEnabled),
-				mock.With(mock.DESIRED_KAFKA_BILLING_MODEL, "mybillingmodel"),
+			want: mockKafkas.BuildKafkaRequest(
+				mockKafkas.With(mockKafkas.REGION, mockKafkas.DefaultKafkaRequestRegion),
+				mockKafkas.With(mockKafkas.CLOUD_PROVIDER, mockKafkas.DefaultKafkaRequestProvider),
+				mockKafkas.With(mockKafkas.NAME, mockKafkas.DefaultKafkaRequestName),
+				mockKafkas.WithReauthenticationEnabled(reauthEnabled),
+				mockKafkas.With(mockKafkas.DESIRED_KAFKA_BILLING_MODEL, "mybillingmodel"),
 			),
 		},
 	}
@@ -120,6 +121,8 @@ func TestPresentKafkaRequest(t *testing.T) {
 	reauthEnabled := true
 	kafkaStorageSize := "1000Gi"
 
+	clusterID := mocks.DefaultClusterID
+
 	defaultInstanceSize := *mocksupportedinstancetypes.BuildKafkaInstanceSize()
 	nowTime := time.Now()
 
@@ -132,24 +135,24 @@ func TestPresentKafkaRequest(t *testing.T) {
 		{
 			name: "should return kafka request as presented to an end user",
 			args: args{
-				dbKafkaRequest: mock.BuildKafkaRequest(
-					mock.WithPredefinedTestValues(),
-					mock.WithReauthenticationEnabled(reauthEnabled),
-					mock.With(mock.BOOTSTRAP_SERVER_HOST, bootstrapServer),
-					mock.With(mock.FAILED_REASON, failedReason),
-					mock.With(mock.ACTUAL_KAFKA_VERSION, version),
-					mock.With(mock.STORAGE_SIZE, kafkaStorageSize),
-					mock.With(mock.DESIRED_KAFKA_BILLING_MODEL, "mydesiredkafkabillingmodel"),
-					mock.With(mock.ACTUAL_KAFKA_BILLING_MODEL, "myactualkafkabillingmodel"),
-					mock.WithCreatedAt(nowTime),
-					mock.WithExpiresAt(sql.NullTime{Time: nowTime.Add(time.Duration(*defaultInstanceSize.LifespanSeconds) * time.Second), Valid: true}),
+				dbKafkaRequest: mockKafkas.BuildKafkaRequest(
+					mockKafkas.WithPredefinedTestValues(),
+					mockKafkas.WithReauthenticationEnabled(reauthEnabled),
+					mockKafkas.With(mockKafkas.BOOTSTRAP_SERVER_HOST, bootstrapServer),
+					mockKafkas.With(mockKafkas.FAILED_REASON, failedReason),
+					mockKafkas.With(mockKafkas.ACTUAL_KAFKA_VERSION, version),
+					mockKafkas.With(mockKafkas.STORAGE_SIZE, kafkaStorageSize),
+					mockKafkas.With(mockKafkas.DESIRED_KAFKA_BILLING_MODEL, "mydesiredkafkabillingmodel"),
+					mockKafkas.With(mockKafkas.ACTUAL_KAFKA_BILLING_MODEL, "myactualkafkabillingmodel"),
+					mockKafkas.WithCreatedAt(nowTime),
+					mockKafkas.WithExpiresAt(sql.NullTime{Time: nowTime.Add(time.Duration(*defaultInstanceSize.LifespanSeconds) * time.Second), Valid: true}),
 				),
 			},
-			want: *mock.BuildPublicKafkaRequest(func(kafkaRequest *public.KafkaRequest) {
+			want: *mockKafkas.BuildPublicKafkaRequest(func(kafkaRequest *public.KafkaRequest) {
 				kafkaRequest.ReauthenticationEnabled = reauthEnabled
 				kafkaRequest.BootstrapServerHost = setBootstrapServerHost(bootstrapServer)
 				kafkaRequest.FailedReason = failedReason
-				kafkaRequest.InstanceType = mock.DefaultInstanceType
+				kafkaRequest.InstanceType = mockKafkas.DefaultInstanceType
 				kafkaRequest.DeprecatedKafkaStorageSize = kafkaStorageSize
 				kafkaRequest.BrowserUrl = "//dashboard"
 				kafkaRequest.SizeId = defaultInstanceSize.Id
@@ -159,6 +162,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.DeprecatedMaxPartitions = int32(defaultInstanceSize.MaxPartitions)
 				kafkaRequest.DeprecatedMaxDataRetentionPeriod = defaultInstanceSize.MaxDataRetentionPeriod
 				kafkaRequest.DeprecatedMaxConnectionAttemptsPerSec = int32(defaultInstanceSize.MaxConnectionAttemptsPerSec)
+				kafkaRequest.ClusterId = &clusterID
 
 				kafkaRequest.CreatedAt = nowTime
 				expireTime := kafkaRequest.CreatedAt.Add(time.Duration(*defaultInstanceSize.LifespanSeconds) * time.Second)
@@ -178,7 +182,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 					Configuration: config.SupportedKafkaInstanceTypesConfig{
 						SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
 							{
-								Id: mock.DefaultInstanceType,
+								Id: mockKafkas.DefaultInstanceType,
 								Sizes: []config.KafkaInstanceSize{
 									defaultInstanceSize,
 								},

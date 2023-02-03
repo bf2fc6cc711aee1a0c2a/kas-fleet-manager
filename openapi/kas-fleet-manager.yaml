@@ -1450,6 +1450,10 @@ components:
             promotion_status:
               type: string
               description: "Status of the Kafka request promotion. Possible values: ['promoting', 'failed']. If unset it means no promotion is in progress."
+            cluster_id:
+              description: data plane on which kafka is placed
+              type: string
+              nullable: true
             promotion_details:
               type: string
               description: "Details of the Kafka request promotion. It can be set when a Kafka request promotion is in progress or has failed"
@@ -2324,6 +2328,7 @@ components:
         billing_cloud_account_id: "123456789012"
         marketplace: "aws"
         billing_model: "marketplace"
+        cluster_id: "21grk30a21grk30a21grk30a21grk30a"
     KafkaRequestFailedCreationStatusExample:
       value:
         id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"

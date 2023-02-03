@@ -81,6 +81,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		Id:                         reference.Id,
 		Kind:                       reference.Kind,
 		Href:                       reference.Href,
+		ClusterId:                  &kafkaRequest.ClusterID,
 		Region:                     kafkaRequest.Region,
 		Name:                       kafkaRequest.Name,
 		CloudProvider:              kafkaRequest.CloudProvider,

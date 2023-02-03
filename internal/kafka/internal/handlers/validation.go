@@ -7,13 +7,12 @@ import (
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
-	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
-	kafkaConstants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
@@ -41,13 +40,13 @@ func validateKafkaBillingModel(ctx context.Context, kafkaService services.KafkaS
 		billingModel := shared.SafeString(kafkaRequestPayload.BillingModel)
 		// enterprise kafkas billing model validation
 
-		if !shared.StringEmpty(kafkaRequestPayload.ClusterId) && !shared.StringEqualsIgnoreCase(billingModel, string(v1.BillingModelStandard)) {
+		if !shared.StringEmpty(kafkaRequestPayload.ClusterId) && !shared.StringEqualsIgnoreCase(billingModel, constants.BillingModelEnterprise.String()) {
 			return errors.InvalidBillingAccount("invalid billing model: %s, only %v is allowed", billingModel,
-				v1.BillingModelStandard)
+				constants.BillingModelEnterprise.String())
 		}
 		// No explicitly set kafka billing mode is allowed for now, in which case
 		// an implementation-defined default is chosen
-		if billingModel == "" {
+		if shared.StringEmpty(billingModel) {
 			return nil
 		}
 
@@ -536,9 +535,9 @@ func validateKafkaRequestToPromoteHasAPromotableActualKafkaBillingModel(kafkaReq
 func validateKafkaRequestToPromoteHasAPromotableStatus(kafkaRequest *dbapi.KafkaRequest) handlers.Validate {
 	return func() *errors.ServiceError {
 		acceptedKafkaStatusesForPromotion := []string{
-			kafkaConstants.KafkaRequestStatusReady.String(),
-			kafkaConstants.KafkaRequestStatusSuspended.String(),
-			kafkaConstants.KafkaRequestStatusResuming.String(),
+			constants.KafkaRequestStatusReady.String(),
+			constants.KafkaRequestStatusSuspended.String(),
+			constants.KafkaRequestStatusResuming.String(),
 		}
 
 		found := arrays.Contains(acceptedKafkaStatusesForPromotion, kafkaRequest.Status)
