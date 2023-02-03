@@ -335,7 +335,10 @@ func TestKafka_QuotaManagementListExpirationBasedOnQuota(t *testing.T) {
 	})
 	g.Expect(kafkaDeletionErr).NotTo(gomega.HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
 
-	kafkaRequestList, _, err := client.DefaultApi.GetKafkas(orgCtx, &public.GetKafkasOpts{})
+	kafkaRequestList, resp, err := client.DefaultApi.GetKafkas(orgCtx, &public.GetKafkasOpts{})
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	// verify that kafkas with an expired quota and grace period is suspended
@@ -369,7 +372,10 @@ func TestKafka_QuotaManagementListExpirationBasedOnQuota(t *testing.T) {
 	})
 	g.Expect(kafkaDeletionErr).NotTo(gomega.HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
 
-	kafkaRequestList, _, err = client.DefaultApi.GetKafkas(saCtx, &public.GetKafkasOpts{})
+	kafkaRequestList, resp, err = client.DefaultApi.GetKafkas(saCtx, &public.GetKafkasOpts{})
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	// verify that kafkas with an expired quota and grace period is suspended
@@ -468,10 +474,13 @@ func TestKafka_ExpirationBasedOnLifespanSeconds(t *testing.T) {
 	// ensure kafka request with long lifespan does not get deleted
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	result, _, err := client.DefaultApi.CreateKafka(ctx, true, public.KafkaRequestPayload{
+	result, resp, err := client.DefaultApi.CreateKafka(ctx, true, public.KafkaRequestPayload{
 		Name: "kafka-with-long-lifespan",
 		Plan: fmt.Sprintf("%s.x1", types.STANDARD), // has a long lifespan of 2d
 	})
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to create kafka with long lifespan")
 	expectedExpirationDate := result.CreatedAt.Add(time.Duration(longLifespanSeconds) * time.Second).Format(time.RFC1123Z)
 	g.Expect(result.ExpiresAt.Format(time.RFC1123Z)).To(gomega.Equal(expectedExpirationDate), "expected expires_at for kafka with long lifespan does not match actual")
@@ -484,10 +493,13 @@ func TestKafka_ExpirationBasedOnLifespanSeconds(t *testing.T) {
 	// ensure kafka request with short lifespan gets deleted
 	account = h.NewAccount("dummy-user-1", "", "", "dummy-org")
 	ctx = h.NewAuthenticatedContext(account, nil)
-	result, _, err = client.DefaultApi.CreateKafka(ctx, true, public.KafkaRequestPayload{
+	result, resp, err = client.DefaultApi.CreateKafka(ctx, true, public.KafkaRequestPayload{
 		Name: "kafka-with-short-lifespan",
 		Plan: fmt.Sprintf("%s.x1", types.DEVELOPER), // has a short lifespan of 10s
 	})
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to create kafka with short lifespan")
 	expectedExpirationDate = result.CreatedAt.Add(time.Duration(shortLifespanSeconds) * time.Second).Format(time.RFC1123Z)
 	g.Expect(result.ExpiresAt.Format(time.RFC1123Z)).To(gomega.Equal(expectedExpirationDate), "expected expires_at for kafka with short lifespan does not match actual")
