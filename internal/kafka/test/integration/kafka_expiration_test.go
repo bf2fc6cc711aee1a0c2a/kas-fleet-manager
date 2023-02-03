@@ -14,6 +14,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	mockclusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	mockkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	mocksupportedinstancetypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/supported_instance_types"
@@ -382,4 +383,115 @@ func TestKafka_QuotaManagementListExpirationBasedOnQuota(t *testing.T) {
 		}
 		g.Expect(k.ExpiresAt).To(gomega.BeNil())
 	}
+}
+
+func TestKafka_ExpirationBasedOnLifespanSeconds(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	longLifespanSeconds := 178000
+	shortLifespanSeconds := 2
+
+	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(kafkaConfig *config.KafkaConfig, quotaManagementListConfig *quota_management.QuotaManagementListConfig) {
+		// configure supported instance types with dummy kafka billing models
+		kafkaConfig.SupportedInstanceTypes = &config.KafkaSupportedInstanceTypesConfig{
+			Configuration: config.SupportedKafkaInstanceTypesConfig{
+				SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+					{
+						Id:          types.STANDARD.String(),
+						DisplayName: types.STANDARD.String(),
+						Sizes: []config.KafkaInstanceSize{
+							*mocksupportedinstancetypes.BuildKafkaInstanceSize(
+								mocksupportedinstancetypes.WithLifespanSeconds(&longLifespanSeconds),
+							),
+						},
+						SupportedBillingModels: []config.KafkaBillingModel{
+							{
+								ID:               types.STANDARD.String(),
+								AMSResource:      ocm.RHOSAKResourceName,
+								AMSProduct:       string(ocm.RHOSAKProduct),
+								AMSBillingModels: []string{string(amsv1.BillingModelStandard)},
+							},
+						},
+					},
+					{
+						Id:          types.DEVELOPER.String(),
+						DisplayName: types.DEVELOPER.String(),
+						Sizes: []config.KafkaInstanceSize{
+							*mocksupportedinstancetypes.BuildKafkaInstanceSize(
+								mocksupportedinstancetypes.WithLifespanSeconds(&shortLifespanSeconds),
+							),
+						},
+						SupportedBillingModels: []config.KafkaBillingModel{
+							{
+								ID:               types.STANDARD.String(),
+								AMSResource:      ocm.RHOSAKResourceName,
+								AMSProduct:       string(ocm.RHOSAKTrialProduct),
+								AMSBillingModels: []string{string(amsv1.BillingModelStandard)},
+							},
+						},
+					},
+				},
+			},
+		}
+	})
+	defer tearDown()
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	// set up dummy data plane cluster that accepts both standard and developer clusters
+	testCluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone // ensures no errors will occur due to it not being available on ocm
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = "test-cluster"
+		cluster.CloudProvider = mocks.MockCloudProviderID
+		cluster.Region = mocks.MockCloudRegionID
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.AvailableStrimziVersions = api.JSON(mockclusters.AvailableStrimziVersions)
+	})
+	db := h.DBFactory().New()
+	err := db.Create(testCluster).Error
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create dummy data plane cluster")
+
+	// ensure kafka request with long lifespan does not get deleted
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account, nil)
+	result, _, err := client.DefaultApi.CreateKafka(ctx, true, public.KafkaRequestPayload{
+		Name: "kafka-with-long-lifespan",
+		Plan: fmt.Sprintf("%s.x1", types.STANDARD), // has a long lifespan of 2d
+	})
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to create kafka with long lifespan")
+	expectedExpirationDate := result.CreatedAt.Add(time.Duration(longLifespanSeconds) * time.Second).Format(time.RFC1123Z)
+	g.Expect(result.ExpiresAt.Format(time.RFC1123Z)).To(gomega.Equal(expectedExpirationDate), "expected expires_at for kafka with long lifespan does not match actual")
+
+	// wait for kafka to be ready and ensure the expiration date does not get updated
+	kafka, err := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, result.Id, constants.KafkaRequestStatusReady)
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to wait for kafka with long lifespan to reach status %q", constants.KafkaRequestStatusReady)
+	g.Expect(kafka.ExpiresAt.Format(time.RFC1123Z)).To(gomega.Equal(expectedExpirationDate), "expected expires_at for kafka with long lifespan does not match actual")
+
+	// ensure kafka request with short lifespan gets deleted
+	account = h.NewAccount("dummy-user-1", "", "", "dummy-org")
+	ctx = h.NewAuthenticatedContext(account, nil)
+	result, _, err = client.DefaultApi.CreateKafka(ctx, true, public.KafkaRequestPayload{
+		Name: "kafka-with-short-lifespan",
+		Plan: fmt.Sprintf("%s.x1", types.DEVELOPER), // has a short lifespan of 10s
+	})
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to create kafka with short lifespan")
+	expectedExpirationDate = result.CreatedAt.Add(time.Duration(shortLifespanSeconds) * time.Second).Format(time.RFC1123Z)
+	g.Expect(result.ExpiresAt.Format(time.RFC1123Z)).To(gomega.Equal(expectedExpirationDate), "expected expires_at for kafka with short lifespan does not match actual")
+
+	err = common.WaitForKafkaToBeDeleted(ctx, test.TestServices.DBFactory, client, result.Id)
+	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to wait for kafka with short lifespan to be deleted")
 }
