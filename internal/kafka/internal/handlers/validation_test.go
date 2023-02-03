@@ -1209,7 +1209,7 @@ func Test_Validation_validateKafkaBillingModel(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "throw an error when the provided kafka billing model is not 'standard' and cluster_id is provided (for enterprise kafka)",
+			name: "throw an error when the provided kafka billing model is not 'enterprise' and cluster_id is provided (for enterprise kafka)",
 			arg: args{
 				kafkaRequestPayload: public.KafkaRequestPayload{
 					BillingModel: &[]string{"developer"}[0],
@@ -1234,6 +1234,58 @@ func Test_Validation_validateKafkaBillingModel(t *testing.T) {
 									SupportedBillingModels: []config.KafkaBillingModel{
 										config.KafkaBillingModel{
 											ID: "marketplace",
+										},
+									},
+								},
+								config.KafkaInstanceType{
+									Id: types.DEVELOPER.String(),
+									Sizes: []config.KafkaInstanceSize{
+										config.KafkaInstanceSize{
+											Id: "x1",
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										config.KafkaBillingModel{
+											ID: "aws",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "throw an error when the provided kafka billing model is 'enterprise' and cluster_id is empty (for enterprise kafka)",
+			arg: args{
+				kafkaRequestPayload: public.KafkaRequestPayload{
+					BillingModel: &[]string{constants.BillingModelEnterprise.String()}[0],
+					ClusterId:    &[]string{""}[0],
+				},
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.STANDARD, nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								config.KafkaInstanceType{
+									Id: types.STANDARD.String(),
+									Sizes: []config.KafkaInstanceSize{
+										config.KafkaInstanceSize{
+											Id: "x1",
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										config.KafkaBillingModel{
+											ID: "marketplace",
+										},
+										config.KafkaBillingModel{
+											ID: constants.BillingModelEnterprise.String(),
 										},
 									},
 								},

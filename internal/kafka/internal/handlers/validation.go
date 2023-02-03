@@ -44,6 +44,11 @@ func validateKafkaBillingModel(ctx context.Context, kafkaService services.KafkaS
 			return errors.InvalidBillingAccount("invalid billing model: %s, only %v is allowed", billingModel,
 				constants.BillingModelEnterprise.String())
 		}
+
+		if shared.StringEmpty(kafkaRequestPayload.ClusterId) && shared.StringEqualsIgnoreCase(billingModel, constants.BillingModelEnterprise.String()) {
+			return errors.GeneralError("cluster ID must be supplied when selected billing model is: %s",
+				constants.BillingModelEnterprise.String())
+		}
 		// No explicitly set kafka billing mode is allowed for now, in which case
 		// an implementation-defined default is chosen
 		if shared.StringEmpty(billingModel) {
