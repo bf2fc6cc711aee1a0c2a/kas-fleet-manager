@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/caddyserver/certmagic"
 	"github.com/libdns/route53"
 )
@@ -24,7 +25,7 @@ type GetCertificateRequest struct {
 // areCertRefsDefined returns true if all certificate references are defined.
 // otherwise returns false
 func (req GetCertificateRequest) areCertRefsDefined() bool {
-	return req.TLSCertRef != "" && req.TLSKeyRef != ""
+	return !(shared.StringEmpty(req.TLSCertRef) || shared.StringEmpty(req.TLSKeyRef))
 }
 
 // Certificate is the content of the certificate

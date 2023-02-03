@@ -1407,7 +1407,7 @@ func (k *kafkaService) ManagedKafkasRoutesTLSCertificate(kafkaRequest *dbapi.Kaf
 	// 1. We use the Kafka domain given in the Kafka config as the base domain for already prepared Kafkas
 	// 2. The base domain name is constructed by concatenating the kafka id and the kafka domain name given in the Kafka config for all standard Kafkas in preparing state i.e Kafkas that do not have the bootstrap server host already set
 	// 3. The base domain name is constructed by concatenating the "trial" and the kafka domain name given in the Kafka config for all developer Kafkas in preparing state i.e Kafkas that do not have the bootstrap server host already set
-	if kafkaRequest.KafkasRoutesBaseDomainName == "" {
+	if !kafkaRequest.HasCertificateInfo() {
 		if !k.kafkaTLSCertificateManagementService.IsAutomaticCertificateManagementEnabled() {
 			kafkaRequest.KafkasRoutesBaseDomainName = k.kafkaConfig.KafkaDomainName
 		} else if kafkaRequest.Status == constants.KafkaRequestStatusAccepted.String() || kafkaRequest.Status == constants.KafkaRequestStatusPreparing.String() {
