@@ -6,7 +6,14 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 )
 
-func validateProcessorRequest(resource *public.ProcessorRequest) handlers.Validate {
+func validateProcessorRequest(request *public.ProcessorRequest) handlers.Validate {
+	//TODO [manstis] No validation of Processors at the moment
+	return func() *errors.ServiceError {
+		return nil
+	}
+}
+
+func validateProcessor(resource *public.Processor) handlers.Validate {
 	//TODO [manstis] No validation of Processors at the moment
 	return func() *errors.ServiceError {
 		return nil

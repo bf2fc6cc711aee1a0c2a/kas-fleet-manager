@@ -5,9 +5,55 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
+func ConvertProcessor(from public.Processor) (*dbapi.Processor, *errors.ServiceError) {
+
+	spec, err := json.Marshal(from.Processor)
+	if err != nil {
+		return nil, errors.BadRequest("invalid processor spec: %v", err)
+	}
+
+	var namespaceId *string
+	if from.NamespaceId != "" {
+		namespaceId = &from.NamespaceId
+	}
+	return &dbapi.Processor{
+		Model: db.Model{
+			ID: from.Id,
+		},
+		NamespaceId:   namespaceId,
+		Name:          from.Name,
+		Owner:         from.Owner,
+		Version:       from.ResourceVersion,
+		DesiredState:  dbapi.ProcessorDesiredState(from.DesiredState),
+		ProcessorSpec: spec,
+		ServiceAccount: dbapi.ServiceAccount{
+			ClientId:     from.ServiceAccount.ClientId,
+			ClientSecret: from.ServiceAccount.ClientSecret,
+		},
+		Annotations: ConvertProcessorAnnotations(from.Id, from.Annotations),
+		Status: dbapi.ProcessorStatus{
+			Phase: dbapi.ProcessorStatusPhase(from.Status.State),
+		},
+	}, nil
+}
+
+func ConvertProcessorAnnotations(id string, annotations map[string]string) []dbapi.ProcessorAnnotation {
+	res := make([]dbapi.ProcessorAnnotation, len(annotations))
+	i := 0
+	for k, v := range annotations {
+		res[i].ProcessorID = id
+		res[i].Key = k
+		res[i].Value = v
+
+		i++
+	}
+
+	return res
+}
 func PresentProcessor(from *dbapi.Processor) (public.Processor, *errors.ServiceError) {
 	spec := map[string]interface{}{}
 	err := from.ProcessorSpec.Unmarshal(&spec)
@@ -68,18 +114,5 @@ func PresentProcessorAnnotations(annotations []dbapi.ProcessorAnnotation) map[st
 	for _, ann := range annotations {
 		res[ann.Key] = ann.Value
 	}
-	return res
-}
-func ConvertProcessorAnnotations(id string, annotations map[string]string) []dbapi.ProcessorAnnotation {
-	res := make([]dbapi.ProcessorAnnotation, len(annotations))
-	i := 0
-	for k, v := range annotations {
-		res[i].ProcessorID = id
-		res[i].Key = k
-		res[i].Value = v
-
-		i++
-	}
-
 	return res
 }
