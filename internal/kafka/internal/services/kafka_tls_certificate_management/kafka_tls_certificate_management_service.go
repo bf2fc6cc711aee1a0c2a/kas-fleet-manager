@@ -174,12 +174,17 @@ func NewKafkaTLSCertificateManagementService(
 		storage, err = newVaultStorage(awsConfig)
 	}
 
-	return &kafkaTLSCertificateManagementService{
-		storage: storage,
-		config:  kafkaTLSCertificateManagementConfig,
-		certManagementClient: wrapper{
+	var certManagementClient certMagicClientWrapper
+	if kafkaTLSCertificateManagementConfig.CertificateManagementStrategy == automaticCertificateManagement {
+		certManagementClient = wrapper{
 			wrappedClient: createCertMagicClient(awsConfig, kafkaTLSCertificateManagementConfig, storage),
-		},
+		}
+	}
+
+	return &kafkaTLSCertificateManagementService{
+		storage:              storage,
+		config:               kafkaTLSCertificateManagementConfig,
+		certManagementClient: certManagementClient,
 	}, err
 }
 
