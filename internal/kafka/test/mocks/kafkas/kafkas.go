@@ -60,6 +60,8 @@ const (
 	ACTUAL_KAFKA_BILLING_MODEL
 	PROMOTION_STATUS
 	PROMOTION_DETAILS
+	CANARY_SERVICE_ACCOUNT_CLIENT_ID
+	CANARY_SERVICE_ACCOUNT_CLIENT_SECRET
 )
 
 type KafkaAttribute int
@@ -117,6 +119,10 @@ func With(attribute KafkaRequestAttribute, value string) KafkaRequestBuildOption
 			request.PromotionStatus = dbapi.KafkaPromotionStatus(value)
 		case PROMOTION_DETAILS:
 			request.PromotionDetails = value
+		case CANARY_SERVICE_ACCOUNT_CLIENT_ID:
+			request.CanaryServiceAccountClientID = value
+		case CANARY_SERVICE_ACCOUNT_CLIENT_SECRET:
+			request.CanaryServiceAccountClientSecret = value
 		}
 	}
 }

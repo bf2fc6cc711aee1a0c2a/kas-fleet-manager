@@ -17,6 +17,7 @@ const (
 	DefaultCapacityConsumed             = 1
 	DefaultMinInSyncReplicas            = 1
 	DefaultReplicationFactor            = 1
+	DefaultMaxPartitions                = 100
 )
 
 var (
@@ -40,6 +41,7 @@ const (
 	MAX_MESSAGE_SIZE
 	QUOTA_TYPE
 	MATURITY_STATUS
+	MAX_PARTITIONS
 )
 
 func With(attribute KafkaInstanceSizeAttribute, value string) KafkaInstanceSizeBuildOption {
@@ -109,6 +111,12 @@ func WithLifespanSeconds(lifespanSeconds *int) KafkaInstanceSizeBuildOption {
 	}
 }
 
+func WithMaxPartitions(maxPartitions int) KafkaInstanceSizeBuildOption {
+	return func(kafkaInstanceSize *config.KafkaInstanceSize) {
+		kafkaInstanceSize.MaxPartitions = maxPartitions
+	}
+}
+
 type KafkaInstanceSizeBuildOption func(*config.KafkaInstanceSize)
 
 func BuildKafkaInstanceSize(options ...KafkaInstanceSizeBuildOption) *config.KafkaInstanceSize {
@@ -130,6 +138,7 @@ func BuildKafkaInstanceSize(options ...KafkaInstanceSizeBuildOption) *config.Kaf
 		ReplicationFactor:           DefaultReplicationFactor,
 		LifespanSeconds:             DefaultLifespanSeconds,
 		MaturityStatus:              DefaultMaturityStatus,
+		MaxPartitions:               DefaultMaxPartitions,
 	}
 
 	for _, option := range options {
