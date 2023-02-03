@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"gorm.io/gorm"
@@ -223,4 +225,10 @@ func (k *KafkaRequest) CanBeAutomaticallySuspended() bool {
 	}
 
 	return arrays.Contains(validSuspensionStatuses, k.Status)
+}
+
+// DesiredBillingModelIsEnterprise returns true if the Kafka has enterprise billing model.
+// Otherwise returns false.
+func (k *KafkaRequest) DesiredBillingModelIsEnterprise() bool {
+	return shared.StringEqualsIgnoreCase(k.DesiredKafkaBillingModel, constants.BillingModelEnterprise.String())
 }

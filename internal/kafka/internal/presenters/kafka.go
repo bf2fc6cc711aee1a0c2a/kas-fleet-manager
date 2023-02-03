@@ -7,6 +7,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -35,6 +36,15 @@ func ConvertKafkaRequest(kafkaRequestPayload public.KafkaRequestPayload, dbKafka
 		kafka.ReauthenticationEnabled = *kafkaRequestPayload.ReauthenticationEnabled
 	} else {
 		kafka.ReauthenticationEnabled = true // true by default
+	}
+
+	// enterprise kafkas should be assigned to specified cluster, if its ID is provided
+	if !shared.StringEmpty(kafkaRequestPayload.ClusterId) {
+		kafka.ClusterID = *kafkaRequestPayload.ClusterId
+		// default to enterprise billing model
+		if shared.StringEmpty(kafka.DesiredKafkaBillingModel) {
+			kafka.DesiredKafkaBillingModel = constants.BillingModelEnterprise.String()
+		}
 	}
 
 	return kafka
@@ -81,7 +91,6 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		Id:                         reference.Id,
 		Kind:                       reference.Kind,
 		Href:                       reference.Href,
-		ClusterId:                  &kafkaRequest.ClusterID,
 		Region:                     kafkaRequest.Region,
 		Name:                       kafkaRequest.Name,
 		CloudProvider:              kafkaRequest.CloudProvider,
@@ -115,6 +124,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		BillingModel:                          kafkaRequest.ActualKafkaBillingModel,
 		PromotionStatus:                       kafkaRequest.PromotionStatus.String(),
 		PromotionDetails:                      kafkaRequest.PromotionDetails,
+		ClusterId:                             getClusterID(kafkaRequest),
 	}, nil
 }
 
@@ -134,4 +144,12 @@ func getDisplayName(instanceType string, config *config.KafkaConfig) (string, *e
 		return kafkaInstanceType.DisplayName, nil
 	}
 	return "", nil
+}
+
+// getClusterID only returns the clusterID when the Kafka is enterprise.
+func getClusterID(kafkaRequest *dbapi.KafkaRequest) *string {
+	if kafkaRequest.DesiredBillingModelIsEnterprise() {
+		return &kafkaRequest.ClusterID
+	}
+	return nil
 }

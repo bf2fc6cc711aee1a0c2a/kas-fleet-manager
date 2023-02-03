@@ -31,6 +31,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //			CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
 //				panic("mock out the CheckStrimziVersionReady method")
 //			},
+//			ComputeConsumedStreamingUnitCountPerInstanceTypeFunc: func(clusterID string) (StreamingUnitCountPerInstanceType, error) {
+//				panic("mock out the ComputeConsumedStreamingUnitCountPerInstanceType method")
+//			},
 //			ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
 //				panic("mock out the ConfigureAndSaveIdentityProvider method")
 //			},
@@ -130,6 +133,9 @@ type ClusterServiceMock struct {
 
 	// CheckStrimziVersionReadyFunc mocks the CheckStrimziVersionReady method.
 	CheckStrimziVersionReadyFunc func(cluster *api.Cluster, strimziVersion string) (bool, error)
+
+	// ComputeConsumedStreamingUnitCountPerInstanceTypeFunc mocks the ComputeConsumedStreamingUnitCountPerInstanceType method.
+	ComputeConsumedStreamingUnitCountPerInstanceTypeFunc func(clusterID string) (StreamingUnitCountPerInstanceType, error)
 
 	// ConfigureAndSaveIdentityProviderFunc mocks the ConfigureAndSaveIdentityProvider method.
 	ConfigureAndSaveIdentityProviderFunc func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
@@ -235,6 +241,11 @@ type ClusterServiceMock struct {
 			Cluster *api.Cluster
 			// StrimziVersion is the strimziVersion argument value.
 			StrimziVersion string
+		}
+		// ComputeConsumedStreamingUnitCountPerInstanceType holds details about calls to the ComputeConsumedStreamingUnitCountPerInstanceType method.
+		ComputeConsumedStreamingUnitCountPerInstanceType []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
 		}
 		// ConfigureAndSaveIdentityProvider holds details about calls to the ConfigureAndSaveIdentityProvider method.
 		ConfigureAndSaveIdentityProvider []struct {
@@ -393,37 +404,38 @@ type ClusterServiceMock struct {
 			Status api.ClusterStatus
 		}
 	}
-	lockApplyResources                                 sync.RWMutex
-	lockCheckClusterStatus                             sync.RWMutex
-	lockCheckStrimziVersionReady                       sync.RWMutex
-	lockConfigureAndSaveIdentityProvider               sync.RWMutex
-	lockCountByStatus                                  sync.RWMutex
-	lockCreate                                         sync.RWMutex
-	lockDelete                                         sync.RWMutex
-	lockDeleteByClusterID                              sync.RWMutex
-	lockDeregisterClusterJob                           sync.RWMutex
-	lockFindAllClusters                                sync.RWMutex
-	lockFindCluster                                    sync.RWMutex
-	lockFindClusterByID                                sync.RWMutex
-	lockFindKafkaInstanceCount                         sync.RWMutex
-	lockFindNonEmptyClusterByID                        sync.RWMutex
-	lockFindStreamingUnitCountByClusterAndInstanceType sync.RWMutex
-	lockGetClientID                                    sync.RWMutex
-	lockGetClusterDNS                                  sync.RWMutex
-	lockGetExternalID                                  sync.RWMutex
-	lockHardDeleteByClusterID                          sync.RWMutex
-	lockInstallClusterLogging                          sync.RWMutex
-	lockInstallStrimzi                                 sync.RWMutex
-	lockIsStrimziKafkaVersionAvailableInCluster        sync.RWMutex
-	lockListByStatus                                   sync.RWMutex
-	lockListEnterpriseClustersOfAnOrganization         sync.RWMutex
-	lockListGroupByProviderAndRegion                   sync.RWMutex
-	lockListNonEnterpriseClusterIDs                    sync.RWMutex
-	lockRegisterClusterJob                             sync.RWMutex
-	lockRemoveResources                                sync.RWMutex
-	lockUpdate                                         sync.RWMutex
-	lockUpdateMultiClusterStatus                       sync.RWMutex
-	lockUpdateStatus                                   sync.RWMutex
+	lockApplyResources                                   sync.RWMutex
+	lockCheckClusterStatus                               sync.RWMutex
+	lockCheckStrimziVersionReady                         sync.RWMutex
+	lockComputeConsumedStreamingUnitCountPerInstanceType sync.RWMutex
+	lockConfigureAndSaveIdentityProvider                 sync.RWMutex
+	lockCountByStatus                                    sync.RWMutex
+	lockCreate                                           sync.RWMutex
+	lockDelete                                           sync.RWMutex
+	lockDeleteByClusterID                                sync.RWMutex
+	lockDeregisterClusterJob                             sync.RWMutex
+	lockFindAllClusters                                  sync.RWMutex
+	lockFindCluster                                      sync.RWMutex
+	lockFindClusterByID                                  sync.RWMutex
+	lockFindKafkaInstanceCount                           sync.RWMutex
+	lockFindNonEmptyClusterByID                          sync.RWMutex
+	lockFindStreamingUnitCountByClusterAndInstanceType   sync.RWMutex
+	lockGetClientID                                      sync.RWMutex
+	lockGetClusterDNS                                    sync.RWMutex
+	lockGetExternalID                                    sync.RWMutex
+	lockHardDeleteByClusterID                            sync.RWMutex
+	lockInstallClusterLogging                            sync.RWMutex
+	lockInstallStrimzi                                   sync.RWMutex
+	lockIsStrimziKafkaVersionAvailableInCluster          sync.RWMutex
+	lockListByStatus                                     sync.RWMutex
+	lockListEnterpriseClustersOfAnOrganization           sync.RWMutex
+	lockListGroupByProviderAndRegion                     sync.RWMutex
+	lockListNonEnterpriseClusterIDs                      sync.RWMutex
+	lockRegisterClusterJob                               sync.RWMutex
+	lockRemoveResources                                  sync.RWMutex
+	lockUpdate                                           sync.RWMutex
+	lockUpdateMultiClusterStatus                         sync.RWMutex
+	lockUpdateStatus                                     sync.RWMutex
 }
 
 // ApplyResources calls ApplyResourcesFunc.
@@ -527,6 +539,38 @@ func (mock *ClusterServiceMock) CheckStrimziVersionReadyCalls() []struct {
 	mock.lockCheckStrimziVersionReady.RLock()
 	calls = mock.calls.CheckStrimziVersionReady
 	mock.lockCheckStrimziVersionReady.RUnlock()
+	return calls
+}
+
+// ComputeConsumedStreamingUnitCountPerInstanceType calls ComputeConsumedStreamingUnitCountPerInstanceTypeFunc.
+func (mock *ClusterServiceMock) ComputeConsumedStreamingUnitCountPerInstanceType(clusterID string) (StreamingUnitCountPerInstanceType, error) {
+	if mock.ComputeConsumedStreamingUnitCountPerInstanceTypeFunc == nil {
+		panic("ClusterServiceMock.ComputeConsumedStreamingUnitCountPerInstanceTypeFunc: method is nil but ClusterService.ComputeConsumedStreamingUnitCountPerInstanceType was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	mock.lockComputeConsumedStreamingUnitCountPerInstanceType.Lock()
+	mock.calls.ComputeConsumedStreamingUnitCountPerInstanceType = append(mock.calls.ComputeConsumedStreamingUnitCountPerInstanceType, callInfo)
+	mock.lockComputeConsumedStreamingUnitCountPerInstanceType.Unlock()
+	return mock.ComputeConsumedStreamingUnitCountPerInstanceTypeFunc(clusterID)
+}
+
+// ComputeConsumedStreamingUnitCountPerInstanceTypeCalls gets all the calls that were made to ComputeConsumedStreamingUnitCountPerInstanceType.
+// Check the length with:
+//
+//	len(mockedClusterService.ComputeConsumedStreamingUnitCountPerInstanceTypeCalls())
+func (mock *ClusterServiceMock) ComputeConsumedStreamingUnitCountPerInstanceTypeCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	mock.lockComputeConsumedStreamingUnitCountPerInstanceType.RLock()
+	calls = mock.calls.ComputeConsumedStreamingUnitCountPerInstanceType
+	mock.lockComputeConsumedStreamingUnitCountPerInstanceType.RUnlock()
 	return calls
 }
 

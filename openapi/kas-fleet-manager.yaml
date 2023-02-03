@@ -1451,7 +1451,7 @@ components:
               type: string
               description: "Status of the Kafka request promotion. Possible values: ['promoting', 'failed']. If unset it means no promotion is in progress."
             cluster_id:
-              description: data plane on which kafka is placed
+              description: The ID of the data plane where Kafka is deployed on. This information is only returned for kafka whose billing model is enterprise
               type: string
               nullable: true
             promotion_details:

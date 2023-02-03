@@ -393,8 +393,9 @@ func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *dbapi.KafkaRequest) 
 }
 
 // unassigns a Kafka instance from a data plane cluster. This is only done for Kafka instances in a 'provisioning' state.
+// enterprise Kafkas are not unassigned
 func (d *dataPlaneKafkaService) unassignKafkaFromDataplaneCluster(kafka *dbapi.KafkaRequest) *serviceError.ServiceError {
-	if kafka.Status == constants.KafkaRequestStatusProvisioning.String() {
+	if kafka.Status == constants.KafkaRequestStatusProvisioning.String() && !kafka.DesiredBillingModelIsEnterprise() {
 		logger.Logger.Infof("kafka %q is being unassigned from clusterID %q", kafka.ID, kafka.ClusterID)
 		if err := d.kafkaService.Updates(kafka, map[string]interface{}{
 			"cluster_id":                "",
@@ -408,7 +409,7 @@ func (d *dataPlaneKafkaService) unassignKafkaFromDataplaneCluster(kafka *dbapi.K
 
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 	} else {
-		logger.Logger.Infof("kafka %q is rejected and current status is %q", kafka.ID, kafka.Status)
+		logger.Logger.Infof("kafka %q is rejected from %q data plane. The current status of the kafka is is %q and the desired billing mode is %q", kafka.ID, kafka.ClusterID, kafka.Status, kafka.DesiredKafkaBillingModel)
 	}
 
 	return nil

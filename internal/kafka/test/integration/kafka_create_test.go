@@ -636,13 +636,13 @@ func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
 		cluster.ClientID = "some-client-id"
 		cluster.ClientSecret = "some-client-secret"
 		cluster.ClusterID = clusterID
-		cluster.Region = mocks.MockCloudRegionID
-		cluster.CloudProvider = mocks.MockCloudProviderID
+		cluster.Region = "some-custom-region"
+		cluster.CloudProvider = "some-custom-cloud-provider"
 		cluster.Status = api.ClusterReady
 		cluster.ProviderSpec = api.JSON{}
 		cluster.ClusterSpec = api.JSON{}
 		cluster.OrganizationID = organizationID
-		cluster.DynamicCapacityInfo = api.JSON([]byte(`{"standard":{"max_nodes":18,"max_units":18,"remaining_units":18}}`))
+		cluster.DynamicCapacityInfo = api.JSON([]byte(`{"standard":{"max_nodes":3,"max_units":1,"remaining_units":1}}`))
 	})
 
 	db := h.DBFactory().New()
@@ -655,14 +655,12 @@ func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
 	differentOrgAccount := h.NewAccount("user", "John", "John@abc.com", otherOrganizationID)
 	differentOrgCtx := h.NewAuthenticatedContext(differentOrgAccount, nil)
 
-	billingModel := types.STANDARD.String()
+	billingModel := constants.BillingModelEnterprise.String()
 
 	k := public.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
-		BillingModel:  &billingModel,
-		ClusterId:     &cluster.ClusterID,
+		Name:         mockKafkaName,
+		BillingModel: &billingModel,
+		ClusterId:    &cluster.ClusterID,
 	}
 
 	kafka, resp, err := client.DefaultApi.CreateKafka(sameOrgCtx, true, k)
@@ -677,6 +675,78 @@ func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
 	g.Expect(kafka.MultiAz).To(gomega.BeTrue())
 	g.Expect(kafka.ExpiresAt).To(gomega.BeNil())
 	g.Expect(kafka.BillingModel).To(gomega.Equal("enterprise"))
+	g.Expect(kafka.ClusterId).To(gomega.Equal(&cluster.ClusterID))
+	g.Expect(kafka.ClusterId).To(gomega.Equal(&cluster.ClusterID))
+	g.Expect(kafka.ClusterId).To(gomega.Equal(&cluster.ClusterID))
+
+	kafka, resp, err = client.DefaultApi.GetKafkaById(sameOrgCtx, kafka.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "error posting object:  %v", err)
+	g.Expect(kafka.BillingModel).To(gomega.Equal("enterprise"))
+	g.Expect(kafka.ClusterId).To(gomega.Equal(&cluster.ClusterID))
+
+	kafka, resp, err = client.DefaultApi.GetKafkaById(sameOrgCtx, kafka.Id)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "error posting object:  %v", err)
+	g.Expect(kafka.BillingModel).To(gomega.Equal("enterprise"))
+	g.Expect(kafka.ClusterId).To(gomega.Equal(&cluster.ClusterID))
+
+	list, resp, err := client.DefaultApi.GetKafkas(sameOrgCtx, nil)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "error posting object:  %v", err)
+	g.Expect(list.Items).To(gomega.HaveLen(1))
+	g.Expect(list.Items[0].BillingModel).To(gomega.Equal("enterprise"))
+	g.Expect(list.Items[0].ClusterId).To(gomega.Equal(&cluster.ClusterID))
+
+	// unsuccessful creation of max unit of 1 already reached
+	kafka, resp, err = client.DefaultApi.CreateKafka(sameOrgCtx, true, public.KafkaRequestPayload{
+		Name:         "some-other-kafka",
+		BillingModel: &billingModel,
+		ClusterId:    &cluster.ClusterID,
+	})
+
+	if resp != nil {
+		resp.Body.Close()
+	}
+
+	g.Expect(err).To(gomega.HaveOccurred(), "cluster can accept a maximum of 1 streaming unit")
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusForbidden))
+
+	// unsuccessful creation of kafka invalid payload
+	kafka, resp, err = client.DefaultApi.CreateKafka(sameOrgCtx, true, public.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          "some-other-name",
+		BillingModel:  &billingModel,
+		ClusterId:     nil,
+	})
+
+	if resp != nil {
+		resp.Body.Close()
+	}
+
+	g.Expect(err).To(gomega.HaveOccurred(), "bad request error should be returned since cluster id is not given")
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
+
+	standardBillingModel := "standard"
+	kafka, resp, err = client.DefaultApi.CreateKafka(sameOrgCtx, true, public.KafkaRequestPayload{
+		Name:         "another-kafka-name",
+		BillingModel: &standardBillingModel,
+		ClusterId:    &cluster.ClusterID,
+	})
+
+	if resp != nil {
+		resp.Body.Close()
+	}
+
+	g.Expect(err).To(gomega.HaveOccurred(), "bad request error should be returned since wrong billing model is supplied")
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusBadRequest))
 
 	// unsuccessful creation of kafka by a user from non matching organization ID
 	k2 := public.KafkaRequestPayload{

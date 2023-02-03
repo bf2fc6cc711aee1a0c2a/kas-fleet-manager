@@ -13,7 +13,9 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	kafkaTypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -84,7 +86,13 @@ type ClusterService interface {
 	// Data Plane clusters that are in 'failed' state are not included in the response.
 	// Kafkas that are in deleting state won't be included in the count as they no longer consume resources in the data plane cluster.
 	FindStreamingUnitCountByClusterAndInstanceType() (KafkaStreamingUnitCountPerClusterList, error)
+
+	// Computes the consumed streaming unit coount per instance of a given cluster.
+	// If an instance type if not contained in the returned object, it can be considered that the consumed capacity for that instance type is 0
+	ComputeConsumedStreamingUnitCountPerInstanceType(clusterID string) (StreamingUnitCountPerInstanceType, error)
 }
+
+type StreamingUnitCountPerInstanceType map[kafkaTypes.KafkaInstanceType]int64
 
 var _ ClusterService = &clusterService{}
 
@@ -880,4 +888,47 @@ func (c *clusterService) FindStreamingUnitCountByClusterAndInstanceType() (Kafka
 	}
 
 	return streamingUnitsCountPerCluster, nil
+}
+
+type ClusterSizeCountPerInstanceType struct {
+	SizeId       string
+	Count        int64
+	InstanceType string
+}
+
+func (c *clusterService) ComputeConsumedStreamingUnitCountPerInstanceType(clusterID string) (StreamingUnitCountPerInstanceType, error) {
+	dbConn := c.connectionFactory.New()
+	var sizeCountsPerInstanceType []*ClusterSizeCountPerInstanceType
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).
+		Select("size_id, instance_type, count(1) as Count").
+		Group("size_id, instance_type").
+		Where("cluster_id = ?", clusterID).
+		Where("status not in (?)", kafkaStatusesThatNoLongerConsumeResourcesInTheDataPlane).
+		Scan(&sizeCountsPerInstanceType).Error; err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get count of sizes of a cluster")
+	}
+
+	streamingUnitCountPerInstanceType := StreamingUnitCountPerInstanceType{
+		kafkaTypes.DEVELOPER: 0,
+		kafkaTypes.STANDARD:  0,
+	}
+
+	for _, sizeCount := range sizeCountsPerInstanceType {
+		instSize, err := c.kafkaConfig.GetKafkaInstanceSize(sizeCount.InstanceType, sizeCount.SizeId)
+		if err != nil {
+			return nil, err
+		}
+
+		streamingUnitCount := int64(instSize.CapacityConsumed) * sizeCount.Count
+		instanceType := kafkaTypes.KafkaInstanceType(sizeCount.InstanceType)
+		existingCount, ok := streamingUnitCountPerInstanceType[instanceType]
+
+		if !ok {
+			streamingUnitCountPerInstanceType[instanceType] = streamingUnitCount
+		} else {
+			streamingUnitCountPerInstanceType[instanceType] = existingCount + streamingUnitCount
+		}
+	}
+
+	return streamingUnitCountPerInstanceType, nil
 }

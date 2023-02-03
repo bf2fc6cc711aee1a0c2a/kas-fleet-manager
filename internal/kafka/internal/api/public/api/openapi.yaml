@@ -2765,7 +2765,8 @@ components:
             ''failed'']. If unset it means no promotion is in progress.'
           type: string
         cluster_id:
-          description: data plane on which kafka is placed
+          description: The ID of the data plane where Kafka is deployed on. This information
+            is only returned for kafka whose billing model is enterprise
           nullable: true
           type: string
         promotion_details:

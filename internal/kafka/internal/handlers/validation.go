@@ -46,9 +46,10 @@ func validateKafkaBillingModel(ctx context.Context, kafkaService services.KafkaS
 		}
 
 		if shared.StringEmpty(kafkaRequestPayload.ClusterId) && shared.StringEqualsIgnoreCase(billingModel, constants.BillingModelEnterprise.String()) {
-			return errors.GeneralError("cluster ID must be supplied when selected billing model is: %s",
+			return errors.BadRequest("cluster_id must be supplied when selected billing model is: %s",
 				constants.BillingModelEnterprise.String())
 		}
+
 		// No explicitly set kafka billing mode is allowed for now, in which case
 		// an implementation-defined default is chosen
 		if shared.StringEmpty(billingModel) {
@@ -211,12 +212,14 @@ func getCloudProviderAndRegion(
 	providerName := arrays.FirstNonEmptyOrDefault(defaultProvider.Name, kafkaRequest.CloudProvider)
 	// Validation for Cloud Provider
 	provider, providerSupported := supportedProviders.GetByName(providerName)
-	if !providerSupported {
+
+	// We only return a validation error if the provider is not supported and Kafka doesn't have a dedicated data plane cluster assigned to it
+	if !providerSupported && shared.StringEmpty(kafkaRequest.ClusterId) {
 		return "", "", errors.ProviderNotSupported("provider %s is not supported, supported providers are: %s", kafkaRequest.CloudProvider, supportedProviders)
 	}
 
-	// Validation for Cloud Region
-	if kafkaRequest.Region != "" { // if region is empty, default region will be chosen, so no validation is needed
+	// Validation for Cloud Region when the Kafka is not assignd to a dedicated data plane cluster
+	if !shared.StringEmpty(kafkaRequest.Region) && shared.StringEmpty(kafkaRequest.ClusterId) { // if region is empty, default region will be chosen, so no validation is needed
 		regionSupported := provider.IsRegionSupported(kafkaRequest.Region)
 		if !regionSupported {
 			return "", "", errors.RegionNotSupported("region %s is not supported for %s, supported regions are: %s", kafkaRequest.Region, kafkaRequest.CloudProvider, provider.Regions)
@@ -244,14 +247,17 @@ func getCloudProviderAndRegion(
 		region, _ = provider.Regions.GetByName(kafkaRequest.Region)
 	}
 
-	if !region.IsInstanceTypeSupported(config.InstanceType(instanceType)) {
+	// we only validate if the region supports the instance type when the Kafka is not assigned to a dedicated cluster
+	if shared.StringEmpty(kafkaRequest.ClusterId) && !region.IsInstanceTypeSupported(config.InstanceType(instanceType)) {
 		return "", "", errors.InstanceTypeNotSupported("instance type '%s' not supported for region '%s'", instanceType.String(), region.Name)
 	}
 
 	return providerName, region.Name, nil
 }
 
-// ValidateCloudProvider returns a validator that validates provided provider and region
+// ValidateCloudProvider returns a validator that validates provided provider and region.
+// The validation is only performed if the cluster id is not supplied in the given kafka request payload
+// in this case the Kafka is an enterprise Kafka and we should not consider supported regions
 func ValidateCloudProvider(ctx context.Context, kafkaService services.KafkaService, kafkaRequest *public.KafkaRequestPayload, providerConfig *config.ProviderConfig, action string) handlers.Validate {
 	return func() *errors.ServiceError {
 		_, _, err := getCloudProviderAndRegion(ctx, kafkaService, kafkaRequest, providerConfig)

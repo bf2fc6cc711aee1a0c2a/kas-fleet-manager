@@ -1397,6 +1397,7 @@ func TestKafkaGet(t *testing.T) {
 	g.Expect(kafka.Name).To(gomega.Equal(mockKafkaName))
 	g.Expect(kafka.Status).To(gomega.Equal(constants.KafkaRequestStatusAccepted.String()))
 	g.Expect(kafka.ReauthenticationEnabled).To(gomega.BeFalse())
+	g.Expect(kafka.ClusterId).To(gomega.BeNil())
 
 	instanceType, err := test.TestServices.KafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafka.InstanceType)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
@@ -2009,6 +2010,7 @@ func TestKafkaList_Success(t *testing.T) {
 	g.Expect(listItem.Status).To(gomega.Equal(constants.KafkaRequestStatusAccepted.String()))
 	g.Expect(listItem.ReauthenticationEnabled).To(gomega.BeTrue())
 	g.Expect(listItem.BrowserUrl).To(gomega.Equal(fmt.Sprintf("%s%s/dashboard", test.TestServices.KafkaConfig.BrowserUrl, listItem.Id)))
+	g.Expect(listItem.ClusterId).To(gomega.BeNil())
 
 	// new account setup to prove that users can list kafkas instances created by a member of their org
 	account = h.NewRandAccount()
@@ -2041,6 +2043,7 @@ func TestKafkaList_Success(t *testing.T) {
 	g.Expect(seedKafka.Name).To(gomega.Equal(listItem.Name))
 	g.Expect(listItem.Name).To(gomega.Equal(mockKafkaName))
 	g.Expect(listItem.Status).To(gomega.Equal(constants.KafkaRequestStatusAccepted.String()))
+	g.Expect(listItem.ClusterId).To(gomega.BeNil())
 
 	// new account setup to prove that users can only list their own (the one they created and the one created by a member of their org) kafka instances
 	// this value is taken from config/quota-management-list-configuration.yaml

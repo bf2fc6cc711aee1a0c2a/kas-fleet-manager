@@ -150,6 +150,7 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 
 func Test_Validation_validateCloudProvider(t *testing.T) {
 	limit := int(5)
+	clusterID := "some-cluster-id"
 
 	developerMap := config.InstanceTypeMap{
 		"developer": {
@@ -390,6 +391,39 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			want: result{
 				wantErr: true,
 				reason:  "provider invalid_provider is not supported, supported providers are: [aws]",
+			},
+		},
+		{
+			name: "no region information should be validated if the Kafka is dedicated to a data plane cluster",
+			arg: args{
+				kafkaService: &services.KafkaServiceMock{
+					AssignInstanceTypeFunc: func(owner string, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.STANDARD, nil
+					},
+				},
+				kafkaRequest: public.KafkaRequestPayload{
+					CloudProvider: "some-dedicated-cloud-provider",
+					Region:        "some-dedicated-region",
+					ClusterId:     &clusterID,
+				},
+				ProviderConfig: &config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "aws",
+								Regions: config.RegionList{
+									config.Region{
+										Name:                   "us-east",
+										SupportedInstanceTypes: standardMap,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			want: result{
+				wantErr: false,
 			},
 		},
 	}
