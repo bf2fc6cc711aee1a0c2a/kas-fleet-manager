@@ -1040,6 +1040,7 @@ func Test_AMSReserveQuotaIfNotAlreadyReserved(t *testing.T) {
 						sub := v1.SubscriptionBuilder{}
 						sub.ID(cb.ClusterID() + "subscription")
 						sub.Status("Active")
+						sub.ClusterBillingModel("standard")
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
 						return ca, nil
 					},
@@ -1062,9 +1063,6 @@ func Test_AMSReserveQuotaIfNotAlreadyReserved(t *testing.T) {
 					FindSubscriptionsFunc: func(query string) ([]*v1.Subscription, error) {
 						return ams.FindSubscriptions(query), nil
 					},
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						return ams.GetReservedResourcesBySubscriptionID(subscriptionID), nil
-					},
 					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
@@ -1072,6 +1070,7 @@ func Test_AMSReserveQuotaIfNotAlreadyReserved(t *testing.T) {
 						sub := v1.SubscriptionBuilder{}
 						sub.ID(cb.ClusterID() + "subscription")
 						sub.Status("Active")
+						sub.ClusterBillingModel("standard")
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
 						return ca, nil
 					},
@@ -1094,9 +1093,6 @@ func Test_AMSReserveQuotaIfNotAlreadyReserved(t *testing.T) {
 				ocmClient: &ocm.ClientMock{
 					FindSubscriptionsFunc: func(query string) ([]*v1.Subscription, error) {
 						return ams.FindSubscriptions(query), nil
-					},
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						return ams.GetReservedResourcesBySubscriptionID(subscriptionID), nil
 					},
 					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
@@ -1127,9 +1123,6 @@ func Test_AMSReserveQuotaIfNotAlreadyReserved(t *testing.T) {
 				ocmClient: &ocm.ClientMock{
 					FindSubscriptionsFunc: func(query string) ([]*v1.Subscription, error) {
 						return ams.FindSubscriptions(query), nil
-					},
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						return ams.GetReservedResourcesBySubscriptionID(subscriptionID), nil
 					},
 					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
@@ -1498,12 +1491,12 @@ func Test_AMSReserveQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					GetQuotaCostsForProductFunc: func(organizationID, resourceName, product string) ([]*v1.QuotaCost, error) {
-						rrbq1 := v1.NewRelatedResource().BillingModel(string("unknownbillingmodelone")).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq1 := v1.NewRelatedResource().BillingModel("unknownbillingmodelone").Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
 						qcb1, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq1).Build()
 						if err != nil {
 							panic("unexpected error")
 						}
-						rrbq2 := v1.NewRelatedResource().BillingModel(string("unknownbillingmodeltwo")).Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
+						rrbq2 := v1.NewRelatedResource().BillingModel("unknownbillingmodeltwo").Product(string(ocm.RHOSAKProduct)).ResourceName(resourceName).Cost(1)
 						qcb2, err := v1.NewQuotaCost().Allowed(1).Consumed(1).OrganizationID(organizationID).RelatedResources(rrbq2).Build()
 						if err != nil {
 							panic("unexpected error")
@@ -2167,56 +2160,14 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 			wantErrMsg: "unable to find kafka instance type for 'unsupported-instance-type'",
 		},
 		{
-			name: "returns an error when it fails to get reserved resources by subscription id",
-			fields: fields{
-				kafkaConfig: defaultKafkaConfig,
-				amsClient: &ocm.ClientMock{
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						return nil, fmt.Errorf("failed to get reserved resources by subscription id")
-					},
-				},
-			},
-			args: args{
-				kafka: &dbapi.KafkaRequest{
-					InstanceType:            "standard",
-					ActualKafkaBillingModel: "standard",
-				},
-			},
-			want:       false,
-			wantErr:    true,
-			wantErrMsg: "failed to get reserved resources by subscription id",
-		},
-		{
-			name: "returns false if no ams related resource billing model is found",
-			fields: fields{
-				kafkaConfig: defaultKafkaConfig,
-				amsClient: &ocm.ClientMock{
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						return ams.GetReservedResourcesBySubscriptionID(subscriptionID), nil
-					},
-				},
-			},
-			args: args{
-				kafka: &dbapi.KafkaRequest{
-					InstanceType:            "standard",
-					ActualKafkaBillingModel: "standard",
-					SubscriptionId:          "subscription-1", // rhosak, marketplace
-				},
-			},
-			want:    false,
-			wantErr: false,
-		},
-		{
 			name: "returns an error when it fails to get quota costs from ams",
 			fields: fields{
 				kafkaConfig: defaultKafkaConfig,
 				amsClient: &ocm.ClientMock{
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						return ams.GetReservedResourcesBySubscriptionID(subscriptionID), nil
-					},
 					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 						return "org-id", nil
 					},
+					GetSubscriptionByIDFunc: ams.GetSubscriptionByID,
 					GetQuotaCostsFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool, filters ...ocm.QuotaCostRelatedResourceFilter) ([]*v1.QuotaCost, error) {
 						return nil, fmt.Errorf("failed to get quota cost")
 					},
@@ -2238,12 +2189,10 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 			fields: fields{
 				kafkaConfig: defaultKafkaConfig,
 				amsClient: &ocm.ClientMock{
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						return ams.GetReservedResourcesBySubscriptionID(subscriptionID), nil
-					},
 					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 						return "org-id", nil
 					},
+					GetSubscriptionByIDFunc: ams.GetSubscriptionByID,
 					GetQuotaCostsFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool, filters ...ocm.QuotaCostRelatedResourceFilter) ([]*v1.QuotaCost, error) {
 						return nil, nil
 					},
@@ -2264,12 +2213,10 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 			fields: fields{
 				kafkaConfig: defaultKafkaConfig,
 				amsClient: &ocm.ClientMock{
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						return ams.GetReservedResourcesBySubscriptionID(subscriptionID), nil
-					},
 					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 						return "org-id", nil
 					},
+					GetSubscriptionByIDFunc: ams.GetSubscriptionByID,
 					GetQuotaCostsFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool, filters ...ocm.QuotaCostRelatedResourceFilter) ([]*v1.QuotaCost, error) {
 						qc1, _ := v1.NewQuotaCost().Build()
 						qc2, _ := v1.NewQuotaCost().Build()
@@ -2294,12 +2241,10 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 			fields: fields{
 				kafkaConfig: defaultKafkaConfig,
 				amsClient: &ocm.ClientMock{
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						return ams.GetReservedResourcesBySubscriptionID(subscriptionID), nil
-					},
 					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 						return "org-id", nil
 					},
+					GetSubscriptionByIDFunc: ams.GetSubscriptionByID,
 					GetQuotaCostsFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool, filters ...ocm.QuotaCostRelatedResourceFilter) ([]*v1.QuotaCost, error) {
 						qc, _ := v1.NewQuotaCost().Consumed(1).Allowed(0).Build()
 
@@ -2322,12 +2267,10 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 			fields: fields{
 				kafkaConfig: defaultKafkaConfig,
 				amsClient: &ocm.ClientMock{
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						return ams.GetReservedResourcesBySubscriptionID(subscriptionID), nil
-					},
 					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 						return "org-id", nil
 					},
+					GetSubscriptionByIDFunc: ams.GetSubscriptionByID,
 					GetQuotaCostsFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool, filters ...ocm.QuotaCostRelatedResourceFilter) ([]*v1.QuotaCost, error) {
 						qc, _ := v1.NewQuotaCost().Consumed(1).Allowed(1).Build()
 
@@ -2350,12 +2293,10 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 			fields: fields{
 				kafkaConfig: defaultKafkaConfig,
 				amsClient: &ocm.ClientMock{
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						return ams.GetReservedResourcesBySubscriptionID(subscriptionID), nil
-					},
 					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 						return "org-id", nil
 					},
+					GetSubscriptionByIDFunc: ams.GetSubscriptionByID,
 					GetQuotaCostsFunc: func(organizationID string, fetchRelatedResources, fetchCloudAccounts bool, filters ...ocm.QuotaCostRelatedResourceFilter) ([]*v1.QuotaCost, error) {
 						qc, _ := v1.NewQuotaCost().Consumed(3).Allowed(1).Build()
 
@@ -2386,133 +2327,6 @@ func Test_amsQuotaService_IsQuotaEntitlementActive(t *testing.T) {
 			if tt.wantErr {
 				g.Expect(err.Error()).To(gomega.Equal(tt.wantErrMsg))
 			}
-			g.Expect(got).To(gomega.Equal(tt.want))
-		})
-	}
-}
-
-func Test_amsQuotaService_getAMSRelatedResourceBillingModel(t *testing.T) {
-	type fields struct {
-		amsClient ocm.Client
-	}
-	type args struct {
-		subscriptionID    string
-		kafkaBillingModel config.KafkaBillingModel
-	}
-
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "return an error when it fails to get reserved resources from ams",
-			fields: fields{
-				amsClient: &ocm.ClientMock{
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						return nil, fmt.Errorf("failed to get reserved resources by subscription id")
-					},
-				},
-			},
-			want:    "",
-			wantErr: true,
-		},
-		{
-			name: "return marketplace if ams billing model is marketplace",
-			fields: fields{
-				amsClient: &ocm.ClientMock{
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						rr, _ := v1.NewReservedResource().BillingModel("marketplace").ResourceName("marketplace").Build()
-						return []*v1.ReservedResource{rr}, nil
-					},
-				},
-			},
-			args: args{
-				kafkaBillingModel: config.KafkaBillingModel{
-					ID:               "marketplace",
-					AMSResource:      "marketplace",
-					AMSProduct:       "marketplace",
-					AMSBillingModels: []string{"marketplace", "marketplace-aws"},
-				},
-			},
-			want:    "marketplace",
-			wantErr: false,
-		},
-		{
-			name: "return marketplace if ams billing model is marketplace-aws",
-			fields: fields{
-				amsClient: &ocm.ClientMock{
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						rr, _ := v1.NewReservedResource().BillingModel("marketplace-aws").ResourceName("marketplace").Build()
-						return []*v1.ReservedResource{rr}, nil
-					},
-				},
-			},
-			args: args{
-				kafkaBillingModel: config.KafkaBillingModel{
-					ID:               "marketplace",
-					AMSResource:      "marketplace",
-					AMSProduct:       "marketplace",
-					AMSBillingModels: []string{"marketplace", "marketplace-aws"},
-				},
-			},
-			want:    "marketplace",
-			wantErr: false,
-		},
-		{
-			name: "return standard if ams billing model is standard",
-			fields: fields{
-				amsClient: &ocm.ClientMock{
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						rr, _ := v1.NewReservedResource().BillingModel("standard").ResourceName("eval").Build()
-						return []*v1.ReservedResource{rr}, nil
-					},
-				},
-			},
-			args: args{
-				kafkaBillingModel: config.KafkaBillingModel{
-					ID:               "eval",
-					AMSResource:      "eval",
-					AMSProduct:       "eval",
-					AMSBillingModels: []string{"standard"},
-				},
-			},
-			want:    "standard",
-			wantErr: false,
-		},
-		{
-			name: "return empty string if no ams related resource billing model is found",
-			fields: fields{
-				amsClient: &ocm.ClientMock{
-					GetReservedResourcesBySubscriptionIDFunc: func(subscriptionID string) ([]*v1.ReservedResource, error) {
-						rr, _ := v1.NewReservedResource().BillingModel("no-match").ResourceName("no-match").Build()
-						return []*v1.ReservedResource{rr}, nil
-					},
-				},
-			},
-			args: args{
-				kafkaBillingModel: config.KafkaBillingModel{
-					ID:               "standard",
-					AMSResource:      "standard",
-					AMSProduct:       "standard",
-					AMSBillingModels: []string{"standard"},
-				},
-			},
-			want:    "",
-			wantErr: false,
-		},
-	}
-	for _, testcase := range tests {
-		tt := testcase
-		t.Run(tt.name, func(t *testing.T) {
-			g := gomega.NewWithT(t)
-			q := amsQuotaService{
-				amsClient: tt.fields.amsClient,
-			}
-			got, err := q.getAMSRelatedResourceBillingModel(tt.args.subscriptionID, tt.args.kafkaBillingModel)
-			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 			g.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}
