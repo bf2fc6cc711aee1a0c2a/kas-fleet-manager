@@ -614,7 +614,7 @@ func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
 	defer ocmServer.Close()
 
 	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
-		acl.EnableInstanceLimitControl = false
+		acl.EnableInstanceLimitControl = true
 	})
 	defer teardown()
 
