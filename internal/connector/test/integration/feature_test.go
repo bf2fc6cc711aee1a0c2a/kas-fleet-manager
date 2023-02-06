@@ -2,15 +2,16 @@ package integration
 
 import (
 	"flag"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
-	"github.com/onsi/gomega"
-	"github.com/spf13/pflag"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
+	"github.com/onsi/gomega"
+	"github.com/spf13/pflag"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -65,8 +66,8 @@ func TestMain(m *testing.M) {
 			"INSERT INTO connector_shard_metadata (connector_type_id, channel) VALUES ('log_sink_0.1', 'stable')",
 		},
 		func(c *config.ConnectorsConfig, kc *keycloak.KeycloakConfig, reconcilerConfig *workers.ReconcilerConfig) {
-			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
-			c.ConnectorMetadataDirs = []string{"./internal/connector/test/integration/connector-metadata"}
+			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/resources/connector-catalog"}
+			c.ConnectorMetadataDirs = []string{"./internal/connector/test/integration/resources/connector-metadata"}
 			c.ConnectorEvalDuration, _ = time.ParseDuration("2s")
 			c.ConnectorEvalOrganizations = []string{"13640210"}
 			c.ConnectorNamespaceLifecycleAPI = true
