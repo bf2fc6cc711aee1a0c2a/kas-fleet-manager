@@ -780,7 +780,7 @@ func Test_findDesiredDataPlaneClusterIfItHasCapacityAvailable_FindCluster(t *tes
 		t.Run(testcase.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			t.Parallel()
-			k := &findDesiredDataPlaneClusterIfItHasCapacityAvailable{
+			k := &findDataPlaneClusterByIdIfItHasCapacityAvailable{
 				clusterService: testcase.fields.clusterService,
 				kafkaConfig: &config.KafkaConfig{
 					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{

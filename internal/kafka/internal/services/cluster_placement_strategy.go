@@ -29,9 +29,9 @@ func NewClusterPlacementStrategy(clusterService ClusterService, dataplaneCluster
 	return clusterSelection
 }
 
-// findDesiredDataPlaneClusterIfItHasCapacityAvailable finds and returns the desired data plane cluster if
+// findDataPlaneClusterByIdIfItHasCapacityAvailable finds and returns the desired data plane cluster if
 // if it has capacity available.
-type findDesiredDataPlaneClusterIfItHasCapacityAvailable struct {
+type findDataPlaneClusterByIdIfItHasCapacityAvailable struct {
 	clusterService ClusterService
 	kafkaConfig    *config.KafkaConfig
 }
@@ -43,8 +43,8 @@ type findDesiredDataPlaneClusterIfItHasCapacityAvailable struct {
 // 2. It also also has to be in the same organization as the kafka request.
 // 3. It must have remaining capacity to receive the Kafka.
 // Capacity capacity is evaluated based on the MaxUnits stored in DynamicCapacityInfo and the actual used capacity.
-func (k *findDesiredDataPlaneClusterIfItHasCapacityAvailable) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
-	cluster, err := k.clusterService.FindClusterByID(kafka.ClusterID)
+func (f *findDataPlaneClusterByIdIfItHasCapacityAvailable) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+	cluster, err := f.clusterService.FindClusterByID(kafka.ClusterID)
 	if err != nil || cluster == nil {
 		return nil, apiErrors.GeneralError("failed to get cluster with id: %q", kafka.ClusterID)
 	}
@@ -57,7 +57,7 @@ func (k *findDesiredDataPlaneClusterIfItHasCapacityAvailable) FindCluster(kafka 
 		return nil, apiErrors.BadRequest("cluster with id: %s is not ready to accept kafkas", kafka.ClusterID)
 	}
 
-	kafkaSizeConsumption, sizeErr := k.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+	kafkaSizeConsumption, sizeErr := f.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
 	if sizeErr != nil {
 		return nil, sizeErr
 	}
@@ -68,7 +68,7 @@ func (k *findDesiredDataPlaneClusterIfItHasCapacityAvailable) FindCluster(kafka 
 		return nil, errors.Errorf("instance type %q not supported on selected cluster %q", kafka.InstanceType, kafka.ClusterID)
 	}
 
-	streamingUnitCounts, streamingUnitComputationErr := k.clusterService.ComputeConsumedStreamingUnitCountPerInstanceType(cluster.ClusterID)
+	streamingUnitCounts, streamingUnitComputationErr := f.clusterService.ComputeConsumedStreamingUnitCountPerInstanceType(cluster.ClusterID)
 	if streamingUnitComputationErr != nil {
 		return nil, streamingUnitComputationErr
 	}
@@ -90,7 +90,7 @@ type FirstReadyCluster struct {
 
 func (f *FirstReadyCluster) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 	if kafka.DesiredBillingModelIsEnterprise() {
-		enterpriseKafkaPlacementStrategy := findDesiredDataPlaneClusterIfItHasCapacityAvailable{
+		enterpriseKafkaPlacementStrategy := findDataPlaneClusterByIdIfItHasCapacityAvailable{
 			clusterService: f.ClusterService,
 			kafkaConfig:    f.kafkaConfig,
 		}
@@ -123,7 +123,7 @@ type FirstSchedulableWithinLimit struct {
 
 func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 	if kafka.DesiredBillingModelIsEnterprise() {
-		enterpriseKafkaPlacementStrategy := findDesiredDataPlaneClusterIfItHasCapacityAvailable{
+		enterpriseKafkaPlacementStrategy := findDataPlaneClusterByIdIfItHasCapacityAvailable{
 			clusterService: f.clusterService,
 			kafkaConfig:    f.kafkaConfig,
 		}
@@ -213,7 +213,7 @@ type FirstReadyWithCapacity struct {
 
 func (f *FirstReadyWithCapacity) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 	if kafka.DesiredBillingModelIsEnterprise() {
-		enterpriseKafkaPlacementStrategy := findDesiredDataPlaneClusterIfItHasCapacityAvailable{
+		enterpriseKafkaPlacementStrategy := findDataPlaneClusterByIdIfItHasCapacityAvailable{
 			clusterService: f.clusterService,
 			kafkaConfig:    f.kafkaConfig,
 		}
