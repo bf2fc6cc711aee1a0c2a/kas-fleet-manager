@@ -4,8 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	clusterMocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"testing"
 	"time"
 
@@ -132,7 +135,10 @@ func TestKafkaPromote_Reconciler(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(reconcilerConfig *workers.ReconcilerConfig) {
+		// set the interval to 1 second
+		reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Second
+	})
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -140,13 +146,27 @@ func TestKafkaPromote_Reconciler(t *testing.T) {
 	mockKasfFleetshardSync.Start()
 	defer mockKasfFleetshardSync.Stop()
 
-	clusterID, err := common.GetRunningOsdClusterID(h, t)
-	if err != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", err)
-	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
+	cluster := clusterMocks.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = types.STANDARD.String()
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = "some-cluster-id"
+		cluster.CloudProvider = mocks.MockCluster.CloudProvider().ID()
+		cluster.Region = mocks.MockCluster.Region().ID()
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterType = api.ManagedDataPlaneClusterType.String()
+		cluster.Status = api.ClusterProvisioning
+	})
+
+	g := gomega.NewWithT(t)
+	db := test.TestServices.DBFactory.New()
+	err := db.Create(cluster).Error
+	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	tests := []struct {
 		name                string
@@ -187,7 +207,7 @@ func TestKafkaPromote_Reconciler(t *testing.T) {
 					kafkaMocks.WithPredefinedTestValues(),
 					kafkaMocks.With(kafkaMocks.NAME, "dummy-kafka"),
 					kafkaMocks.With(kafkaMocks.OWNER, "username"),
-					kafkaMocks.With(kafkaMocks.CLUSTER_ID, clusterID),
+					kafkaMocks.With(kafkaMocks.CLUSTER_ID, cluster.ClusterID),
 					kafkaMocks.With(kafkaMocks.STATUS, constants.KafkaRequestStatusAccepted.String()),
 					kafkaMocks.With(kafkaMocks.BOOTSTRAP_SERVER_HOST, ""),
 					kafkaMocks.With(kafkaMocks.DESIRED_KAFKA_BILLING_MODEL, tt.desiredBillingModel),
