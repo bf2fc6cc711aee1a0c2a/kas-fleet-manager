@@ -322,7 +322,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			},
 			want: result{
 				wantErr: true,
-				reason:  "instance type 'developer' not supported for region 'us-east'",
+				reason:  fmt.Sprintf("instance type %q not supported for region %q", "developer", "us-east"),
 			},
 		},
 		{
@@ -859,7 +859,7 @@ func TestValidateKafkaPlan(t *testing.T) {
 					},
 				},
 			},
-			want: errors.BadRequest("unable to detect instance type in plan provided: 'invalid_plan.x1'"),
+			want: errors.BadRequest(fmt.Sprintf("unable to detect instance type in plan provided: %q", "invalid_plan.x1")),
 		},
 		{
 			name: "should return an error if the plan provided is not supported",
@@ -892,7 +892,7 @@ func TestValidateKafkaPlan(t *testing.T) {
 					},
 				},
 			},
-			want: errors.InstancePlanNotSupported("unsupported plan provided: 'developer.x2'"),
+			want: errors.InstancePlanNotSupported(fmt.Sprintf("unsupported plan provided: %q", "developer.x2")),
 		},
 		{
 			name: "should return an error if KafkaRequestPayload.plan in not set and the kafka plan is not supported",
@@ -923,7 +923,7 @@ func TestValidateKafkaPlan(t *testing.T) {
 					},
 				},
 			},
-			want: errors.InstanceTypeNotSupported("unsupported kafka instance type: 'standard' provided"),
+			want: errors.InstanceTypeNotSupported(fmt.Sprintf("unsupported kafka instance type: %q provided", "standard")),
 		},
 		{
 			name: "should return an error if it is unable to detect instance size in plan provided",
@@ -956,7 +956,7 @@ func TestValidateKafkaPlan(t *testing.T) {
 					},
 				},
 			},
-			want: errors.InstancePlanNotSupported("unsupported plan provided: 'developer.invalidPlan'"),
+			want: errors.InstancePlanNotSupported(fmt.Sprintf("unsupported plan provided: %q", "developer.invalidPlan")),
 		},
 	}
 
@@ -1066,7 +1066,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					DeprecatedKafkaStorageSize: invalidStorageSize,
 				},
 			},
-			want: errors.FieldValidationError("failed to update Kafka Request. Unable to parse current requested size: '%s'", invalidStorageSize),
+			want: errors.FieldValidationError("failed to update Kafka Request. Unable to parse current requested size: %q", invalidStorageSize),
 		},
 		{
 			name: "should return an error if the the kafka request storage size parameter is greater than the the kafka update request storage size parameter",
@@ -1078,7 +1078,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					DeprecatedKafkaStorageSize: decreaseStorageSizeReq,
 				},
 			},
-			want: errors.FieldValidationError("failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", decreaseStorageSizeReq, currentStorageSize),
+			want: errors.FieldValidationError("failed to update Kafka Request. Requested size: %q should be greater than current size: %q", decreaseStorageSizeReq, currentStorageSize),
 		},
 		{
 			name: "should return nil if specified max data retention size is valid",
@@ -1102,7 +1102,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					MaxDataRetentionSize: invalidStorageSize,
 				},
 			},
-			want: errors.FieldValidationError("failed to update Kafka Request. Unable to parse current requested size: '%s'", invalidStorageSize),
+			want: errors.FieldValidationError("failed to update Kafka Request. Unable to parse current requested size: %q", invalidStorageSize),
 		},
 		{
 			name: "should return an error if specified max data retention size is lower than current size",
@@ -1114,7 +1114,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					MaxDataRetentionSize: decreaseStorageSizeReq,
 				},
 			},
-			want: errors.FieldValidationError("failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", decreaseStorageSizeReq, currentStorageSize),
+			want: errors.FieldValidationError("failed to update Kafka Request. Requested size: %q should be greater than current size: %q", decreaseStorageSizeReq, currentStorageSize),
 		},
 		{
 			name: "should return an error if the current kafka request storage size is an empty string",
@@ -1124,7 +1124,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					DeprecatedKafkaStorageSize: increaseStorageSizeReq,
 				},
 			},
-			want: errors.FieldValidationError("failed to update Kafka Request. Unable to parse current storage size: ''"),
+			want: errors.FieldValidationError(fmt.Sprintf("failed to update Kafka Request. Unable to parse current storage size: %q", "")),
 		},
 		{
 			name: "should return an error if the current kafka request storage size is an invalid Quantity value",
@@ -1136,7 +1136,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					DeprecatedKafkaStorageSize: increaseStorageSizeReq,
 				},
 			},
-			want: errors.FieldValidationError("failed to update Kafka Request. Unable to parse current storage size: '%s'", invalidStorageSize),
+			want: errors.FieldValidationError("failed to update Kafka Request. Unable to parse current storage size: %q", invalidStorageSize),
 		},
 	}
 	for _, testcase := range tests {
@@ -2046,7 +2046,7 @@ func Test_validateEnterpriseClusterEligibleForDeregistration(t *testing.T) {
 					},
 				},
 			},
-			want: errors.Forbidden("unable to deregister cluster whose type is not: %s", api.EnterpriseDataPlaneClusterType.String()),
+			want: errors.Forbidden("unable to deregister cluster whose type is not: %q", api.EnterpriseDataPlaneClusterType.String()),
 		},
 		{
 			name: "should return an error if cluster not found when attempting to deregister it",
@@ -2059,7 +2059,7 @@ func Test_validateEnterpriseClusterEligibleForDeregistration(t *testing.T) {
 					},
 				},
 			},
-			want: errors.NotFound("cluster with id='%v' not found", clusterID),
+			want: errors.NotFound("cluster with id=%q not found", clusterID),
 		},
 	}
 

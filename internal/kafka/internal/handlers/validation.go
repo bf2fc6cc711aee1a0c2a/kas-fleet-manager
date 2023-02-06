@@ -41,12 +41,12 @@ func validateKafkaBillingModel(ctx context.Context, kafkaService services.KafkaS
 		// enterprise kafkas billing model validation
 
 		if !shared.StringEmpty(kafkaRequestPayload.ClusterId) && !shared.StringEqualsIgnoreCase(billingModel, constants.BillingModelEnterprise.String()) {
-			return errors.InvalidBillingAccount("invalid billing model: %s, only %v is allowed", billingModel,
+			return errors.InvalidBillingAccount("invalid billing model: %q, only %q is allowed", billingModel,
 				constants.BillingModelEnterprise.String())
 		}
 
 		if shared.StringEmpty(kafkaRequestPayload.ClusterId) && shared.StringEqualsIgnoreCase(billingModel, constants.BillingModelEnterprise.String()) {
-			return errors.BadRequest("cluster_id must be supplied when selected billing model is: %s",
+			return errors.BadRequest("cluster_id must be supplied when selected billing model is: %q",
 				constants.BillingModelEnterprise.String())
 		}
 
@@ -249,7 +249,7 @@ func getCloudProviderAndRegion(
 
 	// we only validate if the region supports the instance type when the Kafka is not assigned to a dedicated cluster
 	if shared.StringEmpty(kafkaRequest.ClusterId) && !region.IsInstanceTypeSupported(config.InstanceType(instanceType)) {
-		return "", "", errors.InstanceTypeNotSupported("instance type '%s' not supported for region '%s'", instanceType.String(), region.Name)
+		return "", "", errors.InstanceTypeNotSupported("instance type %q not supported for region %q", instanceType.String(), region.Name)
 	}
 
 	return providerName, region.Name, nil
@@ -281,22 +281,22 @@ func getInstanceTypeAndSize(ctx context.Context, kafkaService services.KafkaServ
 		plan := config.Plan(kafkaRequestPayload.Plan)
 		instTypeFromPlan, err := plan.GetInstanceType()
 		if err != nil || instTypeFromPlan != string(instanceType) {
-			return "", "", errors.New(errors.ErrorBadRequest, fmt.Sprintf("unable to detect instance type in plan provided: '%s'", kafkaRequestPayload.Plan))
+			return "", "", errors.New(errors.ErrorBadRequest, fmt.Sprintf("unable to detect instance type in plan provided: %q", kafkaRequestPayload.Plan))
 		}
 		size, err := plan.GetSizeID()
 		if err != nil {
-			return "", "", errors.New(errors.ErrorBadRequest, fmt.Sprintf("unable to detect instance size in plan provided: '%s'", kafkaRequestPayload.Plan))
+			return "", "", errors.New(errors.ErrorBadRequest, fmt.Sprintf("unable to detect instance size in plan provided: %q", kafkaRequestPayload.Plan))
 		}
 		_, err = kafkaConfig.GetKafkaInstanceSize(instTypeFromPlan, size)
 
 		if err != nil {
-			return "", "", errors.InstancePlanNotSupported("unsupported plan provided: '%s'", kafkaRequestPayload.Plan)
+			return "", "", errors.InstancePlanNotSupported("unsupported plan provided: %q", kafkaRequestPayload.Plan)
 		}
 		return instanceType.String(), size, nil
 	} else {
 		rSize, err := kafkaConfig.GetFirstAvailableSize(instanceType.String())
 		if err != nil {
-			return "", "", errors.InstanceTypeNotSupported("unsupported kafka instance type: '%s' provided", instanceType.String())
+			return "", "", errors.InstanceTypeNotSupported("unsupported kafka instance type: %q provided", instanceType.String())
 		}
 		return instanceType.String(), rSize.Id, nil
 	}
@@ -428,15 +428,15 @@ func ValidateKafkaStorageSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *
 		if stringSet(&storageSize) {
 			currentSize, err := resource.ParseQuantity(kafkaRequest.KafkaStorageSize)
 			if err != nil {
-				return errors.FieldValidationError("failed to update Kafka Request. Unable to parse current storage size: '%s'", kafkaRequest.KafkaStorageSize)
+				return errors.FieldValidationError("failed to update Kafka Request. Unable to parse current storage size: %q", kafkaRequest.KafkaStorageSize)
 			}
 			requestedSize, err := resource.ParseQuantity(storageSize)
 			if err != nil {
-				return errors.FieldValidationError("failed to update Kafka Request. Unable to parse current requested size: '%s'", storageSize)
+				return errors.FieldValidationError("failed to update Kafka Request. Unable to parse current requested size: %q", storageSize)
 			}
 			currSize, _ := currentSize.AsInt64()
 			if requestedSize.CmpInt64(currSize) < 0 {
-				return errors.FieldValidationError("failed to update Kafka Request. Requested size: '%s' should be greater than current size: '%s'", storageSize, kafkaRequest.KafkaStorageSize)
+				return errors.FieldValidationError("failed to update Kafka Request. Requested size: %q should be greater than current size: %q", storageSize, kafkaRequest.KafkaStorageSize)
 			}
 		}
 		return nil
@@ -482,13 +482,13 @@ func validateEnterpriseClusterEligibleForDeregistration(ctx context.Context, clu
 		}
 
 		if cluster == nil {
-			return errors.NotFound("cluster with id='%v' not found", clusterID)
+			return errors.NotFound("cluster with id=%q not found", clusterID)
 		}
 		if cluster.OrganizationID != orgID {
 			return errors.Forbidden("unable to deregister cluster from different organization")
 		}
 		if cluster.ClusterType != api.EnterpriseDataPlaneClusterType.String() {
-			return errors.Forbidden("unable to deregister cluster whose type is not: %s", api.EnterpriseDataPlaneClusterType.String())
+			return errors.Forbidden("unable to deregister cluster whose type is not: %q", api.EnterpriseDataPlaneClusterType.String())
 		}
 		return nil
 	}
