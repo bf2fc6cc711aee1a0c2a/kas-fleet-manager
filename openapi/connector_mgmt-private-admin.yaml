@@ -227,6 +227,12 @@ paths:
             type: boolean
           in: query
           required: false
+        - name: operator_updates
+          description: include only deployments that have operator updates
+          schema:
+            type: boolean
+          in: query
+          required: false
         - name: dangling_deployments
           description: include only not deleted deployments belonging to a deleted connector
           schema:
@@ -662,6 +668,12 @@ paths:
           required: true
         - name: channel_updates
           description: include only deployments that have channel updates
+          schema:
+            type: boolean
+          in: query
+          required: false
+        - name: operator_updates
+          description: include only deployments that have operator updates
           schema:
             type: boolean
           in: query

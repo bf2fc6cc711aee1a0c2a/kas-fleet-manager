@@ -1264,7 +1264,7 @@ Feature: connector agent API
     #-----------------------------------------------------------------------------------------------------------------
 
     # Now lets verify connector upgrades due to catalog updates
-    Given I am logged in as "Ricky Bobby"
+    Given I am logged in as "Carley Bobby"
     And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments?channel_updates=true"
     And the response code should be 200
     And the response should match json:
@@ -1272,19 +1272,6 @@ Feature: connector agent API
       {
        "items": [],
        "kind": "ConnectorDeploymentAdminViewList",
-       "page": 1,
-       "size": 0,
-       "total": 0
-      }
-      """
-    Given I am logged in as "Carley Bobby"
-    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
-    And the response code should be 200
-    And the response should match json:
-      """
-      {
-       "items": [],
-       "kind": "",
        "page": 1,
        "size": 0,
        "total": 0
@@ -1527,6 +1514,21 @@ Feature: connector agent API
       }
       """
 
+    # Now lets verify connector upgrades due to operator updates
+    Given I am logged in as "Carley Bobby"
+    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments?operator_updates=true"
+    And the response code should be 200
+    And the response should match json:
+      """
+      {
+       "items": [],
+       "kind": "ConnectorDeploymentAdminViewList",
+       "page": 1,
+       "size": 0,
+       "total": 0
+      }
+      """
+
     # Simulate the agent telling us there is an operator upgrade available for the deployment...
     Given I am logged in as "Shard"
     And I set the "Authorization" header to "Bearer ${shard_token}"
@@ -1558,6 +1560,81 @@ Feature: connector agent API
     And the response should match ""
 
     Then I am logged in as "Ricky Bobby"
+    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments?operator_updates=true"
+    And the response code should be 200
+    And the response should match json:
+      """
+      {
+       "items":
+          [{
+           "href": "${response.items[0].href}",
+           "id": "${response.items[0].id}",
+           "kind": "ConnectorDeploymentAdminView",
+            "metadata": {
+              "annotations": {
+                "cos.bf2.org/organisation-id": "20000000",
+                "cos.bf2.org/pricing-tier": "essentials"
+              },
+              "created_at": "${response.items[0].metadata.created_at}",
+              "resolved_secrets": false,
+              "resource_version": ${response.items[0].metadata.resource_version},
+              "updated_at": "${response.items[0].metadata.updated_at}"
+            },
+            "spec": {
+              "cluster_id": "${connector_cluster_id}",
+              "connector_id": "${connector_id}",
+              "connector_resource_version": ${response.items[0].spec.connector_resource_version},
+              "connector_type_id": "aws-sqs-source-v1alpha1",
+              "desired_state": "ready",
+              "namespace_id": "${response.items[0].spec.namespace_id}",
+              "shard_metadata": {
+                "connector_image": "quay.io/mock-image:1.0.0",
+                "connector_revision": 42,
+                "operators": [
+                  {
+                    "type": "camel-k",
+                    "version": "[2.0.0]"
+                  }
+                ]
+              }
+            },
+            "status": {
+              "conditions": [
+                {
+                  "type": "Ready"
+                }
+              ],
+              "operators": {
+                "assigned": {
+                  "id": "camel-k-1.0.0",
+                  "type": "camel-k",
+                  "version": "1.0.0"
+                },
+                "available": {
+                  "id": "camel-k-1.0.1",
+                  "type": "camel-k",
+                  "version": "1.0.1"
+                }
+              },
+              "phase": "ready",
+              "resource_version": 45,
+              "shard_metadata": {
+                "assigned": {
+                  "channel": "stable",
+                  "connector_type_id": "aws-sqs-source-v1alpha1",
+                  "revision": 42
+                },
+                "available": {}
+              }
+            }
+          }],
+       "kind": "ConnectorDeploymentAdminViewList",
+       "page": 1,
+       "size": 1,
+       "total": 1
+      }
+      """
+
     And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
     And the response code should be 200
     And the response should match json:
@@ -1618,13 +1695,13 @@ Feature: connector agent API
 
     # upgrade is not available anymore
     Then I am logged in as "Ricky Bobby"
-    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
+    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments?operator_updates=true"
     And the response code should be 200
     And the response should match json:
       """
       {
        "items": [],
-       "kind": "",
+       "kind": "ConnectorDeploymentAdminViewList",
        "page": 1,
        "size": 0,
        "total": 0

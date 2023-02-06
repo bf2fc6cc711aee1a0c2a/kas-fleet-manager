@@ -452,6 +452,7 @@ func (h *ConnectorAdminHandler) DeleteConnector(writer http.ResponseWriter, requ
 func (h *ConnectorAdminHandler) GetClusterDeployments(writer http.ResponseWriter, request *http.Request) {
 	clusterId := mux.Vars(request)["connector_cluster_id"]
 	channelUpdates := request.URL.Query().Get("channel_updates")
+	operatorUpdates := request.URL.Query().Get("operator_updates")
 	danglingDeployments := request.URL.Query().Get("dangling_deployments")
 	listArgs := coreservices.NewListArguments(request.URL.Query())
 	cfg := handlers.HandlerConfig{
@@ -460,7 +461,7 @@ func (h *ConnectorAdminHandler) GetClusterDeployments(writer http.ResponseWriter
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), clusterId, parseBoolParam(channelUpdates), parseBoolParam(danglingDeployments), listArgs, 0)
+			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), clusterId, parseBoolParam(channelUpdates), parseBoolParam(operatorUpdates), parseBoolParam(danglingDeployments), listArgs, 0)
 			if err != nil {
 				return nil, err
 			}
@@ -521,6 +522,7 @@ func (h *ConnectorAdminHandler) GetConnectorDeployment(writer http.ResponseWrite
 func (h *ConnectorAdminHandler) GetNamespaceDeployments(writer http.ResponseWriter, request *http.Request) {
 	namespaceId := mux.Vars(request)["namespace_id"]
 	channelUpdates := request.URL.Query().Get("channel_updates")
+	operatorUpdates := request.URL.Query().Get("operator_updates")
 	listArgs := coreservices.NewListArguments(request.URL.Query())
 	danglingDeployments := request.URL.Query().Get("dangling_deployments")
 	cfg := handlers.HandlerConfig{
@@ -534,7 +536,7 @@ func (h *ConnectorAdminHandler) GetNamespaceDeployments(writer http.ResponseWrit
 			} else {
 				listArgs.Search = fmt.Sprintf("namespace_id = %s AND (%s)", namespaceId, listArgs.Search)
 			}
-			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), "", parseBoolParam(channelUpdates), parseBoolParam(danglingDeployments), listArgs, 0)
+			deployments, paging, err := h.Service.ListConnectorDeployments(request.Context(), "", parseBoolParam(channelUpdates), parseBoolParam(operatorUpdates), parseBoolParam(danglingDeployments), listArgs, 0)
 			if err != nil {
 				return nil, err
 			}

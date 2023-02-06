@@ -116,7 +116,7 @@ func TestFeatures(t *testing.T) {
 				// cause t.Parallel() to be invoked, other tests won't, so they won't be executed concurrently.
 				//
 				// This could help reducing/removing the need of explicit lock
-				t.Parallel()
+				//t.Parallel()
 
 				o := opts
 				o.TestingT = t
