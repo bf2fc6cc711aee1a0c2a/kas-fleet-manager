@@ -8,9 +8,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	kafkaTypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	v1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
+	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"sync"
@@ -29,7 +29,7 @@ var _ KafkaService = &KafkaServiceMock{}
 //			AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
 //				panic("mock out the AssignBootstrapServerHost method")
 //			},
-//			AssignInstanceTypeFunc: func(owner string, organisationID string) (types.KafkaInstanceType, *apiErrors.ServiceError) {
+//			AssignInstanceTypeFunc: func(owner string, organisationID string) (kafkaTypes.KafkaInstanceType, *apiErrors.ServiceError) {
 //				panic("mock out the AssignInstanceType method")
 //			},
 //			ChangeKafkaCNAMErecordsFunc: func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError) {
@@ -47,7 +47,7 @@ var _ KafkaService = &KafkaServiceMock{}
 //			DeprovisionKafkaForUsersFunc: func(users []string) *apiErrors.ServiceError {
 //				panic("mock out the DeprovisionKafkaForUsers method")
 //			},
-//			GenerateReservedManagedKafkasByClusterIDFunc: func(clusterID string) ([]v1.ManagedKafka, *apiErrors.ServiceError) {
+//			GenerateReservedManagedKafkasByClusterIDFunc: func(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError) {
 //				panic("mock out the GenerateReservedManagedKafkasByClusterID method")
 //			},
 //			GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *apiErrors.ServiceError) {
@@ -62,7 +62,7 @@ var _ KafkaService = &KafkaServiceMock{}
 //			GetCNAMERecordStatusFunc: func(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error) {
 //				panic("mock out the GetCNAMERecordStatus method")
 //			},
-//			GetManagedKafkaByClusterIDFunc: func(clusterID string) ([]v1.ManagedKafka, *apiErrors.ServiceError) {
+//			GetManagedKafkaByClusterIDFunc: func(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError) {
 //				panic("mock out the GetManagedKafkaByClusterID method")
 //			},
 //			HasAvailableCapacityInRegionFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, *apiErrors.ServiceError) {
@@ -110,7 +110,7 @@ var _ KafkaService = &KafkaServiceMock{}
 //			UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *apiErrors.ServiceError {
 //				panic("mock out the Updates method")
 //			},
-//			ValidateBillingAccountFunc: func(externalId string, instanceType types.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
+//			ValidateBillingAccountFunc: func(externalId string, instanceType kafkaTypes.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
 //				panic("mock out the ValidateBillingAccount method")
 //			},
 //			VerifyAndUpdateKafkaAdminFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError {
@@ -127,7 +127,7 @@ type KafkaServiceMock struct {
 	AssignBootstrapServerHostFunc func(kafkaRequest *dbapi.KafkaRequest) error
 
 	// AssignInstanceTypeFunc mocks the AssignInstanceType method.
-	AssignInstanceTypeFunc func(owner string, organisationID string) (types.KafkaInstanceType, *apiErrors.ServiceError)
+	AssignInstanceTypeFunc func(owner string, organisationID string) (kafkaTypes.KafkaInstanceType, *apiErrors.ServiceError)
 
 	// ChangeKafkaCNAMErecordsFunc mocks the ChangeKafkaCNAMErecords method.
 	ChangeKafkaCNAMErecordsFunc func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError)
@@ -145,7 +145,7 @@ type KafkaServiceMock struct {
 	DeprovisionKafkaForUsersFunc func(users []string) *apiErrors.ServiceError
 
 	// GenerateReservedManagedKafkasByClusterIDFunc mocks the GenerateReservedManagedKafkasByClusterID method.
-	GenerateReservedManagedKafkasByClusterIDFunc func(clusterID string) ([]v1.ManagedKafka, *apiErrors.ServiceError)
+	GenerateReservedManagedKafkasByClusterIDFunc func(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError)
 
 	// GetFunc mocks the Get method.
 	GetFunc func(ctx context.Context, id string) (*dbapi.KafkaRequest, *apiErrors.ServiceError)
@@ -160,7 +160,7 @@ type KafkaServiceMock struct {
 	GetCNAMERecordStatusFunc func(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error)
 
 	// GetManagedKafkaByClusterIDFunc mocks the GetManagedKafkaByClusterID method.
-	GetManagedKafkaByClusterIDFunc func(clusterID string) ([]v1.ManagedKafka, *apiErrors.ServiceError)
+	GetManagedKafkaByClusterIDFunc func(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError)
 
 	// HasAvailableCapacityInRegionFunc mocks the HasAvailableCapacityInRegion method.
 	HasAvailableCapacityInRegionFunc func(kafkaRequest *dbapi.KafkaRequest) (bool, *apiErrors.ServiceError)
@@ -208,7 +208,7 @@ type KafkaServiceMock struct {
 	UpdatesFunc func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *apiErrors.ServiceError
 
 	// ValidateBillingAccountFunc mocks the ValidateBillingAccount method.
-	ValidateBillingAccountFunc func(externalId string, instanceType types.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError
+	ValidateBillingAccountFunc func(externalId string, instanceType kafkaTypes.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError
 
 	// VerifyAndUpdateKafkaAdminFunc mocks the VerifyAndUpdateKafkaAdmin method.
 	VerifyAndUpdateKafkaAdminFunc func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError
@@ -362,7 +362,7 @@ type KafkaServiceMock struct {
 			// ExternalId is the externalId argument value.
 			ExternalId string
 			// InstanceType is the instanceType argument value.
-			InstanceType types.KafkaInstanceType
+			InstanceType kafkaTypes.KafkaInstanceType
 			// KafkaBillingModelID is the kafkaBillingModelID argument value.
 			KafkaBillingModelID string
 			// BillingCloudAccountId is the billingCloudAccountId argument value.
@@ -443,7 +443,7 @@ func (mock *KafkaServiceMock) AssignBootstrapServerHostCalls() []struct {
 }
 
 // AssignInstanceType calls AssignInstanceTypeFunc.
-func (mock *KafkaServiceMock) AssignInstanceType(owner string, organisationID string) (types.KafkaInstanceType, *apiErrors.ServiceError) {
+func (mock *KafkaServiceMock) AssignInstanceType(owner string, organisationID string) (kafkaTypes.KafkaInstanceType, *apiErrors.ServiceError) {
 	if mock.AssignInstanceTypeFunc == nil {
 		panic("KafkaServiceMock.AssignInstanceTypeFunc: method is nil but KafkaService.AssignInstanceType was just called")
 	}
@@ -638,7 +638,7 @@ func (mock *KafkaServiceMock) DeprovisionKafkaForUsersCalls() []struct {
 }
 
 // GenerateReservedManagedKafkasByClusterID calls GenerateReservedManagedKafkasByClusterIDFunc.
-func (mock *KafkaServiceMock) GenerateReservedManagedKafkasByClusterID(clusterID string) ([]v1.ManagedKafka, *apiErrors.ServiceError) {
+func (mock *KafkaServiceMock) GenerateReservedManagedKafkasByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError) {
 	if mock.GenerateReservedManagedKafkasByClusterIDFunc == nil {
 		panic("KafkaServiceMock.GenerateReservedManagedKafkasByClusterIDFunc: method is nil but KafkaService.GenerateReservedManagedKafkasByClusterID was just called")
 	}
@@ -802,7 +802,7 @@ func (mock *KafkaServiceMock) GetCNAMERecordStatusCalls() []struct {
 }
 
 // GetManagedKafkaByClusterID calls GetManagedKafkaByClusterIDFunc.
-func (mock *KafkaServiceMock) GetManagedKafkaByClusterID(clusterID string) ([]v1.ManagedKafka, *apiErrors.ServiceError) {
+func (mock *KafkaServiceMock) GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError) {
 	if mock.GetManagedKafkaByClusterIDFunc == nil {
 		panic("KafkaServiceMock.GetManagedKafkaByClusterIDFunc: method is nil but KafkaService.GetManagedKafkaByClusterID was just called")
 	}
@@ -1305,13 +1305,13 @@ func (mock *KafkaServiceMock) UpdatesCalls() []struct {
 }
 
 // ValidateBillingAccount calls ValidateBillingAccountFunc.
-func (mock *KafkaServiceMock) ValidateBillingAccount(externalId string, instanceType types.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
+func (mock *KafkaServiceMock) ValidateBillingAccount(externalId string, instanceType kafkaTypes.KafkaInstanceType, kafkaBillingModelID string, billingCloudAccountId string, marketplace *string) *apiErrors.ServiceError {
 	if mock.ValidateBillingAccountFunc == nil {
 		panic("KafkaServiceMock.ValidateBillingAccountFunc: method is nil but KafkaService.ValidateBillingAccount was just called")
 	}
 	callInfo := struct {
 		ExternalId            string
-		InstanceType          types.KafkaInstanceType
+		InstanceType          kafkaTypes.KafkaInstanceType
 		KafkaBillingModelID   string
 		BillingCloudAccountId string
 		Marketplace           *string
@@ -1334,14 +1334,14 @@ func (mock *KafkaServiceMock) ValidateBillingAccount(externalId string, instance
 //	len(mockedKafkaService.ValidateBillingAccountCalls())
 func (mock *KafkaServiceMock) ValidateBillingAccountCalls() []struct {
 	ExternalId            string
-	InstanceType          types.KafkaInstanceType
+	InstanceType          kafkaTypes.KafkaInstanceType
 	KafkaBillingModelID   string
 	BillingCloudAccountId string
 	Marketplace           *string
 } {
 	var calls []struct {
 		ExternalId            string
-		InstanceType          types.KafkaInstanceType
+		InstanceType          kafkaTypes.KafkaInstanceType
 		KafkaBillingModelID   string
 		BillingCloudAccountId string
 		Marketplace           *string

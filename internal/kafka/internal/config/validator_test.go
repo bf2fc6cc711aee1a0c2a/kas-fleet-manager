@@ -65,6 +65,15 @@ func Test_amsProductValidator(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "validation doesn't fail with accepted AMS product (IV)",
+			args: args{
+				testType: testType{
+					TestField: string(ocm.RHOSAKCCProduct),
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "validation fails with non accepted AMS product",
 			args: args{
 				testType: testType{

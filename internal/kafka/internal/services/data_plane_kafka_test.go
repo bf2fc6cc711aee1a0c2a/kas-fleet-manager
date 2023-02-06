@@ -1193,6 +1193,17 @@ func Test_dataPlaneKafkaService_unassignKafkaFromDataplaneCluster(t *testing.T) 
 			want: nil,
 		},
 		{
+			name: "should return nil if kafka status is kafka is enterprise",
+			args: args{
+				kafka: &dbapi.KafkaRequest{
+					Status:                   "provisioning",
+					ClusterID:                "test-cluster-id",
+					DesiredKafkaBillingModel: constants.BillingModelEnterprise.String(),
+				},
+			},
+			want: nil,
+		},
+		{
 			name: "should return error if updateFunc returns error",
 			fields: fields{
 				kafkaService: &KafkaServiceMock{

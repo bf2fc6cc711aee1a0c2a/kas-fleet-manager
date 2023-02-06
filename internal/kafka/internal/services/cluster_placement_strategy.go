@@ -3,7 +3,9 @@ package services
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/pkg/errors"
 )
 
@@ -22,17 +24,79 @@ func NewClusterPlacementStrategy(clusterService ClusterService, dataplaneCluster
 	case dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled():
 		clusterSelection = &FirstReadyWithCapacity{clusterService, kafkaConfig}
 	default:
-		clusterSelection = &FirstReadyCluster{clusterService}
+		clusterSelection = &FirstReadyCluster{clusterService, kafkaConfig}
 	}
 	return clusterSelection
+}
+
+// findDataPlaneClusterByIdIfItHasCapacityAvailable finds and returns the desired data plane cluster if
+// if it has capacity available.
+type findDataPlaneClusterByIdIfItHasCapacityAvailable struct {
+	clusterService ClusterService
+	kafkaConfig    *config.KafkaConfig
+}
+
+// FindCluster finds the data plane cluster that's desired for the given kafka.
+// The desired data plane cluster is expressed by the "ClusterID" field in the received kafka request.
+// Once the cluster is found, it has to match the following rules:
+// 1. The cluster has to be in ready state.
+// 2. It also also has to be in the same organization as the kafka request.
+// 3. It must have remaining capacity to receive the Kafka.
+// Capacity capacity is evaluated based on the MaxUnits stored in DynamicCapacityInfo and the actual used capacity.
+func (f *findDataPlaneClusterByIdIfItHasCapacityAvailable) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+	cluster, err := f.clusterService.FindClusterByID(kafka.ClusterID)
+	if err != nil || cluster == nil {
+		return nil, apiErrors.GeneralError("failed to get cluster with id: %q", kafka.ClusterID)
+	}
+
+	if cluster.OrganizationID != kafka.OrganisationId {
+		return nil, apiErrors.Unauthorized("user with organization ID: '%s' is unauthorized to create kafka on a cluster belonging to different organization", kafka.OrganisationId)
+	}
+
+	if cluster.Status != api.ClusterStatus(statusReady.String()) {
+		return nil, apiErrors.BadRequest("cluster with id: %s is not ready to accept kafkas", kafka.ClusterID)
+	}
+
+	kafkaSizeConsumption, sizeErr := f.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+	if sizeErr != nil {
+		return nil, sizeErr
+	}
+
+	capacityInfo, ok := cluster.RetrieveDynamicCapacityInfo()[kafka.InstanceType]
+
+	if !ok {
+		return nil, errors.Errorf("instance type %q not supported on selected cluster %q", kafka.InstanceType, kafka.ClusterID)
+	}
+
+	streamingUnitCounts, streamingUnitComputationErr := f.clusterService.ComputeConsumedStreamingUnitCountPerInstanceType(cluster.ClusterID)
+	if streamingUnitComputationErr != nil {
+		return nil, streamingUnitComputationErr
+	}
+
+	usedCapacity := streamingUnitCounts[types.KafkaInstanceType(kafka.InstanceType)]
+	futureRemainingCapacity := int64(capacityInfo.MaxUnits) - (usedCapacity + int64(kafkaSizeConsumption.CapacityConsumed))
+	if futureRemainingCapacity >= 0 {
+		return cluster, nil
+	}
+
+	return nil, nil
 }
 
 // FirstReadyCluster finds and returns the first cluster with Ready status
 type FirstReadyCluster struct {
 	ClusterService ClusterService
+	kafkaConfig    *config.KafkaConfig
 }
 
 func (f *FirstReadyCluster) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+	if kafka.DesiredBillingModelIsEnterprise() {
+		enterpriseKafkaPlacementStrategy := findDataPlaneClusterByIdIfItHasCapacityAvailable{
+			clusterService: f.ClusterService,
+			kafkaConfig:    f.kafkaConfig,
+		}
+		return enterpriseKafkaPlacementStrategy.FindCluster(kafka)
+	}
+
 	criteria := FindClusterCriteria{
 		Provider:              kafka.CloudProvider,
 		Region:                kafka.Region,
@@ -52,12 +116,20 @@ func (f *FirstReadyCluster) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster
 // FirstSchedulableWithinLimit finds and returns the first cluster which is schedulable and the number of
 // Kafka clusters associated with it is within the defined limit.
 type FirstSchedulableWithinLimit struct {
-	DataplaneClusterConfig *config.DataplaneClusterConfig
-	ClusterService         ClusterService
-	KafkaConfig            *config.KafkaConfig
+	dataplaneClusterConfig *config.DataplaneClusterConfig
+	clusterService         ClusterService
+	kafkaConfig            *config.KafkaConfig
 }
 
 func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+	if kafka.DesiredBillingModelIsEnterprise() {
+		enterpriseKafkaPlacementStrategy := findDataPlaneClusterByIdIfItHasCapacityAvailable{
+			clusterService: f.clusterService,
+			kafkaConfig:    f.kafkaConfig,
+		}
+		return enterpriseKafkaPlacementStrategy.FindCluster(kafka)
+	}
+
 	criteria := FindClusterCriteria{
 		Provider:              kafka.CloudProvider,
 		Region:                kafka.Region,
@@ -66,18 +138,18 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 		SupportedInstanceType: kafka.InstanceType,
 	}
 
-	kafkaInstanceSize, e := f.KafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+	kafkaInstanceSize, e := f.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
 	if e != nil {
 		return nil, errors.Wrapf(e, "failed to get kafka instance size for cluster with criteria '%v'", criteria)
 	}
 
 	//#1
-	clusterObj, err := f.ClusterService.FindAllClusters(criteria)
+	clusterObj, err := f.clusterService.FindAllClusters(criteria)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to find all clusters with criteria '%v'", criteria)
 	}
 
-	dataplaneClusterConfig := f.DataplaneClusterConfig.ClusterConfig
+	dataplaneClusterConfig := f.dataplaneClusterConfig.ClusterConfig
 
 	//#2 - collect schedulable clusters
 	clusterSchIds := []string{}
@@ -122,7 +194,7 @@ func searchClusterObjInArray(clusters []*api.Cluster, clusterId string) *api.Clu
 
 // findClusterKafkaInstanceCount searches DB for the number of Kafka instance associated with each OSD Clusters
 func (f *FirstSchedulableWithinLimit) findClusterKafkaInstanceCount(clusterIDs []string) (map[string]int, error) {
-	if instanceLst, err := f.ClusterService.FindKafkaInstanceCount(clusterIDs); err != nil {
+	if instanceLst, err := f.clusterService.FindKafkaInstanceCount(clusterIDs); err != nil {
 		return nil, err
 	} else {
 		clusterWithinLimitMap := make(map[string]int)
@@ -135,11 +207,19 @@ func (f *FirstSchedulableWithinLimit) findClusterKafkaInstanceCount(clusterIDs [
 
 // FirstReadyWithCapacity finds and returns the first cluster in a Ready status with remaining capacity
 type FirstReadyWithCapacity struct {
-	ClusterService ClusterService
-	KafkaConfig    *config.KafkaConfig
+	clusterService ClusterService
+	kafkaConfig    *config.KafkaConfig
 }
 
 func (f *FirstReadyWithCapacity) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+	if kafka.DesiredBillingModelIsEnterprise() {
+		enterpriseKafkaPlacementStrategy := findDataPlaneClusterByIdIfItHasCapacityAvailable{
+			clusterService: f.clusterService,
+			kafkaConfig:    f.kafkaConfig,
+		}
+		return enterpriseKafkaPlacementStrategy.FindCluster(kafka)
+	}
+
 	// Find all clusters that match with the criteria
 	criteria := FindClusterCriteria{
 		Provider:              kafka.CloudProvider,
@@ -149,18 +229,18 @@ func (f *FirstReadyWithCapacity) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cl
 		SupportedInstanceType: kafka.InstanceType,
 	}
 
-	clusters, findAllClusterErr := f.ClusterService.FindAllClusters(criteria)
+	clusters, findAllClusterErr := f.clusterService.FindAllClusters(criteria)
 	if findAllClusterErr != nil || len(clusters) == 0 {
 		return nil, errors.Wrapf(findAllClusterErr, "failed to find all clusters with criteria '%v'", criteria)
 	}
 
 	// Get total number of streaming unit used per region and instance type
-	streamingUnitCountPerRegionList, countStreamingUnitErr := f.ClusterService.FindStreamingUnitCountByClusterAndInstanceType()
+	streamingUnitCountPerRegionList, countStreamingUnitErr := f.clusterService.FindStreamingUnitCountByClusterAndInstanceType()
 	if countStreamingUnitErr != nil {
 		return nil, errors.Wrapf(countStreamingUnitErr, "failed to get count of streaming units by cluster and instance type for criteria '%v'", criteria)
 	}
 
-	instanceSize, getInstanceSizeErr := f.KafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
+	instanceSize, getInstanceSizeErr := f.kafkaConfig.GetKafkaInstanceSize(kafka.InstanceType, kafka.SizeId)
 	if getInstanceSizeErr != nil {
 		return nil, errors.Wrapf(getInstanceSizeErr, "failed to get kafka instance size for cluster with criteria '%v'", criteria)
 	}

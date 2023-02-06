@@ -70,6 +70,8 @@ type KafkaRequest struct {
 	BillingModel                          string `json:"billing_model,omitempty"`
 	// Status of the Kafka request promotion. Possible values: ['promoting', 'failed']. If unset it means no promotion is in progress.
 	PromotionStatus string `json:"promotion_status,omitempty"`
+	// The ID of the data plane where Kafka is deployed on. This information is only returned for kafka whose billing model is enterprise
+	ClusterId *string `json:"cluster_id,omitempty"`
 	// Details of the Kafka request promotion. It can be set when a Kafka request promotion is in progress or has failed
 	PromotionDetails string `json:"promotion_details,omitempty"`
 }

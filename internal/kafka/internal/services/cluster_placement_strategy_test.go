@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	mockkafkas "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
 	"github.com/pkg/errors"
 )
@@ -273,9 +271,9 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			f := &FirstSchedulableWithinLimit{
-				DataplaneClusterConfig: tt.fields.DataplaneClusterConfig,
-				ClusterService:         tt.fields.ClusterService,
-				KafkaConfig:            tt.fields.kafkaConfig,
+				dataplaneClusterConfig: tt.fields.DataplaneClusterConfig,
+				clusterService:         tt.fields.ClusterService,
+				kafkaConfig:            tt.fields.kafkaConfig,
 			}
 			got, err := f.FindCluster(tt.args.kafka)
 			if (err != nil) != tt.wantErr {
@@ -564,8 +562,8 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			f := &FirstReadyWithCapacity{
-				ClusterService: tt.fields.ClusterService,
-				KafkaConfig:    tt.fields.KafkaConfig,
+				clusterService: tt.fields.ClusterService,
+				kafkaConfig:    tt.fields.KafkaConfig,
 			}
 
 			got, err := f.FindCluster(tt.args.kafka)
@@ -574,6 +572,241 @@ func TestFirstReadyWithCapacity_FindCluster(t *testing.T) {
 				g.Expect(err.Error()).To(gomega.Equal(tt.wantErr.Error()))
 			}
 			g.Expect(got).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
+func Test_findDesiredDataPlaneClusterIfItHasCapacityAvailable_FindCluster(t *testing.T) {
+	type fields struct {
+		clusterService ClusterService
+	}
+	type args struct {
+		kafka *dbapi.KafkaRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *api.Cluster
+		wantErr bool
+	}{
+		{
+			name: "return an error if finding the cluster fails",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, &apiErrors.ServiceError{}
+					},
+				},
+			},
+			args: args{
+				kafka: buildKafkaRequest(nil),
+			},
+			wantErr: true,
+		},
+		{
+			name: "return an error if cluster org is different from kafka organization",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: api.NewID(), // generate a random id so that we are sure it'll be different from the Kafka org id
+						}, nil
+					},
+				},
+			},
+			args: args{
+				kafka: buildKafkaRequest(nil),
+			},
+			wantErr: true,
+		},
+		{
+			name: "return an error if cluster is not ready",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: "some-org-id",
+							Status:         api.ClusterCleanup,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				kafka: buildKafkaRequest(mockkafkas.With(mockkafkas.ORGANISATION_ID, "some-org-id")),
+			},
+			wantErr: true,
+		},
+		{
+			name: "return an error if computing used streaming unit for the given cluster fails",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID: "some-org-id",
+							Status:         api.ClusterReady,
+						}, nil
+					},
+					ComputeConsumedStreamingUnitCountPerInstanceTypeFunc: func(clusterID string) (StreamingUnitCountPerInstanceType, error) {
+						return nil, fmt.Errorf("some error")
+					},
+				},
+			},
+			args: args{
+				kafka: buildKafkaRequest(mockkafkas.With(mockkafkas.ORGANISATION_ID, "some-org-id")),
+			},
+			wantErr: true,
+		},
+		{
+			name: "return an error when kafka size not available",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID:      "some-org-id",
+							Status:              api.ClusterReady,
+							DynamicCapacityInfo: []byte([]byte(`{"standard":{"max_nodes":20,"max_units":20,"remaining_units":8}}`)),
+						}, nil
+					},
+					ComputeConsumedStreamingUnitCountPerInstanceTypeFunc: func(clusterID string) (StreamingUnitCountPerInstanceType, error) {
+						return StreamingUnitCountPerInstanceType{
+							types.DEVELOPER: 0,
+							types.STANDARD:  19,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				kafka: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.OrganisationId = "some-org-id"
+					kafkaRequest.InstanceType = types.STANDARD.String()
+					kafkaRequest.SizeId = "x8981"
+				}),
+			},
+			wantErr: true,
+		},
+		{
+			name: "return an error when kafka instance not supported on cluster",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID:      "some-org-id",
+							Status:              api.ClusterReady,
+							DynamicCapacityInfo: []byte([]byte(`{"standard":{"max_nodes":20,"max_units":20,"remaining_units":8}}`)),
+						}, nil
+					},
+					ComputeConsumedStreamingUnitCountPerInstanceTypeFunc: func(clusterID string) (StreamingUnitCountPerInstanceType, error) {
+						return StreamingUnitCountPerInstanceType{
+							types.DEVELOPER: 0,
+							types.STANDARD:  19,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				kafka: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.OrganisationId = "some-org-id"
+					kafkaRequest.InstanceType = types.DEVELOPER.String()
+					kafkaRequest.SizeId = "x1"
+				}),
+			},
+			wantErr: true,
+		},
+		{
+			name: "return nil cluster and no error when cluster is out of capacity",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID:      "some-org-id",
+							Status:              api.ClusterReady,
+							DynamicCapacityInfo: []byte([]byte(`{"standard":{"max_nodes":20,"max_units":20,"remaining_units":8}}`)),
+						}, nil
+					},
+					ComputeConsumedStreamingUnitCountPerInstanceTypeFunc: func(clusterID string) (StreamingUnitCountPerInstanceType, error) {
+						return StreamingUnitCountPerInstanceType{
+							types.DEVELOPER: 0,
+							types.STANDARD:  19,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				kafka: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.OrganisationId = "some-org-id"
+					kafkaRequest.InstanceType = types.STANDARD.String()
+					kafkaRequest.SizeId = "x2"
+				}),
+			},
+			wantErr: false,
+		},
+		{
+			name: "return nil cluster and no error when cluster is out of capacity",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID:      "some-org-id",
+							Status:              api.ClusterReady,
+							DynamicCapacityInfo: []byte([]byte(`{"standard":{"max_nodes":20,"max_units":20,"remaining_units":8}}`)),
+						}, nil
+					},
+					ComputeConsumedStreamingUnitCountPerInstanceTypeFunc: func(clusterID string) (StreamingUnitCountPerInstanceType, error) {
+						return StreamingUnitCountPerInstanceType{
+							types.DEVELOPER: 0,
+							types.STANDARD:  18,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				kafka: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.OrganisationId = "some-org-id"
+					kafkaRequest.InstanceType = types.STANDARD.String()
+					kafkaRequest.SizeId = "x2"
+				}),
+			},
+			wantErr: false,
+			want: &api.Cluster{
+				OrganizationID:      "some-org-id",
+				Status:              api.ClusterReady,
+				DynamicCapacityInfo: []byte([]byte(`{"standard":{"max_nodes":20,"max_units":20,"remaining_units":8}}`)),
+			},
+		},
+	}
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(testcase.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			t.Parallel()
+			k := &findDataPlaneClusterByIdIfItHasCapacityAvailable{
+				clusterService: testcase.fields.clusterService,
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: types.STANDARD.String(),
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:               "x1",
+											CapacityConsumed: 1,
+										},
+										{
+											Id:               "x2",
+											CapacityConsumed: 2,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			got, err := k.FindCluster(testcase.args.kafka)
+			g.Expect(got).To(gomega.Equal(testcase.want))
+			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr))
 		})
 	}
 }

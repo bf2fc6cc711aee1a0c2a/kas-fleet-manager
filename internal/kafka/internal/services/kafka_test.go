@@ -1010,6 +1010,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
+					kafkaRequest.ClusterID = ""
 					kafkaRequest.InstanceType = types.STANDARD.String()
 				}),
 			},
@@ -1062,6 +1063,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
+					kafkaRequest.ClusterID = ""
 					kafkaRequest.InstanceType = types.DEVELOPER.String()
 					kafkaRequest.SizeId = "x1"
 					kafkaRequest.Owner = testUser
@@ -1125,6 +1127,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
+					kafkaRequest.ClusterID = ""
 					kafkaRequest.InstanceType = types.STANDARD.String()
 				}),
 			},
@@ -1224,7 +1227,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 		{
-			name: "should register kafka job successful when developer instances count for the user is less than max-allowed-developer-instances",
+			name: "should register kafka job successfully when developer instances count for the user is less than max-allowed-developer-instances",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				clusterService:         nil,
@@ -1256,6 +1259,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
+					kafkaRequest.ClusterID = ""
 					kafkaRequest.InstanceType = types.DEVELOPER.String()
 					kafkaRequest.SizeId = "x1"
 					kafkaRequest.Owner = testUser
@@ -1287,7 +1291,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 		{
-			name: "should register kafka job unsuccessful when developer kafka instances count for the user has reached the max-allowed-developer-instances limit",
+			name: "should fail to register kafka job when developer kafka instances count for the user has reached the max-allowed-developer-instances limit",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				clusterService:         nil,
@@ -1319,6 +1323,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
+					kafkaRequest.ClusterID = ""
 					kafkaRequest.InstanceType = types.DEVELOPER.String()
 					kafkaRequest.SizeId = "x1"
 					kafkaRequest.Owner = testUser
@@ -1332,6 +1337,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					WithArgs("us-east-1", "aws", "developer").
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 						kafkaRequest.ID = ""
+						kafkaRequest.ClusterID = ""
 						kafkaRequest.InstanceType = types.DEVELOPER.String()
 						kafkaRequest.SizeId = "x1"
 						kafkaRequest.Owner = testUser
@@ -1352,7 +1358,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 		{
-			name: "registering kafka job unsucessful when wrong plan is selected",
+			name: "registering kafka job unsuccessful when wrong plan is selected",
 			fields: fields{
 				connectionFactory:      db.NewMockConnectionFactory(nil),
 				clusterService:         nil,
@@ -1384,6 +1390,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
+					kafkaRequest.ClusterID = ""
 					kafkaRequest.InstanceType = types.DEVELOPER.String()
 					kafkaRequest.SizeId = "x2"
 				}),
@@ -1468,6 +1475,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
 					kafkaRequest.ID = ""
+					kafkaRequest.ClusterID = ""
 					kafkaRequest.InstanceType = types.STANDARD.String()
 				}),
 			},
@@ -1563,6 +1571,89 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				wantErr:  true,
 				code:     errors.ErrorGeneral,
 				httpCode: http.StatusInternalServerError,
+			},
+		},
+		{
+			name: "should fail when cluster for enterprise kafka request cannot be found",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, errors.GeneralError("failed to find cluster")
+					},
+				},
+				kafkaConfig: defaultKafkaConf,
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return nil, nil
+					},
+				},
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, 0, 0, true),
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+					kafkaRequest.ClusterID = "some-cluster-id"
+					kafkaRequest.InstanceType = types.STANDARD.String()
+					kafkaRequest.DesiredKafkaBillingModel = constants.BillingModelEnterprise.String()
+				}),
+			},
+			setupFn: func(connectionFactory *db.ConnectionFactory) {
+				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`).WithReply([]map[string]interface{}{})
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			error: errorCheck{
+				wantErr:  true,
+				code:     errors.ErrorTooManyKafkaInstancesReached,
+				httpCode: http.StatusForbidden,
+			},
+		},
+		{
+			name: "successfully registers an enterprise kafka",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaConfig:       defaultKafkaConf,
+				clusterPlmtStrategy: &ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return &api.Cluster{
+							ClusterID: "some-cluster-id",
+						}, nil
+					},
+				},
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(owner string, organisationID string, instanceType types.KafkaInstanceType, billingModel config.KafkaBillingModel) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
+						return "fake-subscription-id", nil
+					},
+				},
+				dataplaneClusterConfig: buildDataplaneClusterConfig(defaultDataplaneClusterConfig),
+				providerConfig:         buildProviderConfiguration(testKafkaRequestRegion, 0, 0, true),
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+					kafkaRequest.ClusterID = "some-cluster-id"
+					kafkaRequest.InstanceType = types.STANDARD.String()
+					kafkaRequest.DesiredKafkaBillingModel = constants.BillingModelEnterprise.String()
+				}),
+			},
+			setupFn: func(connectionFactory *db.ConnectionFactory) {
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.InstanceType = types.STANDARD.String()
+					})))
+				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			error: errorCheck{
+				wantErr: false,
 			},
 		},
 	}

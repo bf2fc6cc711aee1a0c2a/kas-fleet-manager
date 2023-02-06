@@ -18,6 +18,7 @@ const (
 	RHOSAKProduct      KafkaProduct = "RHOSAK"
 	RHOSAKTrialProduct KafkaProduct = "RHOSAKTrial"
 	RHOSAKEvalProduct  KafkaProduct = "RHOSAKEval"
+	RHOSAKCCProduct    KafkaProduct = "RHOSAKCC"
 )
 
 const (

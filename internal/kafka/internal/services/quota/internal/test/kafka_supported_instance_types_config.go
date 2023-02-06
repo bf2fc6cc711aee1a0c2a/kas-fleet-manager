@@ -82,6 +82,12 @@ var amsKafkaSupportedInstanceTypesConfig = config.KafkaSupportedInstanceTypesCon
 						AMSProduct:       "RHOSAKEval",
 						AMSBillingModels: []string{"standard"},
 					},
+					{
+						ID:               "enterprise",
+						AMSResource:      "rhosak",
+						AMSProduct:       "RHOSAKCC",
+						AMSBillingModels: []string{"standard"},
+					},
 				},
 				Sizes: []config.KafkaInstanceSize{
 					{

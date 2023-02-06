@@ -49,6 +49,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			ValidateKafkaClusterNameIsUnique(&kafkaRequestPayload.Name, h.service, r.Context()),
 			ValidateKafkaClaims(ctx, ValidateUsername(), ValidateOrganisationId()),
 			ValidateCloudProvider(ctx, h.service, &kafkaRequestPayload, h.providerConfig, "creating kafka requests"),
+			handlers.ValidateNotEmptyClusterId(kafkaRequestPayload.ClusterId, "cluster id"),
 			ValidateKafkaPlan(ctx, h.service, h.kafkaConfig, &kafkaRequestPayload),
 			validateKafkaBillingModel(ctx, h.service, h.kafkaConfig, &kafkaRequestPayload),
 			ValidateBillingCloudAccountIdAndMarketplace(ctx, h.service, &kafkaRequestPayload),

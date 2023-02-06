@@ -130,3 +130,13 @@ func GetSuspendedStatuses() []string {
 func GetDeletingStatuses() []string {
 	return []string{KafkaRequestStatusDeprovision.String(), KafkaRequestStatusDeleting.String()}
 }
+
+type BillingModel string
+
+const (
+	BillingModelEnterprise BillingModel = "enterprise"
+)
+
+func (b BillingModel) String() string {
+	return string(b)
+}

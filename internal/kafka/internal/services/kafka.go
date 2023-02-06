@@ -386,34 +386,37 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 		kafkaRequest.MultiAZ = false
 	}
 
-	hasCapacity, err := k.HasAvailableCapacityInRegion(kafkaRequest)
-	if err != nil {
-		if err.Code == errors.ErrorGeneral {
-			err = errors.NewWithCause(errors.ErrorGeneral, err, "unable to validate your request, please try again")
-			logger.Logger.Errorf(err.Reason)
-		}
-		return err
-	}
-	if !hasCapacity {
-		errorMsg := fmt.Sprintf("capacity exhausted in '%s' region for '%s' instance type", kafkaRequest.Region, kafkaRequest.InstanceType)
-		logger.Logger.Warningf(errorMsg)
-		return errors.TooManyKafkaInstancesReached(fmt.Sprintf("region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType))
-	}
-
-	if !k.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
-		cluster, e := k.clusterPlacementStrategy.FindCluster(kafkaRequest)
-		if e != nil || cluster == nil {
-			msg := fmt.Sprintf("no available cluster found for Kafka instance type '%s' in region '%s'", kafkaRequest.InstanceType, kafkaRequest.Region)
-			if e != nil {
-				logger.Logger.Error(fmt.Errorf("%s:%w", msg, e))
-			} else {
-				logger.Logger.Infof(msg)
+	// check for region capacity availability only if the kafka is not enterprise Kafka
+	if !kafkaRequest.DesiredBillingModelIsEnterprise() {
+		hasCapacity, err := k.HasAvailableCapacityInRegion(kafkaRequest)
+		if err != nil {
+			if err.Code == errors.ErrorGeneral {
+				err = errors.NewWithCause(errors.ErrorGeneral, err, "unable to validate your request, please try again")
+				logger.Logger.Errorf(err.Reason)
 			}
-
+			return err
+		}
+		if !hasCapacity {
+			errorMsg := fmt.Sprintf("capacity exhausted in '%s' region for '%s' instance type", kafkaRequest.Region, kafkaRequest.InstanceType)
+			logger.Logger.Warningf(errorMsg)
 			return errors.TooManyKafkaInstancesReached(fmt.Sprintf("region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType))
+		}
+	}
+
+	// assign the Kafka as soon as possible if we are not in dynamic scaling or that the Kafka is an enterprise Kafka
+	if !k.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() || kafkaRequest.DesiredBillingModelIsEnterprise() {
+		cluster, err := k.findADataPlaneClusterToPlaceTheKafka(kafkaRequest)
+		if err != nil {
+			return err
 		}
 
 		kafkaRequest.ClusterID = cluster.ClusterID
+
+		// assign cloud provider and region info of the cluster
+		if kafkaRequest.DesiredBillingModelIsEnterprise() {
+			kafkaRequest.CloudProvider = cluster.CloudProvider
+			kafkaRequest.Region = cluster.Region
+		}
 	}
 
 	subscriptionId, err := k.reserveQuota(kafkaRequest)
@@ -463,6 +466,26 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 
 	return nil
+}
+
+func (k *kafkaService) findADataPlaneClusterToPlaceTheKafka(kafkaRequest *dbapi.KafkaRequest) (*api.Cluster, *errors.ServiceError) {
+	cluster, e := k.clusterPlacementStrategy.FindCluster(kafkaRequest)
+	if e != nil || cluster == nil {
+		msg := fmt.Sprintf("no available cluster found for Kafka instance type '%s' in region '%s'", kafkaRequest.InstanceType, kafkaRequest.Region)
+		if e != nil {
+			logger.Logger.Error(fmt.Errorf("%s:%w", msg, e))
+		} else {
+			logger.Logger.Infof(msg)
+		}
+
+		userMsg := fmt.Sprintf("region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType)
+		if kafkaRequest.DesiredBillingModelIsEnterprise() {
+			userMsg = fmt.Sprintf("cluster %q cannot accept instance type: %q at this moment", kafkaRequest.Region, kafkaRequest.InstanceType)
+		}
+		return nil, errors.TooManyKafkaInstancesReached(userMsg)
+	}
+
+	return cluster, nil
 }
 
 func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {

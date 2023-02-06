@@ -383,7 +383,7 @@ func Test_KafkaHandler_Create(t *testing.T) {
 		wantStatusCode int
 	}{
 		{
-			name: "succeeds if RegisterKafkaJob in the kafka service succeds",
+			name: "succeeds if RegisterKafkaJob in the kafka service succeeds",
 			fields: fields{
 				service: &services.KafkaServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
@@ -411,7 +411,7 @@ func Test_KafkaHandler_Create(t *testing.T) {
 			wantStatusCode: http.StatusAccepted,
 		},
 		{
-			name: "fails if RegisterKafkaJob in the kafka service retuns an error",
+			name: "fails if RegisterKafkaJob in the kafka service returns an error",
 			fields: fields{
 				service: &services.KafkaServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
@@ -569,6 +569,30 @@ func Test_KafkaHandler_Create(t *testing.T) {
 			args: args{
 				url:  "/kafkas?async=true",
 				body: []byte(`{"name": "name", "cloud_provider": "aws", "billing_model":"invalid"}`),
+				ctx:  ctx,
+			},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name: "fails if clusterID is not empty and not valid",
+			fields: fields{
+				service: &services.KafkaServiceMock{
+					GetFunc: func(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return mocks.BuildKafkaRequest(mocks.WithPredefinedTestValues()), nil
+					},
+					ListFunc: func(ctx context.Context, listArgs *s.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+						return dbapi.KafkaList{}, &api.PagingMeta{}, nil
+					},
+					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {
+						return types.STANDARD, nil
+					},
+				},
+				providerConfig: &supportedProviders,
+				kafkaConfig:    &fullKafkaConfig,
+			},
+			args: args{
+				url:  "/kafkas?async=true",
+				body: []byte(`{"name": "name", "cloud_provider": "aws", "billing_model":"standard", "cluster_id": "invalid"}`),
 				ctx:  ctx,
 			},
 			wantStatusCode: http.StatusBadRequest,
