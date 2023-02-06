@@ -33,6 +33,7 @@ registered_service_accounts:
         kafka_billing_models:
           - id: standard
           - id: enterprise
+          - id: eval
   - username: testuser2@example.com
     max_allowed_instances: 2
     granted_quota:
@@ -40,6 +41,7 @@ registered_service_accounts:
         kafka_billing_models:
           - id: standard
           - id: enterprise
+          - id: eval
   - username: testuser3@example.com
     max_allowed_instances: 2
     granted_quota:
@@ -47,6 +49,7 @@ registered_service_accounts:
         kafka_billing_models:
           - id: standard
           - id: enterprise
+          - id: eval
   - username: testuser4@example.com
     max_allowed_instances: 2
     granted_quota:
@@ -54,6 +57,7 @@ registered_service_accounts:
         kafka_billing_models:
           - id: standard
           - id: enterprise
+          - id: eval
   - username: testuser5@example.com
     max_allowed_instances: 2
     granted_quota:
@@ -61,6 +65,7 @@ registered_service_accounts:
         kafka_billing_models:
           - id: standard
           - id: enterprise
+          - id: eval
 
 # A list of registered users per organisation (see structure below). The list current contains known organisations - add yours if it is missing.
 # If a user is not in this or in the `registered_service_accounts` list, only DEVELOPER kafka instances will be allowed.
@@ -97,7 +102,8 @@ registered_users_per_organisation:
           - id: marketplace
             max_allowed_instances: 5
           - id: enterprise
-            max_allowed_instances: 5  
+            max_allowed_instances: 5
+          - id: eval  
     # The App SRE team
   - id: 12147054
     any_user: true
@@ -109,7 +115,8 @@ registered_users_per_organisation:
           - id: standard
             max_allowed_instances: 1
           - id: enterprise
-            max_allowed_instances: 1  
+            max_allowed_instances: 1
+          - id: eval
     # The Kafka Instances team
   - id: 13639843
     any_user: true
@@ -121,7 +128,8 @@ registered_users_per_organisation:
           - id: standard
             max_allowed_instances: 1
           - id: enterprise
-            max_allowed_instances: 1  
+            max_allowed_instances: 1
+          - id: eval
     # The MK Security team
   - id: 13785172
     any_user: true
@@ -133,7 +141,8 @@ registered_users_per_organisation:
           - id: standard
             max_allowed_instances: 1
           - id: enterprise
-            max_allowed_instances: 1   
+            max_allowed_instances: 1
+          - id: eval
     # The Running the Service team
   - id: 13645369
     any_user: true
@@ -145,4 +154,5 @@ registered_users_per_organisation:
           - id: standard
             max_allowed_instances: 3
           - id: enterprise
-            max_allowed_instances: 3  
+            max_allowed_instances: 3
+          - id: eval
