@@ -88,6 +88,12 @@ type ClusterSpec struct {
 	StatusDetails string `json:"status_details"`
 	// additional information related to the cluster, can vary depending on the provider
 	AdditionalInfo api.JSON `json:"additional_info"`
+	// cloud provider region the cluster
+	Region string `json:"region"`
+	// cloud provider name of the cluster
+	CloudProvider string `json:"cloud_provider"`
+	// multi AZ availability flag of the cluster
+	MultiAZ bool `json:"multi_az"`
 }
 
 type CloudProviderInfo struct {

@@ -13,6 +13,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/onsi/gomega"
 	accountsmgmtv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -87,6 +88,9 @@ func TestOCMProvider_Create(t *testing.T) {
 				InternalID:     internalId,
 				ExternalID:     externalId,
 				Status:         api.ClusterProvisioning,
+				Region:         cr.Region,
+				CloudProvider:  cr.CloudProvider,
+				MultiAZ:        cr.MultiAZ,
 				AdditionalInfo: nil,
 			},
 			wantErr: false,
@@ -115,6 +119,85 @@ func TestOCMProvider_Create(t *testing.T) {
 			g.Expect(resp).To(gomega.Equal(test.want))
 			if test.wantErr {
 				g.Expect(err).NotTo(gomega.BeNil())
+			}
+		})
+	}
+}
+
+func TestOCMProvider_GetClusterSpec(t *testing.T) {
+	type fields struct {
+		ocmClient ocm.Client
+	}
+	type args struct {
+		clusterID string
+	}
+
+	internalID := "test-internal-id"
+	externalID := "test-external-id"
+
+	spec := types.ClusterSpec{
+		MultiAZ:       true,
+		CloudProvider: mocks.MockCloudProviderID,
+		Region:        mocks.MockCloudRegionID,
+		ExternalID:    externalID,
+		InternalID:    internalID,
+		Status:        "cluster_provisioning",
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    types.ClusterSpec
+		wantErr bool
+	}{
+		{
+			name: "should return an error if getting cluster from ocmClient fails",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
+						return nil, apiErrors.GeneralError("failed to get cluster")
+					},
+				},
+			},
+			args: args{
+				clusterID: internalID,
+			},
+			want:    types.ClusterSpec{},
+			wantErr: true,
+		},
+		{
+			name: "should successfully return ClusterSpec from a OCM cluster",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
+						return clustersmgmtv1.NewCluster().ID(internalID).
+							MultiAZ(true).
+							ExternalID(externalID).
+							CloudProvider(clustersmgmtv1.NewCloudProvider().ID(mocks.MockCloudProviderID)).
+							Region(clustersmgmtv1.NewCloudRegion().ID(mocks.MockCloudRegionID).
+								CloudProvider(clustersmgmtv1.NewCloudProvider().ID("aws"))).
+							Build()
+					},
+				},
+			},
+			args: args{
+				clusterID: internalID,
+			},
+			wantErr: false,
+			want:    spec,
+		},
+	}
+
+	for _, testcase := range tests {
+		test := testcase
+		t.Run(test.name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
+			resp, err := p.GetClusterSpec(test.args.clusterID)
+			g.Expect(resp).To(gomega.Equal(test.want))
+			if test.wantErr {
+				g.Expect(err).To(gomega.HaveOccurred())
 			}
 		})
 	}

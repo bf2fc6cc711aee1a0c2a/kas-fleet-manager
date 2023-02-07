@@ -49,6 +49,9 @@ var _ Provider = &ProviderMock{}
 //			GetClusterResourceQuotaCostsFunc: func() ([]types.QuotaCost, error) {
 //				panic("mock out the GetClusterResourceQuotaCosts method")
 //			},
+//			GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
+//				panic("mock out the GetClusterSpec method")
+//			},
 //			GetMachinePoolFunc: func(clusterID string, id string) (*types.MachinePoolInfo, error) {
 //				panic("mock out the GetMachinePool method")
 //			},
@@ -100,6 +103,9 @@ type ProviderMock struct {
 
 	// GetClusterResourceQuotaCostsFunc mocks the GetClusterResourceQuotaCosts method.
 	GetClusterResourceQuotaCostsFunc func() ([]types.QuotaCost, error)
+
+	// GetClusterSpecFunc mocks the GetClusterSpec method.
+	GetClusterSpecFunc func(clusterID string) (types.ClusterSpec, error)
 
 	// GetMachinePoolFunc mocks the GetMachinePool method.
 	GetMachinePoolFunc func(clusterID string, id string) (*types.MachinePoolInfo, error)
@@ -168,6 +174,11 @@ type ProviderMock struct {
 		// GetClusterResourceQuotaCosts holds details about calls to the GetClusterResourceQuotaCosts method.
 		GetClusterResourceQuotaCosts []struct {
 		}
+		// GetClusterSpec holds details about calls to the GetClusterSpec method.
+		GetClusterSpec []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+		}
 		// GetMachinePool holds details about calls to the GetMachinePool method.
 		GetMachinePool []struct {
 			// ClusterID is the clusterID argument value.
@@ -212,6 +223,7 @@ type ProviderMock struct {
 	lockGetCloudProviders            sync.RWMutex
 	lockGetClusterDNS                sync.RWMutex
 	lockGetClusterResourceQuotaCosts sync.RWMutex
+	lockGetClusterSpec               sync.RWMutex
 	lockGetMachinePool               sync.RWMutex
 	lockInstallClusterLogging        sync.RWMutex
 	lockInstallKasFleetshard         sync.RWMutex
@@ -534,6 +546,38 @@ func (mock *ProviderMock) GetClusterResourceQuotaCostsCalls() []struct {
 	mock.lockGetClusterResourceQuotaCosts.RLock()
 	calls = mock.calls.GetClusterResourceQuotaCosts
 	mock.lockGetClusterResourceQuotaCosts.RUnlock()
+	return calls
+}
+
+// GetClusterSpec calls GetClusterSpecFunc.
+func (mock *ProviderMock) GetClusterSpec(clusterID string) (types.ClusterSpec, error) {
+	if mock.GetClusterSpecFunc == nil {
+		panic("ProviderMock.GetClusterSpecFunc: method is nil but Provider.GetClusterSpec was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	mock.lockGetClusterSpec.Lock()
+	mock.calls.GetClusterSpec = append(mock.calls.GetClusterSpec, callInfo)
+	mock.lockGetClusterSpec.Unlock()
+	return mock.GetClusterSpecFunc(clusterID)
+}
+
+// GetClusterSpecCalls gets all the calls that were made to GetClusterSpec.
+// Check the length with:
+//
+//	len(mockedProvider.GetClusterSpecCalls())
+func (mock *ProviderMock) GetClusterSpecCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	mock.lockGetClusterSpec.RLock()
+	calls = mock.calls.GetClusterSpec
+	mock.lockGetClusterSpec.RUnlock()
 	return calls
 }
 

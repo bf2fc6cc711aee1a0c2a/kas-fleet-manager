@@ -10,6 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 
 	internalAcl "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/acl"
@@ -53,6 +54,7 @@ type options struct {
 	DB                          *db.ConnectionFactory
 	ClusterPlacementStrategy    services.ClusterPlacementStrategy
 	ClusterService              services.ClusterService
+	ProviderFactory             clusters.ProviderFactory
 	SupportedKafkaInstanceTypes services.SupportedKafkaInstanceTypesService
 
 	AccessControlListMiddleware                       *acl.AccessControlListMiddleware
@@ -228,7 +230,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 		ID:   "clusters",
 		Kind: "EnterpriseClusterList",
 	})
-	clusterHandler := handlers.NewClusterHandler(s.KasFleetshardOperatorAddon, s.ClusterService)
+	clusterHandler := handlers.NewClusterHandler(s.KasFleetshardOperatorAddon, s.ClusterService, s.ProviderFactory)
 	clusterRouter := apiV1Router.PathPrefix("/clusters").Subrouter()
 	clusterRouter.Use(enterpriseClusterMiddleware)
 	clusterRouter.HandleFunc("", clusterHandler.RegisterEnterpriseCluster).

@@ -1,12 +1,13 @@
 package integration
 
 import (
+	"net/http"
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"net/http"
-	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
@@ -94,7 +95,6 @@ func TestEnterpriseClusterDeregistration(t *testing.T) {
 
 	registrationPayload := public.EnterpriseOsdClusterPayload{
 		ClusterId:                     anotherEntCluster.ClusterID,
-		ClusterExternalId:             anotherEntCluster.ExternalID,
 		ClusterIngressDnsName:         anotherEntCluster.ClusterDNS,
 		KafkaMachinePoolNodeCount:     12,
 		AccessKafkasViaPrivateNetwork: true,

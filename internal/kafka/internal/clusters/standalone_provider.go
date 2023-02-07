@@ -298,6 +298,10 @@ func (s *StandaloneProvider) GetClusterDNS(clusterSpec *types.ClusterSpec) (stri
 	return "", nil // NOOP for now
 }
 
+func (s *StandaloneProvider) GetClusterSpec(clusterID string) (types.ClusterSpec, error) {
+	return types.ClusterSpec{}, nil // NOOP for now
+}
+
 func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
 	// setup identity provider
 	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{

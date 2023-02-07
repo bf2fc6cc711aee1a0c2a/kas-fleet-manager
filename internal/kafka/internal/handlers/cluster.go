@@ -4,23 +4,27 @@ import (
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/gorilla/mux"
 )
 
 type clusterHandler struct {
 	kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 	clusterService             services.ClusterService
+	providerFactory            clusters.ProviderFactory
 }
 
-func NewClusterHandler(kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon, clusterService services.ClusterService) *clusterHandler {
+func NewClusterHandler(kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon, clusterService services.ClusterService, providerFactory clusters.ProviderFactory) *clusterHandler {
 	return &clusterHandler{
 		kasFleetshardOperatorAddon: kasFleetshardOperatorAddon,
 		clusterService:             clusterService,
+		providerFactory:            providerFactory,
 	}
 }
 
@@ -29,12 +33,14 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 
 	ctx := r.Context()
 
+	provider, err := h.providerFactory.GetProvider(api.ClusterProviderOCM)
+
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &clusterPayload,
 		Validate: []handlers.Validate{
-			handlers.ValidateLength(&clusterPayload.ClusterId, "cluster id", ClusterIdLength, &ClusterIdLength),
+			h.validateOCMProviderAvailable(provider, err),
 
-			handlers.ValidateExternalClusterId(&clusterPayload.ClusterExternalId, "external cluster id"),
+			handlers.ValidateLength(&clusterPayload.ClusterId, "cluster id", ClusterIdLength, &ClusterIdLength),
 
 			handlers.ValidateNotEmptyClusterId(&clusterPayload.ClusterId, "cluster id"),
 
@@ -46,14 +52,27 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
+			clusterSpec, getClusterErr := provider.GetClusterSpec(clusterPayload.ClusterId)
+			if getClusterErr != nil && shared.IsNil(clusterSpec) {
+				return nil, errors.GeneralError("failed to get cluster by ID: %s", clusterPayload.ClusterId)
+			}
+
+			if !clusterSpec.MultiAZ {
+				return nil, errors.BadRequest("single AZ clusters are not supported")
+			}
+
+			if !shared.StringEqualsIgnoreCase(clusterSpec.Status.String(), api.ClusterProvisioned.String()) {
+				return nil, errors.BadRequest("cluster that are not yet fully provisioned are not accepted")
+			}
+
 			claims, claimsErr := getClaims(ctx)
 
 			if claimsErr != nil {
 				return nil, claimsErr
 			}
 
+			// TODO - validate that the org also owns the cluster.
 			orgId, getOrgIdErr := claims.GetOrgId()
-
 			if getOrgIdErr != nil {
 				return nil, errors.GeneralError(getOrgIdErr.Error())
 			}
@@ -67,11 +86,13 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 				ClusterType:                   api.EnterpriseDataPlaneClusterType.String(),
 				ProviderType:                  api.ClusterProviderOCM,
 				Status:                        api.ClusterAccepted,
+				CloudProvider:                 clusterSpec.CloudProvider,
+				Region:                        clusterSpec.Region,
 				ClusterID:                     clusterPayload.ClusterId,
 				OrganizationID:                orgId,
 				ClusterDNS:                    clusterPayload.ClusterIngressDnsName,
-				ExternalID:                    clusterPayload.ClusterExternalId,
-				MultiAZ:                       true,
+				ExternalID:                    clusterSpec.ExternalID,
+				MultiAZ:                       clusterSpec.MultiAZ,
 				AccessKafkasViaPrivateNetwork: clusterPayload.AccessKafkasViaPrivateNetwork,
 				SupportedInstanceType:         supportedKafkaInstanceType,
 			}
@@ -94,7 +115,6 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 			}
 
 			clusterRequest.ClientID = fsoParams.GetParam(services.KasFleetshardOperatorParamServiceAccountId)
-
 			clusterRequest.ClientSecret = fsoParams.GetParam(services.KasFleetshardOperatorParamServiceAccountSecret)
 
 			svcErr = h.clusterService.RegisterClusterJob(clusterRequest)
@@ -107,6 +127,15 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 
 	// return 200 status ok
 	handlers.Handle(w, r, cfg, http.StatusOK)
+}
+
+func (h clusterHandler) validateOCMProviderAvailable(provider clusters.Provider, err error) handlers.Validate {
+	return func() *errors.ServiceError {
+		if err != nil || shared.IsNil(provider) {
+			return errors.GeneralError("unexpected error occurred. failed to validate the request")
+		}
+		return nil
+	}
 }
 
 func (h clusterHandler) List(w http.ResponseWriter, r *http.Request) {
