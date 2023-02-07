@@ -42,7 +42,7 @@ type Client interface {
 	ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
 	DeleteSubscription(id string) (int, error)
 	FindSubscriptions(query string) ([]*amsv1.Subscription, error)
-	GetSubscriptionByID(subscriptionID string) (*amsv1.SubscriptionGetResponse, error)
+	GetSubscriptionByID(subscriptionID string) (*amsv1.Subscription, bool, error)
 	GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error)
 	GetOrganisationIdFromExternalId(externalId string) (string, error)
 	Connection() *sdkClient.Connection
@@ -56,7 +56,6 @@ type Client interface {
 	GetQuotaCostsForProduct(organizationID, resourceName, product string) ([]*amsv1.QuotaCost, error)
 	// GetCurrentAccount returns the account information of the current authenticated user
 	GetCurrentAccount() (*amsv1.Account, error)
-	GetReservedResourcesBySubscriptionID(subscriptionID string) ([]*amsv1.ReservedResource, error)
 }
 
 var _ Client = &client{}
@@ -479,20 +478,17 @@ func (c client) FindSubscriptions(query string) ([]*amsv1.Subscription, error) {
 	return r.Items().Slice(), nil
 }
 
-func (c client) GetSubscriptionByID(subscriptionID string) (*amsv1.SubscriptionGetResponse, error) {
-	r, err := c.connection.AccountsMgmt().V1().Subscriptions().Subscription(subscriptionID).Get().Send()
-	if err != nil {
-		return nil, err
-	}
-	return r, nil
-}
+func (c client) GetSubscriptionByID(subscriptionID string) (*amsv1.Subscription, bool, error) {
+	resp, err := c.connection.AccountsMgmt().V1().Subscriptions().Subscription(subscriptionID).Get().Send()
 
-func (c *client) GetReservedResourcesBySubscriptionID(subscriptionID string) ([]*amsv1.ReservedResource, error) {
-	r, err := c.connection.AccountsMgmt().V1().Subscriptions().Subscription(subscriptionID).ReservedResources().List().Send()
-	if err != nil {
-		return nil, err
+	if resp != nil && resp.Status() == http.StatusNotFound {
+		return resp.Body(), false, nil
 	}
-	return r.Items().Slice(), nil
+	if err != nil {
+		return nil, false, err
+	}
+
+	return resp.Body(), true, nil
 }
 
 // GetMachinePool returns the machinePoolID associated to clusterID.

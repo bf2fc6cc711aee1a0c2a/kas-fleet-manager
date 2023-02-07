@@ -232,6 +232,11 @@ func (q QuotaManagementListService) DeleteQuota(SubscriptionId string) *errors.S
 // Note that organisation will always take priority over individual accounts to mimic the behaviour of
 // quota allowance checks during Kafka creation.
 func (q QuotaManagementListService) IsQuotaEntitlementActive(kafka *dbapi.KafkaRequest) (bool, error) {
+
+	if !q.quotaManagementList.EnableInstanceLimitControl {
+		return true, nil
+	}
+
 	var billingModel *quota_management.BillingModel
 
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetById(kafka.OrganisationId)

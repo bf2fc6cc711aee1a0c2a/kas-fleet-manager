@@ -648,6 +648,7 @@ func TestQuotaManagementListService_IsQuotaEntitlementActive(t *testing.T) {
 			name: "return false if quota entitled to an organisation but user is not registered to that organisation",
 			fields: fields{
 				quotaManagementList: &quota_management.QuotaManagementListConfig{
+					EnableInstanceLimitControl: true,
 					QuotaList: quota_management.RegisteredUsersListConfiguration{
 						Organisations: quota_management.OrganisationList{
 							quota_management.Organisation{
@@ -689,7 +690,8 @@ func TestQuotaManagementListService_IsQuotaEntitlementActive(t *testing.T) {
 			name: "return false if quota is not entitled to the organisation or user",
 			fields: fields{
 				quotaManagementList: &quota_management.QuotaManagementListConfig{
-					QuotaList: quota_management.RegisteredUsersListConfiguration{},
+					EnableInstanceLimitControl: true,
+					QuotaList:                  quota_management.RegisteredUsersListConfiguration{},
 				},
 			},
 			args: args{
@@ -742,6 +744,7 @@ func TestQuotaManagementListService_IsQuotaEntitlementActive(t *testing.T) {
 			name: "return false if quota entitled to an individual user is expired",
 			fields: fields{
 				quotaManagementList: &quota_management.QuotaManagementListConfig{
+					EnableInstanceLimitControl: true,
 					QuotaList: quota_management.RegisteredUsersListConfiguration{
 						ServiceAccounts: quota_management.AccountList{
 							{

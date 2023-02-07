@@ -2,10 +2,6 @@ package quota
 
 import (
 	"fmt"
-	"net/http"
-
-	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -307,7 +303,17 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *error
 	return resp.Subscription().ID(), nil
 }
 
+// ReserveQuotaIfNotAlreadyReserved reserves quota for the received KafkaRequest only if no quota has already been assigned for
+// the `KafkaRequest.cluster_id`
+// Returns the ID of the subscription associated to this cluster (whether it is a new one or not)
 func (q amsQuotaService) ReserveQuotaIfNotAlreadyReserved(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
+	getClusterID := func(kafka *dbapi.KafkaRequest) string {
+		if kafka.DesiredKafkaBillingModel == "eval" {
+			return kafka.ID + "-eval"
+		}
+		return kafka.ID
+	}
+
 	instanceType, err := q.kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(kafka.InstanceType)
 	if err != nil {
 		return "", errors.GeneralError("failed checking current quota: %v", err)
@@ -317,25 +323,28 @@ func (q amsQuotaService) ReserveQuotaIfNotAlreadyReserved(kafka *dbapi.KafkaRequ
 		return "", errors.GeneralError("failed checking current quota: %v", err)
 	}
 
-	subscriptions, err := q.amsClient.FindSubscriptions(fmt.Sprintf("cluster_id='%s'", kafka.ClusterID))
+	subscriptions, err := q.amsClient.FindSubscriptions(fmt.Sprintf("cluster_id='%s'", getClusterID(kafka)))
 	if err != nil {
 		return "", errors.GeneralError("failed checking current quota: %v", err)
 	}
-	for _, subscription := range subscriptions {
-		// get the reserved resources
-		if subscription.Plan().ID() == kafkaBillingModel.AMSProduct && subscription.Status() == string(v1.SubscriptionStatusActive) {
-			reservedResources, err := q.amsClient.GetReservedResourcesBySubscriptionID(subscription.ID())
-			if err != nil {
-				return "", errors.GeneralError("failed checking current quota: %v", err)
-			}
 
-			if arrays.AnyMatch(reservedResources, func(rr *amsv1.ReservedResource) bool { return rr.ResourceName() == kafkaBillingModel.AMSResource }) {
-				return subscription.ID(), nil
-			}
+	if len(subscriptions) > 0 {
+		if len(subscriptions) > 1 {
+			logger.Logger.V(10).Errorf("found more than one subscription for cluster id %q", getClusterID(kafka))
 		}
+
+		// at most one subscription can exist for one cluster_id. This is enforced by AMS
+		subscription := subscriptions[0]
+
+		// should never enter this `if`. We check it to be extremely sure
+		if !kafkaBillingModel.HasSupportForAMSBillingModel(string(subscription.ClusterBillingModel())) {
+			return "", errors.GeneralError("failed checking current quota. Expected billing model to be one of %v, but found %q", kafkaBillingModel.AMSBillingModels, string(subscription.ClusterBillingModel()))
+		}
+
+		return subscription.ID(), nil
 	}
 
-	// quota is not defined. We need to reserve a new one
+	// no subscriptions found. We need to reserve new quota.
 	return q.ReserveQuota(kafka)
 }
 
@@ -366,18 +375,8 @@ func (q amsQuotaService) DeleteQuotaForBillingModel(subscriptionID string, kafka
 		return nil
 	}
 
-	if subscription.Plan().ID() == kafkaBillingModel.AMSProduct {
-		rr, err := q.amsClient.GetReservedResourcesBySubscriptionID(subscriptionID)
-		if err != nil {
-			return errors.GeneralError("failed to delete the quota: %v", err)
-		}
-		resourceMatches := arrays.AnyMatch(rr, func(resource *amsv1.ReservedResource) bool {
-			return resource.ResourceName() == kafkaBillingModel.AMSResource
-		})
-		if resourceMatches {
-			// this subscription is related to this billing model. We can delete it.
-			return q.DeleteQuota(subscriptionID)
-		}
+	if kafkaBillingModel.HasSupportForAMSBillingModel(string(subscription.ClusterBillingModel())) {
+		return q.DeleteQuota(subscriptionID)
 	}
 
 	// the specified subscription id is not related to the specified billing model
@@ -388,27 +387,57 @@ func (q amsQuotaService) DeleteQuotaForBillingModel(subscriptionID string, kafka
 // return an error if an error happens calling the endpoint, otherwise returns whether it found the subscription(subscription, true, nil)
 // or not (subscription, false, nil)
 func (q amsQuotaService) GetSubscriptionByID(subscriptionID string) (*amsv1.Subscription, bool, *errors.ServiceError) {
-	resp, err := q.amsClient.GetSubscriptionByID(subscriptionID)
-	if resp != nil && resp.Status() == http.StatusNotFound {
-		return resp.Body(), false, nil
-	}
+	subscription, ok, err := q.amsClient.GetSubscriptionByID(subscriptionID)
 	if err != nil {
 		return nil, false, errors.NewWithCause(errors.ErrorGeneral, err, "error getting the subscriptions for id '%s'", subscriptionID)
 	}
 
-	return resp.Body(), true, nil
+	return subscription, ok, nil
 }
 
-// Checks if an organisation has a SKU entitlement and that entitlement is still active in AMS
+// amsBillingModelToAMSBillingModelCategory maps the AMS billing model to its supertype.
+// * marketplace-* maps to marketplace
+// * standard maps to standard
+func (q amsQuotaService) amsBillingModelToAMSBillingModelCategory(amsBillingModel string, kafkaBillingModel config.KafkaBillingModel) (string, bool) {
+	switch true {
+	case shared.StringEqualsIgnoreCase(amsBillingModel, ocm.AMSRelatedResourceBillingModelMarketplace.String()):
+		// legacy ams billing model marketplace, this will be removed in the future and replaced with cloud specific marketplace billing models
+		// if the kafka billing model supports 'marketplace' or any cloud specific marketplace billing model, return 'marketplace'
+		if kafkaBillingModel.HasSupportForMarketplace() {
+			return ocm.AMSRelatedResourceBillingModelMarketplace.String(), true
+		}
+	case shared.StringHasPrefixIgnoreCase(amsBillingModel, fmt.Sprintf("%s-", ocm.AMSRelatedResourceBillingModelMarketplace)):
+		// ams billing model is a cloud specific marketplace, i.e. 'marketplace-aws'
+		// if the kafka billing model supports this cloud specific marketplace billing model, return 'marketplace'
+		if kafkaBillingModel.HasSupportForAMSBillingModel(amsBillingModel) {
+			return ocm.AMSRelatedResourceBillingModelMarketplace.String(), true
+		}
+	case shared.StringEqualsIgnoreCase(amsBillingModel, ocm.AMSRelatedResourceBillingModelStandard.String()):
+		if kafkaBillingModel.HasSupportForStandard() {
+			return ocm.AMSRelatedResourceBillingModelStandard.String(), true
+		}
+	}
+
+	return "", false
+}
+
+// IsQuotaEntitlementActive checks if an organisation has a SKU entitlement and that entitlement is still active in AMS
 func (q amsQuotaService) IsQuotaEntitlementActive(kafka *dbapi.KafkaRequest) (bool, error) {
 	kafkaBillingModel, err := q.kafkaConfig.GetBillingModelByID(kafka.InstanceType, kafka.ActualKafkaBillingModel)
 	if err != nil {
 		return false, err
 	}
 
-	amsRelatedResourceBillingModel, err := q.getAMSRelatedResourceBillingModel(kafka.SubscriptionId, kafkaBillingModel)
-	if err != nil || shared.StringEmpty(amsRelatedResourceBillingModel) {
-		return false, err
+	// Using a new `svcErr` otherwise I would get `nil is not nil` error here since GetSubscriptionByID returns *ServiceError
+	subscription, ok, svcErr := q.GetSubscriptionByID(kafka.SubscriptionId)
+	if svcErr != nil || !ok {
+		return false, svcErr
+	}
+	clusterBillingModel, ok := q.amsBillingModelToAMSBillingModelCategory(string(subscription.ClusterBillingModel()), kafkaBillingModel)
+	if !ok {
+		logger.Logger.V(10).Infof("incompatible ams billing model found (%q) for kafka billing model %q in subscription %q",
+			string(subscription.ClusterBillingModel()), kafka.SubscriptionId, kafkaBillingModel.ID)
+		return false, nil
 	}
 
 	orgID, err := q.amsClient.GetOrganisationIdFromExternalId(kafka.OrganisationId)
@@ -419,7 +448,7 @@ func (q amsQuotaService) IsQuotaEntitlementActive(kafka *dbapi.KafkaRequest) (bo
 	quotaCostRelatedResourceFilter := ocm.QuotaCostRelatedResourceFilter{
 		ResourceName: &kafkaBillingModel.AMSResource,
 		Product:      &kafkaBillingModel.AMSProduct,
-		BillingModel: &amsRelatedResourceBillingModel,
+		BillingModel: &clusterBillingModel,
 	}
 	quotaCosts, err := q.amsClient.GetQuotaCosts(orgID, true, false, quotaCostRelatedResourceFilter)
 	if err != nil {
@@ -454,40 +483,4 @@ func (q amsQuotaService) IsQuotaEntitlementActive(kafka *dbapi.KafkaRequest) (bo
 			orgID, quotaCost.QuotaID(), quotaCost.Consumed(), quotaCost.Allowed())
 	}
 	return true, nil
-}
-
-// Determine the AMS QuotaCost related resource billing model from the AMS Subscription reserved resource billing model
-// based on the given subscription id and kafka billing model.
-func (q amsQuotaService) getAMSRelatedResourceBillingModel(subscriptionID string, kafkaBillingModel config.KafkaBillingModel) (string, error) {
-	reservedResources, err := q.amsClient.GetReservedResourcesBySubscriptionID(subscriptionID)
-	if err != nil {
-		return "", err
-	}
-
-	for _, rr := range reservedResources {
-		if kafkaBillingModel.AMSResource == rr.ResourceName() {
-			amsBillingModel := string(rr.BillingModel())
-			switch true {
-			case shared.StringEqualsIgnoreCase(amsBillingModel, ocm.AMSRelatedResourceBillingModelMarketplace.String()):
-				// legacy ams billing model marketplace, this will be removed in the future and replaced with cloud specific marketplace billing models
-				// if the kafka billing model supports 'marketplace' or any cloud specific marketplace billing model, return 'marketplace'
-				if kafkaBillingModel.HasSupportForMarketplace() {
-					return ocm.AMSRelatedResourceBillingModelMarketplace.String(), nil
-				}
-			case shared.StringHasPrefixIgnoreCase(amsBillingModel, fmt.Sprintf("%s-", ocm.AMSRelatedResourceBillingModelMarketplace)):
-				// ams billing model is a cloud specific marketplace, i.e. 'marketplace-aws'
-				// if the kafka billing model supports this cloud specific marketplace billing model, return 'marketplace'
-				if kafkaBillingModel.HasSupportForAMSBillingModel(amsBillingModel) {
-					return ocm.AMSRelatedResourceBillingModelMarketplace.String(), nil
-				}
-			case shared.StringEqualsIgnoreCase(amsBillingModel, ocm.AMSRelatedResourceBillingModelStandard.String()):
-				if kafkaBillingModel.HasSupportForStandard() {
-					return ocm.AMSRelatedResourceBillingModelStandard.String(), nil
-				}
-			}
-		}
-	}
-
-	logger.Logger.V(10).Infof("ams related resource billing model not found for subscription %q and kafka billing model %q", subscriptionID, kafkaBillingModel.ID)
-	return "", nil
 }
