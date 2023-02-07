@@ -480,7 +480,7 @@ func (k *kafkaService) findADataPlaneClusterToPlaceTheKafka(kafkaRequest *dbapi.
 
 		userMsg := fmt.Sprintf("region %s cannot accept instance type: %s at this moment", kafkaRequest.Region, kafkaRequest.InstanceType)
 		if kafkaRequest.DesiredBillingModelIsEnterprise() {
-			userMsg = fmt.Sprintf("cluster %q cannot accept instance type: %q at this moment", kafkaRequest.Region, kafkaRequest.InstanceType)
+			userMsg = fmt.Sprintf("cluster %q cannot accept instance type: %q at this moment", kafkaRequest.ClusterID, kafkaRequest.InstanceType)
 		}
 		return nil, errors.TooManyKafkaInstancesReached(userMsg)
 	}

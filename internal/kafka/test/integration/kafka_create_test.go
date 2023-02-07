@@ -642,6 +642,7 @@ func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
 		cluster.ProviderSpec = api.JSON{}
 		cluster.ClusterSpec = api.JSON{}
 		cluster.OrganizationID = organizationID
+		cluster.ClusterType = api.EnterpriseDataPlaneClusterType.String()
 		cluster.DynamicCapacityInfo = api.JSON([]byte(`{"standard":{"max_nodes":3,"max_units":1,"remaining_units":1}}`))
 	})
 
@@ -675,8 +676,6 @@ func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
 	g.Expect(kafka.MultiAz).To(gomega.BeTrue())
 	g.Expect(kafka.ExpiresAt).To(gomega.BeNil())
 	g.Expect(kafka.BillingModel).To(gomega.Equal("enterprise"))
-	g.Expect(kafka.ClusterId).To(gomega.Equal(&cluster.ClusterID))
-	g.Expect(kafka.ClusterId).To(gomega.Equal(&cluster.ClusterID))
 	g.Expect(kafka.ClusterId).To(gomega.Equal(&cluster.ClusterID))
 
 	kafka, resp, err = client.DefaultApi.GetKafkaById(sameOrgCtx, kafka.Id)
