@@ -298,7 +298,7 @@ func (s *StandaloneProvider) GetClusterDNS(clusterSpec *types.ClusterSpec) (stri
 	return "", nil // NOOP for now
 }
 
-func (s *StandaloneProvider) GetCluster(clusterID string) (types.ClusterSpec, error) {
+func (s *StandaloneProvider) GetClusterSpec(clusterID string) (types.ClusterSpec, error) {
 	return types.ClusterSpec{}, nil // NOOP for now
 }
 

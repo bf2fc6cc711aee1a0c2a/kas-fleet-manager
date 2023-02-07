@@ -250,6 +250,9 @@ func TestClusterRegistration_Successful(t *testing.T) {
 	g.Expect(api.StandardTypeSupport.String()).To(gomega.Equal(cluster.SupportedInstanceType))
 	g.Expect(api.EnterpriseDataPlaneClusterType.String()).To(gomega.Equal(cluster.ClusterType))
 	g.Expect(api.ClusterProviderOCM).To(gomega.Equal(cluster.ProviderType))
+	g.Expect(cluster.ExternalID).ToNot(gomega.BeEmpty())
+	g.Expect(cluster.Region).ToNot(gomega.BeEmpty())
+	g.Expect(cluster.CloudProvider).ToNot(gomega.BeEmpty())
 
 	dynamicScalingInfo := cluster.RetrieveDynamicCapacityInfo()
 	g.Expect(payload.KafkaMachinePoolNodeCount).To(gomega.Equal(dynamicScalingInfo[api.StandardTypeSupport.String()].MaxNodes))

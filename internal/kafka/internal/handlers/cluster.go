@@ -52,13 +52,17 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			cluster, getClusterErr := provider.GetCluster(clusterPayload.ClusterId)
-			if getClusterErr != nil && shared.IsNil(cluster) {
+			clusterSpec, getClusterErr := provider.GetClusterSpec(clusterPayload.ClusterId)
+			if getClusterErr != nil && shared.IsNil(clusterSpec) {
 				return nil, errors.GeneralError("failed to get cluster by ID: %s", clusterPayload.ClusterId)
 			}
 
-			if !cluster.MultiAZ {
+			if !clusterSpec.MultiAZ {
 				return nil, errors.BadRequest("single AZ clusters are not supported")
+			}
+
+			if !shared.StringEqualsIgnoreCase(clusterSpec.Status.String(), api.ClusterProvisioned.String()) {
+				return nil, errors.BadRequest("cluster that are not yet fully provisioned are not accepted")
 			}
 
 			claims, claimsErr := getClaims(ctx)
@@ -67,8 +71,8 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 				return nil, claimsErr
 			}
 
+			// TODO - validate that the org also owns the cluster.
 			orgId, getOrgIdErr := claims.GetOrgId()
-
 			if getOrgIdErr != nil {
 				return nil, errors.GeneralError(getOrgIdErr.Error())
 			}
@@ -82,13 +86,13 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 				ClusterType:                   api.EnterpriseDataPlaneClusterType.String(),
 				ProviderType:                  api.ClusterProviderOCM,
 				Status:                        api.ClusterAccepted,
-				CloudProvider:                 cluster.CloudProvider,
-				Region:                        cluster.Region,
+				CloudProvider:                 clusterSpec.CloudProvider,
+				Region:                        clusterSpec.Region,
 				ClusterID:                     clusterPayload.ClusterId,
 				OrganizationID:                orgId,
 				ClusterDNS:                    clusterPayload.ClusterIngressDnsName,
-				ExternalID:                    cluster.ExternalID,
-				MultiAZ:                       true,
+				ExternalID:                    clusterSpec.ExternalID,
+				MultiAZ:                       clusterSpec.MultiAZ,
 				AccessKafkasViaPrivateNetwork: clusterPayload.AccessKafkasViaPrivateNetwork,
 				SupportedInstanceType:         supportedKafkaInstanceType,
 			}
@@ -111,7 +115,6 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 			}
 
 			clusterRequest.ClientID = fsoParams.GetParam(services.KasFleetshardOperatorParamServiceAccountId)
-
 			clusterRequest.ClientSecret = fsoParams.GetParam(services.KasFleetshardOperatorParamServiceAccountSecret)
 
 			svcErr = h.clusterService.RegisterClusterJob(clusterRequest)

@@ -86,6 +86,9 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, Param
 		ExternalID:     cluster.ExternalID,
 		Status:         cluster.Status,
 		AdditionalInfo: cluster.ClusterSpec,
+		MultiAZ:        cluster.MultiAZ,
+		Region:         cluster.Region,
+		CloudProvider:  cluster.CloudProvider,
 	}
 	if ready, err := p.InstallKasFleetshard(spec, params); err != nil {
 		return false, params, errors.NewWithCause(errors.ErrorGeneral, err, "failed to install addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
@@ -111,6 +114,9 @@ func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) (P
 		ExternalID:     cluster.ExternalID,
 		Status:         cluster.Status,
 		AdditionalInfo: cluster.ClusterSpec,
+		MultiAZ:        cluster.MultiAZ,
+		Region:         cluster.Region,
+		CloudProvider:  cluster.CloudProvider,
 	}
 	if updated, err := p.InstallKasFleetshard(spec, params); err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to update parameters for addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)

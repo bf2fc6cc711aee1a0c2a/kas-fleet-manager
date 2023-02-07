@@ -58,7 +58,10 @@ func (o *OCMProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec,
 	}
 
 	result := &types.ClusterSpec{
-		Status: api.ClusterProvisioning,
+		Status:        api.ClusterProvisioning,
+		MultiAZ:       request.MultiAZ,
+		Region:        request.Region,
+		CloudProvider: request.CloudProvider,
 	}
 	if createdCluster.ID() != "" {
 		result.InternalID = createdCluster.ID()
@@ -69,45 +72,40 @@ func (o *OCMProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec,
 	return result, nil
 }
 
-func (o *OCMProvider) GetCluster(clusterID string) (types.ClusterSpec, error) {
+func (o *OCMProvider) GetClusterSpec(clusterID string) (types.ClusterSpec, error) {
 	cluster, err := o.ocmClient.GetCluster(clusterID)
 	if err != nil {
 		return types.ClusterSpec{}, errors.Wrapf(err, "failed to get cluster %s", clusterID)
 	}
-	return types.ClusterSpec{
+
+	clusterSpec := types.ClusterSpec{
 		MultiAZ:       cluster.MultiAZ(),
 		CloudProvider: cluster.CloudProvider().ID(),
 		Region:        cluster.Region().ID(),
 		ExternalID:    cluster.ExternalID(),
-	}, nil
+		InternalID:    clusterID,
+	}
+
+	clusterStatusInOCM := cluster.Status()
+	if clusterStatusInOCM.State() == clustersmgmtv1.ClusterStateReady {
+		clusterSpec.Status = api.ClusterProvisioned
+	} else if clusterStatusInOCM.State() == clustersmgmtv1.ClusterStateError {
+		clusterSpec.Status = api.ClusterFailed
+	} else {
+		clusterSpec.Status = api.ClusterProvisioning
+	}
+
+	clusterSpec.StatusDetails = cluster.Status().ProvisionErrorMessage()
+	return clusterSpec, nil
 }
 
 func (o *OCMProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
-	ocmCluster, err := o.ocmClient.GetCluster(spec.InternalID)
+	clusterSpec, err := o.GetClusterSpec(spec.InternalID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get cluster %s", spec.InternalID)
-	}
-	clusterStatus := ocmCluster.Status()
-	if spec.Status == "" {
-		spec.Status = api.ClusterProvisioning
+		return nil, err
 	}
 
-	spec.StatusDetails = clusterStatus.ProvisionErrorMessage()
-
-	if clusterStatus.State() == clustersmgmtv1.ClusterStateReady {
-		if spec.ExternalID == "" {
-			externalId, ok := ocmCluster.GetExternalID()
-			if !ok {
-				return nil, errors.Errorf("external ID for cluster %s cannot be found", ocmCluster.ID())
-			}
-			spec.ExternalID = externalId
-		}
-		spec.Status = api.ClusterProvisioned
-	}
-	if clusterStatus.State() == clustersmgmtv1.ClusterStateError {
-		spec.Status = api.ClusterFailed
-	}
-	return spec, nil
+	return &clusterSpec, nil
 }
 
 func (o *OCMProvider) Delete(spec *types.ClusterSpec) (bool, error) {

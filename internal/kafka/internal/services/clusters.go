@@ -718,7 +718,11 @@ func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
 		InternalID:     cluster.ClusterID,
 		ExternalID:     cluster.ExternalID,
 		Status:         cluster.Status,
+		MultiAZ:        cluster.MultiAZ,
+		Region:         cluster.Region,
+		CloudProvider:  cluster.CloudProvider,
 		AdditionalInfo: cluster.ClusterSpec,
+		StatusDetails:  cluster.StatusDetails,
 	}
 }
 

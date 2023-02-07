@@ -47,6 +47,7 @@ var (
 )
 
 func Test_RegisterEnterpriseCluster(t *testing.T) {
+	g := gomega.NewWithT(t)
 	type fields struct {
 		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 		clusterService             services.ClusterService
@@ -75,7 +76,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
 							},
 						}, nil
@@ -94,7 +95,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
 							},
 						}, nil
@@ -118,7 +119,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
 							},
 						}, nil
@@ -142,7 +143,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
 							},
 						}, nil
@@ -166,7 +167,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
 							},
 						}, nil
@@ -190,7 +191,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
 							},
 						}, nil
@@ -214,7 +215,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
 							},
 						}, nil
@@ -253,9 +254,37 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{
 									MultiAZ: false,
+									Status:  api.ClusterProvisioned,
+								}, nil
+							},
+						}, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+			},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name: "should return an error if cluster is not in cluster_provisioned state",
+			args: args{
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 6}`, validLengthClusterId, validDnsName)),
+				ctx:  ctxWithClaims,
+			},
+			fields: fields{
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{
+									MultiAZ: true,
+									Status:  api.ClusterAccepted,
 								}, nil
 							},
 						}, nil
@@ -284,10 +313,11 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{
 									MultiAZ:    true,
 									InternalID: validLengthClusterId,
+									Status:     api.ClusterProvisioned,
 								}, nil
 							},
 						}, nil
@@ -316,10 +346,11 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{
 									MultiAZ:    true,
 									InternalID: validLengthClusterId,
+									Status:     api.ClusterProvisioned,
 								}, nil
 							},
 						}, nil
@@ -356,10 +387,11 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{
 									MultiAZ:    true,
 									InternalID: validLengthClusterId,
+									Status:     api.ClusterProvisioned,
 								}, nil
 							},
 						}, nil
@@ -396,12 +428,13 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{
 									MultiAZ:       true,
 									InternalID:    validLengthClusterId,
 									Region:        mocks.DefaultKafkaRequestRegion,
 									CloudProvider: "aws",
+									Status:        api.ClusterProvisioned,
 								}, nil
 							},
 						}, nil
@@ -436,6 +469,11 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 						return nil, errors.GeneralError("failed to find cluster")
 					},
 					RegisterClusterJobFunc: func(clusterRequest *api.Cluster) *errors.ServiceError {
+						g.Expect(clusterRequest.MultiAZ).To(gomega.BeTrue())
+						g.Expect(clusterRequest.ClusterID).To(gomega.Equal(validLengthClusterId))
+						g.Expect(clusterRequest.ExternalID).To(gomega.Equal(validFormatExternalClusterId))
+						g.Expect(clusterRequest.CloudProvider).To(gomega.Equal(mocks.DefaultKafkaRequestProvider))
+						g.Expect(clusterRequest.Region).To(gomega.Equal(mocks.DefaultKafkaRequestRegion))
 						return nil
 					},
 				},
@@ -452,12 +490,14 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{
-							GetClusterFunc: func(clusterID string) (types.ClusterSpec, error) {
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{
 									MultiAZ:       true,
 									InternalID:    validLengthClusterId,
 									Region:        mocks.DefaultKafkaRequestRegion,
-									CloudProvider: "aws",
+									ExternalID:    validFormatExternalClusterId,
+									CloudProvider: mocks.DefaultKafkaRequestProvider,
+									Status:        api.ClusterProvisioned,
 								}, nil
 							},
 						}, nil

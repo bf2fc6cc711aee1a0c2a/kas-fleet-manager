@@ -88,6 +88,9 @@ func TestOCMProvider_Create(t *testing.T) {
 				InternalID:     internalId,
 				ExternalID:     externalId,
 				Status:         api.ClusterProvisioning,
+				Region:         cr.Region,
+				CloudProvider:  cr.CloudProvider,
+				MultiAZ:        cr.MultiAZ,
 				AdditionalInfo: nil,
 			},
 			wantErr: false,
@@ -121,7 +124,7 @@ func TestOCMProvider_Create(t *testing.T) {
 	}
 }
 
-func TestOCMProvider_GetCluster(t *testing.T) {
+func TestOCMProvider_GetClusterSpec(t *testing.T) {
 	type fields struct {
 		ocmClient ocm.Client
 	}
@@ -137,6 +140,8 @@ func TestOCMProvider_GetCluster(t *testing.T) {
 		CloudProvider: mocks.MockCloudProviderID,
 		Region:        mocks.MockCloudRegionID,
 		ExternalID:    externalID,
+		InternalID:    internalID,
+		Status:        "cluster_provisioning",
 	}
 
 	tests := []struct {
@@ -189,7 +194,7 @@ func TestOCMProvider_GetCluster(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			p := newOCMProvider(test.fields.ocmClient, nil, &ocm.OCMConfig{})
-			resp, err := p.GetCluster(test.args.clusterID)
+			resp, err := p.GetClusterSpec(test.args.clusterID)
 			g.Expect(resp).To(gomega.Equal(test.want))
 			if test.wantErr {
 				g.Expect(err).To(gomega.HaveOccurred())
