@@ -180,7 +180,7 @@ paths:
 
           ```
           name = aws-sqs-source and channel = stable
-          ```[p-]
+          ```
 
           To return a connector instance with a name that starts with `aws`, use the following syntax:
 
@@ -293,7 +293,7 @@ paths:
 
           ```
           name = aws-sqs-source and channel = stable
-          ```[p-]
+          ```
 
           To return a connector instance with a name that starts with `aws`, use the following syntax:
 
@@ -428,7 +428,7 @@ paths:
 
           ```
           name = aws-sqs-source and channel = stable
-          ```[p-]
+          ```
 
           To return a connector instance with a name that starts with `aws`, use the following syntax:
 
@@ -819,7 +819,7 @@ paths:
 
           ```
           name = aws-sqs-source and channel = stable
-          ```[p-]
+          ```
 
           To return a connector instance with a name that starts with `aws`, use the following syntax:
 
@@ -1268,7 +1268,7 @@ paths:
 
           ```
           name = aws-sqs-source and channel = stable
-          ```[p-]
+          ```
 
           To return a connector instance with a name that starts with `aws`, use the following syntax:
 
@@ -1412,7 +1412,7 @@ paths:
 
           ```
           name = aws-sqs-source and channel = stable
-          ```[p-]
+          ```
 
           To return a connector instance with a name that starts with `aws`, use the following syntax:
 
@@ -1898,7 +1898,7 @@ components:
 
         ```
         name = aws-sqs-source and channel = stable
-        ```[p-]
+        ```
 
         To return a connector instance with a name that starts with `aws`, use the following syntax:
 
