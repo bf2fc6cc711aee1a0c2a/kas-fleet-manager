@@ -54,9 +54,6 @@ var (
 		Status:      api.ClusterProvisioning,
 		ClusterType: api.EnterpriseDataPlaneClusterType.String(),
 	}
-	provisionedCluster = api.Cluster{
-		Status: api.ClusterProvisioned,
-	}
 	enterpriseProvisionedCluster = api.Cluster{
 		Status:      api.ClusterProvisioned,
 		ClusterType: api.EnterpriseDataPlaneClusterType.String(),
