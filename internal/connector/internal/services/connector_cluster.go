@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"gorm.io/gorm/clause"
 	"reflect"
 	"strings"
+
+	"gorm.io/gorm/clause"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
@@ -35,7 +36,7 @@ type ConnectorClusterService interface {
 
 	SaveDeployment(ctx context.Context, resource *dbapi.ConnectorDeployment) *errors.ServiceError
 	UpdateDeployment(resource *dbapi.ConnectorDeployment) *errors.ServiceError
-	ListConnectorDeployments(ctx context.Context, clusterId string, filterChannelUpdates bool, includeDanglingDeploymentsOnly bool, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError)
+	ListConnectorDeployments(ctx context.Context, clusterId string, filterChannelUpdates bool, filterOperatorUpdates bool, includeDanglingDeploymentsOnly bool, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError)
 	UpdateConnectorDeploymentStatus(ctx context.Context, status dbapi.ConnectorDeploymentStatus) *errors.ServiceError
 	FindAvailableNamespace(owner string, orgId string, namespaceId *string) (*dbapi.ConnectorNamespace, *errors.ServiceError)
 	GetDeploymentByConnectorId(ctx context.Context, connectorID string) (dbapi.ConnectorDeployment, *errors.ServiceError)
@@ -432,7 +433,7 @@ func GetValidDeploymentColumns() []string {
 }
 
 // ListConnectorDeployments returns all deployments assigned to the cluster
-func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, clusterId string, filterChannelUpdates bool, includeDanglingDeploymentsOnly bool, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError) {
+func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, clusterId string, filterChannelUpdates bool, filterOperatorUpdates bool, includeDanglingDeploymentsOnly bool, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError) {
 	var resourceList dbapi.ConnectorDeploymentList
 	dbConn := k.connectionFactory.New()
 	// specify preload for annotations only, to avoid skipping deleted connectors
@@ -451,6 +452,9 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 	}
 	if filterChannelUpdates {
 		dbConn = dbConn.Where("\"ConnectorShardMetadata\".\"latest_revision\" IS NOT NULL")
+	}
+	if filterOperatorUpdates {
+		dbConn = dbConn.Where("\"Status\".\"upgrade_available\"")
 	}
 	if includeDanglingDeploymentsOnly {
 		dbConn = dbConn.Where("\"Connector\".\"deleted_at\" IS NOT NULL")

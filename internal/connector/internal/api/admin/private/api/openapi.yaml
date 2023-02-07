@@ -503,6 +503,14 @@ paths:
         schema:
           type: boolean
         style: form
+      - description: include only deployments that have operator updates
+        explode: true
+        in: query
+        name: operator_updates
+        required: false
+        schema:
+          type: boolean
+        style: form
       - description: include only not deleted deployments belonging to a deleted connector
         explode: true
         in: query
@@ -1194,6 +1202,14 @@ paths:
         explode: true
         in: query
         name: channel_updates
+        required: false
+        schema:
+          type: boolean
+        style: form
+      - description: include only deployments that have operator updates
+        explode: true
+        in: query
+        name: operator_updates
         required: false
         schema:
           type: boolean

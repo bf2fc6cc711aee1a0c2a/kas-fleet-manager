@@ -395,6 +395,7 @@ func (a *ConnectorClustersAdminApiService) GetClusterConnectors(ctx _context.Con
 // GetClusterDeploymentsOpts Optional parameters for the method 'GetClusterDeployments'
 type GetClusterDeploymentsOpts struct {
 	ChannelUpdates      optional.Bool
+	OperatorUpdates     optional.Bool
 	DanglingDeployments optional.Bool
 	Page                optional.String
 	Size                optional.String
@@ -407,6 +408,7 @@ GetClusterDeployments Get a list of available deployments in a cluster
   - @param connectorClusterId The id of the cluster
   - @param optional nil or *GetClusterDeploymentsOpts - Optional Parameters:
   - @param "ChannelUpdates" (optional.Bool) -  include only deployments that have channel updates
+  - @param "OperatorUpdates" (optional.Bool) -  include only deployments that have operator updates
   - @param "DanglingDeployments" (optional.Bool) -  include only not deleted deployments belonging to a deleted connector
   - @param "Page" (optional.String) -  Page index
   - @param "Size" (optional.String) -  Number of items in each page
@@ -434,6 +436,9 @@ func (a *ConnectorClustersAdminApiService) GetClusterDeployments(ctx _context.Co
 
 	if localVarOptionals != nil && localVarOptionals.ChannelUpdates.IsSet() {
 		localVarQueryParams.Add("channel_updates", parameterToString(localVarOptionals.ChannelUpdates.Value(), ""))
+	}
+	if localVarOptionals != nil && localVarOptionals.OperatorUpdates.IsSet() {
+		localVarQueryParams.Add("operator_updates", parameterToString(localVarOptionals.OperatorUpdates.Value(), ""))
 	}
 	if localVarOptionals != nil && localVarOptionals.DanglingDeployments.IsSet() {
 		localVarQueryParams.Add("dangling_deployments", parameterToString(localVarOptionals.DanglingDeployments.Value(), ""))
@@ -1342,6 +1347,7 @@ func (a *ConnectorClustersAdminApiService) GetNamespaceConnectors(ctx _context.C
 // GetNamespaceDeploymentsOpts Optional parameters for the method 'GetNamespaceDeployments'
 type GetNamespaceDeploymentsOpts struct {
 	ChannelUpdates      optional.Bool
+	OperatorUpdates     optional.Bool
 	DanglingDeployments optional.Bool
 	Page                optional.String
 	Size                optional.String
@@ -1354,6 +1360,7 @@ GetNamespaceDeployments Get a list of available deployments in a namespace
   - @param namespaceId The id of the namespace
   - @param optional nil or *GetNamespaceDeploymentsOpts - Optional Parameters:
   - @param "ChannelUpdates" (optional.Bool) -  include only deployments that have channel updates
+  - @param "OperatorUpdates" (optional.Bool) -  include only deployments that have operator updates
   - @param "DanglingDeployments" (optional.Bool) -  include only not deleted deployments belonging to a deleted connector
   - @param "Page" (optional.String) -  Page index
   - @param "Size" (optional.String) -  Number of items in each page
@@ -1381,6 +1388,9 @@ func (a *ConnectorClustersAdminApiService) GetNamespaceDeployments(ctx _context.
 
 	if localVarOptionals != nil && localVarOptionals.ChannelUpdates.IsSet() {
 		localVarQueryParams.Add("channel_updates", parameterToString(localVarOptionals.ChannelUpdates.Value(), ""))
+	}
+	if localVarOptionals != nil && localVarOptionals.OperatorUpdates.IsSet() {
+		localVarQueryParams.Add("operator_updates", parameterToString(localVarOptionals.OperatorUpdates.Value(), ""))
 	}
 	if localVarOptionals != nil && localVarOptionals.DanglingDeployments.IsSet() {
 		localVarQueryParams.Add("dangling_deployments", parameterToString(localVarOptionals.DanglingDeployments.Value(), ""))

@@ -122,7 +122,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 
 			getList := func() (list private.ConnectorDeploymentList, err *errors.ServiceError) {
 
-				resources, paging, err := h.Service.ListConnectorDeployments(ctx, connectorClusterId, false, false, listArgs, gtVersion)
+				resources, paging, err := h.Service.ListConnectorDeployments(ctx, connectorClusterId, false, false, false, listArgs, gtVersion)
 				if err != nil {
 					return
 				}
