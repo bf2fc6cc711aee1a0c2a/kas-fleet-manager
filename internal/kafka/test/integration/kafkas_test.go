@@ -2266,6 +2266,9 @@ func TestKafka_KafkaExpiration(t *testing.T) {
 	// also verify that any kafkas whose life has expired has been deleted.
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	kafkaDeletionErr := common.WaitForNumberOfKafkaToBeGivenCount(ctx, test.TestServices.DBFactory, client, 3)
+	kafkaDeletionErr := common.WaitForNumberOfKafkaToBeGivenCount(ctx, test.TestServices.DBFactory, client, 3,
+		func(builder common.PollerBuilder) common.PollerBuilder {
+			return builder.DumpDB("kafka_requests", "", "id", "name", "status", "actual_kafka_billing_model", "expires_at")
+		})
 	g.Expect(kafkaDeletionErr).NotTo(gomega.HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
 }
