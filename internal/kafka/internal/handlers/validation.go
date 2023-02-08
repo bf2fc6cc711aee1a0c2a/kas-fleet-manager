@@ -38,8 +38,14 @@ const minimunNumberOfNodesForTheKafkaMachinePool = 3
 func validateKafkaBillingModel(ctx context.Context, kafkaService services.KafkaService, kafkaConfig *config.KafkaConfig, kafkaRequestPayload *public.KafkaRequestPayload) handlers.Validate {
 	return func() *errors.ServiceError {
 		billingModel := shared.SafeString(kafkaRequestPayload.BillingModel)
-		// enterprise kafkas billing model validation
 
+		// No explicitly set kafka billing mode is allowed for now, in which case
+		// an implementation-defined default is chosen
+		if shared.StringEmpty(billingModel) {
+			return nil
+		}
+
+		// enterprise kafkas billing model validation
 		if !shared.StringEmpty(kafkaRequestPayload.ClusterId) && !shared.StringEqualsIgnoreCase(billingModel, constants.BillingModelEnterprise.String()) {
 			return errors.InvalidBillingAccount("invalid billing model: %q, only %q is allowed", billingModel,
 				constants.BillingModelEnterprise.String())
@@ -48,12 +54,6 @@ func validateKafkaBillingModel(ctx context.Context, kafkaService services.KafkaS
 		if shared.StringEmpty(kafkaRequestPayload.ClusterId) && shared.StringEqualsIgnoreCase(billingModel, constants.BillingModelEnterprise.String()) {
 			return errors.BadRequest("cluster_id must be supplied when selected billing model is: %q",
 				constants.BillingModelEnterprise.String())
-		}
-
-		// No explicitly set kafka billing mode is allowed for now, in which case
-		// an implementation-defined default is chosen
-		if shared.StringEmpty(billingModel) {
-			return nil
 		}
 
 		instanceType, _, svcErr := getInstanceTypeAndSize(ctx, kafkaService, kafkaConfig, kafkaRequestPayload)

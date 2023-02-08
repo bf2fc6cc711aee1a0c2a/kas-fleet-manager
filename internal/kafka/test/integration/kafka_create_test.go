@@ -643,7 +643,7 @@ func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
 		cluster.ClusterSpec = api.JSON{}
 		cluster.OrganizationID = organizationID
 		cluster.ClusterType = api.EnterpriseDataPlaneClusterType.String()
-		cluster.DynamicCapacityInfo = api.JSON([]byte(`{"standard":{"max_nodes":3,"max_units":1,"remaining_units":1}}`))
+		cluster.DynamicCapacityInfo = api.JSON([]byte(`{"standard":{"max_nodes":6,"max_units":2,"remaining_units":2}}`))
 	})
 
 	db := h.DBFactory().New()
@@ -686,6 +686,25 @@ func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
 	g.Expect(kafka.BillingModel).To(gomega.Equal("enterprise"))
 	g.Expect(kafka.ClusterId).To(gomega.Equal(&cluster.ClusterID))
 
+	kafkaRequestWithoutBillingModel := public.KafkaRequestPayload{
+		Name:      "no-billing-model",
+		ClusterId: &cluster.ClusterID,
+	}
+
+	kafka, resp, err = client.DefaultApi.CreateKafka(sameOrgCtx, true, kafkaRequestWithoutBillingModel)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	// successful creation of kafka without billing mode specified
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "error posting object:  %v", err)
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusAccepted))
+	g.Expect(kafka.Id).NotTo(gomega.BeEmpty(), "Expected ID assigned on creation")
+	g.Expect(kafka.InstanceType).To(gomega.Equal(types.STANDARD.String()))
+	g.Expect(kafka.MultiAz).To(gomega.BeTrue())
+	g.Expect(kafka.ExpiresAt).To(gomega.BeNil())
+	g.Expect(kafka.BillingModel).To(gomega.Equal("enterprise"))
+	g.Expect(kafka.ClusterId).To(gomega.Equal(&cluster.ClusterID))
+
 	kafka, resp, err = client.DefaultApi.GetKafkaById(sameOrgCtx, kafka.Id)
 	if resp != nil {
 		resp.Body.Close()
@@ -699,13 +718,15 @@ func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
 		resp.Body.Close()
 	}
 	g.Expect(err).NotTo(gomega.HaveOccurred(), "error posting object:  %v", err)
-	g.Expect(list.Items).To(gomega.HaveLen(1))
+	g.Expect(list.Items).To(gomega.HaveLen(2))
 	g.Expect(list.Items[0].BillingModel).To(gomega.Equal("enterprise"))
 	g.Expect(list.Items[0].ClusterId).To(gomega.Equal(&cluster.ClusterID))
+	g.Expect(list.Items[1].BillingModel).To(gomega.Equal("enterprise"))
+	g.Expect(list.Items[1].ClusterId).To(gomega.Equal(&cluster.ClusterID))
 
-	// unsuccessful creation of max unit of 1 already reached
+	// unsuccessful creation of max unit of 2 already reached
 	kafka, resp, err = client.DefaultApi.CreateKafka(sameOrgCtx, true, public.KafkaRequestPayload{
-		Name:         "some-other-kafka",
+		Name:         "third-kafka",
 		BillingModel: &billingModel,
 		ClusterId:    &cluster.ClusterID,
 	})
@@ -714,7 +735,7 @@ func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
 		resp.Body.Close()
 	}
 
-	g.Expect(err).To(gomega.HaveOccurred(), "cluster can accept a maximum of 1 streaming unit")
+	g.Expect(err).To(gomega.HaveOccurred(), "cluster can accept a maximum of 2 streaming unit")
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusForbidden))
 
 	// unsuccessful creation of kafka invalid payload
