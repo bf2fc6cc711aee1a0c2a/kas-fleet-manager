@@ -31,10 +31,9 @@ const dataPlaneClusterStatusCondReadyName = "Ready"
 
 type dataPlaneClusterService struct {
 	di.Inject
-	ClusterService         ClusterService
-	KafkaConfig            *config.KafkaConfig
-	ObservabilityConfig    *observatorium.ObservabilityConfiguration
-	DataplaneClusterConfig *config.DataplaneClusterConfig
+	ClusterService      ClusterService
+	KafkaConfig         *config.KafkaConfig
+	ObservabilityConfig *observatorium.ObservabilityConfiguration
 }
 
 func NewDataPlaneClusterService(config dataPlaneClusterService) *dataPlaneClusterService {
@@ -51,11 +50,6 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 		return nil, errors.BadRequest("cluster agent with ID '%s' not found", clusterID)
 	}
 
-	dynamicCapacityInfo := map[string]api.DynamicCapacityInfo{}
-	if d.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
-		dynamicCapacityInfo = cluster.RetrieveDynamicCapacityInfo()
-	}
-
 	return &dbapi.DataPlaneClusterConfig{
 		Observability: dbapi.DataPlaneClusterConfigObservability{
 			AccessToken: d.ObservabilityConfig.ObservabilityConfigAccessToken,
@@ -63,7 +57,7 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 			Repository:  d.ObservabilityConfig.ObservabilityConfigRepo,
 			Tag:         d.ObservabilityConfig.ObservabilityConfigTag,
 		},
-		DynamicCapacityInfo: dynamicCapacityInfo,
+		DynamicCapacityInfo: cluster.RetrieveDynamicCapacityInfo(),
 		NetworkConfiguration: dbapi.DataPlaneClusterConfigNetwork{
 			Private: cluster.AccessKafkasViaPrivateNetwork,
 		},

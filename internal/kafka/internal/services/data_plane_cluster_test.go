@@ -351,7 +351,6 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 	type fields struct {
 		clusterService             ClusterService
 		ObservabilityConfiguration *observatorium.ObservabilityConfiguration
-		DataplaneClusterConfig     *config.DataplaneClusterConfig
 	}
 
 	tests := []struct {
@@ -361,13 +360,13 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 		want    *dbapi.DataPlaneClusterConfig
 	}{
 		{
-			name: "should succeed by returned complete spec object with observability and empty capacity config for a given cluster when autoscaling is not set",
+			name: "should succeed by returned complete spec object with observability and empty capacity config when capacity info are is not there",
 			fields: fields{
 				clusterService: &ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return &api.Cluster{
 							AccessKafkasViaPrivateNetwork: true,
-							DynamicCapacityInfo:           api.JSON([]byte(`{"key1":{"max_nodes":1,"max_units":1,"remaining_units":1}}`)),
+							DynamicCapacityInfo:           api.JSON([]byte(`{}`)),
 						}, nil
 					},
 				},
@@ -377,7 +376,6 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 					ObservabilityConfigAccessToken: "test-token",
 					ObservabilityConfigTag:         "test-tag",
 				},
-				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 			},
 			wantErr: false,
 			want: &dbapi.DataPlaneClusterConfig{
@@ -410,7 +408,6 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 					ObservabilityConfigAccessToken: "test-token",
 					ObservabilityConfigTag:         "test-tag",
 				},
-				DataplaneClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest(nil).DataplaneClusterConfig,
 			},
 			wantErr: false,
 			want: &dbapi.DataPlaneClusterConfig{
@@ -446,7 +443,6 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 					ObservabilityConfigAccessToken: "test-token",
 					ObservabilityConfigTag:         "test-tag",
 				},
-				DataplaneClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest(nil).DataplaneClusterConfig,
 			},
 			wantErr: true,
 			want:    nil,
@@ -465,7 +461,6 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 					ObservabilityConfigAccessToken: "test-token",
 					ObservabilityConfigTag:         "test-tag",
 				},
-				DataplaneClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest(nil).DataplaneClusterConfig,
 			},
 			wantErr: true,
 			want:    nil,
@@ -478,9 +473,8 @@ func Test_dataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			s := NewDataPlaneClusterService(dataPlaneClusterService{
-				ClusterService:         tt.fields.clusterService,
-				ObservabilityConfig:    tt.fields.ObservabilityConfiguration,
-				DataplaneClusterConfig: tt.fields.DataplaneClusterConfig,
+				ClusterService:      tt.fields.clusterService,
+				ObservabilityConfig: tt.fields.ObservabilityConfiguration,
 			})
 			config, err := s.GetDataPlaneClusterConfig(context.TODO(), "test-cluster-id")
 			if err != nil && !tt.wantErr {
@@ -527,7 +521,6 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				c := sampleValidApplicationConfigForDataPlaneClusterTest(clusterService)
-				c.DataplaneClusterConfig.DataPlaneClusterScalingType = config.ManualScaling
 				dataPlaneClusterService := NewDataPlaneClusterService(c)
 				return &input{
 					status:                  testStatus,
@@ -559,7 +552,6 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				c := sampleValidApplicationConfigForDataPlaneClusterTest(clusterService)
-				c.DataplaneClusterConfig.DataPlaneClusterScalingType = config.ManualScaling
 				dataPlaneClusterService := NewDataPlaneClusterService(c)
 				return &input{
 					status:                  testStatus,
@@ -636,7 +628,6 @@ func sampleValidApplicationConfigForDataPlaneClusterTest(clusterService ClusterS
 	dataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	return dataPlaneClusterService{
-		ClusterService:         clusterService,
-		DataplaneClusterConfig: dataplaneClusterConfig,
+		ClusterService: clusterService,
 	}
 }
