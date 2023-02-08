@@ -2177,7 +2177,9 @@ func TestKafka_KafkaExpiration(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test.NewKafkaHelper(t, ocmServer)
+	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
+		acl.EnableInstanceLimitControl = true
+	})
 	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
