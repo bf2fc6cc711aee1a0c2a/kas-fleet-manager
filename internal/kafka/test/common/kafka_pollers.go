@@ -24,10 +24,10 @@ const (
 )
 
 // WaitForNumberOfKafkaToBeGivenCount - Awaits for the number of kafkas to be exactly X
-func WaitForNumberOfKafkaToBeGivenCount(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, count int32) error {
+func WaitForNumberOfKafkaToBeGivenCount(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, count int32, customize ...func(builder PollerBuilder) PollerBuilder) error {
 	currentCount := int32(-1)
 
-	return NewPollerBuilder(db).
+	pb := NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, defaultKafkaPollTimeout).
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentCount == -1 {
@@ -46,8 +46,13 @@ func WaitForNumberOfKafkaToBeGivenCount(ctx context.Context, db *db.ConnectionFa
 				currentCount = list.Size
 				return currentCount == count, err
 			}
-		}).
-		Build().Poll()
+		})
+
+	if len(customize) > 0 {
+		pb = customize[0](pb)
+	}
+
+	return pb.Build().Poll()
 }
 
 // WaitForKafkaCreateToBeAccepted - Creates a kafka and awaits for the request to be accepted
