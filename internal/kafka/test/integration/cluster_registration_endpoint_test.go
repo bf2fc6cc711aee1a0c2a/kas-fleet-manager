@@ -9,6 +9,7 @@ import (
 	kafkatest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	mockclusters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
@@ -260,6 +261,21 @@ func TestClusterRegistration_Successful(t *testing.T) {
 	// waiting for cluster state to become `waiting_for_kas_fleetshard_operator`, so that its persisted struct can be updated after terraforming phase
 	_, checkWaitingForKasFleetshardOperatorErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, cluster.ClusterID, api.ClusterWaitingForKasFleetShardOperator)
 	g.Expect(checkWaitingForKasFleetshardOperatorErr).NotTo(gomega.HaveOccurred(), "Error waiting for cluster to reach waiting for fleetshard status: %s %v", cluster.ClusterID, checkWaitingForKasFleetshardOperatorErr)
+
+	// observe that capacity info is there
+	privateAPIClient := test.NewPrivateAPIClient(h)
+	privateAPICtx, err := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, cluster.ClusterID)
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+
+	managedKafkaAgentCR, resp, err := privateAPIClient.AgentClustersApi.GetKafkaAgent(privateAPICtx, cluster.ClusterID)
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).NotTo(gomega.HaveOccurred())
+	capacity, ok := managedKafkaAgentCR.Spec.Capacity[cluster.SupportedInstanceType]
+	g.Expect(ok).To(gomega.BeTrue())
+	g.Expect(capacity.MaxNodes).To(gomega.Equal(int32(payload.KafkaMachinePoolNodeCount)))
+	g.Expect(managedKafkaAgentCR.Spec.Net.Private).To(gomega.BeTrue())
 
 	// register another cluster with AccessKafkasViaPrivateNetwork set to false and verify that it is set to false
 	payload = public.EnterpriseOsdClusterPayload{
