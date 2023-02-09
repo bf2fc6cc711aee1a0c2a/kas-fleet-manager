@@ -2187,13 +2187,25 @@ func TestKafka_KafkaExpiration(t *testing.T) {
 	mockKasfFleetshardSync.Start()
 	defer mockKasfFleetshardSync.Stop()
 
-	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
-	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
+	db := test.TestServices.DBFactory.New()
+
+	cluster := clusterMocks.BuildCluster(func(cluster *api.Cluster) {
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.Status = api.ClusterWaitingForKasFleetShardOperator
+		cluster.ClientID = "some-client-id"
+		cluster.ClientSecret = "some-client-secret"
+		cluster.ClusterID = "some-cluster-id"
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.IdentityProviderID = "some-identity-provider"
+	})
+
+	dbErr := db.Create(cluster).Error
+	g.Expect(dbErr).NotTo(gomega.HaveOccurred())
 
 	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
 	kafkas := []*dbapi.KafkaRequest{
@@ -2204,7 +2216,7 @@ func TestKafka_KafkaExpiration(t *testing.T) {
 			mockkafka.With(mockkafka.STATUS, constants.KafkaRequestStatusAccepted.String()),
 			mockkafka.With(mockkafka.BOOTSTRAP_SERVER_HOST, ""),
 			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
-			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.CLUSTER_ID, cluster.ClusterID),
 			mockkafka.WithExpiresAt(sql.NullTime{}), // simulate kafka with no expires_at set
 		),
 		mockkafka.BuildKafkaRequest(
@@ -2214,14 +2226,14 @@ func TestKafka_KafkaExpiration(t *testing.T) {
 			mockkafka.With(mockkafka.STATUS, constants.KafkaRequestStatusAccepted.String()),
 			mockkafka.With(mockkafka.BOOTSTRAP_SERVER_HOST, ""),
 			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
-			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.CLUSTER_ID, cluster.ClusterID),
 			// we don't set expires_at so the kafka should be remain
 		),
 		mockkafka.BuildKafkaRequest(
 			mockkafka.WithPredefinedTestValues(),
 			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-48*time.Hour))),
 			mockkafka.WithMultiAZ(false),
-			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.CLUSTER_ID, cluster.ClusterID),
 			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-remain-3"),
 			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
 			mockkafka.WithExpiresAt(sql.NullTime{Time: time.Now().Add(48 * time.Hour), Valid: true}),
@@ -2230,7 +2242,7 @@ func TestKafka_KafkaExpiration(t *testing.T) {
 			mockkafka.WithPredefinedTestValues(),
 			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-49*time.Hour))),
 			mockkafka.WithMultiAZ(false),
-			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.CLUSTER_ID, cluster.ClusterID),
 			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-markasdeprovision-1"),
 			mockkafka.With(mockkafka.STATUS, constants.KafkaRequestStatusProvisioning.String()),
 			mockkafka.With(mockkafka.INSTANCE_TYPE, types.DEVELOPER.String()),
@@ -2240,7 +2252,7 @@ func TestKafka_KafkaExpiration(t *testing.T) {
 			mockkafka.WithPredefinedTestValues(),
 			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-49*time.Hour))),
 			mockkafka.WithMultiAZ(false),
-			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.CLUSTER_ID, cluster.ClusterID),
 			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-markasdeprovision-2"),
 			mockkafka.With(mockkafka.STATUS, constants.KafkaRequestStatusProvisioning.String()),
 			mockkafka.With(mockkafka.INSTANCE_TYPE, types.STANDARD.String()),
@@ -2250,7 +2262,7 @@ func TestKafka_KafkaExpiration(t *testing.T) {
 			mockkafka.WithPredefinedTestValues(),
 			mockkafka.WithCreatedAt(time.Now().Add(time.Duration(-49*time.Hour))),
 			mockkafka.WithMultiAZ(false),
-			mockkafka.With(mockkafka.CLUSTER_ID, clusterID),
+			mockkafka.With(mockkafka.CLUSTER_ID, cluster.ClusterID),
 			mockkafka.With(mockkafka.NAME, "dummy-kafka-to-notchange-1"),
 			mockkafka.With(mockkafka.STATUS, constants.KafkaRequestStatusDeleting.String()),
 			mockkafka.With(mockkafka.INSTANCE_TYPE, types.STANDARD.String()),
@@ -2259,7 +2271,6 @@ func TestKafka_KafkaExpiration(t *testing.T) {
 		),
 	}
 
-	db := test.TestServices.DBFactory.New()
 	if err := db.Create(&kafkas).Error; err != nil {
 		g.Expect(err).NotTo(gomega.HaveOccurred())
 		return
