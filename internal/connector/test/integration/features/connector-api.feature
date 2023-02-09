@@ -651,6 +651,7 @@ Feature: create a connector
             "kind": "ConnectorType",
             "name": "Old Connector Type still in use",
             "schema": null,
+            "deprecated": true,
             "version": ""
           }
         ],
@@ -658,6 +659,31 @@ Feature: create a connector
         "page": 1,
         "size": 3,
         "total": 3
+      }
+      """
+
+  Scenario: Gary lists deprecated connector types
+    Given I am logged in as "Gary"
+    When I GET path "/v1/kafka_connector_types?search=deprecated=true"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "deprecated": true,
+            "href": "/api/connector_mgmt/v1/kafka_connector_types/OldConnectorTypeStillInUseId",
+            "id": "OldConnectorTypeStillInUseId",
+            "kind": "ConnectorType",
+            "name": "Old Connector Type still in use",
+            "schema": null,
+            "version": ""
+          }
+        ],
+        "kind": "ConnectorTypeList",
+        "page": 1,
+        "size": 1,
+        "total": 1
       }
       """
 

@@ -92,7 +92,9 @@ func (k *ConnectorTypeManager) Reconcile() []error {
 
 		// the assumption here is that this runs on one instance only of fleetmanager,
 		// runs only at startup and while requests are not being served
-		if err := k.connectorTypesService.DeleteUnusedAndNotInCatalog(); err != nil {
+		// this call handles types that are not in catalog anymore,
+		// removing unused types and marking used types as deprecated
+		if err := k.connectorTypesService.DeleteOrDeprecateRemovedTypes(); err != nil {
 			return []error{err}
 		}
 

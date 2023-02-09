@@ -10,6 +10,7 @@ import (
 	"database/sql"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"gorm.io/gorm/clause"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"regexp"
 	"strings"
 
@@ -37,7 +38,7 @@ type ConnectorTypesService interface {
 	GetConnectorShardMetadata(typeId, channel string, revision int64) (*dbapi.ConnectorShardMetadata, *errors.ServiceError)
 	GetLatestConnectorShardMetadata(typeId, channel string) (*dbapi.ConnectorShardMetadata, *errors.ServiceError)
 	CatalogEntriesReconciled() (bool, *errors.ServiceError)
-	DeleteUnusedAndNotInCatalog() *errors.ServiceError
+	DeleteOrDeprecateRemovedTypes() *errors.ServiceError
 	ListCatalogEntries(*coreService.ListArguments) ([]dbapi.ConnectorCatalogEntry, *api.PagingMeta, *errors.ServiceError)
 	GetCatalogEntry(tyd string) (*dbapi.ConnectorCatalogEntry, *errors.ServiceError)
 }
@@ -167,7 +168,7 @@ func (cts *connectorTypesService) Get(id string) (*dbapi.ConnectorType, *errors.
 }
 
 func GetValidConnectorTypeColumns() []string {
-	return []string{"id", "created_at", "updated_at", "version", "name", "description", "label", "channel", "featured_rank", "pricing_tier"}
+	return []string{"id", "created_at", "updated_at", "version", "name", "description", "label", "channel", "featured_rank", "pricing_tier", "deprecated"}
 }
 
 var skipOrderByColumnsRegExp = regexp.MustCompile("^(channel)|(label)|(pricing_tier)")
@@ -456,7 +457,7 @@ func (cts *connectorTypesService) CatalogEntriesReconciled() (bool, *errors.Serv
 	return true, nil
 }
 
-func (cts *connectorTypesService) DeleteUnusedAndNotInCatalog() *errors.ServiceError {
+func (cts *connectorTypesService) DeleteOrDeprecateRemovedTypes() *errors.ServiceError {
 	notToBeDeletedIDs := make([]string, len(cts.connectorsConfig.CatalogEntries))
 	for _, entry := range cts.connectorsConfig.CatalogEntries {
 		notToBeDeletedIDs = append(notToBeDeletedIDs, entry.ConnectorType.Id)
@@ -470,6 +471,17 @@ func (cts *connectorTypesService) DeleteUnusedAndNotInCatalog() *errors.ServiceE
 	}
 	glog.V(5).Infof("Connector Type IDs used by at least an active connector not to be deleted: %v", usedConnectorTypeIDs)
 
+	// flag deprecated types
+	deprecatedIds := getDeprecatedTypes(usedConnectorTypeIDs, notToBeDeletedIDs)
+	if len(deprecatedIds) > 0 {
+		if err := dbConn.Model(&dbapi.ConnectorType{}).
+			Where("id IN ?", deprecatedIds).
+			Update("deprecated", true).Error; err != nil {
+			return errors.GeneralError("failed to deprecate connector types with ids %v : %v", deprecatedIds, err.Error())
+		}
+		glog.V(5).Infof("Deprecated Connector Types with id IN: %v", deprecatedIds)
+	}
+
 	notToBeDeletedIDs = append(notToBeDeletedIDs, usedConnectorTypeIDs...)
 
 	if err := dbConn.Delete(&dbapi.ConnectorType{}, "id NOT IN ?", notToBeDeletedIDs).Error; err != nil {
@@ -477,6 +489,21 @@ func (cts *connectorTypesService) DeleteUnusedAndNotInCatalog() *errors.ServiceE
 	}
 	glog.V(5).Infof("Deleted Connector Type with id NOT IN: %v", notToBeDeletedIDs)
 	return nil
+}
+
+// get ids that are used, but not in the latest catalog, i.e. deprecated
+func getDeprecatedTypes(usedConnectorTypeIDs []string, notToBeDeletedIDs []string) []string {
+	latestIds := make(map[string]struct{})
+	arrays.ForEach(notToBeDeletedIDs, func(k string) {
+		latestIds[k] = sets.Empty{}
+	})
+	deprecatedIds := make([]string, 0)
+	arrays.ForEach(usedConnectorTypeIDs, func(k string) {
+		if _, ok := latestIds[k]; !ok {
+			deprecatedIds = append(deprecatedIds, k)
+		}
+	})
+	return deprecatedIds
 }
 
 func (cts *connectorTypesService) ListCatalogEntries(listArgs *coreService.ListArguments) ([]dbapi.ConnectorCatalogEntry, *api.PagingMeta, *errors.ServiceError) {

@@ -20,6 +20,7 @@ type ConnectorType struct {
 	Version     string
 	Name        string `gorm:"index"`
 	Description string
+	Deprecated  bool `gorm:"not null;default:false"`
 	// A json schema that can be used to validate a connector's connector_spec field.
 	JsonSchema api.JSON `gorm:"type:jsonb"`
 
