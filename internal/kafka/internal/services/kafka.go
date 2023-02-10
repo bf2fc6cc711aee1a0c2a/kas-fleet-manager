@@ -909,7 +909,7 @@ func (k *kafkaService) GenerateReservedManagedKafkasByClusterID(clusterID string
 		return nil, errors.GeneralError("failed to generate reserved managed kafkas for clusterID %s: clusterID not found", clusterID)
 	}
 	if cluster.Status != api.ClusterReady {
-		logger.Logger.Warningf("ClusterID '%s' is not ready. Its status is '%s'. Returning an empty list of reserved managed kafkas", clusterID, cluster.Status)
+		logger.Logger.V(10).Infof("ClusterID '%s' is not ready. Its status is '%s'. Returning an empty list of reserved managed kafkas", clusterID, cluster.Status)
 		return reservedKafkas, nil
 	}
 
