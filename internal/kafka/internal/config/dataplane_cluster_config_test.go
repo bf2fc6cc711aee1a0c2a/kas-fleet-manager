@@ -90,7 +90,7 @@ func TestDataplaneClusterConfig_IsDataPlaneManualScalingEnabled(t *testing.T) {
 	}
 }
 
-func TestDataplaneClusterConfig_IsWithinClusterLimit(t *testing.T) {
+func TestDataplaneClusterConfig_IsNumberOfStreamingUnitsWithinClusterLimit(t *testing.T) {
 	type fields struct {
 		DataPlaneClusterScalingType string
 		ClusterList                 ClusterList
@@ -155,7 +155,7 @@ func TestDataplaneClusterConfig_IsWithinClusterLimit(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			conf := NewClusterConfig(tt.fields.ClusterList)
-			g.Expect(conf.IsNumberOfKafkaWithinClusterLimit(tt.args.clusterId, tt.args.count)).To(gomega.Equal(tt.want))
+			g.Expect(conf.IsNumberOfStreamingUnitsWithinClusterLimit(tt.args.clusterId, tt.args.count)).To(gomega.Equal(tt.want))
 		})
 	}
 }
