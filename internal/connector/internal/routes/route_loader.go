@@ -172,8 +172,8 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	adminRouter.HandleFunc("/kafka_connector_namespaces/{namespace_id}/connectors", s.ConnectorAdminHandler.GetNamespaceConnectors).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafka_connector_namespaces/{namespace_id}/deployments", s.ConnectorAdminHandler.GetNamespaceDeployments).Methods(http.MethodGet)
 	//TODO: add, to consistency with the {connector_cluster_id}/ counterparts
-	//adminRouter.HandleFunc("/kafka_connector_namespaces/{namespace_id}/deployments/{deployment_id}", s.ConnectorAdminHandler.GetConnectorDeployment).Methods(http.MethodGet)
-	//adminRouter.HandleFunc("/kafka_connector_namespaces/{namespace_id}/deployments/{deployment_id}", s.ConnectorAdminHandler.PatchConnectorDeployment).Methods(http.MethodGet)
+	//adminRouter.HandleFunc("/kafka_connector_namespaces/{namespace_id}/deployments/{deployment_id}", s.ConnectorAdminHandler.GetNamespaceDeployment).Methods(http.MethodGet)
+	//adminRouter.HandleFunc("/kafka_connector_namespaces/{namespace_id}/deployments/{deployment_id}", s.ConnectorAdminHandler.PatchCNamespaceDeployment).Methods(http.MethodPatch)
 	adminRouter.HandleFunc("/kafka_connectors/{connector_id}", s.ConnectorAdminHandler.GetConnector).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafka_connectors/{connector_id}", s.ConnectorAdminHandler.DeleteConnector).Methods(http.MethodDelete)
 	adminRouter.HandleFunc("/kafka_connectors/{connector_id}", s.ConnectorAdminHandler.PatchConnector).Methods(http.MethodPatch)
