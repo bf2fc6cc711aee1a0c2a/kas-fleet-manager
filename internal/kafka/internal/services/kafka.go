@@ -1065,7 +1065,7 @@ func (k *kafkaService) GetCNAMERecordStatus(kafkaRequest *dbapi.KafkaRequest) (*
 
 	changeOutput, err := awsClient.GetChange(kafkaRequest.RoutesCreationId)
 	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to CNAME record status")
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to get status of Route53 change batch request with ID %q", kafkaRequest.RoutesCreationId)
 	}
 
 	return &CNameRecordStatus{
