@@ -457,7 +457,7 @@ func (c clusterService) ListNonEnterpriseClusterIDs() ([]api.Cluster, *apiErrors
 }
 
 type ResKafkaInstanceCount struct {
-	Clusterid string
+	ClusterID string
 	Count     int
 }
 
@@ -506,13 +506,13 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 	if len(clusterIDs) > 0 {
 		for _, clusterId := range clusterIDs {
 			if _, ok := clusterIdCountMap[clusterId]; !ok {
-				res = append(res, ResKafkaInstanceCount{Clusterid: clusterId, Count: 0})
+				res = append(res, ResKafkaInstanceCount{ClusterID: clusterId, Count: 0})
 			}
 		}
 	}
 
 	for k, v := range clusterIdCountMap {
-		res = append(res, ResKafkaInstanceCount{Clusterid: k, Count: v})
+		res = append(res, ResKafkaInstanceCount{ClusterID: k, Count: v})
 	}
 
 	return res, nil

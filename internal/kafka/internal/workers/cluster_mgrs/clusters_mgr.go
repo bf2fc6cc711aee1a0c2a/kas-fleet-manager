@@ -723,10 +723,10 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	var idsOfClustersToDeprovision []string
 	for _, c := range kafkaInstanceCount {
 		if c.Count > 0 {
-			glog.Infof("Excess cluster %s is not going to be deleted because it has %d kafka.", c.Clusterid, c.Count)
+			glog.Infof("Excess cluster %s is not going to be deleted because it has %d kafka.", c.ClusterID, c.Count)
 		} else {
-			glog.Infof("Excess cluster is going to be deleted %s", c.Clusterid)
-			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, c.Clusterid)
+			glog.Infof("Excess cluster is going to be deleted %s", c.ClusterID)
+			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, c.ClusterID)
 		}
 	}
 
@@ -1208,15 +1208,15 @@ func (c *ClusterManager) setKafkaPerClusterCountMetrics() error {
 		// For this to occur, either the counter included:
 		// 1. rejected kafkas but not re-assigned
 		// 2. or accepted kafkas but have not assigned in an OSD cluster
-		if counter.Clusterid == "" {
+		if counter.ClusterID == "" {
 			continue
 		}
 
-		clusterExternalID, err := c.ClusterService.GetExternalID(counter.Clusterid)
+		clusterExternalID, err := c.ClusterService.GetExternalID(counter.ClusterID)
 		if err != nil {
 			return err
 		}
-		metrics.UpdateKafkaPerClusterCountMetric(counter.Clusterid, clusterExternalID, counter.Count)
+		metrics.UpdateKafkaPerClusterCountMetric(counter.ClusterID, clusterExternalID, counter.Count)
 	}
 
 	return nil

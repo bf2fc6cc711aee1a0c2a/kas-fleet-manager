@@ -2110,7 +2110,7 @@ func Test_validateEnterpriseClusterHasNoKafkas(t *testing.T) {
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
-								Clusterid: "different-id",
+								ClusterID: "different-id",
 								Count:     1,
 							},
 						}, nil
@@ -2128,7 +2128,7 @@ func Test_validateEnterpriseClusterHasNoKafkas(t *testing.T) {
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
-								Clusterid: clusterID,
+								ClusterID: clusterID,
 								Count:     1,
 							},
 						}, nil

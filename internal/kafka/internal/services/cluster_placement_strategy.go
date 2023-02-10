@@ -210,7 +210,7 @@ func (f *FirstSchedulableWithinLimit) findConsumedStreamingUnitPerClusterID(clus
 
 	consumedStreamingUnitPerClusterID := make(map[string]int)
 	for _, c := range instanceLst {
-		consumedStreamingUnitPerClusterID[c.Clusterid] = c.Count
+		consumedStreamingUnitPerClusterID[c.ClusterID] = c.Count
 	}
 	return consumedStreamingUnitPerClusterID, nil
 }
