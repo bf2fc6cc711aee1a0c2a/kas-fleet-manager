@@ -15,7 +15,7 @@ import (
 	"github.com/onsi/gomega"
 )
 
-func TestAdminKafka_KafkaCertificateRevocation(t *testing.T) {
+func TestAdminKafka_KafkaTLSCertificateRevocation(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -40,7 +40,7 @@ func TestAdminKafka_KafkaCertificateRevocation(t *testing.T) {
 	adminClientContextWithPermission := NewAuthenticatedContextForAdminEndpoints(h, []string{testFullRole})
 
 	// successfully revokes a certificate for the kafka
-	successfulResponse, err := adminClient.DefaultApi.RevokeCertificateOfAKafkaById(adminClientContextWithPermission, kafka.ID, private.KafkacertificateRevocationRequest{
+	successfulResponse, err := adminClient.DefaultApi.RevokeKafkaTLSCertificateBKafkaID(adminClientContextWithPermission, kafka.ID, private.KafkacertificateRevocationRequest{
 		RevocationReason: 1,
 	})
 	if successfulResponse != nil {
@@ -50,7 +50,7 @@ func TestAdminKafka_KafkaCertificateRevocation(t *testing.T) {
 	g.Expect(successfulResponse.StatusCode).To(gomega.Equal(http.StatusNoContent))
 
 	// return an error when bad request error when certificate reason is invalid
-	badRequestResponse, err := adminClient.DefaultApi.RevokeCertificateOfAKafkaById(adminClientContextWithPermission, kafka.ID, private.KafkacertificateRevocationRequest{
+	badRequestResponse, err := adminClient.DefaultApi.RevokeKafkaTLSCertificateBKafkaID(adminClientContextWithPermission, kafka.ID, private.KafkacertificateRevocationRequest{
 		RevocationReason: -1,
 	})
 	if badRequestResponse != nil {
@@ -60,7 +60,7 @@ func TestAdminKafka_KafkaCertificateRevocation(t *testing.T) {
 	g.Expect(badRequestResponse.StatusCode).To(gomega.Equal(http.StatusBadRequest), "should fail with bad request error")
 
 	// return an error when kafka cannot be found
-	kafkaNotFoundResponse, err := adminClient.DefaultApi.RevokeCertificateOfAKafkaById(adminClientContextWithPermission, api.NewID(), private.KafkacertificateRevocationRequest{
+	kafkaNotFoundResponse, err := adminClient.DefaultApi.RevokeKafkaTLSCertificateBKafkaID(adminClientContextWithPermission, api.NewID(), private.KafkacertificateRevocationRequest{
 		RevocationReason: -1,
 	})
 	if kafkaNotFoundResponse != nil {
@@ -73,7 +73,7 @@ func TestAdminKafka_KafkaCertificateRevocation(t *testing.T) {
 	adminClientContextWithoutPermission := NewAuthenticatedContextForAdminEndpoints(h, []string{testReadRole, testWriteRole})
 
 	// successfully revokes a certificate for the kafka
-	notFoundResponseDueToMissingPermission, err := adminClient.DefaultApi.RevokeCertificateOfAKafkaById(adminClientContextWithoutPermission, kafka.ID, private.KafkacertificateRevocationRequest{
+	notFoundResponseDueToMissingPermission, err := adminClient.DefaultApi.RevokeKafkaTLSCertificateBKafkaID(adminClientContextWithoutPermission, kafka.ID, private.KafkacertificateRevocationRequest{
 		RevocationReason: 1,
 	})
 	if notFoundResponseDueToMissingPermission != nil {

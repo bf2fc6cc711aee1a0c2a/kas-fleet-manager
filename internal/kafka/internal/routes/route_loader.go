@@ -12,7 +12,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafka_tls_certificate_management"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafkatlscertmgmt"
 
 	internalAcl "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
@@ -43,27 +43,26 @@ type options struct {
 	ProviderConfig *config.ProviderConfig
 	KafkaConfig    *config.KafkaConfig
 
-	AMSClient                   ocm.AMSClient
-	Kafka                       services.KafkaService
-	CloudProviders              services.CloudProvidersService
-	Observatorium               services.ObservatoriumService
-	Keycloak                    sso.KafkaKeycloakService
-	DataPlaneCluster            services.DataPlaneClusterService
-	DataPlaneKafkaService       services.DataPlaneKafkaService
-	AccountService              account.AccountService
-	AuthService                 authorization.Authorization
-	DB                          *db.ConnectionFactory
-	ClusterPlacementStrategy    services.ClusterPlacementStrategy
-	ClusterService              services.ClusterService
-	ProviderFactory             clusters.ProviderFactory
-	SupportedKafkaInstanceTypes services.SupportedKafkaInstanceTypesService
-
+	AMSClient                                 ocm.AMSClient
+	Kafka                                     services.KafkaService
+	CloudProviders                            services.CloudProvidersService
+	Observatorium                             services.ObservatoriumService
+	Keycloak                                  sso.KafkaKeycloakService
+	DataPlaneCluster                          services.DataPlaneClusterService
+	DataPlaneKafkaService                     services.DataPlaneKafkaService
+	AccountService                            account.AccountService
+	AuthService                               authorization.Authorization
+	DB                                        *db.ConnectionFactory
+	ClusterPlacementStrategy                  services.ClusterPlacementStrategy
+	ClusterService                            services.ClusterService
+	ProviderFactory                           clusters.ProviderFactory
+	SupportedKafkaInstanceTypes               services.SupportedKafkaInstanceTypesService
 	AccessControlListMiddleware               *acl.AccessControlListMiddleware
 	AccessControlListConfig                   *acl.AccessControlListConfig
 	EnterpriseClustersAccessControlMiddleware *internalAcl.EnterpriseClustersAccessControlMiddleware
 	AdminRoleAuthZConfig                      *auth.AdminRoleAuthZConfig
 	KasFleetshardOperatorAddon                services.KasFleetshardOperatorAddon
-	KafkaTLSCertificateManagementService      kafka_tls_certificate_management.KafkaTLSCertificateManagementService
+	KafkaTLSCertificateManagementService      kafkatlscertmgmt.KafkaTLSCertificateManagementService
 }
 
 func NewRouteLoader(s options) environments.RouteLoader {
@@ -295,8 +294,8 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	adminRouter.HandleFunc("/kafkas/{id}", adminKafkaHandler.Update).
 		Name(logger.NewLogEvent("admin-update-kafka", "[admin] update kafka by id").ToString()).
 		Methods(http.MethodPatch)
-	adminRouter.HandleFunc("/kafkas/{id}/revoke_certificate", adminKafkaHandler.RevokeCertificateOfAKafka).
-		Name(logger.NewLogEvent("admin-kafka-certificate-revocation", "[admin] revoke certificate of a kafka by id").ToString()).
+	adminRouter.HandleFunc("/kafkas/{id}/revoke_tls_certificate", adminKafkaHandler.RevokeCertificateOfAKafka).
+		Name(logger.NewLogEvent("admin-kafka-tls-certificate-revocation", "[admin] revoke the TLS certificate of a kafka by id").ToString()).
 		Methods(http.MethodPost)
 
 	// /api/kafkas_mgmt/v1

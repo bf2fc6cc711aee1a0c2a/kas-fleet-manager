@@ -46,6 +46,7 @@ cmd/kas-fleet-manager/kas-fleet-manager
 /secrets/db.ca_cert
 /secrets/aws.*
 /secrets/vault.*
+/secrets/aws-secret-manager/*
 /secrets/ocm-service.*
 /secrets/kafka-tls.*
 /secrets/kafka-tls-certificate-management-acme-issuer-account-key.pem

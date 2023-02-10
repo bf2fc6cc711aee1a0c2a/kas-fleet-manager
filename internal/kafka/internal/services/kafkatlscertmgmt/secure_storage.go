@@ -1,4 +1,4 @@
-package kafka_tls_certificate_management
+package kafkatlscertmgmt
 
 import (
 	"context"
@@ -16,19 +16,21 @@ import (
 	"github.com/caddyserver/certmagic"
 )
 
-type vaultStorage struct {
+var _ certmagic.Storage = &secureStorage{}
+
+type secureStorage struct {
 	secretCache  *secretcache.Cache
 	secretClient *secretsmanager.SecretsManager
 	secretPrefix string
 }
 
-func newVaultStorage(config *config.AWSConfig) (*vaultStorage, error) {
+func newSecureStorage(config *config.AWSConfig, automaticCertificateManagementConfig config.AutomaticCertificateManagementConfig) (*secureStorage, error) {
 	awsConfig := &aws.Config{
 		Credentials: credentials.NewStaticCredentials(
-			config.SecretManagerAccessKey,
-			config.SecretManagerSecretAccessKey,
+			config.SecretManager.AccessKey,
+			config.SecretManager.SecretAccessKey,
 			""),
-		Region:  aws.String(config.SecretManagerRegion),
+		Region:  aws.String(config.SecretManager.Region),
 		Retryer: client.DefaultRetryer{NumMaxRetries: 2},
 	}
 	sess, err := session.NewSession(awsConfig)
@@ -36,33 +38,31 @@ func newVaultStorage(config *config.AWSConfig) (*vaultStorage, error) {
 		return nil, err
 	}
 
-	// cache the keys for a day
-	oneDayInNanoSeconds := int64(86400000000000)
 	secretClient := secretsmanager.New(sess)
 	secretCache, err := secretcache.New(func(cache *secretcache.Cache) {
 		cache.Client = secretClient
-		cache.CacheItemTTL = oneDayInNanoSeconds
+		cache.CacheItemTTL = automaticCertificateManagementConfig.CertificateCacheTTL.Nanoseconds()
 	})
 
 	if err != nil {
 		return nil, err
 	}
-	return &vaultStorage{
+	return &secureStorage{
 		secretClient: secretClient,
 		secretCache:  secretCache,
-		secretPrefix: config.SecretManagerSecretPrefix,
+		secretPrefix: config.SecretManager.SecretPrefix,
 	}, nil
 }
 
-func (storage *vaultStorage) Lock(ctx context.Context, key string) error {
+func (storage *secureStorage) Lock(ctx context.Context, key string) error {
 	return nil // NOOP as AWS Secret manager uses versioning mechanism to achieve optimistic locking
 }
 
-func (storage *vaultStorage) Unlock(ctx context.Context, key string) error {
+func (storage *secureStorage) Unlock(ctx context.Context, key string) error {
 	return nil // NOOP as AWS Secret manager uses versioning mechanism to achieve optimistic locking
 }
 
-func (storage *vaultStorage) Store(ctx context.Context, key string, value []byte) error {
+func (storage *secureStorage) Store(ctx context.Context, key string, value []byte) error {
 	name := storage.constructSecretName(key)
 	_, err := storage.secretClient.CreateSecret(&secretsmanager.CreateSecretInput{
 		Name:         &name,
@@ -87,7 +87,7 @@ func (storage *vaultStorage) Store(ctx context.Context, key string, value []byte
 
 }
 
-func (storage *vaultStorage) Load(ctx context.Context, key string) ([]byte, error) {
+func (storage *secureStorage) Load(ctx context.Context, key string) ([]byte, error) {
 	name := storage.constructSecretName(key)
 	result, err := storage.secretCache.GetSecretBinary(name)
 
@@ -103,7 +103,7 @@ func (storage *vaultStorage) Load(ctx context.Context, key string) ([]byte, erro
 	}
 }
 
-func (storage *vaultStorage) Delete(ctx context.Context, key string) error {
+func (storage *secureStorage) Delete(ctx context.Context, key string) error {
 	name := storage.constructSecretName(key)
 	force := true
 	_, err := storage.secretClient.DeleteSecret(&secretsmanager.DeleteSecretInput{
@@ -114,13 +114,13 @@ func (storage *vaultStorage) Delete(ctx context.Context, key string) error {
 	return err
 }
 
-func (storage *vaultStorage) Exists(ctx context.Context, key string) bool {
+func (storage *secureStorage) Exists(ctx context.Context, key string) bool {
 	_, err := storage.Load(ctx, key)
 	return err == nil
 }
 
-func (storage *vaultStorage) List(ctx context.Context, prefix string, recursive bool) ([]string, error) {
-	filterKey := `name`
+func (storage *secureStorage) List(ctx context.Context, prefix string, recursive bool) ([]string, error) {
+	filterKey := "name"
 	filterValue := fmt.Sprintf("%s/", storage.secretPrefix)
 
 	input := &secretsmanager.ListSecretsInput{
@@ -142,7 +142,7 @@ func (storage *vaultStorage) List(ctx context.Context, prefix string, recursive 
 	return keys, err
 }
 
-func (storage *vaultStorage) Stat(ctx context.Context, key string) (certmagic.KeyInfo, error) {
+func (storage *secureStorage) Stat(ctx context.Context, key string) (certmagic.KeyInfo, error) {
 	result, err := storage.Load(ctx, key)
 
 	if err != nil {
@@ -163,10 +163,10 @@ func (storage *vaultStorage) Stat(ctx context.Context, key string) (certmagic.Ke
 	}, nil
 }
 
-func (storage *vaultStorage) String() string {
-	return "VaultStorage"
+func (storage *secureStorage) String() string {
+	return "SecureStorage"
 }
 
-func (storage *vaultStorage) constructSecretName(key string) string {
+func (storage *secureStorage) constructSecretName(key string) string {
 	return fmt.Sprintf("%s/%s", storage.secretPrefix, key)
 }

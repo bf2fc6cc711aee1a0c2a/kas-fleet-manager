@@ -16,7 +16,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafka_tls_certificate_management"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafkatlscertmgmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -31,11 +31,11 @@ type adminKafkaHandler struct {
 	providerConfig *config.ProviderConfig
 	kafkaConfig    *config.KafkaConfig
 
-	kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
+	kafkaTLSCertificateManagementService kafkatlscertmgmt.KafkaTLSCertificateManagementService
 }
 
 func NewAdminKafkaHandler(kafkaService services.KafkaService, accountService account.AccountService, providerConfig *config.ProviderConfig, clusterService services.ClusterService, kafkaConfig *config.KafkaConfig,
-	kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService) *adminKafkaHandler {
+	kafkaTLSCertificateManagementService kafkatlscertmgmt.KafkaTLSCertificateManagementService) *adminKafkaHandler {
 	return &adminKafkaHandler{
 		kafkaService:   kafkaService,
 		accountService: accountService,
@@ -223,7 +223,7 @@ func (h *adminKafkaHandler) RevokeCertificateOfAKafka(w http.ResponseWriter, r *
 			validateGettingKafkaFromDatabase(id, kafkaRequest, err),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			reason, err := kafka_tls_certificate_management.ParseReason(int(kafkaCertificationRevocationRequest.RevocationReason))
+			reason, err := kafkatlscertmgmt.ParseReason(int(kafkaCertificationRevocationRequest.RevocationReason))
 			if err != nil {
 				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, err.Error())
 			}

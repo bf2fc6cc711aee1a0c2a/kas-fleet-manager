@@ -1,4 +1,4 @@
-package kafka_tls_certificate_management
+package kafkatlscertmgmt
 
 import (
 	"context"
@@ -9,6 +9,8 @@ import (
 
 	"github.com/caddyserver/certmagic"
 )
+
+var _ certmagic.Storage = &inMemoryStorage{}
 
 type inMemoryStorageItem struct {
 	value []byte
@@ -22,7 +24,7 @@ func (item inMemoryStorageItem) Lock() {
 }
 
 func (item inMemoryStorageItem) Unlock() {
-	item.mu.Lock()
+	item.mu.Unlock()
 }
 
 type inMemoryStorage struct {

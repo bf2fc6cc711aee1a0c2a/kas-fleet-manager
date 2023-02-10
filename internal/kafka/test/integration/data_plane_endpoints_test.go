@@ -17,7 +17,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafka_tls_certificate_management"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	kafkamocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
@@ -619,7 +618,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 
 	cert := "some-fake-cert"
 	key := "some-fake-key"
-	startHook := func(c *config.KafkaConfig, tlsConfig *kafka_tls_certificate_management.KafkaTLSCertificateManagementConfig) {
+	startHook := func(c *config.KafkaConfig, tlsConfig *config.KafkaTLSCertificateManagementConfig) {
 		tlsConfig.EnableKafkaExternalCertificate = true
 		c.EnableKafkaCNAMERegistration = true
 		tlsConfig.ManualCertificateManagementConfig.KafkaTLSCert = cert

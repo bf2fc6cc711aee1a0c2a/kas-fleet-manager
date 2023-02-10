@@ -96,7 +96,10 @@ func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRe
 func (r clusterBuilder) setCloudProviderBuilder(cloudProviderID cloudproviders.CloudProviderID, ocmClusterBuilder *clustersmgmtv1.ClusterBuilder) {
 	switch cloudProviderID {
 	case cloudproviders.AWS:
-		awsBuilder := clustersmgmtv1.NewAWS().AccountID(r.awsConfig.AccountID).AccessKeyID(r.awsConfig.AccessKey).SecretAccessKey(r.awsConfig.SecretAccessKey)
+		awsBuilder := clustersmgmtv1.NewAWS().
+			AccountID(r.awsConfig.ConfigForOSDClusterCreation.AccountID).
+			AccessKeyID(r.awsConfig.ConfigForOSDClusterCreation.AccessKey).
+			SecretAccessKey(r.awsConfig.ConfigForOSDClusterCreation.SecretAccessKey)
 		ocmClusterBuilder.AWS(awsBuilder)
 	case cloudproviders.GCP:
 		gcpBuilder := clustersmgmtv1.NewGCP()

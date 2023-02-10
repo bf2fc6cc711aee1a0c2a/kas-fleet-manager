@@ -199,14 +199,14 @@ paths:
             application/json:
               schema:
                 $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
-  '/api/kafkas_mgmt/v1/admin/kafkas/{id}/revoke_certificate':
+  '/api/kafkas_mgmt/v1/admin/kafkas/{id}/revoke_tls_certificate':
     post:
-      description: Revokes the certificate for the Kafka instance by id
+      description: Revokes the automatically generated TLS wildcard certificate for the Kafka instance by id
       parameters:
         - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
       security:
         - Bearer: []
-      operationId: revokeCertificateOfAKafkaById
+      operationId: revokeKafkaTLSCertificateBKafkaID
       requestBody:
         description: Kafka certificate revocation request payload. 
         content:

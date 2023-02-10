@@ -22,7 +22,7 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 
 	_, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(aws *config.AWSConfig) {
 		// setting AWS.AccountID to invalid value
-		aws.AccountID = "123456789012"
+		aws.ConfigForOSDClusterCreation.AccountID = "123456789012"
 	})
 	defer teardown()
 

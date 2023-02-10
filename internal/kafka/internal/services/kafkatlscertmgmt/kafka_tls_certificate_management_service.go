@@ -1,4 +1,4 @@
-package kafka_tls_certificate_management
+package kafkatlscertmgmt
 
 import (
 	"context"
@@ -58,13 +58,17 @@ type KafkaTLSCertificateManagementService interface {
 	IsAutomaticCertificateManagementEnabled() bool
 }
 
-// certificateManagementClientWrapper wrapps the certmagic.Config struct so that we can easily unit test the
-// kafkaTLSCertificateManagementService
+// certificateManagementClientWrapper wrapps the certmagic.Config (https://github.com/caddyserver/certmagic/blob/91cbe177810730b91352b5069474f1eca8c0a9a0/config.go) struct used for certificate management.
+// The intention is that we can easily unit test the kafkaTLSCertificateManagementService which otherwise would have been difficult with the certmagic.Config.
+// certificateManagementClientWrapper being a wrapper, just proxies all calls to certmagic.Config
 //
 //go:generate moq -out certmagic_client_wrapper_moq.go . certMagicClientWrapper
 type certMagicClientWrapper interface {
+	//ManageCertificate manages certificate (generation and renewals) by relying on the certificate management library
 	ManageCertificate(ctx context.Context, domainNames []string) error
+	//RevokeCertificate revoke the certificate for the given domain. This relies on the certificate management library revocation method.
 	RevokeCertificate(ctx context.Context, domain string, reason int) error
+	//GetCerticateRefs returns the certificate's references keys in the Storage for a given domain
 	GetCerticateRefs(domain string) CertificateManagementOutput
 }
 
@@ -90,7 +94,7 @@ func (w wrapper) GetCerticateRefs(domain string) CertificateManagementOutput {
 }
 
 type kafkaTLSCertificateManagementService struct {
-	config               *KafkaTLSCertificateManagementConfig
+	config               *config.KafkaTLSCertificateManagementConfig
 	storage              certmagic.Storage
 	certManagementClient certMagicClientWrapper
 }
@@ -122,7 +126,7 @@ func (certManagementService *kafkaTLSCertificateManagementService) GetCertificat
 }
 
 func (certManagementService *kafkaTLSCertificateManagementService) ManageCertificate(ctx context.Context, domain string) (CertificateManagementOutput, error) {
-	if certManagementService.config.CertificateManagementStrategy == manualCertificateManagement {
+	if certManagementService.config.CertificateManagementStrategy == config.ManualCertificateManagement {
 		return CertificateManagementOutput{}, nil // the certificate is managed manually in manual mode
 	}
 
@@ -139,7 +143,7 @@ func (certManagementService *kafkaTLSCertificateManagementService) ManageCertifi
 }
 
 func (certManagementService *kafkaTLSCertificateManagementService) RevokeCertificate(ctx context.Context, domain string, reason CertificateRevocationReason) error {
-	if certManagementService.config.CertificateManagementStrategy == manualCertificateManagement {
+	if certManagementService.config.CertificateManagementStrategy == config.ManualCertificateManagement {
 		return nil // the certificate is revoked manually in manual mode
 	}
 
@@ -153,30 +157,30 @@ func (certManagementService *kafkaTLSCertificateManagementService) IsKafkaExtern
 }
 
 func (certManagementService *kafkaTLSCertificateManagementService) IsAutomaticCertificateManagementEnabled() bool {
-	return certManagementService.config.CertificateManagementStrategy == automaticCertificateManagement
+	return certManagementService.config.CertificateManagementStrategy == config.AutomaticCertificateManagement
 }
 
 func NewKafkaTLSCertificateManagementService(
 	awsConfig *config.AWSConfig,
-	kafkaTLSCertificateManagementConfig *KafkaTLSCertificateManagementConfig,
+	kafkaTLSCertificateManagementConfig *config.KafkaTLSCertificateManagementConfig,
 ) (KafkaTLSCertificateManagementService, error) {
 	var storage certmagic.Storage
 	var err error
 	switch kafkaTLSCertificateManagementConfig.StorageType {
-	case fileStorageType:
+	case config.FileTLSCertStorageType:
 		storage = &certmagic.FileStorage{
 			Path: "secrets/tls/",
 		}
-	case inMemoryStorageType:
+	case config.InMemoryTLSCertStorageType:
 		storage = &inMemoryStorage{
 			store: map[string]inMemoryStorageItem{},
 		}
-	case vaultStorageType:
-		storage, err = newVaultStorage(awsConfig)
+	case config.SecureTLSCertStorageType:
+		storage, err = newSecureStorage(awsConfig, kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig)
 	}
 
 	var certManagementClient certMagicClientWrapper
-	if kafkaTLSCertificateManagementConfig.CertificateManagementStrategy == automaticCertificateManagement {
+	if kafkaTLSCertificateManagementConfig.CertificateManagementStrategy == config.AutomaticCertificateManagement {
 		certManagementClient = wrapper{
 			wrappedClient: createCertMagicClient(awsConfig, kafkaTLSCertificateManagementConfig, storage),
 		}
@@ -190,11 +194,11 @@ func NewKafkaTLSCertificateManagementService(
 }
 
 func createCertMagicClient(awsConfig *config.AWSConfig,
-	kafkaTLSCertificateManagementConfig *KafkaTLSCertificateManagementConfig,
+	kafkaTLSCertificateManagementConfig *config.KafkaTLSCertificateManagementConfig,
 	storage certmagic.Storage) *certmagic.Config {
 	provider := &route53.Provider{
-		AccessKeyId:     awsConfig.Route53AccessKey,
-		SecretAccessKey: awsConfig.Route53SecretAccessKey,
+		AccessKeyId:     awsConfig.Route53.AccessKey,
+		SecretAccessKey: awsConfig.Route53.SecretAccessKey,
 	}
 
 	certmagic.Default.RenewalWindowRatio = kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.RenewalWindowRatio

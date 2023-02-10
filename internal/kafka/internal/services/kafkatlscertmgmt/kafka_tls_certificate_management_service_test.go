@@ -1,4 +1,4 @@
-package kafka_tls_certificate_management
+package kafkatlscertmgmt
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/caddyserver/certmagic"
 	"github.com/onsi/gomega"
 )
@@ -13,7 +14,7 @@ import (
 func Test_kafkaTLSCertificateManagementService_GetCertificate(t *testing.T) {
 	type fields struct {
 		storage certmagic.Storage
-		config  *KafkaTLSCertificateManagementConfig
+		config  *config.KafkaTLSCertificateManagementConfig
 	}
 	type args struct {
 		request GetCertificateRequest
@@ -37,9 +38,9 @@ func Test_kafkaTLSCertificateManagementService_GetCertificate(t *testing.T) {
 			name: "returns certificate content from tls certificate configuration when in manual mode",
 			fields: fields{
 				storage: &certmagic.FileStorage{},
-				config: &KafkaTLSCertificateManagementConfig{
-					CertificateManagementStrategy: manualCertificateManagement,
-					ManualCertificateManagementConfig: ManualCertificateManagementConfig{
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.ManualCertificateManagement,
+					ManualCertificateManagementConfig: config.ManualCertificateManagementConfig{
 						KafkaTLSCert: "cert",
 						KafkaTLSKey:  "key",
 					},
@@ -61,9 +62,9 @@ func Test_kafkaTLSCertificateManagementService_GetCertificate(t *testing.T) {
 			name: "returns certificate content from tls certificate configuration when certificate request fields are not defined i.e they are empty",
 			fields: fields{
 				storage: &certmagic.FileStorage{},
-				config: &KafkaTLSCertificateManagementConfig{
-					CertificateManagementStrategy: automaticCertificateManagement,
-					ManualCertificateManagementConfig: ManualCertificateManagementConfig{
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.AutomaticCertificateManagement,
+					ManualCertificateManagementConfig: config.ManualCertificateManagementConfig{
 						KafkaTLSCert: "cert",
 						KafkaTLSKey:  "key",
 					},
@@ -82,8 +83,8 @@ func Test_kafkaTLSCertificateManagementService_GetCertificate(t *testing.T) {
 			name: "returns certificate content from storage when in auto mode",
 			fields: fields{
 				storage: storageWithCerts,
-				config: &KafkaTLSCertificateManagementConfig{
-					CertificateManagementStrategy: automaticCertificateManagement,
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.AutomaticCertificateManagement,
 				},
 			},
 			args: args{
@@ -102,8 +103,8 @@ func Test_kafkaTLSCertificateManagementService_GetCertificate(t *testing.T) {
 			name: "should return an error when loading from the storage returns an error",
 			fields: fields{
 				storage: newInMemoryStorage(),
-				config: &KafkaTLSCertificateManagementConfig{
-					CertificateManagementStrategy: automaticCertificateManagement,
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.AutomaticCertificateManagement,
 				},
 			},
 			args: args{
@@ -134,7 +135,7 @@ func Test_kafkaTLSCertificateManagementService_GetCertificate(t *testing.T) {
 
 func Test_kafkaTLSCertificateManagementService_RevokeCertificate(t *testing.T) {
 	type fields struct {
-		config               *KafkaTLSCertificateManagementConfig
+		config               *config.KafkaTLSCertificateManagementConfig
 		certManagementClient certMagicClientWrapper
 	}
 	type args struct {
@@ -150,8 +151,8 @@ func Test_kafkaTLSCertificateManagementService_RevokeCertificate(t *testing.T) {
 		{
 			name: "should return an error when revoking the certificate returns an error",
 			fields: fields{
-				config: &KafkaTLSCertificateManagementConfig{
-					CertificateManagementStrategy: automaticCertificateManagement,
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.AutomaticCertificateManagement,
 				},
 				certManagementClient: &certMagicClientWrapperMock{
 					RevokeCertificateFunc: func(ctx context.Context, domain string, reason int) error {
@@ -168,8 +169,8 @@ func Test_kafkaTLSCertificateManagementService_RevokeCertificate(t *testing.T) {
 		{
 			name: "should not revoke the certificae if running in manual mode",
 			fields: fields{
-				config: &KafkaTLSCertificateManagementConfig{
-					CertificateManagementStrategy: manualCertificateManagement,
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.ManualCertificateManagement,
 				},
 				certManagementClient: &certMagicClientWrapperMock{
 					RevokeCertificateFunc: nil, // it should never be called
@@ -184,8 +185,8 @@ func Test_kafkaTLSCertificateManagementService_RevokeCertificate(t *testing.T) {
 		{
 			name: "should succeed when revoking the certificate is successfully",
 			fields: fields{
-				config: &KafkaTLSCertificateManagementConfig{
-					CertificateManagementStrategy: automaticCertificateManagement,
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.AutomaticCertificateManagement,
 				},
 				certManagementClient: &certMagicClientWrapperMock{
 					RevokeCertificateFunc: func(ctx context.Context, domain string, reason int) error {
@@ -217,7 +218,7 @@ func Test_kafkaTLSCertificateManagementService_RevokeCertificate(t *testing.T) {
 
 func Test_kafkaTLSCertificateManagementService_ManageCertificate(t *testing.T) {
 	type fields struct {
-		config               *KafkaTLSCertificateManagementConfig
+		config               *config.KafkaTLSCertificateManagementConfig
 		certManagementClient certMagicClientWrapper
 	}
 	type args struct {
@@ -233,8 +234,8 @@ func Test_kafkaTLSCertificateManagementService_ManageCertificate(t *testing.T) {
 		{
 			name: "should not manage the certificate if in manual mode",
 			fields: fields{
-				config: &KafkaTLSCertificateManagementConfig{
-					CertificateManagementStrategy: manualCertificateManagement,
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.ManualCertificateManagement,
 				},
 				certManagementClient: &certMagicClientWrapperMock{
 					ManageCertificateFunc: nil, // it should never be called
@@ -248,8 +249,8 @@ func Test_kafkaTLSCertificateManagementService_ManageCertificate(t *testing.T) {
 		{
 			name: "should return an error when managing the certificate returns an error",
 			fields: fields{
-				config: &KafkaTLSCertificateManagementConfig{
-					CertificateManagementStrategy: automaticCertificateManagement,
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.AutomaticCertificateManagement,
 				},
 				certManagementClient: &certMagicClientWrapperMock{
 					ManageCertificateFunc: func(ctx context.Context, domainNames []string) error {
@@ -265,8 +266,8 @@ func Test_kafkaTLSCertificateManagementService_ManageCertificate(t *testing.T) {
 		{
 			name: "should return certificate key refs",
 			fields: fields{
-				config: &KafkaTLSCertificateManagementConfig{
-					CertificateManagementStrategy: automaticCertificateManagement,
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.AutomaticCertificateManagement,
 				},
 				certManagementClient: &certMagicClientWrapperMock{
 					ManageCertificateFunc: func(ctx context.Context, domainNames []string) error {
@@ -310,7 +311,7 @@ func Test_kafkaTLSCertificateManagementService_ManageCertificate(t *testing.T) {
 
 func Test_kafkaTLSCertificateManagementService_IsKafkaExternalCertificateEnabled(t *testing.T) {
 	type fields struct {
-		config *KafkaTLSCertificateManagementConfig
+		config *config.KafkaTLSCertificateManagementConfig
 	}
 	tests := []struct {
 		name   string
@@ -320,7 +321,7 @@ func Test_kafkaTLSCertificateManagementService_IsKafkaExternalCertificateEnabled
 		{
 			name: "return true if external certificate is enabled",
 			fields: fields{
-				config: &KafkaTLSCertificateManagementConfig{
+				config: &config.KafkaTLSCertificateManagementConfig{
 					EnableKafkaExternalCertificate: true,
 				},
 			},
@@ -329,7 +330,7 @@ func Test_kafkaTLSCertificateManagementService_IsKafkaExternalCertificateEnabled
 		{
 			name: "return false if external certificate is not enabled",
 			fields: fields{
-				config: &KafkaTLSCertificateManagementConfig{
+				config: &config.KafkaTLSCertificateManagementConfig{
 					EnableKafkaExternalCertificate: false,
 				},
 			},
@@ -352,7 +353,7 @@ func Test_kafkaTLSCertificateManagementService_IsKafkaExternalCertificateEnabled
 
 func Test_kafkaTLSCertificateManagementService_IsAutomaticCertificateManagementEnabled(t *testing.T) {
 	type fields struct {
-		config *KafkaTLSCertificateManagementConfig
+		config *config.KafkaTLSCertificateManagementConfig
 	}
 	tests := []struct {
 		name   string
@@ -362,8 +363,8 @@ func Test_kafkaTLSCertificateManagementService_IsAutomaticCertificateManagementE
 		{
 			name: "return true if the certificate management strategy automatic",
 			fields: fields{
-				config: &KafkaTLSCertificateManagementConfig{
-					CertificateManagementStrategy: automaticCertificateManagement,
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.AutomaticCertificateManagement,
 				},
 			},
 			want: true,
@@ -371,8 +372,8 @@ func Test_kafkaTLSCertificateManagementService_IsAutomaticCertificateManagementE
 		{
 			name: "return false if the certificate management strategy manual",
 			fields: fields{
-				config: &KafkaTLSCertificateManagementConfig{
-					CertificateManagementStrategy: manualCertificateManagement,
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.ManualCertificateManagement,
 				},
 			},
 			want: false,

@@ -1,4 +1,4 @@
-package kafka_tls_certificate_management
+package config
 
 import (
 	"testing"
@@ -33,7 +33,7 @@ func TestKafkaTLSCertificateManagementConfig_Validate(t *testing.T) {
 			name: "should return an error when storage type is invalid",
 			fields: fields{
 				StorageType:                   "some-storage-type",
-				CertificateManagementStrategy: manualCertificateManagement,
+				CertificateManagementStrategy: ManualCertificateManagement,
 			},
 			args: args{
 				&environments.Env{},
@@ -43,7 +43,7 @@ func TestKafkaTLSCertificateManagementConfig_Validate(t *testing.T) {
 		{
 			name: "should return an error when certificate management strategy is invalid",
 			fields: fields{
-				StorageType:                   "vault",
+				StorageType:                   "secure-storage",
 				CertificateManagementStrategy: "fake-strategy",
 			},
 			args: args{
@@ -54,8 +54,8 @@ func TestKafkaTLSCertificateManagementConfig_Validate(t *testing.T) {
 		{
 			name: "should return an error when renewal window ratio is less than 0",
 			fields: fields{
-				StorageType:                    "vault",
-				CertificateManagementStrategy:  automaticCertificateManagement,
+				StorageType:                    "secure-storage",
+				CertificateManagementStrategy:  AutomaticCertificateManagement,
 				RenewalWindowRatio:             -0.1,
 				EmailToSendNotificationTo:      "some-email@gmail.com",
 				AcmeIssuerAccountKeyPEMFile:    "some-key",
@@ -69,8 +69,8 @@ func TestKafkaTLSCertificateManagementConfig_Validate(t *testing.T) {
 		{
 			name: "should return an error when renewal window ratio is greater than 1",
 			fields: fields{
-				StorageType:                    "vault",
-				CertificateManagementStrategy:  automaticCertificateManagement,
+				StorageType:                    "secure-storage",
+				CertificateManagementStrategy:  AutomaticCertificateManagement,
 				RenewalWindowRatio:             1.2,
 				EmailToSendNotificationTo:      "some-email@gmail.com",
 				AcmeIssuerAccountKeyPEMFile:    "some-key",
@@ -84,8 +84,8 @@ func TestKafkaTLSCertificateManagementConfig_Validate(t *testing.T) {
 		{
 			name: "should return an error when email is invalid",
 			fields: fields{
-				StorageType:                    "vault",
-				CertificateManagementStrategy:  automaticCertificateManagement,
+				StorageType:                    "secure-storage",
+				CertificateManagementStrategy:  AutomaticCertificateManagement,
 				RenewalWindowRatio:             0.2,
 				EmailToSendNotificationTo:      "some-email@gmail",
 				AcmeIssuerAccountKeyPEMFile:    "some-key",
@@ -99,8 +99,8 @@ func TestKafkaTLSCertificateManagementConfig_Validate(t *testing.T) {
 		{
 			name: "should return an error when account key is missing",
 			fields: fields{
-				StorageType:                    "vault",
-				CertificateManagementStrategy:  automaticCertificateManagement,
+				StorageType:                    "secure-storage",
+				CertificateManagementStrategy:  AutomaticCertificateManagement,
 				RenewalWindowRatio:             0.2,
 				EmailToSendNotificationTo:      "some-email@gmail.com",
 				AcmeIssuerAccountKeyPEMFile:    "",
@@ -115,7 +115,7 @@ func TestKafkaTLSCertificateManagementConfig_Validate(t *testing.T) {
 			name: "should not return an error when configuration is valid for manual management of certificates",
 			fields: fields{
 				StorageType:                   "in-memory",
-				CertificateManagementStrategy: manualCertificateManagement,
+				CertificateManagementStrategy: ManualCertificateManagement,
 			},
 			args: args{
 				&environments.Env{},
@@ -126,7 +126,7 @@ func TestKafkaTLSCertificateManagementConfig_Validate(t *testing.T) {
 			name: "should not return an error when manual configuration is invalid but external certificate is disabled",
 			fields: fields{
 				StorageType:                    "in-memory",
-				CertificateManagementStrategy:  manualCertificateManagement,
+				CertificateManagementStrategy:  ManualCertificateManagement,
 				KafkaTLSCertFile:               "",
 				KafkaTLSKeyFile:                "",
 				EnableKafkaExternalCertificate: false,
@@ -140,7 +140,7 @@ func TestKafkaTLSCertificateManagementConfig_Validate(t *testing.T) {
 			name: "should return an error when manual configuration is invalid",
 			fields: fields{
 				StorageType:                    "in-memory",
-				CertificateManagementStrategy:  manualCertificateManagement,
+				CertificateManagementStrategy:  ManualCertificateManagement,
 				KafkaTLSCertFile:               "",
 				KafkaTLSKeyFile:                "",
 				EnableKafkaExternalCertificate: true,
@@ -153,8 +153,8 @@ func TestKafkaTLSCertificateManagementConfig_Validate(t *testing.T) {
 		{
 			name: "should not return an error when configuration is valid for automatic management of certificates",
 			fields: fields{
-				StorageType:                    "vault",
-				CertificateManagementStrategy:  automaticCertificateManagement,
+				StorageType:                    "secure-storage",
+				CertificateManagementStrategy:  AutomaticCertificateManagement,
 				RenewalWindowRatio:             0.2,
 				EmailToSendNotificationTo:      "some-email@gmail.com",
 				AcmeIssuerAccountKeyPEMFile:    "some-keyfile.pem",
@@ -168,8 +168,8 @@ func TestKafkaTLSCertificateManagementConfig_Validate(t *testing.T) {
 		{
 			name: "should not return an error when configuration is invalid for automatic management of certificates but external certificate flag is not enabled",
 			fields: fields{
-				StorageType:                    "vault",
-				CertificateManagementStrategy:  automaticCertificateManagement,
+				StorageType:                    "secure-storage",
+				CertificateManagementStrategy:  AutomaticCertificateManagement,
 				RenewalWindowRatio:             2.5,
 				EmailToSendNotificationTo:      "some-email.gmail.com",
 				AcmeIssuerAccountKeyPEMFile:    "some-keyfile.pem",
@@ -191,9 +191,9 @@ func TestKafkaTLSCertificateManagementConfig_Validate(t *testing.T) {
 				CertificateManagementStrategy:  testcase.fields.CertificateManagementStrategy,
 				EnableKafkaExternalCertificate: testcase.fields.EnableKafkaExternalCertificate,
 				AutomaticCertificateManagementConfig: AutomaticCertificateManagementConfig{
-					RenewalWindowRatio:        testcase.fields.RenewalWindowRatio,
-					AcmeIssuerAccountKeyFile:  testcase.fields.AcmeIssuerAccountKeyPEMFile,
-					EmailToSendNotificationTo: testcase.fields.EmailToSendNotificationTo,
+					RenewalWindowRatio:           testcase.fields.RenewalWindowRatio,
+					AcmeIssuerAccountKeyFilePath: testcase.fields.AcmeIssuerAccountKeyPEMFile,
+					EmailToSendNotificationTo:    testcase.fields.EmailToSendNotificationTo,
 				},
 			}
 

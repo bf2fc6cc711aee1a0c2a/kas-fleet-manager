@@ -406,13 +406,13 @@ func (a *DefaultApiService) GetKafkas(ctx _context.Context, localVarOptionals *G
 }
 
 /*
-RevokeCertificateOfAKafkaById Method for RevokeCertificateOfAKafkaById
-Revokes the certificate for the Kafka instance by id
+RevokeKafkaTLSCertificateBKafkaID Method for RevokeKafkaTLSCertificateBKafkaID
+Revokes the automatically generated TLS wildcard certificate for the Kafka instance by id
   - @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
   - @param id The ID of record
   - @param kafkacertificateRevocationRequest Kafka certificate revocation request payload.
 */
-func (a *DefaultApiService) RevokeCertificateOfAKafkaById(ctx _context.Context, id string, kafkacertificateRevocationRequest KafkacertificateRevocationRequest) (*_nethttp.Response, error) {
+func (a *DefaultApiService) RevokeKafkaTLSCertificateBKafkaID(ctx _context.Context, id string, kafkacertificateRevocationRequest KafkacertificateRevocationRequest) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
@@ -422,7 +422,7 @@ func (a *DefaultApiService) RevokeCertificateOfAKafkaById(ctx _context.Context, 
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/kafkas_mgmt/v1/admin/kafkas/{id}/revoke_certificate"
+	localVarPath := a.client.cfg.BasePath + "/api/kafkas_mgmt/v1/admin/kafkas/{id}/revoke_tls_certificate"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)

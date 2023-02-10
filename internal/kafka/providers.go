@@ -10,7 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/migrations"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafka_tls_certificate_management"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafkatlscertmgmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/quota"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers/cluster_mgrs"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers/kafka_mgrs"
@@ -50,7 +50,7 @@ func ConfigProviders() di.Option {
 		di.Provide(config.NewDataplaneClusterConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
 		di.Provide(config.NewKasFleetshardConfig, di.As(new(environments2.ConfigModule))),
 		di.Provide(quota_management.NewQuotaManagementListConfig, di.As(new(environments2.ConfigModule))),
-		di.Provide(kafka_tls_certificate_management.NewCertificateManagementConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
+		di.Provide(config.NewCertificateManagementConfig, di.As(new(environments2.ConfigModule)), di.As(new(environments2.ServiceValidator))),
 
 		// Additional CLI subcommands
 		di.Provide(environments2.Func(ServiceProviders)),
@@ -89,6 +89,6 @@ func ServiceProviders() di.Option {
 		di.Provide(kafka_mgrs.NewKafkaCNAMEManager, di.As(new(workers.Worker))),
 		di.Provide(promotion.NewPromotionKafkaManager, di.As(new(workers.Worker))),
 		di.Provide(acl.NewEnterpriseClustersAccessControlMiddleware),
-		di.Provide(kafka_tls_certificate_management.NewKafkaTLSCertificateManagementService),
+		di.Provide(kafkatlscertmgmt.NewKafkaTLSCertificateManagementService),
 	)
 }

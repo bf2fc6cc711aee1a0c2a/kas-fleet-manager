@@ -17,7 +17,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafka_tls_certificate_management"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafkatlscertmgmt"
 	mocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -84,7 +84,7 @@ func Test_Get(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig, tt.fields.clusterService, tt.fields.kafkaConfig, &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{})
+			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig, tt.fields.clusterService, tt.fields.kafkaConfig, &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{})
 			req, rw := GetHandlerParams("GET", "/{id}", nil, t)
 			h.Get(rw, req)
 			resp := rw.Result()
@@ -174,7 +174,7 @@ func Test_List(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig, tt.fields.clusterService, tt.fields.kafkaConfig, &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{})
+			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig, tt.fields.clusterService, tt.fields.kafkaConfig, &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{})
 			req, rw := GetHandlerParams("GET", tt.args.url, nil, t)
 			h.List(rw, req)
 			resp := rw.Result()
@@ -230,7 +230,7 @@ func Test_Delete(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig, tt.fields.clusterService, tt.fields.kafkaConfig, &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{})
+			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig, tt.fields.clusterService, tt.fields.kafkaConfig, &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{})
 			req, rw := GetHandlerParams("DELETE", tt.args.url, nil, t)
 			h.Delete(rw, req)
 			resp := rw.Result()
@@ -1137,7 +1137,7 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig, tt.fields.clusterService, tt.fields.kafkaConfig, &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{})
+			h := NewAdminKafkaHandler(tt.fields.kafkaService, tt.fields.accountService, tt.fields.providerConfig, tt.fields.clusterService, tt.fields.kafkaConfig, &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{})
 			req, rw := GetHandlerParams("PATCH", tt.args.url, bytes.NewBuffer(tt.args.body), t)
 			h.Update(rw, req)
 			resp := rw.Result()
@@ -1155,11 +1155,11 @@ func Test_adminKafkaHandler_Update(t *testing.T) {
 
 func Test_RevokeCertificateOfAKafka(t *testing.T) {
 	g := gomega.NewWithT(t)
-	revokeCertificateByKafkaByIdUrl := "/kafkas/{id}/revoke_certificate"
+	revokeCertificateByKafkaByIdUrl := "/kafkas/{id}/revoke_tls_certificate"
 
 	type fields struct {
 		kafkaService                         services.KafkaService
-		kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
+		kafkaTLSCertificateManagementService kafkatlscertmgmt.KafkaTLSCertificateManagementService
 	}
 
 	type args struct {
@@ -1231,10 +1231,10 @@ func Test_RevokeCertificateOfAKafka(t *testing.T) {
 						}, nil
 					},
 				},
-				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
-					RevokeCertificateFunc: func(ctx context.Context, domain string, reason kafka_tls_certificate_management.CertificateRevocationReason) error {
+				kafkaTLSCertificateManagementService: &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{
+					RevokeCertificateFunc: func(ctx context.Context, domain string, reason kafkatlscertmgmt.CertificateRevocationReason) error {
 						g.Expect(domain).To(gomega.Equal("kafka.bf2.dev"))
-						g.Expect(reason).To(gomega.Equal(kafka_tls_certificate_management.AACompromise))
+						g.Expect(reason).To(gomega.Equal(kafkatlscertmgmt.AACompromise))
 						return fmt.Errorf("some cert revocation error")
 					},
 				},
@@ -1255,10 +1255,10 @@ func Test_RevokeCertificateOfAKafka(t *testing.T) {
 						}, nil
 					},
 				},
-				kafkaTLSCertificateManagementService: &kafka_tls_certificate_management.KafkaTLSCertificateManagementServiceMock{
-					RevokeCertificateFunc: func(ctx context.Context, domain string, reason kafka_tls_certificate_management.CertificateRevocationReason) error {
+				kafkaTLSCertificateManagementService: &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{
+					RevokeCertificateFunc: func(ctx context.Context, domain string, reason kafkatlscertmgmt.CertificateRevocationReason) error {
 						g.Expect(domain).To(gomega.Equal("12676787.kafka.bf2.dev"))
-						g.Expect(reason).To(gomega.Equal(kafka_tls_certificate_management.KeyCompromise))
+						g.Expect(reason).To(gomega.Equal(kafkatlscertmgmt.KeyCompromise))
 						return nil
 					},
 				},

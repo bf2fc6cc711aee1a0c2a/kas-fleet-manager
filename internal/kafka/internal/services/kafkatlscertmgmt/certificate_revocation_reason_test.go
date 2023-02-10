@@ -1,4 +1,4 @@
-package kafka_tls_certificate_management
+package kafkatlscertmgmt
 
 import (
 	"testing"

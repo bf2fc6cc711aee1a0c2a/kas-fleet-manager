@@ -318,10 +318,11 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-  /api/kafkas_mgmt/v1/admin/kafkas/{id}/revoke_certificate:
+  /api/kafkas_mgmt/v1/admin/kafkas/{id}/revoke_tls_certificate:
     post:
-      description: Revokes the certificate for the Kafka instance by id
-      operationId: revokeCertificateOfAKafkaById
+      description: Revokes the automatically generated TLS wildcard certificate for
+        the Kafka instance by id
+      operationId: revokeKafkaTLSCertificateBKafkaID
       parameters:
       - description: The ID of record
         in: path

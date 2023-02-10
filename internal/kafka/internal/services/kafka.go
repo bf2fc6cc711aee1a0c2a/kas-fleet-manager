@@ -16,7 +16,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cloudproviders"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafka_tls_certificate_management"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafkatlscertmgmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
@@ -154,7 +154,7 @@ type kafkaService struct {
 	dataplaneClusterConfig               *config.DataplaneClusterConfig
 	providerConfig                       *config.ProviderConfig
 	clusterPlacementStrategy             ClusterPlacementStrategy
-	kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService
+	kafkaTLSCertificateManagementService kafkatlscertmgmt.KafkaTLSCertificateManagementService
 }
 
 func NewKafkaService(
@@ -162,7 +162,7 @@ func NewKafkaService(
 	kafkaConfig *config.KafkaConfig, dataplaneClusterConfig *config.DataplaneClusterConfig, awsConfig *config.AWSConfig,
 	quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization,
 	providerConfig *config.ProviderConfig, clusterPlacementStrategy ClusterPlacementStrategy,
-	kafkaTLSCertificateManagementService kafka_tls_certificate_management.KafkaTLSCertificateManagementService) *kafkaService {
+	kafkaTLSCertificateManagementService kafkatlscertmgmt.KafkaTLSCertificateManagementService) *kafkaService {
 	return &kafkaService{
 		connectionFactory:                    connectionFactory,
 		clusterService:                       clusterService,
@@ -796,7 +796,7 @@ func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 
 		// only revoke the certificates if they have been generated and the certificate is not shared among all kafkas
 		if kafkaRequest.HasCertificateInfo() && !kafkaRequest.IsUsingSharedTLSCertificate(k.kafkaConfig) {
-			err = k.kafkaTLSCertificateManagementService.RevokeCertificate(context.Background(), kafkaRequest.KafkasRoutesBaseDomainName, kafka_tls_certificate_management.CessationOfOperation)
+			err = k.kafkaTLSCertificateManagementService.RevokeCertificate(context.Background(), kafkaRequest.KafkasRoutesBaseDomainName, kafkatlscertmgmt.CessationOfOperation)
 			if err != nil {
 				return errors.NewWithCause(errors.ErrorGeneral, err, "error revoking certificate for the base domain %q of kafka with id %q", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
 			}
@@ -910,10 +910,10 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 	var res []managedkafka.ManagedKafka
 	// convert kafka requests to managed kafka
 	for _, kafkaRequest := range kafkaRequestList {
-		var certificate kafka_tls_certificate_management.Certificate
+		var certificate kafkatlscertmgmt.Certificate
 
 		if enableKafkaExternalCertificate { // only fetch certs when Kafka external certificates is enabled
-			certRequest := kafka_tls_certificate_management.GetCertificateRequest{
+			certRequest := kafkatlscertmgmt.GetCertificateRequest{
 				TLSCertRef: kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef,
 				TLSKeyRef:  kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef,
 			}
@@ -1064,8 +1064,8 @@ func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest,
 	domainRecordBatch := buildKafkaClusterCNAMESRecordBatch(routes, action)
 
 	awsConfig := aws.Config{
-		AccessKeyID:     k.awsConfig.Route53AccessKey,
-		SecretAccessKey: k.awsConfig.Route53SecretAccessKey,
+		AccessKeyID:     k.awsConfig.Route53.AccessKey,
+		SecretAccessKey: k.awsConfig.Route53.SecretAccessKey,
 	}
 
 	route53Region, err := k.getRoute53RegionFromKafkaRequest(kafkaRequest)
@@ -1088,8 +1088,8 @@ func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest,
 
 func (k *kafkaService) GetCNAMERecordStatus(kafkaRequest *dbapi.KafkaRequest) (*CNameRecordStatus, error) {
 	awsConfig := aws.Config{
-		AccessKeyID:     k.awsConfig.Route53AccessKey,
-		SecretAccessKey: k.awsConfig.Route53SecretAccessKey,
+		AccessKeyID:     k.awsConfig.Route53.AccessKey,
+		SecretAccessKey: k.awsConfig.Route53.SecretAccessKey,
 	}
 
 	route53Region, err := k.getRoute53RegionFromKafkaRequest(kafkaRequest)
@@ -1175,7 +1175,7 @@ func (k *kafkaService) ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, 
 }
 
 func buildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakService sso.KeycloakService,
-	certificates kafka_tls_certificate_management.Certificate,
+	certificates kafkatlscertmgmt.Certificate,
 	enableKafkaExternalCertificate bool) (*managedkafka.ManagedKafka, *errors.ServiceError) {
 	k, err := kafkaConfig.GetKafkaInstanceSize(kafkaRequest.InstanceType, kafkaRequest.SizeId)
 	if err != nil {
