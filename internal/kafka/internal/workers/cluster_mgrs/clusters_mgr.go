@@ -38,26 +38,25 @@ import (
 )
 
 const (
-	observabilityNamespace                     = constants.ObservabilityOperatorNamespace
-	observabilityOperatorGroupName             = "observability-operator-group-name"
-	observabilityCatalogSourceName             = "observability-operator-manifests"
-	observabilitySubscriptionName              = "observability-operator"
-	observatoriumDexSecretName                 = "observatorium-configuration-dex"
-	observatoriumSSOSecretName                 = "observatorium-configuration-red-hat-sso"
-	syncsetName                                = "ext-managedservice-cluster-mgr"
-	strimziAddonNamespace                      = constants.StrimziOperatorNamespace
-	strimziQEAddonNamespace                    = "redhat-managed-kafka-operator-qe"
-	kasFleetshardAddonNamespace                = constants.KASFleetShardOperatorNamespace
-	kasFleetshardQEAddonNamespace              = "redhat-kas-fleetshard-operator-qe"
-	openIDIdentityProviderName                 = "Kafka_SRE"
-	mkReadOnlyGroupName                        = "mk-readonly-access"
-	mkSREGroupName                             = "kafka-sre"
-	mkReadOnlyRoleBindingName                  = "mk-dedicated-readers"
-	mkSRERoleBindingName                       = "kafka-sre-cluster-admin"
-	dedicatedReadersRoleBindingName            = "dedicated-readers"
-	clusterAdminRoleName                       = "cluster-admin"
-	kafkaInstanceProfileType                   = "bf2.org/kafkaInstanceProfileType"
-	observabilityProxyServiceAccountSecretName = "observability-proxy-credentials"
+	observabilityNamespace          = constants.ObservabilityOperatorNamespace
+	observabilityOperatorGroupName  = "observability-operator-group-name"
+	observabilityCatalogSourceName  = "observability-operator-manifests"
+	observabilitySubscriptionName   = "observability-operator"
+	observatoriumDexSecretName      = "observatorium-configuration-dex"
+	observatoriumSSOSecretName      = "observatorium-configuration-red-hat-sso"
+	syncsetName                     = "ext-managedservice-cluster-mgr"
+	strimziAddonNamespace           = constants.StrimziOperatorNamespace
+	strimziQEAddonNamespace         = "redhat-managed-kafka-operator-qe"
+	kasFleetshardAddonNamespace     = constants.KASFleetShardOperatorNamespace
+	kasFleetshardQEAddonNamespace   = "redhat-kas-fleetshard-operator-qe"
+	openIDIdentityProviderName      = "Kafka_SRE"
+	mkReadOnlyGroupName             = "mk-readonly-access"
+	mkSREGroupName                  = "kafka-sre"
+	mkReadOnlyRoleBindingName       = "mk-dedicated-readers"
+	mkSRERoleBindingName            = "kafka-sre-cluster-admin"
+	dedicatedReadersRoleBindingName = "dedicated-readers"
+	clusterAdminRoleName            = "cluster-admin"
+	kafkaInstanceProfileType        = "bf2.org/kafkaInstanceProfileType"
 )
 
 var clusterMetricsStatuses = []api.ClusterStatus{
@@ -112,6 +111,7 @@ type ClusterManagerOptions struct {
 	ClusterService             services.ClusterService
 	CloudProvidersService      services.CloudProvidersService
 	KasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+	SsoService                 sso.KafkaKeycloakService
 	OsdIdpKeycloakService      sso.OsdKeycloakService
 	ProviderFactory            clusters.ProviderFactory
 }
@@ -771,7 +771,7 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 		c.buildObservabilityCatalogSourceResource(),
 		c.buildObservabilityOperatorGroupResource(),
 		c.buildObservabilitySubscriptionResource(),
-		c.buildDataplaneServiceaccountSecretResource(&cluster),
+		c.buildObservabilityRemoteWriteServiceAccountCredential(&cluster),
 	)
 
 	strimziNamespace := strimziAddonNamespace
@@ -879,15 +879,16 @@ func (c *ClusterManager) buildObservatoriumDexSecretResource() *k8sCoreV1.Secret
 	}
 }
 
-func (c *ClusterManager) buildDataplaneServiceaccountSecretResource(cluster *api.Cluster) *k8sCoreV1.Secret {
+func (c *ClusterManager) buildObservabilityRemoteWriteServiceAccountCredential(cluster *api.Cluster) *k8sCoreV1.Secret {
 	return &k8sCoreV1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      observabilityProxyServiceAccountSecretName,
+			Name:      "observability-proxy-credentials",
 			Namespace: observabilityNamespace,
 		},
 		StringData: map[string]string{
 			"client_id":     cluster.ClientID,
 			"client_secret": cluster.ClientSecret,
+			"issuer_url":    c.SsoService.GetRealmConfig().ValidIssuerURI,
 		},
 	}
 }
