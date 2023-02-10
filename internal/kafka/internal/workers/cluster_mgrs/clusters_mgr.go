@@ -38,25 +38,26 @@ import (
 )
 
 const (
-	observabilityNamespace          = constants.ObservabilityOperatorNamespace
-	observabilityOperatorGroupName  = "observability-operator-group-name"
-	observabilityCatalogSourceName  = "observability-operator-manifests"
-	observabilitySubscriptionName   = "observability-operator"
-	observatoriumDexSecretName      = "observatorium-configuration-dex"
-	observatoriumSSOSecretName      = "observatorium-configuration-red-hat-sso"
-	syncsetName                     = "ext-managedservice-cluster-mgr"
-	strimziAddonNamespace           = constants.StrimziOperatorNamespace
-	strimziQEAddonNamespace         = "redhat-managed-kafka-operator-qe"
-	kasFleetshardAddonNamespace     = constants.KASFleetShardOperatorNamespace
-	kasFleetshardQEAddonNamespace   = "redhat-kas-fleetshard-operator-qe"
-	openIDIdentityProviderName      = "Kafka_SRE"
-	mkReadOnlyGroupName             = "mk-readonly-access"
-	mkSREGroupName                  = "kafka-sre"
-	mkReadOnlyRoleBindingName       = "mk-dedicated-readers"
-	mkSRERoleBindingName            = "kafka-sre-cluster-admin"
-	dedicatedReadersRoleBindingName = "dedicated-readers"
-	clusterAdminRoleName            = "cluster-admin"
-	kafkaInstanceProfileType        = "bf2.org/kafkaInstanceProfileType"
+	observabilityNamespace                     = constants.ObservabilityOperatorNamespace
+	observabilityOperatorGroupName             = "observability-operator-group-name"
+	observabilityCatalogSourceName             = "observability-operator-manifests"
+	observabilitySubscriptionName              = "observability-operator"
+	observatoriumDexSecretName                 = "observatorium-configuration-dex"
+	observatoriumSSOSecretName                 = "observatorium-configuration-red-hat-sso"
+	syncsetName                                = "ext-managedservice-cluster-mgr"
+	strimziAddonNamespace                      = constants.StrimziOperatorNamespace
+	strimziQEAddonNamespace                    = "redhat-managed-kafka-operator-qe"
+	kasFleetshardAddonNamespace                = constants.KASFleetShardOperatorNamespace
+	kasFleetshardQEAddonNamespace              = "redhat-kas-fleetshard-operator-qe"
+	openIDIdentityProviderName                 = "Kafka_SRE"
+	mkReadOnlyGroupName                        = "mk-readonly-access"
+	mkSREGroupName                             = "kafka-sre"
+	mkReadOnlyRoleBindingName                  = "mk-dedicated-readers"
+	mkSRERoleBindingName                       = "kafka-sre-cluster-admin"
+	dedicatedReadersRoleBindingName            = "dedicated-readers"
+	clusterAdminRoleName                       = "cluster-admin"
+	kafkaInstanceProfileType                   = "bf2.org/kafkaInstanceProfileType"
+	observabilityProxyServiceAccountSecretName = "observability-proxy-credentials"
 )
 
 var clusterMetricsStatuses = []api.ClusterStatus{
@@ -770,6 +771,7 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 		c.buildObservabilityCatalogSourceResource(),
 		c.buildObservabilityOperatorGroupResource(),
 		c.buildObservabilitySubscriptionResource(),
+		c.buildDataplaneServiceaccountSecretResource(&cluster),
 	)
 
 	strimziNamespace := strimziAddonNamespace
@@ -810,6 +812,9 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 		r = append(r, s)
 	}
 	if s := c.buildImagePullSecret(kasFleetshardNamespace); s != nil {
+		r = append(r, s)
+	}
+	if s := c.buildImagePullSecret(observabilityNamespace); s != nil {
 		r = append(r, s)
 	}
 	return types.ResourceSet{
@@ -871,6 +876,19 @@ func (c *ClusterManager) buildObservatoriumDexSecretResource() *k8sCoreV1.Secret
 		},
 		Type:       k8sCoreV1.SecretTypeOpaque,
 		StringData: stringDataMap,
+	}
+}
+
+func (c *ClusterManager) buildDataplaneServiceaccountSecretResource(cluster *api.Cluster) *k8sCoreV1.Secret {
+	return &k8sCoreV1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      observabilityProxyServiceAccountSecretName,
+			Namespace: observabilityNamespace,
+		},
+		StringData: map[string]string{
+			"client_id":     cluster.ClientID,
+			"client_secret": cluster.ClientSecret,
+		},
 	}
 }
 
