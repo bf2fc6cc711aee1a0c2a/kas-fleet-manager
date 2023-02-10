@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var validColumns = []string{"region", "name", "cloud_provider", "status", "owner"}
+var validColumns = []string{"region", "name", "cloud_provider", "status", "owner", "cluster_id"}
 
 const (
 	braceTokenFamily       = "BRACE"
