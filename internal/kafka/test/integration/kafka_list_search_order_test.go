@@ -21,11 +21,14 @@ const (
 	mockKafkaName1           = "test-kafka1"
 	mockKafkaName2           = "a-kafka1"
 	mockKafkaName3           = "z-kafka1"
+	mockKafkaName4           = "another-kafka"
 	nonExistentKafkaName     = "non-existentKafka"
 	nonExistentColumnName    = "non_existentColumn"
 	sqlDeleteQuery           = "delete * from clusters;"
 	usernameWithSpecialChars = "special+kafka@example.com"
+	anotherUsername          = "anotherUsername"
 	orgId                    = "13640203"
+	orgId1                   = "another-org"
 )
 
 type testEnv struct {
@@ -69,6 +72,12 @@ func setUp(t *testing.T) *testEnv {
 			mockkafka.WithPredefinedTestValues(),
 			mockkafka.With(mockkafka.OWNER, usernameWithSpecialChars),
 			mockkafka.With(mockkafka.NAME, mockKafkaName3),
+		),
+		mockkafka.BuildKafkaRequest(
+			mockkafka.WithPredefinedTestValues(),
+			mockkafka.With(mockkafka.OWNER, anotherUsername),
+			mockkafka.With(mockkafka.NAME, mockKafkaName4),
+			mockkafka.With(mockkafka.ORGANISATION_ID, orgId1),
 		),
 	}
 
@@ -136,7 +145,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 			expectedOrder: []string{mockKafkaName1},
 		},
 		{
-			name:          "Filter By Name Not In",
+			name:          "Filter By Name Equal Non Existent Name",
 			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name = %s", nonExistentKafkaName))},
 			wantErr:       false,
 			expectedSize:  0,
@@ -151,12 +160,44 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 			notContains:   []string{mockKafkaName1},
 		},
 		{
+			// ensure that the query is not built as `name <> 'xxx' or name <> 'yyy' and organisation_id = 'zzz'`, thus overriding the organisation_id filter
+			name:          "Filter By Name Not Equal With OR",
+			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s or name <> %s", mockKafkaName1, mockKafkaName1))},
+			wantErr:       false,
+			expectedSize:  2,
+			expectedTotal: 2,
+			notContains:   []string{mockKafkaName1},
+		},
+		{
 			name:          "Filter By Name Not Equal Non Existent Name",
 			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s", nonExistentKafkaName))},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
 			notContains:   []string{nonExistentKafkaName},
+		},
+		{
+			name:          "Filter cluster_id not in ('')",
+			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString("cluster_id not in ('')")},
+			wantErr:       false,
+			expectedSize:  3,
+			expectedTotal: 3,
+			notContains:   []string{nonExistentKafkaName, mockKafkaName4},
+		},
+		{
+			name:          "Filter name in (cluster from different org)",
+			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name in ('%s')", mockKafkaName4))},
+			wantErr:       false,
+			expectedSize:  0,
+			expectedTotal: 0,
+		},
+		{
+			name:          "Filter name in",
+			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name in ('%s', '%s')", mockKafkaName1, mockKafkaName2))},
+			wantErr:       false,
+			expectedSize:  2,
+			expectedTotal: 2,
+			notContains:   []string{mockKafkaName3, mockKafkaName4},
 		},
 		{
 			name:          "Filter By Owner With Special Characters",
