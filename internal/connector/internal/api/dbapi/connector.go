@@ -102,7 +102,6 @@ type ConnectorDeployment struct {
 	NamespaceID              string
 	AllowUpgrade             bool
 	Status                   ConnectorDeploymentStatus `gorm:"foreignKey:ID;references:ID"`
-	Annotations              []ConnectorAnnotation     `gorm:"foreignKey:ConnectorID;references:ConnectorID"`
 }
 
 type ConnectorDeploymentList []ConnectorDeployment

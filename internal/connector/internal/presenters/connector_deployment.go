@@ -55,7 +55,7 @@ func PresentConnectorDeployment(from dbapi.ConnectorDeployment, resolvedSecrets 
 			UpdatedAt:       from.UpdatedAt,
 			ResourceVersion: from.Version,
 			ResolvedSecrets: resolvedSecrets,
-			Annotations:     PresentConnectorAnnotations(from.Annotations),
+			Annotations:     presentedConnector.Annotations,
 		},
 		Spec: private.ConnectorDeploymentSpec{
 			ConnectorId:              presentedConnector.Id,
@@ -132,7 +132,7 @@ func PresentConnectorDeploymentAdminView(from dbapi.ConnectorDeployment, cluster
 			UpdatedAt:       fromPresentedConnectorDeployment.Metadata.UpdatedAt,
 			ResourceVersion: fromPresentedConnectorDeployment.Metadata.ResourceVersion,
 			ResolvedSecrets: fromPresentedConnectorDeployment.Metadata.ResolvedSecrets,
-			Annotations:     PresentConnectorAnnotations(from.Annotations),
+			Annotations:     fromPresentedConnectorDeployment.Metadata.Annotations,
 		},
 
 		Spec: admin.ConnectorDeploymentAdminSpec{
