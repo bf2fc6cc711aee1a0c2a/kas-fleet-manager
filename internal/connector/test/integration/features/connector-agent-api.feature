@@ -1408,7 +1408,7 @@ Feature: connector agent API
     Given I set the "Content-Type" header to "application/merge-patch+json"
     When I PATCH path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments/${upgradable_deployment_id}" with json body:
       """
-     {
+      {
         "spec": {
           "shard_metadata": {
             "connector_revision": ${shard_metadata_latest_revision}
@@ -1549,9 +1549,9 @@ Feature: connector agent API
             "version": "1.0.0"
           },
           "available": {
-            "id": "camel-k-1.0.1",
+            "id": "camel-k-2.0.0",
             "type": "camel-k",
-            "version": "1.0.1"
+            "version": "2.0.0"
           }
         }
       }
@@ -1611,9 +1611,9 @@ Feature: connector agent API
                   "version": "1.0.0"
                 },
                 "available": {
-                  "id": "camel-k-1.0.1",
+                  "id": "camel-k-2.0.0",
                   "type": "camel-k",
-                  "version": "1.0.1"
+                  "version": "2.0.0"
                 }
               },
               "phase": "ready",
@@ -1634,45 +1634,104 @@ Feature: connector agent API
        "total": 1
       }
       """
+    And I store the ".items[0].status.operators.available.id" selection from the response as ${available_operator_id}
 
-    And I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator"
-    And the response code should be 200
+    # Try to upgrade operator to a non available operator id
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments/${upgradable_deployment_id}" with json body:
+      """
+      {
+        "spec": {
+          "operator_id": "not_available_operator_id"
+        }
+      }
+      """
+    Then the response code should be 400
+
+    # Upgrade by operator
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments/${upgradable_deployment_id}" with json body:
+      """
+      {
+        "spec": {
+          "operator_id": "${available_operator_id}"
+        }
+      }
+      """
+    Then the response code should be 202
     And the response should match json:
       """
       {
-       "items":
-          [{
-            "connector_id": "${connector_id}",
-            "namespace_id": "${connector_namespace_id}",
-            "connector_type_id": "aws-sqs-source-v1alpha1",
-            "channel": "stable",
-            "operator": {
-              "assigned_id": "camel-k-1.0.0",
-              "available_id": "camel-k-1.0.1"
+        "href": "${response.href}",
+        "id": "${response.id}",
+        "kind": "ConnectorDeploymentAdminView",
+        "metadata": {
+          "created_at": "${response.metadata.created_at}",
+          "resolved_secrets": false,
+          "resource_version": ${response.metadata.resource_version},
+          "updated_at": "${response.metadata.updated_at}",
+          "annotations": {
+            "cos.bf2.org/organisation-id": "20000000",
+            "cos.bf2.org/pricing-tier": "essentials"
+          }
+        },
+        "spec": {
+          "cluster_id": "${connector_cluster_id}",
+          "connector_id": "${connector_id}",
+          "connector_resource_version": ${response.spec.connector_resource_version},
+          "connector_type_id": "aws-sqs-source-v1alpha1",
+          "desired_state": "ready",
+          "namespace_id": "${response.spec.namespace_id}",
+          "operator_id": "${available_operator_id}",
+          "shard_metadata": {
+            "connector_image": "quay.io/mock-image:1.0.0",
+            "connector_revision": 42,
+            "operators": [
+              {
+                "type": "camel-k",
+                "version": "[2.0.0]"
+              }
+            ]
+          }
+        },
+        "status": {
+          "conditions": [
+            {
+              "type": "Ready"
             }
-          }],
-       "kind": "",
-       "page": 1,
-       "size": 1,
-       "total": 1
+          ],
+          "operators": {
+            "assigned": {
+              "id": "camel-k-1.0.0",
+              "type": "camel-k",
+              "version": "1.0.0"
+            },
+            "available": {
+              "id": "camel-k-2.0.0",
+              "type": "camel-k",
+              "version": "2.0.0"
+            }
+          },
+          "phase": "ready",
+          "resource_version": 45,
+          "shard_metadata": {
+            "assigned": {
+              "channel": "stable",
+              "connector_type_id": "aws-sqs-source-v1alpha1",
+              "revision": 42
+            },
+            "available": {}
+          }
+        }
       }
       """
-    And I store the ".items" selection from the response as ${upgrade_items}
-
-    # Upgrade by operator
-    Then I PUT path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/upgrades/operator" with json body:
-      """
-      ${upgrade_items}
-      """
-    And the response code should be 204
-    And the response should match ""
 
     # agent should get updated operator id
     Given I am logged in as "Shard"
     And I set the "Authorization" header to "Bearer ${shard_token}"
     When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
-    And the ".items[0].spec.operator_id" selection from the response should match "camel-k-1.0.1"
+    And the ".items[0].spec.operator_id" selection from the response should match "camel-k-2.0.0"
 
     # agent removes available operator upgrade status
     Given I am logged in as "Shard"

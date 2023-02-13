@@ -38,6 +38,16 @@ type ConnectorAdminHandler struct {
 	ConnectorTypesService services.ConnectorTypesService
 }
 
+type operator struct {
+	Id      string
+	Tpe     string
+	Version string
+}
+type operators struct {
+	Assigned  operator
+	Available operator
+}
+
 func NewConnectorAdminHandler(handler ConnectorAdminHandler) *ConnectorAdminHandler {
 	return &handler
 }
@@ -659,9 +669,22 @@ func (h *ConnectorAdminHandler) PatchConnectorDeployment(writer http.ResponseWri
 				}
 				updatedDeployment.ConnectorShardMetadataID = updateShardMetadata.ID
 				updatedDeployment.ConnectorShardMetadata = *updateShardMetadata
+			} else if resource.Spec.OperatorId != "" {
+				// operator update
+				var operators operators
+				err := json.Unmarshal(existingDeployment.Status.Operators, &operators)
+				if err != nil {
+					return nil, errors.GeneralError("failed to convert Deployments.Status.Operators: %+v to json, for connector deployment: %s due to %v", existingDeployment.Status.Operators, existingDeployment.ID, err)
+				}
+
+				if operators.Available.Id == resource.Spec.OperatorId {
+					updatedDeployment.OperatorID = resource.Spec.OperatorId
+				} else {
+					return nil, errors.BadRequest("Error in patching deployment, OperatorId %v is not the available operator: %+v", resource.Spec.OperatorId, operators.Available.Id)
+				}
 			} else {
-				// Spec.ShardMetadata is the only updatable field for now
-				return presenters.PresentConnectorDeploymentAdminView(existingDeployment, clusterId)
+				// Spec.ShardMetadata and Spec.OperatorId are the only updatable fields for now
+				return nil, errors.BadRequest("Error in patching deployment %v, Spec.ShardMetadata and Spec.OperatorId are the only updatable fields", deploymentId)
 			}
 
 			// update

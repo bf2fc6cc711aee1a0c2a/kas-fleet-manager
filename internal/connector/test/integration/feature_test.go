@@ -116,11 +116,16 @@ func TestFeatures(t *testing.T) {
 				// cause t.Parallel() to be invoked, other tests won't, so they won't be executed concurrently.
 				//
 				// This could help reducing/removing the need of explicit lock
-				//t.Parallel()
+				t.Parallel()
 
 				o := opts
 				o.TestingT = t
 				o.Paths = []string{path.Join(root, info.Name())}
+				//o.Randomize = -1
+				_, exists := os.LookupEnv("GODOG_NO_COLORS")
+				if exists {
+					o.NoColors = true
+				}
 
 				s := cucumber.NewTestSuite(helper)
 
