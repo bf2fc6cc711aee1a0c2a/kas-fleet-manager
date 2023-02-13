@@ -101,58 +101,6 @@ func (h *ConnectorAdminHandler) ListConnectorClusters(w http.ResponseWriter, r *
 	handlers.HandleList(w, r, cfg)
 }
 
-func (h *ConnectorAdminHandler) GetConnectorUpgradesByOperator(writer http.ResponseWriter, request *http.Request) {
-	id := mux.Vars(request)["connector_cluster_id"]
-	listArgs := coreservices.NewListArguments(request.URL.Query())
-	cfg := handlers.HandlerConfig{
-		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
-		},
-		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-
-			upgrades, paging, serviceError := h.Service.GetAvailableDeploymentOperatorUpgrades(listArgs)
-			if serviceError != nil {
-				return nil, serviceError
-			}
-			result := make([]private.ConnectorAvailableOperatorUpgrade, len(upgrades))
-			for i := range upgrades {
-				result[i] = *presenters.PresentConnectorAvailableOperatorUpgrade(&upgrades[i])
-			}
-
-			i = private.ConnectorAvailableOperatorUpgradeList{
-				Page:  int32(paging.Page),
-				Size:  int32(paging.Size),
-				Total: int32(paging.Total),
-				Items: result,
-			}
-			return
-		},
-	}
-
-	handlers.HandleGet(writer, request, &cfg)
-}
-
-func (h *ConnectorAdminHandler) UpgradeConnectorsByOperator(writer http.ResponseWriter, request *http.Request) {
-	var resource []private.ConnectorAvailableOperatorUpgrade
-	id := mux.Vars(request)["connector_cluster_id"]
-	cfg := handlers.HandlerConfig{
-		MarshalInto: &resource,
-		Validate: []handlers.Validate{
-			handlers.Validation("connector_cluster_id", &id, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
-		},
-		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-
-			upgrades := make(dbapi.ConnectorDeploymentOperatorUpgradeList, len(resource))
-			for i2 := range resource {
-				upgrades[i2] = *presenters.ConvertConnectorAvailableOperatorUpgrade(&resource[i2])
-			}
-			return nil, h.Service.UpgradeConnectorsByOperator(request.Context(), id, upgrades)
-		},
-	}
-
-	handlers.Handle(writer, request, &cfg, http.StatusNoContent)
-}
-
 func (h *ConnectorAdminHandler) GetClusterNamespaces(writer http.ResponseWriter, request *http.Request) {
 	id := mux.Vars(request)["connector_cluster_id"]
 	listArgs := coreservices.NewListArguments(request.URL.Query())
