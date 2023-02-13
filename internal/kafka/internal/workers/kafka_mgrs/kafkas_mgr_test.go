@@ -46,9 +46,6 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
 						return dbapi.KafkaList{}, nil
 					},
-					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
-						return nil
-					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -74,9 +71,6 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
 						return dbapi.KafkaList{}, nil
 					},
-					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
-						return nil
-					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
@@ -101,9 +95,6 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					},
 					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
 						return dbapi.KafkaList{}, nil
-					},
-					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
-						return nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -131,9 +122,6 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 					},
 					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
 						return nil, errors.GeneralError("failed to list kafkas")
-					},
-					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
-						return nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -172,9 +160,6 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 								SizeId:       "unsupported-size-id",
 							},
 						}, nil
-					},
-					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
-						return nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -258,9 +243,6 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return true, nil
 					},
-					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
-						return nil
-					},
 					IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
 						return false, nil
 					},
@@ -312,9 +294,6 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return true, nil
 					},
-					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
-						return nil
-					},
 					IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
 						return false, nil
 					},
@@ -364,9 +343,6 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 					},
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return true, nil
-					},
-					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
-						return nil
 					},
 					IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
 						return false, nil
@@ -418,9 +394,6 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return true, nil
 					},
-					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
-						return nil
-					},
 					IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
 						return false, nil
 					},
@@ -470,9 +443,6 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 					},
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return true, nil
-					},
-					UpdateZeroValueOfKafkaRequestsExpiredAtFunc: func() error {
-						return nil
 					},
 					IsQuotaEntitlementActiveFunc: func(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
 						return true, nil

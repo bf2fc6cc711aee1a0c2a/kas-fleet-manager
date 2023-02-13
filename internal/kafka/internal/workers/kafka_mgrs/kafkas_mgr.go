@@ -119,14 +119,6 @@ func (k *KafkaManager) Reconcile() []error {
 		}
 	}
 
-	// MGDSTRM-10012 temporarily reconcile updating the zero-value of ExpiredAt
-	// for kafka requests
-	updateErr := k.updateZeroValueOfKafkaRequestsExpiredAt()
-	if updateErr != nil {
-		encounteredErrors = append(encounteredErrors, updateErr)
-		return encounteredErrors
-	}
-
 	// reconciles expires_at field for kafka instances
 	updateExpiresAtErrors := k.reconcileKafkaExpiresAt(kafkas)
 	if updateExpiresAtErrors != nil {
@@ -383,10 +375,6 @@ func (k *KafkaManager) updateClusterStatusCapacityAvailableMetric(c services.Kaf
 
 func (k *KafkaManager) updateClusterStatusCapacityMaxMetric(c services.KafkaStreamingUnitCountPerCluster) {
 	metrics.UpdateClusterStatusCapacityMaxCount(c.CloudProvider, c.Region, c.InstanceType, c.ClusterId, float64(c.MaxUnits))
-}
-
-func (k *KafkaManager) updateZeroValueOfKafkaRequestsExpiredAt() error {
-	return k.kafkaService.UpdateZeroValueOfKafkaRequestsExpiredAt()
 }
 
 func (k *KafkaManager) reconcileKafkaExpiresAt(kafkas dbapi.KafkaList) serviceErr.ErrorList {

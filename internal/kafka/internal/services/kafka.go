@@ -133,11 +133,6 @@ type KafkaService interface {
 	// It returns true if the user has an active quota entitlement and false if not.
 	// It returns false and an error if it encounters any issues while trying to check the quota entitlement status.
 	IsQuotaEntitlementActive(kafkaRequest *dbapi.KafkaRequest) (bool, error)
-
-	// MGDSTRM-10012 temporarily add method to reconcile updating the zero-value
-	// of ExpiredAt. Remove this method when functionality has been rolled out
-	// to stage and prod
-	UpdateZeroValueOfKafkaRequestsExpiredAt() error
 }
 
 var _ KafkaService = &kafkaService{}
@@ -1379,16 +1374,6 @@ func (k *kafkaService) getRoute53RegionFromKafkaRequest(kafkaRequest *dbapi.Kafk
 	default:
 		return "", errors.GeneralError("unknown cloud provider: %q", kafkaRequest.CloudProvider)
 	}
-}
-
-func (k *kafkaService) UpdateZeroValueOfKafkaRequestsExpiredAt() error {
-	dbConn := k.connectionFactory.New()
-	zeroTime := time.Time{}
-	nullTime := sql.NullTime{Time: time.Time{}, Valid: false}
-	db := dbConn.Table("kafka_requests").Where("expires_at = ?", zeroTime).Where("deleted_at IS NULL").Update("expires_at", nullTime)
-	glog.Infof("%v kafka_requests had expires_at with the zero-value of time.Time '%v' and have been updated to NULL", db.RowsAffected, zeroTime)
-
-	return db.Error
 }
 
 func (k *kafkaService) IsQuotaEntitlementActive(kafkaRequest *dbapi.KafkaRequest) (bool, error) {
