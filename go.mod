@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/Nerzal/gocloak/v11 v11.2.0
 	github.com/antihax/optional v1.0.0
-	github.com/aws/aws-sdk-go v1.44.194
+	github.com/aws/aws-sdk-go v1.44.199
 	github.com/aws/aws-secretsmanager-caching-go v1.1.0
 	github.com/blang/semver/v4 v4.0.0
 	github.com/cucumber/godog v0.12.6
