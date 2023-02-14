@@ -132,22 +132,6 @@ type ServiceAccount struct {
 	ClientSecretRef string `gorm:"column:client_secret"`
 }
 
-type ConnectorDeploymentOperatorUpgrade struct {
-	ConnectorID     string                    `json:"connector_id,omitempty"`
-	DeploymentID    string                    `json:"deployment_id,omitempty"`
-	ConnectorTypeId string                    `json:"connector_type_id,omitempty"`
-	NamespaceID     string                    `json:"namespace_id,omitempty"`
-	Channel         string                    `json:"channel,omitempty"`
-	Operator        *ConnectorOperatorUpgrade `json:"operator,omitempty"`
-}
-
-type ConnectorOperatorUpgrade struct {
-	Assigned  ConnectorOperator `json:"assigned"`
-	Available ConnectorOperator `json:"available"`
-}
-
-type ConnectorDeploymentOperatorUpgradeList []ConnectorDeploymentOperatorUpgrade
-
 type ConnectorOperator struct {
 	// the id of the operator
 	Id string `json:"id,omitempty"`

@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -10,7 +9,6 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/phase"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -41,8 +39,6 @@ type ConnectorClusterService interface {
 	FindAvailableNamespace(owner string, orgId string, namespaceId *string) (*dbapi.ConnectorNamespace, *errors.ServiceError)
 	GetDeploymentByConnectorId(ctx context.Context, connectorID string) (dbapi.ConnectorDeployment, *errors.ServiceError)
 	GetDeployment(ctx context.Context, id string) (dbapi.ConnectorDeployment, *errors.ServiceError)
-	GetAvailableDeploymentOperatorUpgrades(listArgs *services.ListArguments) (dbapi.ConnectorDeploymentOperatorUpgradeList, *api.PagingMeta, *errors.ServiceError)
-	UpgradeConnectorsByOperator(ctx context.Context, clusterId string, upgrades dbapi.ConnectorDeploymentOperatorUpgradeList) *errors.ServiceError
 	CleanupDeployments() *errors.ServiceError
 	ReconcileEmptyDeletingClusters(ctx context.Context, clusterIds []string) (int, []*errors.ServiceError)
 	ReconcileNonEmptyDeletingClusters(ctx context.Context, clusterIds []string) (int, []*errors.ServiceError)
@@ -590,145 +586,6 @@ func (k *connectorClusterService) GetDeployment(ctx context.Context, id string) 
 	}
 
 	return
-}
-
-func (k *connectorClusterService) GetAvailableDeploymentOperatorUpgrades(listArgs *services.ListArguments) (upgrades dbapi.ConnectorDeploymentOperatorUpgradeList, paging *api.PagingMeta, serr *errors.ServiceError) {
-
-	type Result struct {
-		ConnectorID        string
-		DeploymentID       string
-		ConnectorTypeID    string
-		NamespaceID        string
-		Channel            string
-		ConnectorOperators api.JSON
-	}
-
-	results := []Result{}
-	dbConn := k.connectionFactory.New()
-	dbConn = dbConn.Table("connector_deployments")
-	dbConn = dbConn.Select(
-		"connector_deployments.connector_id AS connector_id",
-		"connector_deployments.id AS deployment_id",
-		"connector_deployments.namespace_id AS namespace_id",
-		"connector_shard_metadata.connector_type_id",
-		"connector_shard_metadata.channel",
-		"connector_deployment_statuses.operators AS connector_operators",
-	)
-	dbConn = dbConn.Joins("LEFT JOIN connector_shard_metadata ON connector_shard_metadata.id = connector_deployments.connector_shard_metadata_id")
-	dbConn = dbConn.Joins("LEFT JOIN connector_deployment_statuses ON connector_deployment_statuses.id = connector_deployments.id")
-	dbConn = dbConn.Where("connector_deployment_statuses.upgrade_available")
-
-	if err := dbConn.Scan(&results).Error; err != nil {
-		return upgrades, paging, services.HandleGetError(`Connector deployment`, `upgrade_available`, true, err)
-	}
-
-	// TODO support paging
-	paging = &api.PagingMeta{
-		Page:  1,
-		Size:  len(results),
-		Total: len(results),
-	}
-	upgrades = make([]dbapi.ConnectorDeploymentOperatorUpgrade, len(results))
-	for i, r := range results {
-		upgrades[i] = dbapi.ConnectorDeploymentOperatorUpgrade{
-			ConnectorID:     r.ConnectorID,
-			DeploymentID:    r.DeploymentID,
-			ConnectorTypeId: r.ConnectorTypeID,
-			NamespaceID:     r.NamespaceID,
-			Channel:         r.Channel,
-		}
-
-		var operators private.ConnectorDeploymentStatusOperators
-		err := json.Unmarshal([]byte(r.ConnectorOperators), &operators)
-		if err != nil {
-			return upgrades, paging, errors.GeneralError("converting ConnectorDeploymentStatusOperators: %s", err)
-		}
-
-		upgrades[i].Operator = &dbapi.ConnectorOperatorUpgrade{
-			Assigned: dbapi.ConnectorOperator{
-				Id:      operators.Assigned.Id,
-				Type:    operators.Assigned.Type,
-				Version: operators.Assigned.Version,
-			},
-			Available: dbapi.ConnectorOperator{
-				Id:      operators.Available.Id,
-				Type:    operators.Available.Type,
-				Version: operators.Available.Version,
-			},
-		}
-
-	}
-
-	return
-}
-
-func (k *connectorClusterService) UpgradeConnectorsByOperator(ctx context.Context, clusterId string, upgrades dbapi.ConnectorDeploymentOperatorUpgradeList) *errors.ServiceError {
-	// get deployment ids from available upgrades
-	available, _, serr := k.GetAvailableDeploymentOperatorUpgrades(&services.ListArguments{})
-	if serr != nil {
-		return serr
-	}
-
-	availableConnectors := toOperatorMap(available)
-	reqConnectors := toOperatorMap(upgrades)
-
-	// validate reqConnectors
-	var errorList errors.ErrorList
-	for cid, upgrade := range reqConnectors {
-		availableUpgrade, ok := availableConnectors[cid]
-		if !ok {
-			errorList = append(errorList, errors.Conflict("operator upgrade not available for connector %s", cid))
-		}
-
-		// make sure other bits match
-		upgrade.DeploymentID = availableUpgrade.DeploymentID
-		upgrade.Operator.Assigned.Type = availableUpgrade.Operator.Assigned.Type
-		upgrade.Operator.Assigned.Version = availableUpgrade.Operator.Assigned.Version
-		upgrade.Operator.Available.Type = availableUpgrade.Operator.Available.Type
-		upgrade.Operator.Available.Version = availableUpgrade.Operator.Available.Version
-
-		if !reflect.DeepEqual(upgrade, availableUpgrade) {
-			errorList = append(errorList, errors.Conflict("operator upgrade is outdated for connector %s", cid))
-		}
-	}
-	if len(errorList) != 0 {
-		return errors.Conflict(errorList.Error())
-	}
-
-	// update deployments by setting operator_id to available_id
-	notificationAdded := false
-	dbConn := k.connectionFactory.New()
-	for cid, upgrade := range availableConnectors {
-
-		// upgrade operator id
-		if err := dbConn.Model(&dbapi.ConnectorDeployment{}).
-			Where("id = ?", upgrade.DeploymentID).
-			Update("OperatorID", upgrade.Operator.Available.Id).Error; err != nil {
-			errorList = append(errorList,
-				services.HandleUpdateError("Connector deployment id="+cid, serr))
-		} else {
-			if !notificationAdded {
-				_ = db.AddPostCommitAction(ctx, func() {
-					k.bus.Notify(fmt.Sprintf("/kafka_connector_clusters/%s/deployments", clusterId))
-				})
-				notificationAdded = true
-			}
-		}
-	}
-
-	if len(errorList) != 0 {
-		return services.HandleUpdateError(`Connector deployment`, errorList)
-	}
-
-	return nil
-}
-
-func toOperatorMap(arr []dbapi.ConnectorDeploymentOperatorUpgrade) map[string]dbapi.ConnectorDeploymentOperatorUpgrade {
-	m := make(map[string]dbapi.ConnectorDeploymentOperatorUpgrade)
-	for _, upgrade := range arr {
-		m[upgrade.ConnectorID] = upgrade
-	}
-	return m
 }
 
 // ReconcileDeletingClusters deletes empty clusters with no namespaces that are in phase deleting,
