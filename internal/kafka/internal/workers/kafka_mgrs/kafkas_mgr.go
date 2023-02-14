@@ -418,12 +418,6 @@ func (k *KafkaManager) reconcileKafkaExpiresAt(kafkas dbapi.KafkaList) serviceEr
 			if err := k.updateExpiresAtBasedOnQuotaEntitlement(kafka, active); err != nil {
 				svcErrors = append(svcErrors, errors.Wrapf(err, "failed to update expires_at value based on quota entitlement for kafka instance %q", kafka.ID))
 			}
-		} else {
-			// any Kafka instance types with lifespan seconds defined will have their expires_at value set on creation.
-			// this is only temporary to ensure that the expires_at value is set for any Kafka instances created during the rollout of this change.
-			if err := k.updateExpiresAtBasedOnLifespanSeconds(kafka, *instanceSize); err != nil {
-				svcErrors = append(svcErrors, errors.Wrapf(err, "failed to update expires_at value based on lifespanSeconds for kafka instance %q", kafka.ID))
-			}
 		}
 	}
 
@@ -439,10 +433,7 @@ func (k *KafkaManager) updateExpiresAtBasedOnQuotaEntitlement(kafka *dbapi.Kafka
 	}
 
 	// if quota entitlement is not active and expires_at is not already set, set its value based on the current time and grace period allowance
-	// note that there is a temporary check for zero value of time.Time for cases where the kafka instance expires_at value
-	// hasn't been updated to null yet after migration/rollout. This additional check can be removed once all Kafka instances
-	// has been successfully migrated to the new expires_at type.
-	if !isQuotaEntitlementActive && (!kafka.ExpiresAt.Valid || kafka.ExpiresAt.Time.IsZero()) {
+	if !isQuotaEntitlementActive && !kafka.ExpiresAt.Valid {
 		billingModel, err := k.kafkaConfig.GetBillingModelByID(kafka.InstanceType, kafka.ActualKafkaBillingModel)
 		if err != nil {
 			return err
@@ -455,22 +446,6 @@ func (k *KafkaManager) updateExpiresAtBasedOnQuotaEntitlement(kafka *dbapi.Kafka
 	}
 
 	logger.Logger.Infof("no expires_at changes needed for kafka %q, skipping update", kafka.ID)
-	return nil
-}
-
-// Updates expires_at field based on the lifespan seconds configured per Kafka instance type/size
-func (k *KafkaManager) updateExpiresAtBasedOnLifespanSeconds(kafka *dbapi.KafkaRequest, instanceSize config.KafkaInstanceSize) error {
-	// note that there is a temporary check for zero value of time.Time in cases where the kafka instance expires_at value
-	// hasn't been updated to null yet after migration/rollout. This additional check can be removed once all Kafka instances
-	// has been successfully migrated to the new expires_at type
-	if !kafka.ExpiresAt.Valid || kafka.ExpiresAt.Time.IsZero() {
-		// set expires_at to created_at + lifespanSeconds
-		expiresAtTime := kafka.CreatedAt.Add(time.Duration(*instanceSize.LifespanSeconds) * time.Second)
-		logger.Logger.Infof("lifespanSeconds defined for Kafka %q, updating expires_at to %q as it is not yet set", kafka.ID, expiresAtTime.Format(time.RFC1123Z))
-		return k.updateKafkaExpirationDate(kafka, &expiresAtTime)
-	}
-
-	logger.Logger.Infof("lifespanSeconds defined for Kafka %q but expires_at is already set, skipping update", kafka.ID)
 	return nil
 }
 

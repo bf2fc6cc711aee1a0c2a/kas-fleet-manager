@@ -1806,7 +1806,7 @@ func TestKafkaManager_reconcileKafkaExpiresAt(t *testing.T) {
 			wantErrCount:          0,
 		},
 		{
-			name: "should update expires_at if quota entitlement is not active and expires_at is set to a zero time value",
+			name: "should not update expires_at if quota entitlement is not active and expires_at is already set with a zero value",
 			fields: fields{
 				kafkaConfig: &config.KafkaConfig{
 					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
@@ -1855,8 +1855,8 @@ func TestKafkaManager_reconcileKafkaExpiresAt(t *testing.T) {
 					},
 				},
 			},
-			wantNewExpiresAtValue: sql.NullTime{Time: time.Now(), Valid: true},
-			wantUpdateCallCount:   1,
+			wantNewExpiresAtValue: sql.NullTime{},
+			wantUpdateCallCount:   0,
 			wantErrCount:          0,
 		},
 		{
@@ -1914,7 +1914,7 @@ func TestKafkaManager_reconcileKafkaExpiresAt(t *testing.T) {
 			wantErrCount:          0,
 		},
 		{
-			name: "should update expires_at based on lifespanSeconds if defined and expires_at is set to null",
+			name: "should not update expires_at based on lifespanSeconds if defined and expires_at is set to null",
 			fields: fields{
 				kafkaConfig: &config.KafkaConfig{
 					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
@@ -1960,12 +1960,12 @@ func TestKafkaManager_reconcileKafkaExpiresAt(t *testing.T) {
 					},
 				},
 			},
-			wantNewExpiresAtValue: sql.NullTime{Time: time.Now().Add(time.Duration(172800) * time.Second), Valid: true},
-			wantUpdateCallCount:   1,
+			wantNewExpiresAtValue: sql.NullTime{Time: time.Time{}, Valid: false},
+			wantUpdateCallCount:   0,
 			wantErrCount:          0,
 		},
 		{
-			name: "should update expires_at based on lifespanSeconds if defined and expires_at is set to a zero time value",
+			name: "should not update expires_at based on lifespanSeconds if defined and expires_at is valid and set to a zero time value",
 			fields: fields{
 				kafkaConfig: &config.KafkaConfig{
 					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
@@ -2015,8 +2015,8 @@ func TestKafkaManager_reconcileKafkaExpiresAt(t *testing.T) {
 					},
 				},
 			},
-			wantNewExpiresAtValue: sql.NullTime{Time: time.Now().Add(time.Duration(172800) * time.Second), Valid: true},
-			wantUpdateCallCount:   1,
+			wantNewExpiresAtValue: sql.NullTime{Time: time.Time{}, Valid: false},
+			wantUpdateCallCount:   0,
 			wantErrCount:          0,
 		},
 		{
