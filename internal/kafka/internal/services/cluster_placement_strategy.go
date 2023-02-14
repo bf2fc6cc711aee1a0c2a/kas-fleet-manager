@@ -150,7 +150,7 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 		return nil, errors.Wrapf(err, "failed to find all clusters with criteria '%v'", criteria)
 	}
 
-	//#2 - collect cluster IDs of managed clusters that are chedulable
+	//#2 - collect cluster IDs of managed clusters that are schedulable
 	clusterIDs := f.findClusterIDsOfManagedClustersThatAreSchedulable(clusters)
 	if len(clusterIDs) == 0 {
 		return nil, nil
@@ -179,7 +179,7 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 
 // findClusterIDsOfManagedClustersThatAreSchedulable returns the clusterIDs of managed clusters that are schedulable
 func (f *FirstSchedulableWithinLimit) findClusterIDsOfManagedClustersThatAreSchedulable(clusterObj []*api.Cluster) []string {
-	clusterSchIds := []string{}
+	var clusterSchIds []string
 	for _, cluster := range clusterObj {
 		if cluster.ClusterType != api.ManagedDataPlaneClusterType.String() {
 			continue
@@ -193,9 +193,9 @@ func (f *FirstSchedulableWithinLimit) findClusterIDsOfManagedClustersThatAreSche
 	return clusterSchIds
 }
 
-func searchForClusterFromClustersList(clusters []*api.Cluster, clusterId string) *api.Cluster {
+func searchForClusterFromClustersList(clusters []*api.Cluster, clusterID string) *api.Cluster {
 	_, cluster := arrays.FindFirst(clusters, func(cluster *api.Cluster) bool {
-		return cluster.ClusterID == clusterId && cluster.ClusterType == api.ManagedDataPlaneClusterType.String()
+		return cluster.ClusterID == clusterID && cluster.ClusterType == api.ManagedDataPlaneClusterType.String()
 	})
 
 	return cluster
