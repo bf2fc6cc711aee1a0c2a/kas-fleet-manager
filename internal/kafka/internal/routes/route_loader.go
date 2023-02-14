@@ -57,11 +57,11 @@ type options struct {
 	ProviderFactory             clusters.ProviderFactory
 	SupportedKafkaInstanceTypes services.SupportedKafkaInstanceTypesService
 
-	AccessControlListMiddleware                       *acl.AccessControlListMiddleware
-	AccessControlListConfig                           *acl.AccessControlListConfig
-	EnterpriseClusterRegistrationAccessListMiddleware *internalAcl.EnterpriseClusterRegistrationAccessListMiddleware
-	AdminRoleAuthZConfig                              *auth.AdminRoleAuthZConfig
-	KasFleetshardOperatorAddon                        services.KasFleetshardOperatorAddon
+	AccessControlListMiddleware               *acl.AccessControlListMiddleware
+	AccessControlListConfig                   *acl.AccessControlListConfig
+	EnterpriseClustersAccessControlMiddleware *internalAcl.EnterpriseClustersAccessControlMiddleware
+	AdminRoleAuthZConfig                      *auth.AdminRoleAuthZConfig
+	KasFleetshardOperatorAddon                services.KasFleetshardOperatorAddon
 }
 
 func NewRouteLoader(s options) environments.RouteLoader {
@@ -94,7 +94,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	supportedKafkaInstanceTypesHandler := handlers.NewSupportedKafkaInstanceTypesHandler(s.SupportedKafkaInstanceTypes)
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
-	enterpriseClusterMiddleware := s.EnterpriseClusterRegistrationAccessListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
 	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.ServerConfig.TokenIssuerURL}, errors.ErrorUnauthenticated)
 	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.AMSClient, errors.ErrorTermsNotAccepted)
@@ -232,7 +231,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	})
 	clusterHandler := handlers.NewClusterHandler(s.KasFleetshardOperatorAddon, s.ClusterService, s.ProviderFactory)
 	clusterRouter := apiV1Router.PathPrefix("/clusters").Subrouter()
-	clusterRouter.Use(enterpriseClusterMiddleware)
+	clusterRouter.Use(s.EnterpriseClustersAccessControlMiddleware.Authorize)
 	clusterRouter.HandleFunc("", clusterHandler.RegisterEnterpriseCluster).
 		Name(logger.NewLogEvent("register-enterprise-cluster", "register enterprise data plane cluster").ToString()).
 		Methods(http.MethodPost)
