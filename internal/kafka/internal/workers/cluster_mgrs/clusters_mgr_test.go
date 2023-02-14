@@ -2850,7 +2850,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
-								Clusterid: "test02",
+								ClusterID: "test02",
 								Count:     1,
 							},
 						}, nil
@@ -2876,7 +2876,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
-								Clusterid: "test02",
+								ClusterID: "test02",
 								Count:     0,
 							},
 						}, nil
@@ -2902,7 +2902,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
-								Clusterid: "test02",
+								ClusterID: "test02",
 								Count:     0,
 							},
 						}, nil
@@ -3204,7 +3204,7 @@ func TestClusterManager_setKafkaPerClusterCountMetrics(t *testing.T) {
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
-								Clusterid: "test02",
+								ClusterID: "test02",
 								Count:     1,
 							},
 						}, nil
@@ -3223,7 +3223,7 @@ func TestClusterManager_setKafkaPerClusterCountMetrics(t *testing.T) {
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
-								Clusterid: "test02",
+								ClusterID: "test02",
 								Count:     1,
 							},
 						}, nil
@@ -3242,7 +3242,7 @@ func TestClusterManager_setKafkaPerClusterCountMetrics(t *testing.T) {
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
-								Clusterid: "",
+								ClusterID: "",
 								Count:     1,
 							},
 						}, nil

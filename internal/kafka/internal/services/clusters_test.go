@@ -1268,11 +1268,11 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 			},
 			want: []ResKafkaInstanceCount{
 				{
-					Clusterid: "test01",
+					ClusterID: "test01",
 					Count:     2,
 				},
 				{
-					Clusterid: "test02",
+					ClusterID: "test02",
 					Count:     0,
 				},
 			},

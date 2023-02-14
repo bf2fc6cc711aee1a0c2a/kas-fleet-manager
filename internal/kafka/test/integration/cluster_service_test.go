@@ -110,7 +110,7 @@ func TestClusterService_FindKafkaInstanceCount(t *testing.T) {
 	g.Expect(kafkaCount).To(gomega.HaveLen(1)) // count should contain the cluster under test
 
 	clusterKafkaCount := kafkaCount[0]
-	g.Expect(clusterKafkaCount.Clusterid).To(gomega.Equal(cluster.ClusterID)) // cluster id should equal to the cluster id of the cluster under test
+	g.Expect(clusterKafkaCount.ClusterID).To(gomega.Equal(cluster.ClusterID)) // cluster id should equal to the cluster id of the cluster under test
 	g.Expect(clusterKafkaCount.Count).To(gomega.Equal(1))                     // count should be one since we include only statuses that do not consume resources
 }
 

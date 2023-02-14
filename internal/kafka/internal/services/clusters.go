@@ -457,7 +457,7 @@ func (c clusterService) ListNonEnterpriseClusterIDs() ([]api.Cluster, *apiErrors
 }
 
 type ResKafkaInstanceCount struct {
-	Clusterid string
+	ClusterID string
 	Count     int
 }
 
@@ -489,7 +489,7 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 		return nil, err
 	}
 
-	clusterIdCountMap := map[string]int{}
+	clusterIDCountMap := map[string]int{}
 
 	var res []ResKafkaInstanceCount
 
@@ -498,21 +498,21 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 		if e != nil {
 			return nil, e
 		}
-		clusterIdCountMap[k.ClusterID] += kafkaInstanceSize.CapacityConsumed
+		clusterIDCountMap[k.ClusterID] += kafkaInstanceSize.CapacityConsumed
 	}
 
 	// the query above won't return a count for a clusterId if that cluster doesn't have any Kafkas,
 	// to keep things consistent and less confusing, we will identity these ids and set their count to 0
 	if len(clusterIDs) > 0 {
-		for _, clusterId := range clusterIDs {
-			if _, ok := clusterIdCountMap[clusterId]; !ok {
-				res = append(res, ResKafkaInstanceCount{Clusterid: clusterId, Count: 0})
+		for _, clusterID := range clusterIDs {
+			if _, ok := clusterIDCountMap[clusterID]; !ok {
+				res = append(res, ResKafkaInstanceCount{ClusterID: clusterID, Count: 0})
 			}
 		}
 	}
 
-	for k, v := range clusterIdCountMap {
-		res = append(res, ResKafkaInstanceCount{Clusterid: k, Count: v})
+	for k, v := range clusterIDCountMap {
+		res = append(res, ResKafkaInstanceCount{ClusterID: k, Count: v})
 	}
 
 	return res, nil

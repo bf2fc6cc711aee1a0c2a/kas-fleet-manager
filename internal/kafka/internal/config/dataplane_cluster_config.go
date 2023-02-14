@@ -240,24 +240,30 @@ func (conf *ClusterConfig) GetCapacityForRegionAndInstanceType(region, instanceT
 	return capacity
 }
 
-func (conf *ClusterConfig) IsNumberOfKafkaWithinClusterLimit(clusterId string, count int) bool {
-	if _, exist := conf.clusterConfigMap[clusterId]; exist {
-		limit := conf.clusterConfigMap[clusterId].KafkaInstanceLimit
+func (conf *ClusterConfig) IsNumberOfStreamingUnitsWithinClusterLimit(clusterID string, count int) bool {
+	if clusterConfigMap, exist := conf.clusterConfigMap[clusterID]; exist {
+		limit := clusterConfigMap.KafkaInstanceLimit
 		return limit == -1 || count <= limit
 	}
+
+	// TODO - we've to consider returning false here if the cluster is not in the manual list.
 	return true
 }
 
-func (conf *ClusterConfig) IsClusterSchedulable(clusterId string) bool {
-	if _, exist := conf.clusterConfigMap[clusterId]; exist {
-		return conf.clusterConfigMap[clusterId].Schedulable
+func (conf *ClusterConfig) IsClusterSchedulable(clusterID string) bool {
+	if clusterConfigMap, exist := conf.clusterConfigMap[clusterID]; exist {
+		return clusterConfigMap.Schedulable
 	}
+
+	// TODO - we've to consider returning false here if the cluster is not in the manual list.
 	return true
 }
 
-func (conf *ClusterConfig) GetClusterSupportedInstanceType(clusterId string) (string, bool) {
-	manualCluster, exist := conf.clusterConfigMap[clusterId]
-	return manualCluster.SupportedInstanceType, exist
+func (conf *ClusterConfig) GetClusterSupportedInstanceType(clusterID string) (string, bool) {
+	if manualCluster, exist := conf.clusterConfigMap[clusterID]; exist {
+		return manualCluster.SupportedInstanceType, true
+	}
+	return "", false
 }
 
 func (conf *ClusterConfig) ExcessClusters(clusterList map[string]api.Cluster) []string {

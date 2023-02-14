@@ -91,7 +91,30 @@ func TestKafkaCreate_ManualScaling(t *testing.T) {
 	mockKasFleetshardSync.Start()
 	defer mockKasFleetshardSync.Stop()
 
-	_, err := common.WaitForClusterStatus(h.DBFactory(), &kafkatest.TestServices.ClusterService, clusterList[0].ClusterId, api.ClusterReady)
+	enterpriseCluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		dynamicCapacityInfoString := fmt.Sprintf("{\"standard\":{\"max_nodes\":1,\"max_units\":%[1]d,\"remaining_units\":%[1]d}}", kasfleetshardsync.StandardCapacityInfo.MaxUnits)
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id-2"
+		cluster.ClientSecret = "some-client-secret-2"
+		cluster.ClusterID = "enterprise"
+		cluster.CloudProvider = mocks.MockCloudProviderID
+		cluster.Region = mocks.MockCloudRegionID
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterType = api.EnterpriseDataPlaneClusterType.String()
+		cluster.AvailableStrimziVersions = api.JSON(mockclusters.AvailableStrimziVersions)
+		cluster.DynamicCapacityInfo = api.JSON([]byte(dynamicCapacityInfoString))
+	})
+	db := h.DBFactory().New()
+	err := db.Create(enterpriseCluster).Error
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "failed to seed an enterprise data plane clusters")
+
+	_, err = common.WaitForClusterStatus(h.DBFactory(), &kafkatest.TestServices.ClusterService, clusterList[0].ClusterId, api.ClusterReady)
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "data plane cluster failed to reach status ready")
 
 	// setup pre-requisites for performing requests
@@ -312,13 +335,13 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 	})
 	defer teardown()
 
-	// set up data plane cluster
-	testCluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+	// set up data plane cluster - one managed and one enterprise
+	managedCluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
 		dynamicCapacityInfoString := fmt.Sprintf("{\"standard\":{\"max_nodes\":1,\"max_units\":%[1]d,\"remaining_units\":%[1]d}}", kasfleetshardsync.StandardCapacityInfo.MaxUnits)
 		cluster.Meta = api.Meta{
 			ID: api.NewID(),
 		}
-		cluster.ProviderType = api.ClusterProviderStandalone // ensures no errors will occur due to it not being available on ocm
+		cluster.ProviderType = api.ClusterProviderStandalone
 		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
 		cluster.ClientID = "some-client-id"
 		cluster.ClientSecret = "some-client-secret"
@@ -328,12 +351,35 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 		cluster.Status = api.ClusterReady
 		cluster.ProviderSpec = api.JSON{}
 		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterType = api.ManagedDataPlaneClusterType.String()
+		cluster.AvailableStrimziVersions = api.JSON(mockclusters.AvailableStrimziVersions)
+		cluster.DynamicCapacityInfo = api.JSON([]byte(dynamicCapacityInfoString))
+	})
+	enterpriseCluster := mockclusters.BuildCluster(func(cluster *api.Cluster) {
+		dynamicCapacityInfoString := fmt.Sprintf("{\"standard\":{\"max_nodes\":1,\"max_units\":%[1]d,\"remaining_units\":%[1]d}}", kasfleetshardsync.StandardCapacityInfo.MaxUnits)
+		cluster.Meta = api.Meta{
+			ID: api.NewID(),
+		}
+		cluster.ProviderType = api.ClusterProviderStandalone
+		cluster.SupportedInstanceType = api.AllInstanceTypeSupport.String()
+		cluster.ClientID = "some-client-id-2"
+		cluster.ClientSecret = "some-client-secret-2"
+		cluster.ClusterID = "enterprise"
+		cluster.CloudProvider = mocks.MockCloudProviderID
+		cluster.Region = mocks.MockCloudRegionID
+		cluster.Status = api.ClusterReady
+		cluster.ProviderSpec = api.JSON{}
+		cluster.ClusterSpec = api.JSON{}
+		cluster.ClusterType = api.EnterpriseDataPlaneClusterType.String()
 		cluster.AvailableStrimziVersions = api.JSON(mockclusters.AvailableStrimziVersions)
 		cluster.DynamicCapacityInfo = api.JSON([]byte(dynamicCapacityInfoString))
 	})
 	db := h.DBFactory().New()
-	err := db.Create(testCluster).Error
-	g.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create data plane cluster")
+	err := db.Create([]*api.Cluster{
+		managedCluster,
+		enterpriseCluster,
+	}).Error
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create data plane clusters")
 
 	// reload services with auto scaling enabled
 	h.Env.Stop()
@@ -426,6 +472,7 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 				g.Expect(kafkaRequest.PlacementId).ToNot(gomega.BeEmpty())
 				g.Expect(kafkaRequest.Namespace).To(gomega.Equal(fmt.Sprintf("kafka-%s", strings.ToLower(kafkaRequest.ID))))
 				g.Expect(kafkaRequest.DesiredStrimziVersion).To(gomega.Equal(mockclusters.StrimziOperatorVersion))
+				g.Expect(kafkaRequest.ClusterID).To(gomega.Equal(managedCluster.ClusterID))
 
 				common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
 				common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationCreate.String()))
@@ -452,7 +499,7 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 					dummyKafkas = append(dummyKafkas, mockkafkas.BuildKafkaRequest(
 						mockkafkas.WithPredefinedTestValues(),
 						mockkafkas.With(mockkafkas.NAME, fmt.Sprintf("dummy-kafka-%d", i)),
-						mockkafkas.With(mockkafkas.CLUSTER_ID, testCluster.ClusterID),
+						mockkafkas.With(mockkafkas.CLUSTER_ID, managedCluster.ClusterID),
 						mockkafkas.With(mockkafkas.CLOUD_PROVIDER, kafkaRequestPayload.CloudProvider),
 						mockkafkas.With(mockkafkas.REGION, kafkaRequestPayload.Region),
 						mockkafkas.With(mockkafkas.OWNER, account2.Username()),
@@ -613,8 +660,9 @@ func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig, c *config.DataplaneClusterConfig) {
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig, c *config.DataplaneClusterConfig, dataplaneConfig *config.DataplaneClusterConfig) {
 		acl.EnableInstanceLimitControl = true
+		dataplaneConfig.DataPlaneClusterScalingType = config.ManualScaling
 	})
 	defer teardown()
 
@@ -783,13 +831,13 @@ func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
 	}
 	g.Expect(err).To(gomega.HaveOccurred(), "error should have occurred when attempting to create enterprise kafka against org ID not matching the requester")
 
-	// explicitly setting non standard billing model, which is not allowed when creating enterprise kafkas
-	nonStandardBillingModel := "developer"
+	// explicitly setting non enterprise billing model, which is not allowed when creating enterprise kafkas
+	nonEnterpriseBillingModel := "developer"
 	k3 := public.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
-		BillingModel:  &nonStandardBillingModel,
+		BillingModel:  &nonEnterpriseBillingModel,
 		ClusterId:     &cluster.ClusterID,
 	}
 
@@ -798,4 +846,16 @@ func TestKafkaCreate_EnterpriseKafkas(t *testing.T) {
 		resp.Body.Close()
 	}
 	g.Expect(err).To(gomega.HaveOccurred(), "error should have occurred when attempting to create enterprise kafka with billing model other than standard")
+
+	// a non enterprise kafka should not be accepted since there is no cluster in the manual list
+	kafka, resp, err = client.DefaultApi.CreateKafka(sameOrgCtx, true, public.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          "some-kafka-name",
+	})
+	if resp != nil {
+		resp.Body.Close()
+	}
+	g.Expect(err).To(gomega.HaveOccurred(), "error should have occurred when attempting to create non enterprise kafka when there is no managed data plane cluster without available capacity")
+
 }

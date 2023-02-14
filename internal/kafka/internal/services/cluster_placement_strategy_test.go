@@ -118,7 +118,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "find an available schedule cluster and within limit",
+			name: "find an available schedulable cluster and within limit",
 			fields: fields{
 				DataplaneClusterConfig: &config.DataplaneClusterConfig{
 					DataPlaneClusterScalingType: "manual",
@@ -126,13 +126,11 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				},
 				ClusterService: &ClusterServiceMock{
 					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
-						var res []*api.Cluster
-						res = append(res, &api.Cluster{ClusterID: "test01"})
+						res := []*api.Cluster{{ClusterID: "test01", ClusterType: api.ManagedDataPlaneClusterType.String()}}
 						return res, nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIds []string) ([]ResKafkaInstanceCount, error) {
-						var res2 []ResKafkaInstanceCount
-						res2 = append(res2, ResKafkaInstanceCount{Clusterid: "test01", Count: 1})
+						res2 := []ResKafkaInstanceCount{{ClusterID: "test01", Count: 1}}
 						return res2, nil
 					},
 				},
@@ -144,7 +142,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 					InstanceType: types.STANDARD.String(),
 				},
 			},
-			want:    &api.Cluster{ClusterID: "test01"},
+			want:    &api.Cluster{ClusterID: "test01", ClusterType: api.ManagedDataPlaneClusterType.String()},
 			wantErr: false,
 		},
 		{
@@ -156,13 +154,11 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				},
 				ClusterService: &ClusterServiceMock{
 					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
-						var res []*api.Cluster
-						res = append(res, &api.Cluster{ClusterID: "test01"})
+						res := []*api.Cluster{{ClusterID: "test01", ClusterType: api.ManagedDataPlaneClusterType.String()}, {ClusterID: "some-cluster-id", ClusterType: api.EnterpriseDataPlaneClusterType.String()}}
 						return res, nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIds []string) ([]ResKafkaInstanceCount, error) {
-						var res2 []ResKafkaInstanceCount
-						res2 = append(res2, ResKafkaInstanceCount{Clusterid: "test01", Count: 1})
+						res2 := []ResKafkaInstanceCount{{ClusterID: "test01", Count: 1}, {ClusterID: "some-cluster-id", Count: 0}}
 						return res2, nil
 					},
 				},
@@ -187,15 +183,15 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 						config.ManualCluster{ClusterId: "test02", Schedulable: true, KafkaInstanceLimit: 3}})},
 				ClusterService: &ClusterServiceMock{
 					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
-						var res []*api.Cluster
-						res = append(res, &api.Cluster{ClusterID: "test01"})
-						res = append(res, &api.Cluster{ClusterID: "test02"})
+						res := []*api.Cluster{
+							{ClusterID: "test01", ClusterType: api.ManagedDataPlaneClusterType.String()},
+							{ClusterID: "enterprise", ClusterType: api.EnterpriseDataPlaneClusterType.String()},
+							{ClusterID: "test02", ClusterType: api.ManagedDataPlaneClusterType.String()},
+						}
 						return res, nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIds []string) ([]ResKafkaInstanceCount, error) {
-						var res2 []ResKafkaInstanceCount
-						res2 = append(res2, ResKafkaInstanceCount{Clusterid: "test01", Count: 1})
-						res2 = append(res2, ResKafkaInstanceCount{Clusterid: "test02", Count: 1})
+						res2 := []ResKafkaInstanceCount{{ClusterID: "test01", Count: 1}, {ClusterID: "enterprise", Count: 0}, {ClusterID: "test02", Count: 1}}
 						return res2, nil
 					},
 				},
@@ -207,7 +203,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 					InstanceType: types.STANDARD.String(),
 				},
 			},
-			want:    &api.Cluster{ClusterID: "test02"},
+			want:    &api.Cluster{ClusterID: "test02", ClusterType: api.ManagedDataPlaneClusterType.String()},
 			wantErr: false,
 		},
 		{
@@ -219,9 +215,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				},
 				ClusterService: &ClusterServiceMock{
 					FindAllClustersFunc: func(criteria FindClusterCriteria) ([]*api.Cluster, error) {
-						var res []*api.Cluster
-						res = append(res, &api.Cluster{ClusterID: "test01"})
-						return res, nil
+						return []*api.Cluster{{ClusterID: "test01"}}, nil
 					},
 					FindKafkaInstanceCountFunc: func(clusterIds []string) ([]ResKafkaInstanceCount, error) {
 						return nil, nil

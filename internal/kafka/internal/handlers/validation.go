@@ -503,7 +503,7 @@ func validateEnterpriseClusterHasNoKafkas(clusterID string, clusterService servi
 		}
 
 		for _, instanceCount := range instanceCounts {
-			if instanceCount.Clusterid == clusterID && instanceCount.Count > 0 {
+			if instanceCount.ClusterID == clusterID && instanceCount.Count > 0 {
 				return errors.Forbidden("unable to deregister cluster with kafka instances")
 			}
 		}

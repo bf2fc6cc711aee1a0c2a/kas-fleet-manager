@@ -752,7 +752,7 @@ func Test_DeregisterEnterpriseCluster(t *testing.T) {
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
-								Clusterid: entClusterID,
+								ClusterID: entClusterID,
 								Count:     0,
 							},
 						}, nil
@@ -784,7 +784,7 @@ func Test_DeregisterEnterpriseCluster(t *testing.T) {
 					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, error) {
 						return []services.ResKafkaInstanceCount{
 							{
-								Clusterid: entClusterID,
+								ClusterID: entClusterID,
 								Count:     1,
 							},
 						}, nil

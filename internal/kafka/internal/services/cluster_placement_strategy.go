@@ -6,6 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/pkg/errors"
 )
 
@@ -143,39 +144,32 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 		return nil, errors.Wrapf(e, "failed to get kafka instance size for cluster with criteria '%v'", criteria)
 	}
 
-	//#1
-	clusterObj, err := f.clusterService.FindAllClusters(criteria)
+	//#1 we retrieve all the clusters that match the criteria
+	clusters, err := f.clusterService.FindAllClusters(criteria)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to find all clusters with criteria '%v'", criteria)
 	}
 
-	dataplaneClusterConfig := f.dataplaneClusterConfig.ClusterConfig
-
-	//#2 - collect schedulable clusters
-	clusterSchIds := []string{}
-	for _, cluster := range clusterObj {
-		isSchedulable := dataplaneClusterConfig.IsClusterSchedulable(cluster.ClusterID)
-		if isSchedulable {
-			clusterSchIds = append(clusterSchIds, cluster.ClusterID)
-		}
-	}
-
-	if len(clusterSchIds) == 0 {
+	//#2 - collect cluster IDs of managed clusters that are schedulable
+	clusterIDs := f.findClusterIDsOfManagedClustersThatAreSchedulable(clusters)
+	if len(clusterIDs) == 0 {
 		return nil, nil
 	}
 
-	//search for limit
-	clusterWithinLimit, errf := f.findClusterKafkaInstanceCount(clusterSchIds)
+	//search for current consumed streaming unit per cluster
+	consumedStreamingUnitPerClusterID, errf := f.findConsumedStreamingUnitPerClusterID(clusterIDs)
 	if errf != nil {
-		return nil, errors.Wrapf(err, "failed to find cluster kafka instance count for clusters '%v'", clusterSchIds)
+		return nil, errors.Wrapf(err, "failed to find cluster kafka instance count for clusters '%v'", clusterIDs)
 	}
 
 	//#3 which schedulable cluster is also within the limit
 	//we want to make sure the order of the ids configuration is always respected: e.g the first cluster in the configuration that passes all the checks should be picked first
-	for _, schClusterid := range clusterSchIds {
-		cnt := clusterWithinLimit[schClusterid]
-		if dataplaneClusterConfig.IsNumberOfKafkaWithinClusterLimit(schClusterid, cnt+kafkaInstanceSize.CapacityConsumed) {
-			return searchClusterObjInArray(clusterObj, schClusterid), nil
+	for _, clusterID := range clusterIDs {
+		currentStreamingUnitConsumption := consumedStreamingUnitPerClusterID[clusterID]
+		futureStreamingUnitConsumptionInTheCluster := currentStreamingUnitConsumption + kafkaInstanceSize.CapacityConsumed
+		numberOfKafkaIsWithinLimit := f.dataplaneClusterConfig.ClusterConfig.IsNumberOfStreamingUnitsWithinClusterLimit(clusterID, futureStreamingUnitConsumptionInTheCluster)
+		if numberOfKafkaIsWithinLimit {
+			return searchForClusterFromClustersList(clusters, clusterID), nil
 		}
 	}
 
@@ -183,26 +177,42 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 	return nil, nil
 }
 
-func searchClusterObjInArray(clusters []*api.Cluster, clusterId string) *api.Cluster {
-	for _, cluster := range clusters {
-		if cluster.ClusterID == clusterId {
-			return cluster
+// findClusterIDsOfManagedClustersThatAreSchedulable returns the clusterIDs of managed clusters that are schedulable
+func (f *FirstSchedulableWithinLimit) findClusterIDsOfManagedClustersThatAreSchedulable(clusterObj []*api.Cluster) []string {
+	var clusterSchIds []string
+	for _, cluster := range clusterObj {
+		if cluster.ClusterType != api.ManagedDataPlaneClusterType.String() {
+			continue
+		}
+
+		isSchedulable := f.dataplaneClusterConfig.ClusterConfig.IsClusterSchedulable(cluster.ClusterID)
+		if isSchedulable {
+			clusterSchIds = append(clusterSchIds, cluster.ClusterID)
 		}
 	}
-	return nil
+	return clusterSchIds
 }
 
-// findClusterKafkaInstanceCount searches DB for the number of Kafka instance associated with each OSD Clusters
-func (f *FirstSchedulableWithinLimit) findClusterKafkaInstanceCount(clusterIDs []string) (map[string]int, error) {
-	if instanceLst, err := f.clusterService.FindKafkaInstanceCount(clusterIDs); err != nil {
+func searchForClusterFromClustersList(clusters []*api.Cluster, clusterID string) *api.Cluster {
+	_, cluster := arrays.FindFirst(clusters, func(cluster *api.Cluster) bool {
+		return cluster.ClusterID == clusterID && cluster.ClusterType == api.ManagedDataPlaneClusterType.String()
+	})
+
+	return cluster
+}
+
+// findConsumedStreamingUnitPerClusterID searches DB for the number of consumed streaming units associated with each clusters given by cluster ids
+func (f *FirstSchedulableWithinLimit) findConsumedStreamingUnitPerClusterID(clusterIDs []string) (map[string]int, error) {
+	instanceLst, err := f.clusterService.FindKafkaInstanceCount(clusterIDs)
+	if err != nil {
 		return nil, err
-	} else {
-		clusterWithinLimitMap := make(map[string]int)
-		for _, c := range instanceLst {
-			clusterWithinLimitMap[c.Clusterid] = c.Count
-		}
-		return clusterWithinLimitMap, nil
 	}
+
+	consumedStreamingUnitPerClusterID := make(map[string]int)
+	for _, c := range instanceLst {
+		consumedStreamingUnitPerClusterID[c.ClusterID] = c.Count
+	}
+	return consumedStreamingUnitPerClusterID, nil
 }
 
 // FirstReadyWithCapacity finds and returns the first cluster in a Ready status with remaining capacity
