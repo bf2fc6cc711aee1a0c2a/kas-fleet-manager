@@ -229,7 +229,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 		ID:   "clusters",
 		Kind: "EnterpriseClusterList",
 	})
-	clusterHandler := handlers.NewClusterHandler(s.KasFleetshardOperatorAddon, s.ClusterService, s.ProviderFactory)
+	clusterHandler := handlers.NewClusterHandler(s.KasFleetshardOperatorAddon, s.ClusterService, s.ProviderFactory, s.KafkaConfig)
 	clusterRouter := apiV1Router.PathPrefix("/clusters").Subrouter()
 	clusterRouter.Use(s.EnterpriseClustersAccessControlMiddleware.Authorize)
 	clusterRouter.HandleFunc("", clusterHandler.RegisterEnterpriseCluster).

@@ -88,6 +88,10 @@ func TestEnterpriseClustersList(t *testing.T) {
 	enterpriseCluster := clusterList.Items[0]
 	g.Expect(enterpriseCluster.Status).To(gomega.Equal(api.ClusterReady.String()))
 	g.Expect(enterpriseCluster.AccessKafkasViaPrivateNetwork).To(gomega.BeTrue())
+	g.Expect(enterpriseCluster.Region).ToNot(gomega.BeEmpty())
+	g.Expect(enterpriseCluster.CloudProvider).ToNot(gomega.BeEmpty())
+	g.Expect(enterpriseCluster.MultiAz).To(gomega.BeTrue())
+
 	g.Expect(resp2).ToNot((gomega.BeNil()))
 	if resp2 != nil {
 		defer resp2.Body.Close()

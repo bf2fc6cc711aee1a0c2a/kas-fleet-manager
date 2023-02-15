@@ -5,6 +5,8 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -18,13 +20,16 @@ type clusterHandler struct {
 	kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 	clusterService             services.ClusterService
 	providerFactory            clusters.ProviderFactory
+	kafkaConfig                *config.KafkaConfig
 }
 
-func NewClusterHandler(kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon, clusterService services.ClusterService, providerFactory clusters.ProviderFactory) *clusterHandler {
+func NewClusterHandler(kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon, clusterService services.ClusterService, providerFactory clusters.ProviderFactory,
+	kafkaConfig *config.KafkaConfig) *clusterHandler {
 	return &clusterHandler{
 		kasFleetshardOperatorAddon: kasFleetshardOperatorAddon,
 		clusterService:             clusterService,
 		providerFactory:            providerFactory,
+		kafkaConfig:                kafkaConfig,
 	}
 }
 
@@ -153,11 +158,11 @@ func (h clusterHandler) List(w http.ResponseWriter, r *http.Request) {
 				Page:  1,
 				Size:  int32(len(clusters)),
 				Total: int32(len(clusters)),
-				Items: []public.EnterpriseCluster{},
+				Items: []public.EnterpriseClusterListItem{},
 			}
 
 			for _, cluster := range clusters {
-				converted := presenters.PresentEnterpriseCluster(*cluster)
+				converted := presenters.PresentEnterpriseClusterListItem(*cluster)
 				clusterList.Items = append(clusterList.Items, converted)
 			}
 
@@ -208,7 +213,18 @@ func (h clusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 				return nil, errors.NotFound("enterprise data plane cluster with id='%v' not found within organization: %s", clusterID, orgID)
 			}
 
-			return presenters.PresentEnterpriseCluster(*cluster), nil
+			consumedCapacity, consumedCapacityError := h.clusterService.ComputeConsumedStreamingUnitCountPerInstanceType(clusterID)
+			if consumedCapacityError != nil {
+				return nil, errors.GeneralError("failed to retrieve cluster %q consumed capacity info", clusterID)
+			}
+
+			standardConsumedCapacity := consumedCapacity[types.STANDARD]
+			presentedCluster, presentationErr := presenters.PresentEnterpriseCluster(*cluster, int32(standardConsumedCapacity), h.kafkaConfig)
+			if presentationErr != nil {
+				return nil, errors.GeneralError("failed to present enterprise cluster due to %q", presentationErr.Error())
+			}
+
+			return presentedCluster, nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)

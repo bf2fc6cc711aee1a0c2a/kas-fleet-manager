@@ -883,8 +883,12 @@ func Test_ListEnterpriseClustersOfAnOrganization(t *testing.T) {
 			wantErr: false,
 			want: []*api.Cluster{
 				{
-					ClusterID: clusterID,
-					Status:    api.ClusterReady,
+					ClusterID:                     clusterID,
+					Status:                        api.ClusterReady,
+					MultiAZ:                       true,
+					AccessKafkasViaPrivateNetwork: true,
+					CloudProvider:                 "some-provider",
+					Region:                        "some-region",
 				},
 			},
 			setupFn: func(clusters []*api.Cluster) {
@@ -892,12 +896,16 @@ func Test_ListEnterpriseClustersOfAnOrganization(t *testing.T) {
 
 				response := []map[string]interface{}{
 					{
-						"cluster_id": clusterID,
-						"status":     api.ClusterReady,
+						"cluster_id":                        clusterID,
+						"status":                            api.ClusterReady,
+						"access_kafkas_via_private_network": true,
+						"multi_az":                          true,
+						"cloud_provider":                    "some-provider",
+						"region":                            "some-region",
 					},
 				}
 
-				query := `SELECT cluster_id, status, access_kafkas_via_private_network FROM "clusters" WHERE (organization_id = $1 AND cluster_type = $2) AND "clusters"."deleted_at" IS NULL`
+				query := `SELECT cluster_id, status, access_kafkas_via_private_network, cloud_provider, region, multi_az FROM "clusters" WHERE (organization_id = $1 AND cluster_type = $2) AND "clusters"."deleted_at" IS NULL`
 
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -918,7 +926,7 @@ func Test_ListEnterpriseClustersOfAnOrganization(t *testing.T) {
 
 				response := []map[string]interface{}{}
 
-				query := `SELECT cluster_id, status, access_kafkas_via_private_network FROM "clusters" WHERE (organization_id = $1 AND cluster_type = $2) AND "clusters"."deleted_at" IS NULL`
+				query := `SELECT cluster_id, status, access_kafkas_via_private_network, cloud_provider, region, multi_az FROM "clusters" WHERE (organization_id = $1 AND cluster_type = $2) AND "clusters"."deleted_at" IS NULL`
 
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
