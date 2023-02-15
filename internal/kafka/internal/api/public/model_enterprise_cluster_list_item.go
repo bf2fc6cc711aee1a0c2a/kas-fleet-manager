@@ -10,8 +10,8 @@
 
 package public
 
-// EnterpriseClusterWithAddonParameters Enterprise cluster with addon parameters
-type EnterpriseClusterWithAddonParameters struct {
+// EnterpriseClusterListItem struct for EnterpriseClusterListItem
+type EnterpriseClusterListItem struct {
 	Id   string `json:"id"`
 	Kind string `json:"kind"`
 	Href string `json:"href"`
@@ -26,6 +26,5 @@ type EnterpriseClusterWithAddonParameters struct {
 	// The region of this cluster. This valus will be used as the Kafka's region value when a Kafka is created on this cluster
 	Region string `json:"region,omitempty"`
 	// A flag indicating whether this cluster is available on multiple availability zones or not
-	MultiAz              bool                  `json:"multi_az"`
-	FleetshardParameters []FleetshardParameter `json:"fleetshard_parameters,omitempty"`
+	MultiAz bool `json:"multi_az"`
 }

@@ -19,5 +19,5 @@ type SupportedKafkaInstanceType struct {
 	// A list of available kafka billing models for the instance type. Each kafka billing model item has a unique 'id'
 	SupportedBillingModels []SupportedKafkaBillingModel `json:"supported_billing_models"`
 	// A list of Kafka instance sizes available for this instance type
-	Sizes []SupportedKafkaSize `json:"sizes,omitempty"`
+	Sizes []SupportedKafkaSize `json:"sizes"`
 }

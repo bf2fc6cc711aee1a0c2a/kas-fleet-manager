@@ -34,7 +34,7 @@ type ClusterService interface {
 	Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
 	GetClusterDNS(clusterID string) (string, *apiErrors.ServiceError)
 	GetExternalID(clusterID string) (string, *apiErrors.ServiceError)
-	// ListEnterpriseClustersOfAnOrganization returns a list of enterprise clusters (ClusterID, AccessKafkasViaPrivateNetwork and Status fields only) which belong to organization obtained from the context
+	// ListEnterpriseClustersOfAnOrganization returns a list of enterprise clusters (ClusterID, AccessKafkasViaPrivateNetwork, Cloud Provider, Region, MultiAZ and Status fields only) which belong to organization obtained from the context
 	ListEnterpriseClustersOfAnOrganization(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError)
 	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
 	UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error
@@ -129,7 +129,7 @@ func (c clusterService) DeregisterClusterJob(clusterID string) *apiErrors.Servic
 	return nil
 }
 
-// ListEnterpriseClustersOfAnOrganization returns a list of clusters (ClusterID, AccessKafkasViaPrivateNetwork and Status fields only) which belong to organization obtained from the context
+// ListEnterpriseClustersOfAnOrganization returns a list of clusters (ClusterID, AccessKafkasViaPrivateNetwork, CloudProvider, Region, MultiAZ and Status fields only) which belong to organization obtained from the context
 func (c clusterService) ListEnterpriseClustersOfAnOrganization(ctx context.Context) ([]*api.Cluster, *apiErrors.ServiceError) {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
@@ -144,7 +144,7 @@ func (c clusterService) ListEnterpriseClustersOfAnOrganization(ctx context.Conte
 	orgId, _ := claims.GetOrgId()
 
 	dbConn := c.connectionFactory.New().
-		Model(&api.Cluster{}).Select("cluster_id, status, access_kafkas_via_private_network")
+		Model(&api.Cluster{}).Select("cluster_id, status, access_kafkas_via_private_network, cloud_provider, region, multi_az")
 
 	var clusters []*api.Cluster
 

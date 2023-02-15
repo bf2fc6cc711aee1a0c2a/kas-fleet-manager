@@ -240,6 +240,10 @@ func TestClusterRegistration_Successful(t *testing.T) {
 	g.Expect(enterpriseCluster.Status).To(gomega.Equal(api.ClusterAccepted.String()))
 	g.Expect(enterpriseCluster.AccessKafkasViaPrivateNetwork).To(gomega.BeTrue())
 	g.Expect(enterpriseCluster.FleetshardParameters).To(gomega.HaveLen(7))
+	g.Expect(enterpriseCluster.Region).ToNot(gomega.BeEmpty())
+	g.Expect(enterpriseCluster.CloudProvider).ToNot(gomega.BeEmpty())
+	g.Expect(enterpriseCluster.MultiAz).To(gomega.BeTrue())
+
 	for _, parameter := range enterpriseCluster.FleetshardParameters {
 		g.Expect(parameter.Id).ToNot(gomega.BeEmpty())
 		g.Expect(parameter.Value).ToNot(gomega.BeEmpty())
@@ -254,6 +258,7 @@ func TestClusterRegistration_Successful(t *testing.T) {
 	g.Expect(cluster.ExternalID).ToNot(gomega.BeEmpty())
 	g.Expect(cluster.Region).ToNot(gomega.BeEmpty())
 	g.Expect(cluster.CloudProvider).ToNot(gomega.BeEmpty())
+	g.Expect(cluster.MultiAZ).To(gomega.BeTrue())
 
 	dynamicScalingInfo := cluster.RetrieveDynamicCapacityInfo()
 	g.Expect(payload.KafkaMachinePoolNodeCount).To(gomega.Equal(dynamicScalingInfo[api.StandardTypeSupport.String()].MaxNodes))

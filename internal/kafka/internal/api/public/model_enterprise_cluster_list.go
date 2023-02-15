@@ -12,9 +12,9 @@ package public
 
 // EnterpriseClusterList struct for EnterpriseClusterList
 type EnterpriseClusterList struct {
-	Kind  string              `json:"kind"`
-	Page  int32               `json:"page"`
-	Size  int32               `json:"size"`
-	Total int32               `json:"total"`
-	Items []EnterpriseCluster `json:"items"`
+	Kind  string                      `json:"kind"`
+	Page  int32                       `json:"page"`
+	Size  int32                       `json:"size"`
+	Total int32                       `json:"total"`
+	Items []EnterpriseClusterListItem `json:"items"`
 }

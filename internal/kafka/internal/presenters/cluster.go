@@ -1,14 +1,33 @@
 package presenters
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 )
 
-func PresentEnterpriseClusterWithAddonParams(cluster api.Cluster, fleetShardParams services.ParameterList) (public.EnterpriseClusterWithAddonParameters, *errors.ServiceError) {
+func PresentEnterpriseClusterListItem(cluster api.Cluster) public.EnterpriseClusterListItem {
+	reference := PresentReference(cluster.ClusterID, cluster)
+	return public.EnterpriseClusterListItem{
+		Id:                            cluster.ClusterID,
+		Status:                        cluster.Status.String(),
+		ClusterId:                     cluster.ClusterID,
+		Kind:                          reference.Kind,
+		Href:                          reference.Href,
+		CloudProvider:                 cluster.CloudProvider,
+		Region:                        cluster.Region,
+		MultiAz:                       cluster.MultiAZ,
+		AccessKafkasViaPrivateNetwork: cluster.AccessKafkasViaPrivateNetwork,
+	}
+}
 
+func PresentEnterpriseClusterWithAddonParams(cluster api.Cluster, fleetShardParams services.ParameterList) (public.EnterpriseClusterWithAddonParameters, *errors.ServiceError) {
 	fsoParams := []public.FleetshardParameter{}
 
 	for _, param := range fleetShardParams {
@@ -19,11 +38,13 @@ func PresentEnterpriseClusterWithAddonParams(cluster api.Cluster, fleetShardPara
 	}
 
 	reference := PresentReference(cluster.ClusterID, cluster)
-
 	c := public.EnterpriseClusterWithAddonParameters{
 		Id:                            cluster.ClusterID,
 		ClusterId:                     cluster.ClusterID,
 		Status:                        cluster.Status.String(),
+		CloudProvider:                 cluster.CloudProvider,
+		Region:                        cluster.Region,
+		MultiAz:                       cluster.MultiAZ,
 		Kind:                          reference.Kind,
 		Href:                          reference.Href,
 		AccessKafkasViaPrivateNetwork: cluster.AccessKafkasViaPrivateNetwork,
@@ -33,14 +54,79 @@ func PresentEnterpriseClusterWithAddonParams(cluster api.Cluster, fleetShardPara
 	return c, nil
 }
 
-func PresentEnterpriseCluster(cluster api.Cluster) public.EnterpriseCluster {
+func PresentEnterpriseCluster(cluster api.Cluster, consumedStreamingUnitsInTheCluster int32, kafkaConfig *config.KafkaConfig) public.EnterpriseCluster {
 	reference := PresentReference(cluster.ClusterID, cluster)
-	return public.EnterpriseCluster{
+	presentedCluster := public.EnterpriseCluster{
 		Id:                            cluster.ClusterID,
 		Status:                        cluster.Status.String(),
 		ClusterId:                     cluster.ClusterID,
 		Kind:                          reference.Kind,
 		Href:                          reference.Href,
+		CloudProvider:                 cluster.CloudProvider,
+		Region:                        cluster.Region,
+		MultiAz:                       cluster.MultiAZ,
 		AccessKafkasViaPrivateNetwork: cluster.AccessKafkasViaPrivateNetwork,
+		SupportedInstanceTypes:        public.SupportedKafkaInstanceTypesList{},
+	}
+
+	// enterprise clusters only supports standard instance type for now. It is safe to hardcode this.
+	storedCapacityInfo, ok := cluster.RetrieveDynamicCapacityInfo()[types.STANDARD.String()]
+	if ok {
+		presentedCluster.CapacityInformation = presentEnterpriseClusterCapacityInfo(consumedStreamingUnitsInTheCluster, storedCapacityInfo)
+		presentedCluster.SupportedInstanceTypes = presentEnterpriseClusterSupportedInstanceTypes(presentedCluster.CapacityInformation.RemainingKafkaStreamingUnits, kafkaConfig)
+	}
+
+	return presentedCluster
+}
+
+func presentEnterpriseClusterCapacityInfo(consumedStreamingUnitsInTheCluster int32, storedCapacityInfo api.DynamicCapacityInfo) public.EnterpriseClusterAllOfCapacityInformation {
+	return public.EnterpriseClusterAllOfCapacityInformation{
+		ConsumedKafkaStreamingUnits:  consumedStreamingUnitsInTheCluster,
+		KafkaMachinePoolNodeCount:    storedCapacityInfo.MaxNodes,
+		RemainingKafkaStreamingUnits: storedCapacityInfo.MaxUnits - consumedStreamingUnitsInTheCluster,
+		MaximumKafkaStreamingUnits:   storedCapacityInfo.MaxUnits,
+	}
+}
+
+func presentEnterpriseClusterSupportedInstanceTypes(remainingCapacity int32, kafkaConfig *config.KafkaConfig) public.SupportedKafkaInstanceTypesList {
+	// enterprise clusters only supports standard instance type for now. It is safe to hardcode this.
+	standardInstanceType, err := kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(types.STANDARD.String())
+	if err != nil { // this should never happen, lets log an error in case it happens.
+		logger.Logger.Errorf("failed to find standard instance type from supported instance type config due to %q.", err.Error())
+		return public.SupportedKafkaInstanceTypesList{
+			InstanceTypes: []public.SupportedKafkaInstanceType{},
+		}
+	}
+
+	// only enlist enterprise billing model as the supported billing model
+	enterpriseBillingModel, err := standardInstanceType.GetKafkaSupportedBillingModelByID(constants.BillingModelEnterprise.String())
+	if err != nil { // this should never happen, lets log an error in case it happens.
+		logger.Logger.Errorf("failed to find enterprise billing model for standard instance due to %q.", err.Error())
+		return public.SupportedKafkaInstanceTypesList{
+			InstanceTypes: []public.SupportedKafkaInstanceType{},
+		}
+	}
+
+	availableSizes := arrays.Filter(standardInstanceType.Sizes, func(size config.KafkaInstanceSize) bool {
+		return int32(size.CapacityConsumed) <= remainingCapacity
+	})
+
+	presentedSizes := []public.SupportedKafkaSize{}
+
+	if len(availableSizes) > 0 {
+		presentedSizes = GetSupportedSizes(&config.KafkaInstanceType{Sizes: availableSizes})
+	}
+
+	return public.SupportedKafkaInstanceTypesList{
+		InstanceTypes: []public.SupportedKafkaInstanceType{
+			{
+				Id:          standardInstanceType.Id,
+				DisplayName: standardInstanceType.DisplayName,
+				Sizes:       presentedSizes,
+				SupportedBillingModels: GetSupportedBillingModels(&config.KafkaInstanceType{
+					SupportedBillingModels: []config.KafkaBillingModel{*enterpriseBillingModel},
+				}),
+			},
+		},
 	}
 }
