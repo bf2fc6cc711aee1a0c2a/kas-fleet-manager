@@ -219,7 +219,12 @@ func (h clusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 			}
 
 			standardConsumedCapacity := consumedCapacity[types.STANDARD]
-			return presenters.PresentEnterpriseCluster(*cluster, int32(standardConsumedCapacity), h.kafkaConfig), nil
+			presentedCluster, presentationErr := presenters.PresentEnterpriseCluster(*cluster, int32(standardConsumedCapacity), h.kafkaConfig)
+			if presentationErr != nil {
+				return nil, errors.GeneralError("failed to present enterprise cluster due to %q", presentationErr.Error())
+			}
+
+			return presentedCluster, nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)

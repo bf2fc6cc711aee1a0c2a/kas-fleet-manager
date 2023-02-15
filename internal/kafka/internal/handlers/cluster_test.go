@@ -894,6 +894,7 @@ func Test_DeregisterEnterpriseCluster(t *testing.T) {
 func Test_GetEnterpriseCluster(t *testing.T) {
 	type fields struct {
 		clusterService services.ClusterService
+		kafkaConfig    *config.KafkaConfig
 	}
 
 	type args struct {
@@ -999,8 +1000,96 @@ func Test_GetEnterpriseCluster(t *testing.T) {
 			wantStatusCode: http.StatusInternalServerError,
 		},
 		{
+			name: "should return general error when a presentation error occurs",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{},
+						},
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{
+							OrganizationID:      mocks.DefaultOrganisationId,
+							ClusterType:         api.EnterpriseDataPlaneClusterType.String(),
+							ClusterID:           entClusterID,
+							CloudProvider:       "aws",
+							Region:              "us-east-1",
+							MultiAZ:             true,
+							DynamicCapacityInfo: api.JSON([]byte(`{"standard":{"max_nodes":12,"max_units":4,"remaining_units":3}}`)),
+						}, nil
+					},
+					ComputeConsumedStreamingUnitCountPerInstanceTypeFunc: func(clusterID string) (services.StreamingUnitCountPerInstanceType, error) {
+						return services.StreamingUnitCountPerInstanceType{
+							kafkaTypes.STANDARD: 3,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: nonAdminCtxWithClaims,
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
 			name: "should successfully return enterprise cluster for a user of the same org",
 			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: kafkaTypes.STANDARD.String(),
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:               "x1",
+											CapacityConsumed: 1,
+										},
+										{
+											Id:               "x2",
+											CapacityConsumed: 2,
+										},
+										{
+											Id:               "x3",
+											CapacityConsumed: 3,
+										},
+										{
+											Id:               "x4",
+											CapacityConsumed: 4,
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										{
+											ID: "some-other-billing-model",
+										},
+										{
+											ID: constants.BillingModelEnterprise.String(),
+										},
+										{
+											ID: "some-other-billing-model-2",
+										},
+									},
+								},
+								{
+									Id: kafkaTypes.DEVELOPER.String(),
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:               "x1",
+											CapacityConsumed: 1,
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										{
+											ID: "some-other-billing-model-2",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 				clusterService: &services.ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return &api.Cluster{
@@ -1065,70 +1154,7 @@ func Test_GetEnterpriseCluster(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			h := NewClusterHandler(nil, tt.fields.clusterService, nil, &config.KafkaConfig{
-				SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
-					Configuration: config.SupportedKafkaInstanceTypesConfig{
-						SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
-							{
-								Id: kafkaTypes.STANDARD.String(),
-								Sizes: []config.KafkaInstanceSize{
-									{
-										Id:               "x1",
-										CapacityConsumed: 1,
-									},
-									{
-										Id:               "x2",
-										CapacityConsumed: 2,
-									},
-									{
-										Id:               "x3",
-										CapacityConsumed: 3,
-									},
-									{
-										Id:               "x4",
-										CapacityConsumed: 4,
-									},
-									{
-										Id:               "x5",
-										CapacityConsumed: 5,
-									},
-								},
-								SupportedBillingModels: []config.KafkaBillingModel{
-									{
-										ID: "some-other-billing-model",
-									},
-									{
-										ID: constants.BillingModelEnterprise.String(),
-									},
-									{
-										ID: "some-other-billing-model-2",
-									},
-								},
-							},
-							{
-								Id: kafkaTypes.DEVELOPER.String(),
-								Sizes: []config.KafkaInstanceSize{
-									{
-										Id:               "x1",
-										CapacityConsumed: 1,
-									},
-								},
-								SupportedBillingModels: []config.KafkaBillingModel{
-									{
-										ID: "some-other-billing-model",
-									},
-									{
-										ID: constants.BillingModelEnterprise.String(),
-									},
-									{
-										ID: "some-other-billing-model-2",
-									},
-								},
-							},
-						},
-					},
-				},
-			})
+			h := NewClusterHandler(nil, tt.fields.clusterService, nil, tt.fields.kafkaConfig)
 			req, rw := GetHandlerParams("GET", "/{id}", nil, t)
 			req = mux.SetURLVars(req, map[string]string{"id": entClusterID})
 			req = req.WithContext(tt.args.ctx)

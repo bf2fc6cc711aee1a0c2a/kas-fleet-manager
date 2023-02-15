@@ -1,6 +1,8 @@
 package presenters
 
 import (
+	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -54,7 +56,7 @@ func PresentEnterpriseClusterWithAddonParams(cluster api.Cluster, fleetShardPara
 	return c, nil
 }
 
-func PresentEnterpriseCluster(cluster api.Cluster, consumedStreamingUnitsInTheCluster int32, kafkaConfig *config.KafkaConfig) public.EnterpriseCluster {
+func PresentEnterpriseCluster(cluster api.Cluster, consumedStreamingUnitsInTheCluster int32, kafkaConfig *config.KafkaConfig) (public.EnterpriseCluster, error) {
 	reference := PresentReference(cluster.ClusterID, cluster)
 	presentedCluster := public.EnterpriseCluster{
 		Id:                            cluster.ClusterID,
@@ -73,10 +75,19 @@ func PresentEnterpriseCluster(cluster api.Cluster, consumedStreamingUnitsInTheCl
 	storedCapacityInfo, ok := cluster.RetrieveDynamicCapacityInfo()[types.STANDARD.String()]
 	if ok {
 		presentedCluster.CapacityInformation = presentEnterpriseClusterCapacityInfo(consumedStreamingUnitsInTheCluster, storedCapacityInfo)
-		presentedCluster.SupportedInstanceTypes = presentEnterpriseClusterSupportedInstanceTypes(presentedCluster.CapacityInformation.RemainingKafkaStreamingUnits, kafkaConfig)
+		supportedInstanceTypes, err := presentEnterpriseClusterSupportedInstanceTypes(presentedCluster.CapacityInformation.RemainingKafkaStreamingUnits, kafkaConfig)
+		if err != nil {
+			return public.EnterpriseCluster{}, err
+		}
+
+		presentedCluster.SupportedInstanceTypes = supportedInstanceTypes
+	} else { // this should never happen, let's log an error in case it happens
+		err := fmt.Errorf("cluster %q is missing capacity information", cluster.ID)
+		logger.Logger.Error(err)
+		return public.EnterpriseCluster{}, err
 	}
 
-	return presentedCluster
+	return presentedCluster, nil
 }
 
 func presentEnterpriseClusterCapacityInfo(consumedStreamingUnitsInTheCluster int32, storedCapacityInfo api.DynamicCapacityInfo) public.EnterpriseClusterAllOfCapacityInformation {
@@ -88,14 +99,14 @@ func presentEnterpriseClusterCapacityInfo(consumedStreamingUnitsInTheCluster int
 	}
 }
 
-func presentEnterpriseClusterSupportedInstanceTypes(remainingCapacity int32, kafkaConfig *config.KafkaConfig) public.SupportedKafkaInstanceTypesList {
+func presentEnterpriseClusterSupportedInstanceTypes(remainingCapacity int32, kafkaConfig *config.KafkaConfig) (public.SupportedKafkaInstanceTypesList, error) {
 	// enterprise clusters only supports standard instance type for now. It is safe to hardcode this.
 	standardInstanceType, err := kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(types.STANDARD.String())
 	if err != nil { // this should never happen, lets log an error in case it happens.
 		logger.Logger.Errorf("failed to find standard instance type from supported instance type config due to %q.", err.Error())
 		return public.SupportedKafkaInstanceTypesList{
 			InstanceTypes: []public.SupportedKafkaInstanceType{},
-		}
+		}, err
 	}
 
 	// only enlist enterprise billing model as the supported billing model
@@ -104,7 +115,7 @@ func presentEnterpriseClusterSupportedInstanceTypes(remainingCapacity int32, kaf
 		logger.Logger.Errorf("failed to find enterprise billing model for standard instance due to %q.", err.Error())
 		return public.SupportedKafkaInstanceTypesList{
 			InstanceTypes: []public.SupportedKafkaInstanceType{},
-		}
+		}, err
 	}
 
 	availableSizes := arrays.Filter(standardInstanceType.Sizes, func(size config.KafkaInstanceSize) bool {
@@ -128,5 +139,5 @@ func presentEnterpriseClusterSupportedInstanceTypes(remainingCapacity int32, kaf
 				}),
 			},
 		},
-	}
+	}, nil
 }
