@@ -3965,7 +3965,7 @@ func Test_kafkaService_VerifyAndUpdateKafkaAdmin(t *testing.T) {
 					ActualKafkaVersion:     "2.7",
 					DesiredKafkaVersion:    "2.7",
 					DesiredStrimziVersion:  "2.7",
-					KafkaStorageSize:       "100",
+					MaxDataRetentionSize:   "100",
 				},
 			},
 			want: nil,

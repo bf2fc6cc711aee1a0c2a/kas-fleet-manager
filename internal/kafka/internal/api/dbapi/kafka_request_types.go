@@ -43,7 +43,7 @@ type KafkaRequest struct {
 	KafkaUpgrading         bool   `json:"kafka_upgrading"`
 	StrimziUpgrading       bool   `json:"strimzi_upgrading"`
 	KafkaIBPUpgrading      bool   `json:"kafka_ibp_upgrading"`
-	KafkaStorageSize       string `json:"kafka_storage_size"`
+	MaxDataRetentionSize   string `json:"max_data_retention_size"`
 	// The type of kafka instance (developer or standard)
 	InstanceType string `json:"instance_type"`
 	// the quota service type for the kafka, e.g. ams, quota-management-list

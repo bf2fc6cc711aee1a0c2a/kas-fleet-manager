@@ -985,10 +985,10 @@ func TestValidateKafkaUpdateFields(t *testing.T) {
 			name: "should return nil if it validates kafka update fields successfully",
 			args: args{
 				kafkaUpdateRequest: &private.KafkaUpdateRequest{
-					StrimziVersion:             "StrimziVersion",
-					KafkaVersion:               "KafkaVersion",
-					KafkaIbpVersion:            "KafkaIbpVersion",
-					DeprecatedKafkaStorageSize: "KafkaStorageSize",
+					StrimziVersion:       "StrimziVersion",
+					KafkaVersion:         "KafkaVersion",
+					KafkaIbpVersion:      "KafkaIbpVersion",
+					MaxDataRetentionSize: "MaxDataRetentionSize",
 				},
 			},
 			want: nil,
@@ -997,13 +997,13 @@ func TestValidateKafkaUpdateFields(t *testing.T) {
 			name: "should return error if all fields are empty",
 			args: args{
 				kafkaUpdateRequest: &private.KafkaUpdateRequest{
-					StrimziVersion:             "",
-					KafkaVersion:               "",
-					KafkaIbpVersion:            "",
-					DeprecatedKafkaStorageSize: "",
+					StrimziVersion:       "",
+					KafkaVersion:         "",
+					KafkaIbpVersion:      "",
+					MaxDataRetentionSize: "",
 				},
 			},
-			want: errors.FieldValidationError("failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version, kafka_storage_size, max_data_retention_size or suspended to be provided"),
+			want: errors.FieldValidationError("failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version, max_data_retention_size or suspended to be provided"),
 		},
 	}
 	for _, testcase := range tests {
@@ -1018,7 +1018,7 @@ func TestValidateKafkaUpdateFields(t *testing.T) {
 	}
 }
 
-func TestValidateKafkaStorageSize(t *testing.T) {
+func TestValidateMaxDataRetentionSize(t *testing.T) {
 	type args struct {
 		kafkaRequest   *dbapi.KafkaRequest
 		kafkaUpdateReq *private.KafkaUpdateRequest
@@ -1035,7 +1035,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 		want *errors.ServiceError
 	}{
 		{
-			name: "should return nil if kafka_storage_size or max_data_retention_size is not specified",
+			name: "should return nil if max_data_retention_size is not specified",
 			args: args{
 				kafkaRequest: mockkafka.BuildKafkaRequest(
 					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
@@ -1043,42 +1043,6 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 				kafkaUpdateReq: &private.KafkaUpdateRequest{},
 			},
 			want: nil,
-		},
-		{
-			name: "should return nil if specified kafka storage size is valid",
-			args: args{
-				kafkaRequest: mockkafka.BuildKafkaRequest(
-					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
-				),
-				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					DeprecatedKafkaStorageSize: increaseStorageSizeReq,
-				},
-			},
-			want: nil,
-		},
-		{
-			name: "should return an error if it is unable to parse kafka_storage_size",
-			args: args{
-				kafkaRequest: mockkafka.BuildKafkaRequest(
-					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
-				),
-				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					DeprecatedKafkaStorageSize: invalidStorageSize,
-				},
-			},
-			want: errors.FieldValidationError("failed to update Kafka Request. Unable to parse current requested size: %q", invalidStorageSize),
-		},
-		{
-			name: "should return an error if the the kafka request storage size parameter is greater than the the kafka update request storage size parameter",
-			args: args{
-				kafkaRequest: mockkafka.BuildKafkaRequest(
-					mockkafka.With(mockkafka.STORAGE_SIZE, currentStorageSize),
-				),
-				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					DeprecatedKafkaStorageSize: decreaseStorageSizeReq,
-				},
-			},
-			want: errors.FieldValidationError("failed to update Kafka Request. Requested size: %q should be greater than current size: %q", decreaseStorageSizeReq, currentStorageSize),
 		},
 		{
 			name: "should return nil if specified max data retention size is valid",
@@ -1121,7 +1085,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 			args: args{
 				kafkaRequest: mockkafka.BuildKafkaRequest(),
 				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					DeprecatedKafkaStorageSize: increaseStorageSizeReq,
+					MaxDataRetentionSize: increaseStorageSizeReq,
 				},
 			},
 			want: errors.FieldValidationError(fmt.Sprintf("failed to update Kafka Request. Unable to parse current storage size: %q", "")),
@@ -1133,7 +1097,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 					mockkafka.With(mockkafka.STORAGE_SIZE, invalidStorageSize),
 				),
 				kafkaUpdateReq: &private.KafkaUpdateRequest{
-					DeprecatedKafkaStorageSize: increaseStorageSizeReq,
+					MaxDataRetentionSize: increaseStorageSizeReq,
 				},
 			},
 			want: errors.FieldValidationError("failed to update Kafka Request. Unable to parse current storage size: %q", invalidStorageSize),
@@ -1144,7 +1108,7 @@ func TestValidateKafkaStorageSize(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
 			t.Parallel()
-			validateFn := ValidateKafkaStorageSize(tt.args.kafkaRequest, tt.args.kafkaUpdateReq)
+			validateFn := ValidateMaxDataRetentionSize(tt.args.kafkaRequest, tt.args.kafkaUpdateReq)
 			err := validateFn()
 			g.Expect(err).To(gomega.Equal(tt.want))
 		})
@@ -1413,7 +1377,7 @@ func Test_validateVersionsCompatibility(t *testing.T) {
 					ActualKafkaVersion:     "2.7",
 					DesiredKafkaVersion:    "2.7",
 					DesiredStrimziVersion:  "2.7",
-					KafkaStorageSize:       "100",
+					MaxDataRetentionSize:   "100",
 				},
 				kafkaUpdateReq: private.KafkaUpdateRequest{
 					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
@@ -1456,7 +1420,7 @@ func Test_validateVersionsCompatibility(t *testing.T) {
 					ActualKafkaVersion:     "2.7",
 					DesiredKafkaVersion:    "2.7",
 					DesiredStrimziVersion:  "2.7",
-					KafkaStorageSize:       "100",
+					MaxDataRetentionSize:   "100",
 				},
 				kafkaUpdateReq: private.KafkaUpdateRequest{
 					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
@@ -1499,7 +1463,7 @@ func Test_validateVersionsCompatibility(t *testing.T) {
 					ActualKafkaVersion:     "2.7",
 					DesiredKafkaVersion:    "2.7",
 					DesiredStrimziVersion:  "2.7",
-					KafkaStorageSize:       "100",
+					MaxDataRetentionSize:   "100",
 				},
 				kafkaUpdateReq: private.KafkaUpdateRequest{
 					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
@@ -1542,7 +1506,7 @@ func Test_validateVersionsCompatibility(t *testing.T) {
 					ActualKafkaVersion:     "2.7",
 					DesiredKafkaVersion:    "2.7",
 					DesiredStrimziVersion:  "2.7",
-					KafkaStorageSize:       "100",
+					MaxDataRetentionSize:   "100",
 				},
 				kafkaUpdateReq: private.KafkaUpdateRequest{
 					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
@@ -1585,7 +1549,7 @@ func Test_validateVersionsCompatibility(t *testing.T) {
 					ActualKafkaVersion:     "2.7",
 					DesiredKafkaVersion:    "2.7",
 					DesiredStrimziVersion:  "2.7",
-					KafkaStorageSize:       "100",
+					MaxDataRetentionSize:   "100",
 				},
 				kafkaUpdateReq: private.KafkaUpdateRequest{
 					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
@@ -1628,7 +1592,7 @@ func Test_validateVersionsCompatibility(t *testing.T) {
 					ActualKafkaVersion:     "2.7",
 					DesiredKafkaVersion:    "2.7",
 					DesiredStrimziVersion:  "2.7",
-					KafkaStorageSize:       "100",
+					MaxDataRetentionSize:   "100",
 				},
 				kafkaUpdateReq: private.KafkaUpdateRequest{
 					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
@@ -1670,7 +1634,7 @@ func Test_validateVersionsCompatibility(t *testing.T) {
 					ActualKafkaVersion:    "2.7",
 					DesiredKafkaVersion:   "2.7",
 					DesiredStrimziVersion: "2.7",
-					KafkaStorageSize:      "100",
+					MaxDataRetentionSize:  "100",
 				},
 				kafkaUpdateReq: private.KafkaUpdateRequest{
 					StrimziVersion: "strimzi-cluster-operator.v0.24.0-0",
@@ -1711,7 +1675,7 @@ func Test_validateVersionsCompatibility(t *testing.T) {
 					DesiredKafkaIBPVersion: "2.7",
 					ActualKafkaVersion:     "2.7",
 					DesiredStrimziVersion:  "2.7",
-					KafkaStorageSize:       "100",
+					MaxDataRetentionSize:   "100",
 				},
 				kafkaUpdateReq: private.KafkaUpdateRequest{
 					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
@@ -1753,7 +1717,7 @@ func Test_validateVersionsCompatibility(t *testing.T) {
 					ActualKafkaVersion:     "2.7",
 					DesiredKafkaVersion:    "2.7",
 					DesiredStrimziVersion:  "2.7",
-					KafkaStorageSize:       "100",
+					MaxDataRetentionSize:   "100",
 				},
 				kafkaUpdateReq: private.KafkaUpdateRequest{
 					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
@@ -1796,7 +1760,7 @@ func Test_validateVersionsCompatibility(t *testing.T) {
 					ActualKafkaVersion:     "2.7",
 					DesiredKafkaVersion:    "2.6",
 					DesiredStrimziVersion:  "2.7",
-					KafkaStorageSize:       "100",
+					MaxDataRetentionSize:   "100",
 				},
 				kafkaUpdateReq: private.KafkaUpdateRequest{
 					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",
@@ -1839,7 +1803,7 @@ func Test_validateVersionsCompatibility(t *testing.T) {
 					ActualKafkaVersion:     "2.7",
 					DesiredKafkaVersion:    "2.7",
 					DesiredStrimziVersion:  "2.7",
-					KafkaStorageSize:       "100",
+					MaxDataRetentionSize:   "100",
 				},
 				kafkaUpdateReq: private.KafkaUpdateRequest{
 					StrimziVersion:  "strimzi-cluster-operator.v0.24.0-0",

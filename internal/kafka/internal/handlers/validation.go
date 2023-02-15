@@ -315,10 +315,9 @@ func ValidateKafkaUpdateFields(kafkaUpdateRequest *private.KafkaUpdateRequest) h
 		if !(stringSet(&kafkaUpdateRequest.StrimziVersion) ||
 			stringSet(&kafkaUpdateRequest.KafkaVersion) ||
 			stringSet(&kafkaUpdateRequest.KafkaIbpVersion) ||
-			stringSet(&kafkaUpdateRequest.DeprecatedKafkaStorageSize) ||
 			stringSet(&kafkaUpdateRequest.MaxDataRetentionSize) ||
 			shared.IsNotNil(kafkaUpdateRequest.Suspended)) {
-			return errors.FieldValidationError("failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version, kafka_storage_size, max_data_retention_size or suspended to be provided")
+			return errors.FieldValidationError("failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version, kafka_version, kafka_ibp_version, max_data_retention_size or suspended to be provided")
 		}
 		return nil
 	}
@@ -421,22 +420,21 @@ func ValidateKafkaClaims(ctx context.Context, validations ...ValidateKafkaClaims
 	}
 }
 
-func ValidateKafkaStorageSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *private.KafkaUpdateRequest) handlers.Validate {
+func ValidateMaxDataRetentionSize(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *private.KafkaUpdateRequest) handlers.Validate {
 	return func() *errors.ServiceError {
-		storageSize, _ := arrays.FirstNonEmpty(kafkaUpdateReq.MaxDataRetentionSize, kafkaUpdateReq.DeprecatedKafkaStorageSize)
 
-		if stringSet(&storageSize) {
-			currentSize, err := resource.ParseQuantity(kafkaRequest.KafkaStorageSize)
+		if stringSet(&kafkaUpdateReq.MaxDataRetentionSize) {
+			currentSize, err := resource.ParseQuantity(kafkaRequest.MaxDataRetentionSize)
 			if err != nil {
-				return errors.FieldValidationError("failed to update Kafka Request. Unable to parse current storage size: %q", kafkaRequest.KafkaStorageSize)
+				return errors.FieldValidationError("failed to update Kafka Request. Unable to parse current storage size: %q", kafkaRequest.MaxDataRetentionSize)
 			}
-			requestedSize, err := resource.ParseQuantity(storageSize)
+			requestedSize, err := resource.ParseQuantity(kafkaUpdateReq.MaxDataRetentionSize)
 			if err != nil {
-				return errors.FieldValidationError("failed to update Kafka Request. Unable to parse current requested size: %q", storageSize)
+				return errors.FieldValidationError("failed to update Kafka Request. Unable to parse current requested size: %q", kafkaUpdateReq.MaxDataRetentionSize)
 			}
 			currSize, _ := currentSize.AsInt64()
 			if requestedSize.CmpInt64(currSize) < 0 {
-				return errors.FieldValidationError("failed to update Kafka Request. Requested size: %q should be greater than current size: %q", storageSize, kafkaRequest.KafkaStorageSize)
+				return errors.FieldValidationError("failed to update Kafka Request. Requested size: %q should be greater than current size: %q", kafkaUpdateReq.MaxDataRetentionSize, kafkaRequest.MaxDataRetentionSize)
 			}
 		}
 		return nil

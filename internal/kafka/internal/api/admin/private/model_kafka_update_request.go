@@ -15,9 +15,6 @@ type KafkaUpdateRequest struct {
 	StrimziVersion  string `json:"strimzi_version,omitempty"`
 	KafkaVersion    string `json:"kafka_version,omitempty"`
 	KafkaIbpVersion string `json:"kafka_ibp_version,omitempty"`
-	// Maximum data storage available to this Kafka. This is now deprecated, please use max_data_retention_size instead
-	// Deprecated
-	DeprecatedKafkaStorageSize string `json:"kafka_storage_size,omitempty"`
 	// Maximum data storage available to this Kafka
 	MaxDataRetentionSize string `json:"max_data_retention_size,omitempty"`
 	// boolean value indicating whether kafka should be suspended or not depending on the value provided. Suspended kafkas have their certain resources removed and become inaccessible until fully unsuspended (restored to Ready state).

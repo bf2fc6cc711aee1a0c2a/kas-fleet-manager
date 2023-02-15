@@ -393,7 +393,7 @@ func Test_KafkaHandler_Create(t *testing.T) {
 						return dbapi.KafkaList{}, &api.PagingMeta{}, nil
 					},
 					RegisterKafkaJobFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-						kafkaRequest.KafkaStorageSize = mocksupportedinstancetypes.DefaultMaxDataRetentionSize
+						kafkaRequest.MaxDataRetentionSize = mocksupportedinstancetypes.DefaultMaxDataRetentionSize
 						return nil
 					},
 					AssignInstanceTypeFunc: func(owner, organisationID string) (types.KafkaInstanceType, *errors.ServiceError) {

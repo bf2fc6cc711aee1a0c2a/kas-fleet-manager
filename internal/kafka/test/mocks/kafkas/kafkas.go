@@ -86,7 +86,7 @@ func With(attribute KafkaRequestAttribute, value string) KafkaRequestBuildOption
 		case INSTANCE_TYPE:
 			request.InstanceType = value
 		case STORAGE_SIZE:
-			request.KafkaStorageSize = value
+			request.MaxDataRetentionSize = value
 		case SIZE_ID:
 			request.SizeId = value
 		case NAME:
@@ -173,7 +173,7 @@ func WithPredefinedTestValues() KafkaRequestBuildOption {
 		request.BootstrapServerHost = DefaultBootstrapServerHost
 		request.Owner = user
 		request.Status = constants.KafkaRequestStatusReady.String()
-		request.KafkaStorageSize = mocksupportedinstancetypes.DefaultMaxDataRetentionSize
+		request.MaxDataRetentionSize = mocksupportedinstancetypes.DefaultMaxDataRetentionSize
 		request.OrganisationId = DefaultOrganisationId
 	}
 }

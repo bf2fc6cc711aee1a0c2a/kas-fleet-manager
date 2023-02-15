@@ -1405,8 +1405,6 @@ func TestKafkaGet(t *testing.T) {
 	instanceSize, err := instanceType.GetKafkaInstanceSizeByID(kafka.SizeId)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	g.Expect(kafka.DeprecatedKafkaStorageSize).To(gomega.Equal(instanceSize.MaxDataRetentionSize.String()))
-
 	maxDataRetentionSizeBytes, err := instanceSize.MaxDataRetentionSize.ToInt64()
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	g.Expect(kafka.MaxDataRetentionSize.Bytes).To(gomega.Equal(maxDataRetentionSizeBytes))

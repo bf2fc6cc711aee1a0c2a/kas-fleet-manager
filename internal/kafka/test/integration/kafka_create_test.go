@@ -174,7 +174,6 @@ func TestKafkaCreate_ManualScaling(t *testing.T) {
 
 				instanceSize, err := instanceType.GetKafkaInstanceSizeByID(kafka.SizeId)
 				g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to get kafka instance size by id")
-				g.Expect(readyKafka.DeprecatedKafkaStorageSize).To(gomega.Equal(instanceSize.MaxDataRetentionSize.String()))
 
 				maxDataRetentionSizeBytes, err := instanceSize.MaxDataRetentionSize.ToInt64()
 				g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to convert max data retention size to bytes")
@@ -456,7 +455,6 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 
 				instanceSize, err := instanceType.GetKafkaInstanceSizeByID(kafka.SizeId)
 				g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to get kafka instance size by id")
-				g.Expect(readyKafka.DeprecatedKafkaStorageSize).To(gomega.Equal(instanceSize.MaxDataRetentionSize.String()))
 
 				maxDataRetentionSizeBytes, err := instanceSize.MaxDataRetentionSize.ToInt64()
 				g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to convert max data retention size to bytes")

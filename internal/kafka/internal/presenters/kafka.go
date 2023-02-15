@@ -81,32 +81,31 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 	}
 
 	// convert kafka storage size to bytes
-	maxDataRetentionSizeQuantity := config.Quantity(kafkaRequest.KafkaStorageSize)
+	maxDataRetentionSizeQuantity := config.Quantity(kafkaRequest.MaxDataRetentionSize)
 	maxDataRetentionSizeBytes, conversionErr := maxDataRetentionSizeQuantity.ToInt64()
 	if conversionErr != nil {
 		return public.KafkaRequest{}, errors.NewWithCause(errors.ErrorGeneral, conversionErr, "failed to get bytes value for max_data_retention_size")
 	}
 
 	return public.KafkaRequest{
-		Id:                         reference.Id,
-		Kind:                       reference.Kind,
-		Href:                       reference.Href,
-		Region:                     kafkaRequest.Region,
-		Name:                       kafkaRequest.Name,
-		CloudProvider:              kafkaRequest.CloudProvider,
-		MultiAz:                    kafkaRequest.MultiAZ,
-		Owner:                      kafkaRequest.Owner,
-		BootstrapServerHost:        setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
-		AdminApiServerUrl:          kafkaRequest.AdminApiServerURL,
-		Status:                     kafkaRequest.Status,
-		CreatedAt:                  kafkaRequest.CreatedAt,
-		UpdatedAt:                  kafkaRequest.UpdatedAt,
-		ExpiresAt:                  expiresAt,
-		FailedReason:               kafkaRequest.FailedReason,
-		Version:                    kafkaRequest.ActualKafkaVersion,
-		InstanceType:               kafkaRequest.InstanceType,
-		ReauthenticationEnabled:    kafkaRequest.ReauthenticationEnabled,
-		DeprecatedKafkaStorageSize: kafkaRequest.KafkaStorageSize,
+		Id:                      reference.Id,
+		Kind:                    reference.Kind,
+		Href:                    reference.Href,
+		Region:                  kafkaRequest.Region,
+		Name:                    kafkaRequest.Name,
+		CloudProvider:           kafkaRequest.CloudProvider,
+		MultiAz:                 kafkaRequest.MultiAZ,
+		Owner:                   kafkaRequest.Owner,
+		BootstrapServerHost:     setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
+		AdminApiServerUrl:       kafkaRequest.AdminApiServerURL,
+		Status:                  kafkaRequest.Status,
+		CreatedAt:               kafkaRequest.CreatedAt,
+		UpdatedAt:               kafkaRequest.UpdatedAt,
+		ExpiresAt:               expiresAt,
+		FailedReason:            kafkaRequest.FailedReason,
+		Version:                 kafkaRequest.ActualKafkaVersion,
+		InstanceType:            kafkaRequest.InstanceType,
+		ReauthenticationEnabled: kafkaRequest.ReauthenticationEnabled,
 		MaxDataRetentionSize: public.SupportedKafkaSizeBytesValueItem{
 			Bytes: maxDataRetentionSizeBytes,
 		},

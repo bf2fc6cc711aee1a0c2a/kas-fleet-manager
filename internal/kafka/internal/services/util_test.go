@@ -53,7 +53,7 @@ func buildKafkaDBApiRequest() dbapi.KafkaRequest {
 		KafkaUpgrading:                   false,
 		StrimziUpgrading:                 false,
 		KafkaIBPUpgrading:                false,
-		KafkaStorageSize:                 "5gi",
+		MaxDataRetentionSize:             "5gi",
 		InstanceType:                     "developer",
 		QuotaType:                        "ams",
 		Routes:                           route,
