@@ -1,6 +1,7 @@
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 DOCS_DIR := $(PROJECT_PATH)/docs
+SECRETS_DIR := $(PROJECT_PATH)/secrets
 
 .DEFAULT_GOAL := help
 SHELL = bash
@@ -222,6 +223,7 @@ help:
 	@echo "make image/push                          push docker image to the external image registry"
 	@echo "make image/push/internal                 push the image to the Openshift internal registry"
 	@echo "make setup/git/hooks                     setup git hooks"
+	@echo "make secrets/setup/empty                 setup needed secrets files for the fleet manager to be able to start"
 	@echo "make keycloak/setup                      setup mas sso clientId, clientSecret & crt"
 	@echo "make gcp/setup/credentials               setup GCP credentials"
 	@echo "make kafkacert/setup                     setup the kafka certificate used for Kafka Brokers"
@@ -521,6 +523,34 @@ cos-fleet-catalog-camel/teardown:
 	$(DOCKER) stop cos-fleet-catalog-camel
 	rm config/connector-types/cos-fleet-catalog-camel
 .PHONY: cos-fleet-catalog-camel/teardown
+
+# Touch all the necessary files for fleet manager to start
+# See docs/populating-configuration.md for more information
+secrets/setup/empty:
+	touch ${SECRETS_DIR}/ocm-service.clientId
+	touch $(SECRETS_DIR)/ocm-service.clientSecret
+	touch $(SECRETS_DIR)/ocm-service.token
+	touch $(SECRETS_DIR)/aws.accountid
+	touch $(SECRETS_DIR)/aws.accesskey
+	touch $(SECRETS_DIR)/aws.secretaccesskey
+	touch $(SECRETS_DIR)/aws.route53accesskey
+	touch $(SECRETS_DIR)/aws.route53secretaccesskey
+	touch $(SECRETS_DIR)/keycloak-service.clientId
+	touch $(SECRETS_DIR)/keycloak-service.clientSecret
+	touch $(SECRETS_DIR)/redhatsso-service.clientId
+	touch $(SECRETS_DIR)/redhatsso-service.clientSecret
+	touch $(SECRETS_DIR)/osd-idp-keycloak-service.clientId
+	touch $(SECRETS_DIR)/osd-idp-keycloak-service.clientSecret
+	touch $(SECRETS_DIR)/sentry.key
+	touch $(SECRETS_DIR)/rhsso-logs.clientId
+	touch $(SECRETS_DIR)/rhsso-logs.clientSecret
+	touch $(SECRETS_DIR)/rhsso-metrics.clientId
+	touch $(SECRETS_DIR)/rhsso-metrics.clientSecret
+	touch $(SECRETS_DIR)/observability-config-access.token
+	touch $(SECRETS_DIR)/kafka-tls.crt
+	touch $(SECRETS_DIR)/kafka-tls.key
+	touch $(SECRETS_DIR)/image-pull.dockerconfigjson
+.PHONY: secrets/setup/empty
 
 db/setup:
 	./scripts/local_db_setup.sh
