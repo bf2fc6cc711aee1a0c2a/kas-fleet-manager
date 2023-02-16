@@ -31,9 +31,9 @@ func NewConfig() *Config {
 }
 
 func (c *Config) AddFlags(fs *pflag.FlagSet) {
-	fs.BoolVar(&c.Enabled, "enable-sentry", c.Enabled, "Enable sentry error monitoring")
+	fs.BoolVar(&c.Enabled, "enable-sentry", c.Enabled, "Enable Sentry error monitoring. A Sentry API-compatible service like GlitchTip is also supported")
 	fs.StringVar(&c.KeyFile, "sentry-key-file", c.KeyFile, "File containing Sentry key")
-	fs.StringVar(&c.URL, "sentry-url", c.URL, "Base URL of Sentry isntance")
+	fs.StringVar(&c.URL, "sentry-url", c.URL, "Base URL of Sentry instance. A Sentry API-compatible service like GlitchTip is also supported")
 	fs.StringVar(&c.Project, "sentry-project", c.Project, "Sentry project to report to")
 	fs.BoolVar(&c.Debug, "enable-sentry-debug", c.Debug, "Enable sentry error monitoring")
 	fs.DurationVar(&c.Timeout, "sentry-timeout", c.Timeout, "Timeout for all requests made to Sentry")
