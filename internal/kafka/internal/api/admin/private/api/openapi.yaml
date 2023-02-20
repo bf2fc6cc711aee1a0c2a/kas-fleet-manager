@@ -8,7 +8,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0
   title: Kafka Service Fleet Manager Admin APIs
-  version: 0.1.0
+  version: 0.2.0
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -318,6 +318,60 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
+  /api/kafkas_mgmt/v1/admin/kafkas/{id}/revoke_tls_certificate:
+    post:
+      description: Revokes the automatically generated TLS wildcard certificate for
+        the Kafka instance by id
+      operationId: revokeKafkaTLSCertificateBKafkaID
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KafkacertificateRevocationRequest'
+        description: Kafka certificate revocation request payload.
+        required: true
+      responses:
+        "204":
+          description: Kafka certificate successfully revoked
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Bad request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User is not authorised to access the service
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No Kafka found with the specified ID
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
 components:
   schemas:
     Kafka:
@@ -362,6 +416,15 @@ components:
       properties:
         bytes:
           format: int64
+          type: integer
+      type: object
+    KafkacertificateRevocationRequest:
+      example:
+        revocation_reason: 1
+      properties:
+        revocation_reason:
+          description: The certificate revocation reason. See https://www.rfc-editor.org/rfc/rfc5280#section-5.3.1
+            for the available reasons
           type: integer
       type: object
     Error:

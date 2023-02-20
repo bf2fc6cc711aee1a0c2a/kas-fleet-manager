@@ -74,6 +74,7 @@ This will create the following secrets in the given namespace:
 - `kas-fleet-manager-dataplane-certificate`
 - `kas-fleet-manager-observatorium-configuration-red-hat-sso`
 - `kas-fleet-manager-rds`
+- `kas-fleet-manager-aws-secret-manager`
 
 ```
 make deploy/secrets <OPTIONAL_PARAMETERS>
@@ -110,6 +111,9 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `OBSERVABILITY_RHSSO_METRICS_CLIENT_ID`: The client id for a RHSSO service account that has read metrics permission. Defaults to `''`
 - `OBSERVABILITY_RHSSO_METRICS_SECRET`: The client secret for a RHSSO service account that has read metrics permission. Defaults to `''`
 - `JWKS_VERIFY_INSECURE`: Skip TLS insecure verification for the connection for fetching jwks certificate. Defaults to value false.
+- `ACME_ISSUER_ACCOUNT_KEY`: The ACME Issuer account key used for the automatic management of certificate. This is required when certificate management mode is `automatic`. Defaults to `''`
+- `AWS_SECRET_MANAGER_SECRET_ACCESS_KEY`: AWS secret manager secret access key: Defaults to `''`. This is required when certificate management mode is `automatic`.
+- `AWS_SECRET_MANAGER_ACCESS_KEY`: AWS secret manager access key: Defaults to `''`. This is required when certificate management mode is `automatic`.
 ## (Optional) Deploy the Observatorium Token Refresher
 >**NOTE**: This is only needed if your Observatorium instance is using RHSSO as authentication.
 
@@ -198,7 +202,12 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `ADMIN_API_SSO_BASE_URL`: Base URL of admin API endpints SSO. Defaults to `"https://auth.redhat.com"`
 - `ADMIN_API_SSO_ENDPOINT_URI`: admin API SSO endpoint URI. defaults to `"/auth/realms/EmployeeIDP"`
 - `ADMIN_API_SSO_REALM`: admin API SSO realm. Defaults to `"EmployeeIDP"`
-
+- `KAFKA_TLS_CERTIFICATE_MANAGEMENT_MUST_STAPLE`: The tls certificate management must staple. Adds the must staple TLS extension to the certificate signing request. The default value is `false`
+- `KAFKA_TLS_CERTIFICATE_MANAGEMENT_STRATEGY`: The tls certificate management strategy. Possible options are manual and automatic. The default value is `manual`. In the `manual` mode, the user is expected to manually manage a wildcard certificate that will be applied to all the Kafkas. In `automatic` mode, kas-fleet-manager automatically handles the management of Kafka tls certificate.
+- `KAFKA_TLS_CERTIFICATE_MANAGEMENT_STORAGE_TYPE`: The tls certificate management storage type. Available options are in-memory, file and vault. The default value is `vault`.
+- `KAFKA_TLS_CERTIFICATE_MANAGEMENT_EMAIL`: The tls certificate management email. This is required when strategy is automatic
+- `KAFKA_TLS_CERTIFICATE_MANAGEMENT_RENEWAL_WINDOW_RATIO`: The tls certificate management renewal window ratio i.e how much of a certificate's lifetime becomes the renewal window. The default value is `0.3333333333` - renew certificates a month before their expiry.
+- `KAFKA_TLS_CERTIFICATE_MANAGEMENT_SECURE_STORAGE_CACHE_TTL` - the duration of the certificate in the in the secure storage cache. Past this duration, the certificate will be fetched from the remote secure storage. The dafault value is `10m`
 
 ### Using an Image from a Private External Registry
 If you are using a private external registry, a docker pull secret must be created in the namespace where KAS Fleet Manager is deployed and linked to the service account that KAS Fleet Manager uses.

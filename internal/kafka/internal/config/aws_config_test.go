@@ -14,11 +14,21 @@ func Test_NewAwsConfig(t *testing.T) {
 		{
 			name: "should return NewAWSConfig",
 			want: &AWSConfig{
-				AccountIDFile:              "secrets/aws.accountid",
-				AccessKeyFile:              "secrets/aws.accesskey",
-				SecretAccessKeyFile:        "secrets/aws.secretaccesskey",
-				Route53AccessKeyFile:       "secrets/aws.route53accesskey",
-				Route53SecretAccessKeyFile: "secrets/aws.route53secretaccesskey",
+				ConfigForOSDClusterCreation: awsConfigForOSDClusterCreation{
+					accountIDFilePath:       "secrets/aws.accountid",
+					accessKeyFilePath:       "secrets/aws.accesskey",
+					secretAccessKeyFilePath: "secrets/aws.secretaccesskey",
+				},
+				Route53: awsRoute53Config{
+					accessKeyFilePath:       "secrets/aws.route53accesskey",
+					secretAccessKeyFilePath: "secrets/aws.route53secretaccesskey",
+				},
+				SecretManager: awsSecretManagerConfig{
+					accessKeyFilePath:       "secrets/aws-secret-manager/aws_access_key_id",
+					secretAccessKeyFilePath: "secrets/aws-secret-manager/aws_secret_access_key",
+					Region:                  "us-east-1",
+					SecretPrefix:            "kas-fleet-manager",
+				},
 			},
 		},
 	}
@@ -56,7 +66,7 @@ func Test_ReadFilesAWSConfig(t *testing.T) {
 				config: NewAWSConfig(),
 			},
 			modifyFn: func(config *AWSConfig) {
-				config.AccountIDFile = "invalid"
+				config.ConfigForOSDClusterCreation.accountIDFilePath = "invalid"
 			},
 			wantErr: true,
 		},
@@ -66,7 +76,7 @@ func Test_ReadFilesAWSConfig(t *testing.T) {
 				config: NewAWSConfig(),
 			},
 			modifyFn: func(config *AWSConfig) {
-				config.AccessKeyFile = "invalid"
+				config.ConfigForOSDClusterCreation.accessKeyFilePath = "invalid"
 			},
 			wantErr: true,
 		},
@@ -76,7 +86,7 @@ func Test_ReadFilesAWSConfig(t *testing.T) {
 				config: NewAWSConfig(),
 			},
 			modifyFn: func(config *AWSConfig) {
-				config.SecretAccessKeyFile = "invalid"
+				config.ConfigForOSDClusterCreation.secretAccessKeyFilePath = "invalid"
 			},
 			wantErr: true,
 		},
@@ -86,7 +96,7 @@ func Test_ReadFilesAWSConfig(t *testing.T) {
 				config: NewAWSConfig(),
 			},
 			modifyFn: func(config *AWSConfig) {
-				config.Route53AccessKeyFile = "invalid"
+				config.Route53.accessKeyFilePath = "invalid"
 			},
 			wantErr: true,
 		},
@@ -96,7 +106,27 @@ func Test_ReadFilesAWSConfig(t *testing.T) {
 				config: NewAWSConfig(),
 			},
 			modifyFn: func(config *AWSConfig) {
-				config.Route53SecretAccessKeyFile = "invalid"
+				config.Route53.secretAccessKeyFilePath = "invalid"
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error with misconfigured SecretManagerAccessKeyFile",
+			fields: fields{
+				config: NewAWSConfig(),
+			},
+			modifyFn: func(config *AWSConfig) {
+				config.SecretManager.accessKeyFilePath = "invalid"
+			},
+			wantErr: true,
+		},
+		{
+			name: "should return an error with misconfigured SecretManagerSecretAccessKeyFile",
+			fields: fields{
+				config: NewAWSConfig(),
+			},
+			modifyFn: func(config *AWSConfig) {
+				config.SecretManager.secretAccessKeyFilePath = "invalid"
 			},
 			wantErr: true,
 		},

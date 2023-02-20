@@ -55,6 +55,12 @@ const (
 	// AcceptedKafkaMaxRetryDurationWhileWaitingForClusterAssignment the maximum duration, in hours, where KAS Fleet Manager
 	// will retry reconciliation of a Kafka request in an 'accepted' state in order to assign it into a data plane cluster.
 	AcceptedKafkaMaxRetryDurationWhileWaitingForClusterAssignment = 1 * time.Hour
+
+	//TrialKafkasDomainShard is the shard name where all the Trial Kafkas routes will be deployed.
+	//For all the Trial Kafkas, their Kafka's URLs will be of the form "<unique-slug-specific-to-kafka>.trial.<kafka-domain-name>"
+	//e.g when using the "kafka.bf2.dev" domain, an admin server URL of a developer Kafka may look like "admin-server-xxxx.trial.kafka.bf2.dev"
+	//see ADR-90 https://github.com/bf2fc6cc711aee1a0c2a/architecture/blob/main/_adr/90/index.adoc for more context
+	TrialKafkasDomainShard = "trial"
 )
 
 // ordinals - Used to decide if a status comes after or before a given state

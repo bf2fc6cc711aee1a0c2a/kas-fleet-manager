@@ -53,9 +53,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 
 	clusterAWS := clustersmgmtv1.
 		NewAWS().
-		AccountID(awsConfig.AccountID).
-		AccessKeyID(awsConfig.AccessKey).
-		SecretAccessKey(awsConfig.SecretAccessKey)
+		AccountID(awsConfig.ConfigForOSDClusterCreation.AccountID).
+		AccessKeyID(awsConfig.ConfigForOSDClusterCreation.AccessKey).
+		SecretAccessKey(awsConfig.ConfigForOSDClusterCreation.SecretAccessKey)
 
 	clusterGCP := clustersmgmtv1.
 		NewGCP().

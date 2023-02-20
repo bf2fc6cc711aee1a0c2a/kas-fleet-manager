@@ -10,6 +10,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"gorm.io/gorm"
 )
@@ -67,6 +69,12 @@ type KafkaRequest struct {
 	// ExpiresAt contains the timestamp of when a Kafka instance is scheduled to expire.
 	// On expiration, the Kafka instance will be marked for deletion, its status will be set to 'deprovision'.
 	ExpiresAt sql.NullTime `json:"expires_at"`
+	// KafkasRoutesBaseDomainName is the base domain name for kafkas routes
+	KafkasRoutesBaseDomainName string
+	// KafkasRoutesBaseDomainTLSKeyRef is the key referencing the TLS certificate key (private part of the certificate) for the base kafka domain
+	KafkasRoutesBaseDomainTLSKeyRef string
+	// KafkasRoutesBaseDomainTLSCrtRef is the key referencing the TLS certificate crt (public part of the certificate) for the base kafka domain
+	KafkasRoutesBaseDomainTLSCrtRef string
 }
 
 type KafkaPromotionStatus string
@@ -231,4 +239,25 @@ func (k *KafkaRequest) CanBeAutomaticallySuspended() bool {
 // Otherwise returns false.
 func (k *KafkaRequest) DesiredBillingModelIsEnterprise() bool {
 	return shared.StringEqualsIgnoreCase(k.DesiredKafkaBillingModel, constants.BillingModelEnterprise.String())
+}
+
+// HasCertificateInfo returns true when the tls certificate info for this Kafka have been set
+func (k *KafkaRequest) HasCertificateInfo() bool {
+	return !(shared.StringEmpty(k.KafkasRoutesBaseDomainName) ||
+		shared.StringEmpty(k.KafkasRoutesBaseDomainTLSCrtRef) ||
+		shared.StringEmpty(k.KafkasRoutesBaseDomainTLSKeyRef))
+}
+
+// IsUsingSharedTLSCertificate returns true if the kafka is using a shared certificate.
+// A kafka is considered to be using a shared certificate if its kafkas routes base domain name is the same as the kafka domain name given in the configuration
+// or its routes base domain is prefixed with the "trial"
+func (k *KafkaRequest) IsUsingSharedTLSCertificate(kafkaConfig *config.KafkaConfig) bool {
+	return k.KafkasRoutesBaseDomainName == kafkaConfig.KafkaDomainName ||
+		k.KafkasRoutesBaseDomainName == fmt.Sprintf("%s.%s", constants.TrialKafkasDomainShard, kafkaConfig.KafkaDomainName)
+}
+
+// IsADeveloperInstance returns true if the instance type is developer.
+// Otherwise returns false
+func (k *KafkaRequest) IsADeveloperInstance() bool {
+	return k.InstanceType == types.DEVELOPER.String()
 }

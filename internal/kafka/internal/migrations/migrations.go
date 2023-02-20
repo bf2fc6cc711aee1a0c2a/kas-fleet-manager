@@ -97,6 +97,7 @@ var migrations = []*gormigrate.Migration{
 	addKafkaPromoteWorkerInLeaderLeases(),
 	updateExpiresAtZeroValueFromKafkaRequests(),
 	renameKafkaStorageSizeColumn(),
+	addKafkaDomainCertificateManagementInfoInKafkaRequestsTable(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

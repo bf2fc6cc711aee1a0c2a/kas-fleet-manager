@@ -645,6 +645,8 @@ aws/setup:
 	@echo -n "$(AWS_SECRET_ACCESS_KEY)" > secrets/aws.secretaccesskey
 	@echo -n "$(ROUTE53_ACCESS_KEY)" > secrets/aws.route53accesskey
 	@echo -n "$(ROUTE53_SECRET_ACCESS_KEY)" > secrets/aws.route53secretaccesskey
+	@echo -n "$(AWS_SECRET_MANAGER_ACCESS_KEY)" > secrets/aws-secret-manager/aws_access_key_id
+	@echo -n "$(AWS_SECRET_MANAGER_SECRET_ACCESS_KEY)" > secrets/aws-secret-manager/aws_secret_access_key
 .PHONY: aws/setup
 
 # Setup for GCP credentials
@@ -669,6 +671,7 @@ redhatsso/setup:
 kafkacert/setup:
 	@echo -n "$(KAFKA_TLS_CERT)" > secrets/kafka-tls.crt
 	@echo -n "$(KAFKA_TLS_KEY)" > secrets/kafka-tls.key
+	@echo -n "$(ACME_ISSUER_ACCOUNT_KEY)" > secrets/kafka-tls-certificate-management-acme-issuer-account-key.pem
 .PHONY:kafkacert/setup
 
 observability/cloudwatchlogs/setup:
@@ -742,6 +745,8 @@ deploy/secrets:
 		-p AWS_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.secretaccesskey' ] && [ -z '${AWS_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.secretaccesskey || echo '${AWS_SECRET_ACCESS_KEY}')" \
 		-p ROUTE53_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53accesskey' ] && [ -z '${ROUTE53_ACCESS_KEY}' ]) && cat ./secrets/aws.route53accesskey || echo '${ROUTE53_ACCESS_KEY}')" \
 		-p ROUTE53_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53secretaccesskey' ] && [ -z '${ROUTE53_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.route53secretaccesskey || echo '${ROUTE53_SECRET_ACCESS_KEY}')" \
+		-p AWS_SECRET_MANAGER_ACCESS_KEY="$(shell ([ -s './secrets/aws-secret-manager/aws_access_key_id' ] && [ -z '${AWS_SECRET_MANAGER_ACCESS_KEY}' ]) && cat ./secrets/aws-secret-manager/aws_access_key_id || echo '${AWS_SECRET_MANAGER_ACCESS_KEY}')" \
+		-p AWS_SECRET_MANAGER_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws-secret-manager/aws_secret_access_key' ] && [ -z '${AWS_SECRET_MANAGER_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws-secret-manager/aws_secret_access_key || echo '${AWS_SECRET_MANAGER_SECRET_ACCESS_KEY}')" \
 		-p GCP_API_CREDENTIALS="$(shell ([ -s './secrets/gcp.api-credentials' ] && [ -z '${GCP_API_CREDENTIALS}' ]) && cat ./secrets/gcp.api-credentials | base64 -w 0 ||  echo '${GCP_API_CREDENTIALS}')" \
 		-p DEX_SECRET="$(shell ([ -s './secrets/dex.secret' ] && [ -z '${DEX_SECRET}' ]) && cat ./secrets/dex.secret || echo '${DEX_SECRET}')" \
 		-p DEX_PASSWORD="$(shell ([ -s './secrets/dex.password' ] && [ -z '${DEX_PASSWORD}' ]) && cat ./secrets/dex.password || echo '${DEX_PASSWORD}')" \
@@ -752,6 +757,7 @@ deploy/secrets:
 		-p MAS_SSO_CRT="$(shell ([ -s './secrets/keycloak-service.crt' ] && [ -z '${MAS_SSO_CRT}' ]) && cat ./secrets/keycloak-service.crt || echo '${MAS_SSO_CRT}')" \
 		-p KAFKA_TLS_CERT="$(shell ([ -s './secrets/kafka-tls.crt' ] && [ -z '${KAFKA_TLS_CERT}' ]) && cat ./secrets/kafka-tls.crt || echo '${KAFKA_TLS_CERT}')" \
 		-p KAFKA_TLS_KEY="$(shell ([ -s './secrets/kafka-tls.key' ] && [ -z '${KAFKA_TLS_KEY}' ]) && cat ./secrets/kafka-tls.key || echo '${KAFKA_TLS_KEY}')" \
+		-p ACME_ISSUER_ACCOUNT_KEY="$(shell ([ -s './secrets/kafka-tls-certificate-management-acme-issuer-account-key.pem' ] && [ -z '${ACME_ISSUER_ACCOUNT_KEY}' ]) && cat ./secrets/kafka-tls-certificate-management-acme-issuer-account-key.pem || echo '${ACME_ISSUER_ACCOUNT_KEY}')" \
 		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
 		-p IMAGE_PULL_DOCKER_CONFIG="$(shell ([ -s './secrets/image-pull.dockerconfigjson' ] && [ -z '${IMAGE_PULL_DOCKER_CONFIG}' ]) && cat ./secrets/image-pull.dockerconfigjson | base64 -w 0 || echo '${IMAGE_PULL_DOCKER_CONFIG}')" \
 		-p KUBE_CONFIG="${KUBE_CONFIG}" \
@@ -831,6 +837,12 @@ deploy/service: STRIMZI_OPERATOR_SUBSCRIPTION_CONFIG ?= "{}"
 deploy/service: ENABLE_KAFKA_SRE_IDENTITY_PROVIDER_CONFIGURATION ?="true"
 deploy/service: ENABLE_KAFKA_OWNER ?="false"
 deploy/service: KAFKA_OWNERS ?="[]"
+deploy/service: KAFKA_TLS_CERTIFICATE_MANAGEMENT_MUST_STAPLE ?= "false"
+deploy/service: KAFKA_TLS_CERTIFICATE_MANAGEMENT_RENEWAL_WINDOW_RATIO ?= "0.3333333333"
+deploy/service: KAFKA_TLS_CERTIFICATE_MANAGEMENT_EMAIL ?= ""
+deploy/service: KAFKA_TLS_CERTIFICATE_MANAGEMENT_STORAGE_TYPE ?= "secure-storage"
+deploy/service: KAFKA_TLS_CERTIFICATE_MANAGEMENT_STRATEGY ?= "manual"
+deploy/service: KAFKA_TLS_CERTIFICATE_MANAGEMENT_SECURE_STORAGE_CACHE_TTL ?="10m"
 deploy/service: SSO_PROVIDER_TYPE ?= "mas_sso"
 deploy/service: REGISTERED_USERS_PER_ORGANISATION ?= "[{id: 13640203, any_user: true, max_allowed_instances: 5, registered_users: [], granted_quota: [{instance_type_id: standard, kafka_billing_models: [{id: standard, max_allowed_instances: 5}, {id: marketplace, max_allowed_instances: 5}, {id: enterprise, max_allowed_instances: 5}]}]}, {id: 12147054, any_user: true, max_allowed_instances: 1, registered_users: [], granted_quota: [{instance_type_id: standard, kafka_billing_models: [{id: standard, max_allowed_instances: 1}, {id: enterprise, max_allowed_instances: 1}]}]}, {id: 13639843, any_user: true, max_allowed_instances: 1, registered_users: [], granted_quota: [{instance_type_id: standard, kafka_billing_models: [{id: standard, max_allowed_instances: 1}, {id: enterprise, max_allowed_instances: 1}]}]}, {id: 13785172, any_user: true, max_allowed_instances: 1, registered_users: [], granted_quota: [{instance_type_id: standard, kafka_billing_models: [{id: standard, max_allowed_instances: 1}, {id: enterprise, max_allowed_instances: 1}]}]}, {id: 13645369, any_user: true, max_allowed_instances: 3, registered_users: [], granted_quota: [{instance_type_id: standard, kafka_billing_models: [{id: standard, max_allowed_instances: 3}, {id: enterprise, max_allowed_instances: 3}]}]}]"
 deploy/service: DYNAMIC_SCALING_CONFIG ?= "{new_data_plane_openshift_version: '', enable_dynamic_data_plane_scale_up: false, enable_dynamic_data_plane_scale_down: false, compute_machine_per_cloud_provider: {aws: {cluster_wide_workload: {compute_machine_type: m5.2xlarge, compute_node_autoscaling: {min_compute_nodes: 3, max_compute_nodes: 18}}, kafka_workload_per_instance_type: {standard: {compute_machine_type: r5.xlarge, compute_node_autoscaling: {min_compute_nodes: 3, max_compute_nodes: 18}}, developer: {compute_machine_type: m5.2xlarge, compute_node_autoscaling: {min_compute_nodes: 1, max_compute_nodes: 3}}}}, gcp: {cluster_wide_workload: {compute_machine_type: custom-8-32768, compute_node_autoscaling: {min_compute_nodes: 3, max_compute_nodes: 18}}, kafka_workload_per_instance_type: {standard: {compute_machine_type: custom-8-32768, compute_node_autoscaling: {min_compute_nodes: 3, max_compute_nodes: 18}}, developer: {compute_machine_type: custom-8-32768, compute_node_autoscaling: {min_compute_nodes: 1, max_compute_nodes: 3}}}}}}"
@@ -921,6 +933,12 @@ deploy/service: deploy/envoy deploy/route
 		-p ADMIN_API_SSO_BASE_URL="${ADMIN_API_SSO_BASE_URL}" \
 		-p ADMIN_API_SSO_ENDPOINT_URI="${ADMIN_API_SSO_ENDPOINT_URI}" \
 		-p ADMIN_API_SSO_REALM="${ADMIN_API_SSO_REALM}" \
+		-p KAFKA_TLS_CERTIFICATE_MANAGEMENT_EMAIL=${KAFKA_TLS_CERTIFICATE_MANAGEMENT_EMAIL} \
+		-p KAFKA_TLS_CERTIFICATE_MANAGEMENT_STRATEGY=${KAFKA_TLS_CERTIFICATE_MANAGEMENT_STRATEGY} \
+		-p KAFKA_TLS_CERTIFICATE_MANAGEMENT_MUST_STAPLE=${KAFKA_TLS_CERTIFICATE_MANAGEMENT_MUST_STAPLE} \
+		-p KAFKA_TLS_CERTIFICATE_MANAGEMENT_STORAGE_TYPE=${KAFKA_TLS_CERTIFICATE_MANAGEMENT_STORAGE_TYPE} \
+		-p KAFKA_TLS_CERTIFICATE_MANAGEMENT_RENEWAL_WINDOW_RATIO=${KAFKA_TLS_CERTIFICATE_MANAGEMENT_RENEWAL_WINDOW_RATIO} \
+		-p KAFKA_TLS_CERTIFICATE_MANAGEMENT_SECURE_STORAGE_CACHE_TTL=${KAFKA_TLS_CERTIFICATE_MANAGEMENT_SECURE_STORAGE_CACHE_TTL} \
 		| $(OC) apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 

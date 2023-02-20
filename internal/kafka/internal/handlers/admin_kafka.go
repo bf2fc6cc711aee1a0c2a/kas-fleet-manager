@@ -16,6 +16,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/kafkatlscertmgmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -29,16 +30,20 @@ type adminKafkaHandler struct {
 
 	providerConfig *config.ProviderConfig
 	kafkaConfig    *config.KafkaConfig
+
+	kafkaTLSCertificateManagementService kafkatlscertmgmt.KafkaTLSCertificateManagementService
 }
 
-func NewAdminKafkaHandler(kafkaService services.KafkaService, accountService account.AccountService, providerConfig *config.ProviderConfig, clusterService services.ClusterService, kafkaConfig *config.KafkaConfig) *adminKafkaHandler {
+func NewAdminKafkaHandler(kafkaService services.KafkaService, accountService account.AccountService, providerConfig *config.ProviderConfig, clusterService services.ClusterService, kafkaConfig *config.KafkaConfig,
+	kafkaTLSCertificateManagementService kafkatlscertmgmt.KafkaTLSCertificateManagementService) *adminKafkaHandler {
 	return &adminKafkaHandler{
 		kafkaService:   kafkaService,
 		accountService: accountService,
 		clusterService: clusterService,
 
-		providerConfig: providerConfig,
-		kafkaConfig:    kafkaConfig,
+		providerConfig:                       providerConfig,
+		kafkaConfig:                          kafkaConfig,
+		kafkaTLSCertificateManagementService: kafkaTLSCertificateManagementService,
 	}
 }
 
@@ -122,15 +127,7 @@ func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &kafkaUpdateReq,
 		Validate: []handlers.Validate{
-			func() *errors.ServiceError { // Validate kafka found
-				if err != nil {
-					return err
-				}
-				if kafkaRequest == nil {
-					return errors.NotFound("unable to find kafka with id '%s'", id)
-				}
-				return nil
-			},
+			validateGettingKafkaFromDatabase(id, kafkaRequest, err),
 			ValidateKafkaUpdateFields(
 				&kafkaUpdateReq,
 			),
@@ -214,6 +211,35 @@ func (h *adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
+func (h *adminKafkaHandler) RevokeCertificateOfAKafka(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	ctx := r.Context()
+	kafkaRequest, err := h.kafkaService.Get(ctx, id)
+
+	var kafkaCertificationRevocationRequest private.KafkacertificateRevocationRequest
+	cfg := &handlers.HandlerConfig{
+		MarshalInto: &kafkaCertificationRevocationRequest,
+		Validate: []handlers.Validate{
+			validateGettingKafkaFromDatabase(id, kafkaRequest, err),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			reason, err := kafkatlscertmgmt.ParseReason(int(kafkaCertificationRevocationRequest.RevocationReason))
+			if err != nil {
+				return nil, errors.NewWithCause(errors.ErrorBadRequest, err, err.Error())
+			}
+
+			certRevocationErr := h.kafkaTLSCertificateManagementService.RevokeCertificate(ctx, kafkaRequest.KafkasRoutesBaseDomainName, reason)
+
+			if certRevocationErr != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, certRevocationErr, certRevocationErr.Error())
+			}
+
+			return nil, nil
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusNoContent)
+}
+
 func (h *adminKafkaHandler) validateUpdateKafkaSuspended(kafkaRequest *dbapi.KafkaRequest, kafkaUpdateReq *private.KafkaUpdateRequest) handlers.Validate {
 	return func() *errors.ServiceError {
 		if kafkaUpdateReq.Suspended == nil {
@@ -265,6 +291,18 @@ func (h *adminKafkaHandler) validateUpdateKafkaCanBeResumed(kafkaRequest *dbapi.
 			return errors.New(errors.ErrorValidation, "kafka instance with a status of %q cannot be resumed due to the instance is suspended and it is within its grace period: start of grace period: %s ", kafkaRequest.Status, startOfGracePeriod)
 		}
 
+		return nil
+	}
+}
+
+func validateGettingKafkaFromDatabase(kafkaId string, kafkaFromDatabase *dbapi.KafkaRequest, err *errors.ServiceError) func() *errors.ServiceError {
+	return func() *errors.ServiceError {
+		if err != nil {
+			return err
+		}
+		if kafkaFromDatabase == nil {
+			return errors.NotFound("unable to find kafka with id %q", kafkaId)
+		}
 		return nil
 	}
 }

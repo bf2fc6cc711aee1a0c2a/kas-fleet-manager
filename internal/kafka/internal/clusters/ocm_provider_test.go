@@ -31,11 +31,7 @@ func TestOCMProvider_Create(t *testing.T) {
 	type args struct {
 		clusterReq types.ClusterRequest
 	}
-	awsConfig := &config.AWSConfig{
-		AccountID:       "",
-		AccessKey:       "",
-		SecretAccessKey: "",
-	}
+	awsConfig := config.NewAWSConfig()
 	gcpConfig := &config.GCPConfig{}
 	osdCreateConfig := &config.DataplaneClusterConfig{
 		DynamicScalingConfig: config.DynamicScalingConfig{

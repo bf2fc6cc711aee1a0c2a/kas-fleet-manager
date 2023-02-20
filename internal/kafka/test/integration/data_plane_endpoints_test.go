@@ -618,11 +618,11 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 
 	cert := "some-fake-cert"
 	key := "some-fake-key"
-	startHook := func(c *config.KafkaConfig) {
-		c.EnableKafkaExternalCertificate = true
+	startHook := func(c *config.KafkaConfig, tlsConfig *config.KafkaTLSCertificateManagementConfig) {
+		tlsConfig.EnableKafkaExternalCertificate = true
 		c.EnableKafkaCNAMERegistration = true
-		c.KafkaTLSCert = cert
-		c.KafkaTLSKey = key
+		tlsConfig.ManualCertificateManagementConfig.KafkaTLSCert = cert
+		tlsConfig.ManualCertificateManagementConfig.KafkaTLSKey = key
 	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
