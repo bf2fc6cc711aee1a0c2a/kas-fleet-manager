@@ -361,6 +361,8 @@ Additionally, make sure that the functionality is enabled by setting the
 ## Configure Sentry logging
 Fleet Manager can be configured to send its logs to the
 [Sentry](https://sentry.io/) logging service.
+Additionally, a logging service that is API compatible with Sentry like
+[GlitchTip](https://glitchtip.com/) is also supported.
 
 In order for the Fleet Manager to be able to start, create the following files:
 ```

@@ -151,10 +151,10 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 
   
 ## Sentry
-- **enable-sentry**: Enables Sentry error reporting.
+- **enable-sentry**: Enable Sentry error monitoring. A Sentry API-compatible service like GlitchTip is also supported.
     - `sentry-key-file` [Required]: The path to the file containing the Sentry key (default: `'secrets/sentry.key'`).
     - `sentry-project` [Required]: The Sentry project ID.
-    - `sentry-url` [Required]: The base URL of the Sentry instance.
+    - `sentry-url` [Required]: Base URL of Sentry instance. A Sentry API-compatible service like GlitchTip is also supported.
     - `enable-sentry-debug` [Optional]: Enables Sentry debug logging (default: `false`).
     - `sentry-timeout` [Optional]: The timeout duration for requests to Sentry.
 
