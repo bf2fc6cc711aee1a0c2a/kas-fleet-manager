@@ -116,6 +116,13 @@ var (
 			SubscriptionStartingCSV: "dummy",
 		},
 	}
+	keycloakServiceMock = &sso.KeycloakServiceMock{
+		GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+			return &keycloak.KeycloakRealmConfig{
+				ValidIssuerURI: "dummy",
+			}
+		},
+	}
 )
 
 func TestClusterManager_GetID(t *testing.T) {
@@ -774,7 +781,7 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 					},
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
 						// the resource set must contain 8 items: the observability resources plus two image pull secrets
-						if len(resources.Resources) != 8 {
+						if len(resources.Resources) != 10 {
 							return apiErrors.GeneralError(fmt.Sprintf("expected 8 items in the resource set but got %v", len(resources.Resources)))
 						}
 						return nil
@@ -820,6 +827,7 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
 					KasFleetshardOperatorAddon: tt.fields.agentOperator,
 					ProviderFactory:            tt.fields.providerFactory,
+					SsoService:                 keycloakServiceMock,
 				},
 			}
 			g.Expect(len(c.processProvisionedClusters()) > 0).To(gomega.Equal(tt.wantErr))
@@ -1084,6 +1092,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
 					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
 					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
+					SsoService:                 keycloakServiceMock,
 				},
 			}
 			g.Expect(c.reconcileReadyCluster(tt.args.cluster) != nil).To(gomega.Equal(tt.wantErr))
@@ -1265,6 +1274,7 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
 					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
 					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
+					SsoService:                 keycloakServiceMock,
 				},
 			}
 			g.Expect(c.reconcileWaitingForKasFleetshardOperatorCluster(tt.args.cluster) != nil).To(gomega.Equal(tt.wantErr))
@@ -1554,6 +1564,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 					KasFleetshardOperatorAddon: tt.fields.agentOperator,
 					ObservabilityConfiguration: tt.fields.observabilityConfiguration,
 					ProviderFactory:            tt.fields.providerFactory,
+					SsoService:                 keycloakServiceMock,
 				},
 			}
 			g.Expect(c.reconcileProvisionedCluster(tt.args.cluster) != nil).To(gomega.Equal(tt.wantErr))
@@ -1657,6 +1668,7 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
 					OsdIdpKeycloakService:      tt.fields.osdIdpKeycloakService,
 					KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
+					SsoService:                 keycloakServiceMock,
 				},
 			}
 			g.Expect(len(c.processWaitingForKasFleetshardOperatorClusters()) > 0).To(gomega.Equal(tt.wantErr))
@@ -2323,7 +2335,6 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 	}
 
 	resources = append(resources,
-
 		&k8sCoreV1.Secret{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: metav1.SchemeGroupVersion.Version,
@@ -2411,7 +2422,17 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				Package:                observabilitySubscriptionName,
 			},
 		},
-	)
+		&k8sCoreV1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "observability-proxy-credentials",
+				Namespace: observabilityNamespace,
+			},
+			StringData: map[string]string{
+				"client_id":     cluster.ClientID,
+				"client_secret": cluster.ClientSecret,
+				"issuer_url":    "dummy",
+			},
+		})
 
 	if cluster.ProviderType == api.ClusterProviderStandalone {
 		strimziNamespace = clusterConfig.StrimziOperatorOLMConfig.Namespace
@@ -2437,20 +2458,21 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 	}
 
 	if clusterConfig.ImagePullDockerConfigContent != "" {
-		resources = append(resources, &k8sCoreV1.Secret{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: metav1.SchemeGroupVersion.Version,
-				Kind:       "Secret",
+		resources = append(resources,
+			&k8sCoreV1.Secret{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: metav1.SchemeGroupVersion.Version,
+					Kind:       "Secret",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      constants.ImagePullSecretName,
+					Namespace: strimziNamespace,
+				},
+				Type: k8sCoreV1.SecretTypeDockerConfigJson,
+				Data: map[string][]byte{
+					k8sCoreV1.DockerConfigJsonKey: []byte(clusterConfig.ImagePullDockerConfigContent),
+				},
 			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      constants.ImagePullSecretName,
-				Namespace: strimziNamespace,
-			},
-			Type: k8sCoreV1.SecretTypeDockerConfigJson,
-			Data: map[string][]byte{
-				k8sCoreV1.DockerConfigJsonKey: []byte(clusterConfig.ImagePullDockerConfigContent),
-			},
-		},
 			&k8sCoreV1.Secret{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: metav1.SchemeGroupVersion.Version,
@@ -2459,6 +2481,20 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      constants.ImagePullSecretName,
 					Namespace: kasFleetshardNamespace,
+				},
+				Type: k8sCoreV1.SecretTypeDockerConfigJson,
+				Data: map[string][]byte{
+					k8sCoreV1.DockerConfigJsonKey: []byte(clusterConfig.ImagePullDockerConfigContent),
+				},
+			},
+			&k8sCoreV1.Secret{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: metav1.SchemeGroupVersion.Version,
+					Kind:       "Secret",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      constants.ImagePullSecretName,
+					Namespace: observabilityNamespace,
 				},
 				Type: k8sCoreV1.SecretTypeDockerConfigJson,
 				Data: map[string][]byte{
@@ -2582,6 +2618,7 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 					ObservabilityConfiguration: &obsConfig,
 					DataplaneClusterConfig:     &clusterConfig,
 					OCMConfig:                  &ocm.OCMConfig{},
+					SsoService:                 keycloakServiceMock,
 				},
 			}
 

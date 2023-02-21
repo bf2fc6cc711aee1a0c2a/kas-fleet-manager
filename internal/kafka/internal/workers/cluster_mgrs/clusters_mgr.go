@@ -111,6 +111,7 @@ type ClusterManagerOptions struct {
 	ClusterService             services.ClusterService
 	CloudProvidersService      services.CloudProvidersService
 	KasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+	SsoService                 sso.KafkaKeycloakService
 	OsdIdpKeycloakService      sso.OsdKeycloakService
 	ProviderFactory            clusters.ProviderFactory
 }
@@ -770,6 +771,7 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 		c.buildObservabilityCatalogSourceResource(),
 		c.buildObservabilityOperatorGroupResource(),
 		c.buildObservabilitySubscriptionResource(),
+		c.buildObservabilityRemoteWriteServiceAccountCredential(&cluster),
 	)
 
 	strimziNamespace := strimziAddonNamespace
@@ -810,6 +812,9 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 		r = append(r, s)
 	}
 	if s := c.buildImagePullSecret(kasFleetshardNamespace); s != nil {
+		r = append(r, s)
+	}
+	if s := c.buildImagePullSecret(observabilityNamespace); s != nil {
 		r = append(r, s)
 	}
 	return types.ResourceSet{
@@ -871,6 +876,20 @@ func (c *ClusterManager) buildObservatoriumDexSecretResource() *k8sCoreV1.Secret
 		},
 		Type:       k8sCoreV1.SecretTypeOpaque,
 		StringData: stringDataMap,
+	}
+}
+
+func (c *ClusterManager) buildObservabilityRemoteWriteServiceAccountCredential(cluster *api.Cluster) *k8sCoreV1.Secret {
+	return &k8sCoreV1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "observability-proxy-credentials",
+			Namespace: observabilityNamespace,
+		},
+		StringData: map[string]string{
+			"client_id":     cluster.ClientID,
+			"client_secret": cluster.ClientSecret,
+			"issuer_url":    c.SsoService.GetRealmConfig().ValidIssuerURI,
+		},
 	}
 }
 
