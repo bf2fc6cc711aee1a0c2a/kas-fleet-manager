@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9-minimal:9.1.0 AS builder
+FROM registry.access.redhat.com/ubi9-minimal:9.1.0-1760.1675784957 AS builder
  
 RUN microdnf install -y tar gzip make which git
 
@@ -14,7 +14,7 @@ COPY . ./
 RUN go mod vendor 
 RUN make binary
 
-FROM registry.access.redhat.com/ubi9-minimal:9.1.0
+FROM registry.access.redhat.com/ubi9-minimal:9.1.0-1760.1675784957
 
 COPY --from=builder /workspace/kas-fleet-manager /usr/local/bin/
 
