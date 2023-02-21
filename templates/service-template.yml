@@ -878,7 +878,7 @@ objects:
           - name: observability-cwl-config
             secret:
               secretName: kas-fleet-manager-observability-cwl-config
-            optional: true
+              optional: true
           - name: kas-fleet-manager-providers-config
             configMap:
               name: kas-fleet-manager-providers-config
