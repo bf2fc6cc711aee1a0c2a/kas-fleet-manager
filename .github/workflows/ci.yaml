@@ -140,7 +140,7 @@ jobs:
           make verify lint/templates binary test test/integration
         timeout-minutes: 14
       - name: Upload unit tests code coverage to codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           files: ./coverage.out
           flags: unittests # optional
