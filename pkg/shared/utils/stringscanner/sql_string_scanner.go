@@ -47,6 +47,13 @@ func (s *scanner) Init(txt string) {
 			} else {
 				sendCurrentTokens()
 			}
+		case ',':
+			if quoted {
+				tokens = append(tokens, Token{TokenType: LITERAL, Value: string(currentChar), Position: i})
+				break
+			}
+			sendCurrentTokens()
+			s.tokens = append(s.tokens, Token{TokenType: LITERAL, Value: string(currentChar), Position: i})
 		case '(':
 			fallthrough
 		case ')':

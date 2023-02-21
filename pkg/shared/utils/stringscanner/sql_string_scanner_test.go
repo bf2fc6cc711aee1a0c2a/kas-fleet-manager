@@ -36,6 +36,20 @@ func Test_SQLStringScanner(t *testing.T) {
 			},
 		},
 		{
+			name:  "Test quoted string with comma",
+			value: "SELECT * FROM ADDRESS_BOOK WHERE SURNAME = 'surname with , comma'",
+			expectedTokens: []Token{
+				{TokenType: LITERAL, Value: "SELECT", Position: 0},
+				{TokenType: LITERAL, Value: "*", Position: 7},
+				{TokenType: LITERAL, Value: "FROM", Position: 9},
+				{TokenType: LITERAL, Value: "ADDRESS_BOOK", Position: 14},
+				{TokenType: LITERAL, Value: "WHERE", Position: 27},
+				{TokenType: LITERAL, Value: "SURNAME", Position: 33},
+				{TokenType: OP, Value: "=", Position: 41},
+				{TokenType: LITERAL, Value: "'surname with , comma'", Position: 43},
+			},
+		},
+		{
 			name:  "Test escaped chars",
 			value: `SELECT * FROM ADDRESS_BOOK WHERE SURNAME = 'surname with spaces and \'quote\''`,
 			expectedTokens: []Token{

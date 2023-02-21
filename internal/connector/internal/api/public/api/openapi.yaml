@@ -180,7 +180,7 @@ paths:
           * Connector Types: id, created_at, updated_at, version, name, description, label, channel, featured_rank, pricing_tier
           * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url
 
-          Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`.
+          Allowed operators are `<>`, `=`, `IN`, `NOT IN`, `LIKE`, or `ILIKE`.
           Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
 
           Examples:
@@ -311,7 +311,7 @@ paths:
           * Connector Types: id, created_at, updated_at, version, name, description, label, channel, featured_rank, pricing_tier
           * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url
 
-          Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`.
+          Allowed operators are `<>`, `=`, `IN`, `NOT IN`, `LIKE`, or `ILIKE`.
           Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
 
           Examples:
@@ -464,7 +464,7 @@ paths:
           * Connector Types: id, created_at, updated_at, version, name, description, label, channel, featured_rank, pricing_tier
           * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url
 
-          Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`.
+          Allowed operators are `<>`, `=`, `IN`, `NOT IN`, `LIKE`, or `ILIKE`.
           Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
 
           Examples:
@@ -873,7 +873,7 @@ paths:
           * Connector Types: id, created_at, updated_at, version, name, description, label, channel, featured_rank, pricing_tier
           * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url
 
-          Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`.
+          Allowed operators are `<>`, `=`, `IN`, `NOT IN`, `LIKE`, or `ILIKE`.
           Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
 
           Examples:
@@ -1340,7 +1340,7 @@ paths:
           * Connector Types: id, created_at, updated_at, version, name, description, label, channel, featured_rank, pricing_tier
           * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url
 
-          Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`.
+          Allowed operators are `<>`, `=`, `IN`, `NOT IN`, `LIKE`, or `ILIKE`.
           Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
 
           Examples:
@@ -1502,7 +1502,7 @@ paths:
           * Connector Types: id, created_at, updated_at, version, name, description, label, channel, featured_rank, pricing_tier
           * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url
 
-          Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`.
+          Allowed operators are `<>`, `=`, `IN`, `NOT IN`, `LIKE`, or `ILIKE`.
           Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
 
           Examples:
@@ -2006,7 +2006,7 @@ components:
         * Connector Types: id, created_at, updated_at, version, name, description, label, channel, featured_rank, pricing_tier
         * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url
 
-        Allowed operators are `<>`, `=`, `LIKE`, or `ILIKE`.
+        Allowed operators are `<>`, `=`, `IN`, `NOT IN`, `LIKE`, or `ILIKE`.
         Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.
 
         Examples:
