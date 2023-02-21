@@ -114,6 +114,8 @@ data:
                       prefix_rewrite: /stats/prometheus
               http_filters:
               - name: envoy.filters.http.router
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
 
       # This listener is used to accept inbound API requests.
       - name: ingress
@@ -208,7 +210,9 @@ data:
 
               # This is mandatory in order to have the HTTP routes above.
               - name: envoy.filters.http.router
-
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+              
               # We need this in order to generate JSON responses according to
               # our API guidelines, otherwise Envoy will generate plain text
               # responses.
