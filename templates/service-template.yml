@@ -855,6 +855,10 @@ objects:
                 weight: 100
           serviceAccount: kas-fleet-manager
           serviceAccountName: kas-fleet-manager
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
           volumes:
           - name: tls
             secret:
@@ -939,6 +943,11 @@ objects:
           - name: migration
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
             imagePullPolicy: ${IMAGE_PULL_POLICY}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
             volumeMounts:
             - name: service
               mountPath: /secrets/service
@@ -962,6 +971,11 @@ objects:
           - name: service
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
             imagePullPolicy: ${IMAGE_PULL_POLICY}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
             volumeMounts:
             - name: tls
               mountPath: /secrets/tls
@@ -1219,6 +1233,11 @@ objects:
           - name: envoy-sidecar
             image: ${ENVOY_IMAGE}
             imagePullPolicy: ${IMAGE_PULL_POLICY}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
             command:
             - envoy
             - --config-path
