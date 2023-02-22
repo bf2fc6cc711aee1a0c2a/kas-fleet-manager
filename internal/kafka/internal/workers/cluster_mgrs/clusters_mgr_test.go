@@ -2423,6 +2423,10 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 			},
 		},
 		&k8sCoreV1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
+				Kind:       "Secret",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "observability-proxy-credentials",
 				Namespace: observabilityNamespace,
