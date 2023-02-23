@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	"reflect"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -262,47 +260,4 @@ func (k *KafkaRequest) IsUsingSharedTLSCertificate(kafkaConfig *config.KafkaConf
 // Otherwise returns false
 func (k *KafkaRequest) IsADeveloperInstance() bool {
 	return k.InstanceType == types.DEVELOPER.String()
-}
-
-//////////////////////////////////
-/// functional builder
-
-type kafkaRequestFunctionalParam func(request *KafkaRequest)
-
-// makeFunc creates a functional parameter for the specified struct field and with the specified value type
-func makeFunc[T any](dest string) func(value T) kafkaRequestFunctionalParam {
-	return func(value T) kafkaRequestFunctionalParam {
-		return func(request *KafkaRequest) {
-			r := reflect.ValueOf(request)
-			reflect.Indirect(r).FieldByName(dest).Set(reflect.ValueOf(value))
-		}
-	}
-}
-
-var WithID = makeFunc[string]("ID")
-var WithStatus = makeFunc[string]("Status")
-var WithInstanceType = makeFunc[string]("InstanceType")
-var WithSizeID = makeFunc[string]("SizeId")
-var WithActualBillingModel = makeFunc[string]("ActualKafkaBillingModel")
-var WithDesiredBillingModel = makeFunc[string]("DesiredKafkaBillingModel")
-var WithName = makeFunc[string]("name")
-
-func WithDefaultTestValues() kafkaRequestFunctionalParam {
-	return func(request *KafkaRequest) {
-		request.ID = uuid.New().String()
-		request.Name = uuid.New().String()
-		request.Status = constants.KafkaRequestStatusAccepted.String()
-		request.InstanceType = types.STANDARD.String()
-		request.SizeId = "x1"
-		request.DesiredKafkaBillingModel = "standard"
-		request.ActualKafkaBillingModel = "standard"
-	}
-}
-
-func NewKafkaRequest(params ...kafkaRequestFunctionalParam) *KafkaRequest {
-	k := &KafkaRequest{}
-	for _, functionalParam := range params {
-		functionalParam(k)
-	}
-	return k
 }

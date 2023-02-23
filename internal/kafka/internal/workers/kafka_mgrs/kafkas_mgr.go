@@ -129,9 +129,9 @@ func (k *KafkaManager) Reconcile() []error {
 		}
 	}
 
-	reconcileBillingModelErrors := k.reconcileBillingModel(kafkas)
-	if reconcileBillingModelErrors != nil {
-		wrappedError := errors.Wrap(reconcileBillingModelErrors, "failed to reconcile billing models for kafka instances")
+	migrateEmptyBillingModelErrors := k.tempMigrateEmptyBillingModels(kafkas)
+	if migrateEmptyBillingModelErrors != nil {
+		wrappedError := errors.Wrap(migrateEmptyBillingModelErrors, "failed to reconcile billing models for kafka instances")
 		encounteredErrors = append(encounteredErrors, wrappedError)
 	}
 
@@ -395,28 +395,31 @@ func (k *KafkaManager) updateClusterStatusCapacityMaxMetric(c services.KafkaStre
 
 // TODO: this is a temporary reconciler added to value the `actual_kafka_billing_model` and `desired_kafka_billing_model` for
 // kafkas where billing_model has always been empty. See https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pull/1115#discussion_r902415419 for details
-func (k *KafkaManager) reconcileBillingModel(kafkas dbapi.KafkaList) serviceErr.ErrorList {
+// ** This is to be removed after the issue is fixed **
+// Issue: https://issues.redhat.com/browse/MGDSTRM-10766
+func (k *KafkaManager) tempMigrateEmptyBillingModels(kafkas dbapi.KafkaList) serviceErr.ErrorList {
 	var svcErrors serviceErr.ErrorList
+
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
+	if factoryErr != nil {
+		svcErrors = append(svcErrors, errors.Wrap(factoryErr,
+			"unable to get the quota service",
+		))
+		// if we are not able to get the quota service, we can't retrieve the billing model
+		return svcErrors
+	}
+
+	amsQuotaService, ok := quotaService.(quota.AMSQuotaService)
+	if !ok {
+		// we are not using AMS: we can't infer the billing model from the subscription
+		return svcErrors
+	}
 
 	for _, kafka := range kafkas {
 		if kafka.ActualKafkaBillingModel != "" {
 			continue
 		}
 		// infer the billing model from the subscription
-		quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
-		if factoryErr != nil {
-			svcErrors = append(svcErrors, errors.Wrap(factoryErr,
-				"unable to get the quota service",
-			))
-			// if we are not able to get the quota service, there is no point in continuing the loop
-			break
-		}
-
-		amsQuotaService, ok := quotaService.(quota.AMSQuotaService)
-		if !ok {
-			// we are not using AMS: we can't infer the billing model from the subscription
-			break
-		}
 
 		subscription, ok, err := amsQuotaService.GetSubscriptionByID(kafka.SubscriptionId)
 		if err != nil {
@@ -432,11 +435,11 @@ func (k *KafkaManager) reconcileBillingModel(kafkas dbapi.KafkaList) serviceErr.
 
 		if err := k.kafkaService.Update(kafka); err != nil {
 			svcErrors = append(svcErrors, errors.Wrap(err,
-				"unable to get the update kafka",
+				"unable to update the kafka request",
 			))
-		} else {
-			logger.Logger.Infof("billing model for kafka %q updated to %q", kafka.ClusterID, kafka.ActualKafkaBillingModel)
+			continue
 		}
+		logger.Logger.Infof("billing model for kafka %q updated to %q", kafka.ClusterID, kafka.ActualKafkaBillingModel)
 	}
 
 	return svcErrors
