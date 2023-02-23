@@ -274,7 +274,7 @@ func (s *StandaloneProvider) buildKASFleetShardSyncSecret(params []types.Paramet
 	kasFleetshardOLMConfig := s.dataplaneClusterConfig.KasFleetshardOperatorOLMConfig
 	return &v1.Secret{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
+			APIVersion: v1.SchemeGroupVersion.String(),
 			Kind:       "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -319,7 +319,7 @@ func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec,
 func (s *StandaloneProvider) buildOpenIDPClientSecret(identityProvider types.IdentityProviderInfo) *v1.Secret {
 	return &v1.Secret{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: metav1.SchemeGroupVersion.Version,
+			APIVersion: v1.SchemeGroupVersion.String(),
 			Kind:       "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
