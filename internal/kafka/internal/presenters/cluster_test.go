@@ -218,7 +218,7 @@ func Test_PresentEnterpriseCluster(t *testing.T) {
 					CloudProvider:                 "azure",
 					Region:                        "af-east",
 					MultiAZ:                       true,
-					DynamicCapacityInfo:           api.JSON([]byte(`{"standard":{"max_nodes":15,"max_units":5,"remaining_units":3}}`)),
+					DynamicCapacityInfo:           api.JSON(`{"standard":{"max_nodes":15,"max_units":5,"remaining_units":3}}`),
 				},
 				kafkaConfig: validKafkaConfig,
 			},
@@ -254,6 +254,14 @@ func Test_PresentEnterpriseCluster(t *testing.T) {
 									Id:               "x3",
 									CapacityConsumed: 3,
 								},
+								{
+									Id:               "x4",
+									CapacityConsumed: 4,
+								},
+								{
+									Id:               "x5",
+									CapacityConsumed: 5,
+								},
 							},
 							SupportedBillingModels: []public.SupportedKafkaBillingModel{
 								{
@@ -267,7 +275,7 @@ func Test_PresentEnterpriseCluster(t *testing.T) {
 			},
 		},
 		{
-			name: "should successfully convert api.Cluster to EnterpriseCluster with capacity information and supported types that has an empty list of sizes when there is not capacity left",
+			name: "should successfully convert api.Cluster to EnterpriseCluster with capacity information and a full list of supported sizes",
 			args: args{
 				cluster: api.Cluster{
 					ClusterID:                     clusterId,
@@ -298,8 +306,29 @@ func Test_PresentEnterpriseCluster(t *testing.T) {
 				SupportedInstanceTypes: public.SupportedKafkaInstanceTypesList{
 					InstanceTypes: []public.SupportedKafkaInstanceType{
 						{
-							Id:    types.STANDARD.String(),
-							Sizes: []public.SupportedKafkaSize{},
+							Id: types.STANDARD.String(),
+							Sizes: []public.SupportedKafkaSize{
+								{
+									Id:               "x1",
+									CapacityConsumed: 1,
+								},
+								{
+									Id:               "x2",
+									CapacityConsumed: 2,
+								},
+								{
+									Id:               "x3",
+									CapacityConsumed: 3,
+								},
+								{
+									Id:               "x4",
+									CapacityConsumed: 4,
+								},
+								{
+									Id:               "x5",
+									CapacityConsumed: 5,
+								},
+							},
 							SupportedBillingModels: []public.SupportedKafkaBillingModel{
 								{
 									Id: constants.BillingModelEnterprise.String(),

@@ -1134,6 +1134,18 @@ func Test_GetEnterpriseCluster(t *testing.T) {
 									Id:               "x1",
 									CapacityConsumed: 1,
 								},
+								{
+									Id:               "x2",
+									CapacityConsumed: 2,
+								},
+								{
+									Id:               "x3",
+									CapacityConsumed: 3,
+								},
+								{
+									Id:               "x4",
+									CapacityConsumed: 4,
+								},
 							},
 							SupportedBillingModels: []public.SupportedKafkaBillingModel{
 								{

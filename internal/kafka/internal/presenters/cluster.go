@@ -11,7 +11,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 )
 
 func PresentEnterpriseClusterListItem(cluster api.Cluster) public.EnterpriseClusterListItem {
@@ -75,7 +74,7 @@ func PresentEnterpriseCluster(cluster api.Cluster, consumedStreamingUnitsInTheCl
 	storedCapacityInfo, ok := cluster.RetrieveDynamicCapacityInfo()[types.STANDARD.String()]
 	if ok {
 		presentedCluster.CapacityInformation = presentEnterpriseClusterCapacityInfo(consumedStreamingUnitsInTheCluster, storedCapacityInfo)
-		supportedInstanceTypes, err := presentEnterpriseClusterSupportedInstanceTypes(presentedCluster.CapacityInformation.RemainingKafkaStreamingUnits, kafkaConfig)
+		supportedInstanceTypes, err := presentEnterpriseClusterSupportedInstanceTypes(kafkaConfig)
 		if err != nil {
 			return public.EnterpriseCluster{}, err
 		}
@@ -99,7 +98,7 @@ func presentEnterpriseClusterCapacityInfo(consumedStreamingUnitsInTheCluster int
 	}
 }
 
-func presentEnterpriseClusterSupportedInstanceTypes(remainingCapacity int32, kafkaConfig *config.KafkaConfig) (public.SupportedKafkaInstanceTypesList, error) {
+func presentEnterpriseClusterSupportedInstanceTypes(kafkaConfig *config.KafkaConfig) (public.SupportedKafkaInstanceTypesList, error) {
 	// enterprise clusters only supports standard instance type for now. It is safe to hardcode this.
 	standardInstanceType, err := kafkaConfig.SupportedInstanceTypes.Configuration.GetKafkaInstanceTypeByID(types.STANDARD.String())
 	if err != nil { // this should never happen, lets log an error in case it happens.
@@ -118,15 +117,7 @@ func presentEnterpriseClusterSupportedInstanceTypes(remainingCapacity int32, kaf
 		}, err
 	}
 
-	availableSizes := arrays.Filter(standardInstanceType.Sizes, func(size config.KafkaInstanceSize) bool {
-		return int32(size.CapacityConsumed) <= remainingCapacity
-	})
-
-	presentedSizes := []public.SupportedKafkaSize{}
-
-	if len(availableSizes) > 0 {
-		presentedSizes = GetSupportedSizes(&config.KafkaInstanceType{Sizes: availableSizes})
-	}
+	presentedSizes := GetSupportedSizes(&config.KafkaInstanceType{Sizes: standardInstanceType.Sizes})
 
 	return public.SupportedKafkaInstanceTypesList{
 		InstanceTypes: []public.SupportedKafkaInstanceType{
