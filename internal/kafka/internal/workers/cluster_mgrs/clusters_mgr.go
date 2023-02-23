@@ -842,7 +842,7 @@ func (c *ClusterManager) buildObservabilityCloudwatchLoggingCredentialsSecret() 
 	}
 	return &k8sCoreV1.Secret{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: metav1.SchemeGroupVersion.Version,
+			APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
 			Kind:       "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -867,7 +867,7 @@ func (c *ClusterManager) buildObservatoriumDexSecretResource() *k8sCoreV1.Secret
 	}
 	return &k8sCoreV1.Secret{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: metav1.SchemeGroupVersion.Version,
+			APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
 			Kind:       "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -912,7 +912,7 @@ func (c *ClusterManager) buildObservatoriumSSOSecretResource() *k8sCoreV1.Secret
 	}
 	return &k8sCoreV1.Secret{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: metav1.SchemeGroupVersion.Version,
+			APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
 			Kind:       "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -989,7 +989,7 @@ func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secre
 
 	return &k8sCoreV1.Secret{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: metav1.SchemeGroupVersion.Version,
+			APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
 			Kind:       "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{

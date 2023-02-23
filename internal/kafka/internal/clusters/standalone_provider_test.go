@@ -203,7 +203,7 @@ func TestStandaloneProvider_buildOpenIDPClientSecret(t *testing.T) {
 			},
 			want: &v1.Secret{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: metav1.SchemeGroupVersion.Version,
+					APIVersion: v1.SchemeGroupVersion.String(),
 					Kind:       "Secret",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -227,7 +227,7 @@ func TestStandaloneProvider_buildOpenIDPClientSecret(t *testing.T) {
 			},
 			want: &v1.Secret{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: metav1.SchemeGroupVersion.Version,
+					APIVersion: v1.SchemeGroupVersion.String(),
 					Kind:       "Secret",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -737,7 +737,7 @@ func TestStandaloneProvider_buildKasFleetshardSyncSecret(t *testing.T) {
 			},
 			want: &v1.Secret{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: "v1",
+					APIVersion: v1.SchemeGroupVersion.String(),
 					Kind:       "Secret",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -773,7 +773,7 @@ func TestStandaloneProvider_buildKasFleetshardSyncSecret(t *testing.T) {
 			},
 			want: &v1.Secret{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: "v1",
+					APIVersion: v1.SchemeGroupVersion.String(),
 					Kind:       "Secret",
 				},
 				ObjectMeta: metav1.ObjectMeta{

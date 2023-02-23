@@ -2322,7 +2322,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 		resources = append(resources,
 			&k8sCoreV1.Secret{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: metav1.SchemeGroupVersion.Version,
+					APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
 					Kind:       "Secret",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -2337,7 +2337,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 	resources = append(resources,
 		&k8sCoreV1.Secret{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: metav1.SchemeGroupVersion.Version,
+				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
 				Kind:       "Secret",
 			},
 			ObjectMeta: metav1.ObjectMeta{
@@ -2357,7 +2357,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 		},
 		&k8sCoreV1.Secret{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: metav1.SchemeGroupVersion.Version,
+				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
 				Kind:       "Secret",
 			},
 			ObjectMeta: metav1.ObjectMeta{
@@ -2465,7 +2465,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 		resources = append(resources,
 			&k8sCoreV1.Secret{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: metav1.SchemeGroupVersion.Version,
+					APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
 					Kind:       "Secret",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -2479,7 +2479,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 			},
 			&k8sCoreV1.Secret{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: metav1.SchemeGroupVersion.Version,
+					APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
 					Kind:       "Secret",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -2493,7 +2493,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 			},
 			&k8sCoreV1.Secret{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: metav1.SchemeGroupVersion.Version,
+					APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
 					Kind:       "Secret",
 				},
 				ObjectMeta: metav1.ObjectMeta{
