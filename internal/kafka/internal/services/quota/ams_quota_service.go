@@ -16,12 +16,18 @@ import (
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
 
+type AMSQuotaService interface {
+	services.QuotaService
+	GetSubscriptionByID(subscriptionID string) (*amsv1.Subscription, bool, *errors.ServiceError)
+}
+
 type amsQuotaService struct {
 	amsClient   ocm.AMSClient
 	kafkaConfig *config.KafkaConfig
 }
 
 var _ services.QuotaService = &amsQuotaService{}
+var _ AMSQuotaService = &amsQuotaService{}
 
 const (
 	amsReservedResourceResourceTypeClusterAWS = "cluster.aws"

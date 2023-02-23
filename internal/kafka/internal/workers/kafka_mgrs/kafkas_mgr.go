@@ -3,6 +3,7 @@ package kafka_mgrs
 import (
 	"database/sql"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/quota"
 	"math"
 	"strings"
 	"time"
@@ -43,6 +44,7 @@ type KafkaManager struct {
 	workers.BaseWorker
 	kafkaService            services.KafkaService
 	clusterService          services.ClusterService
+	quotaServiceFactory     services.QuotaServiceFactory
 	accessControlListConfig *acl.AccessControlListConfig
 	kafkaConfig             *config.KafkaConfig
 	dataplaneClusterConfig  *config.DataplaneClusterConfig
@@ -50,7 +52,14 @@ type KafkaManager struct {
 }
 
 // NewKafkaManager creates a new kafka manager to reconcile kafkas
-func NewKafkaManager(kafkaService services.KafkaService, accessControlList *acl.AccessControlListConfig, kafka *config.KafkaConfig, clusters *config.DataplaneClusterConfig, providers *config.ProviderConfig, reconciler workers.Reconciler, clusterService services.ClusterService) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService,
+	accessControlList *acl.AccessControlListConfig,
+	kafka *config.KafkaConfig,
+	clusters *config.DataplaneClusterConfig,
+	providers *config.ProviderConfig,
+	reconciler workers.Reconciler,
+	clusterService services.ClusterService,
+	quotaServiceFactory services.QuotaServiceFactory) *KafkaManager {
 	return &KafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -63,6 +72,7 @@ func NewKafkaManager(kafkaService services.KafkaService, accessControlList *acl.
 		dataplaneClusterConfig:  clusters,
 		cloudProviders:          providers,
 		clusterService:          clusterService,
+		quotaServiceFactory:     quotaServiceFactory,
 	}
 }
 
@@ -117,6 +127,12 @@ func (k *KafkaManager) Reconcile() []error {
 			wrappedError := errors.Wrapf(kafkaDeprovisioningForDeniedOwnersErr, "failed to deprovision kafka for denied owners %s", accessControlListConfig.DenyList)
 			encounteredErrors = append(encounteredErrors, wrappedError)
 		}
+	}
+
+	reconcileBillingModelErrors := k.reconcileBillingModel(kafkas)
+	if reconcileBillingModelErrors != nil {
+		wrappedError := errors.Wrap(reconcileBillingModelErrors, "failed to reconcile billing models for kafka instances")
+		encounteredErrors = append(encounteredErrors, wrappedError)
 	}
 
 	// reconciles expires_at field for kafka instances
@@ -375,6 +391,55 @@ func (k *KafkaManager) updateClusterStatusCapacityAvailableMetric(c services.Kaf
 
 func (k *KafkaManager) updateClusterStatusCapacityMaxMetric(c services.KafkaStreamingUnitCountPerCluster) {
 	metrics.UpdateClusterStatusCapacityMaxCount(c.CloudProvider, c.Region, c.InstanceType, c.ClusterId, float64(c.MaxUnits))
+}
+
+// TODO: this is a temporary reconciler added to value the `actual_kafka_billing_model` and `desired_kafka_billing_model` for
+// kafkas where billing_model has always been empty. See https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pull/1115#discussion_r902415419 for details
+func (k *KafkaManager) reconcileBillingModel(kafkas dbapi.KafkaList) serviceErr.ErrorList {
+	var svcErrors serviceErr.ErrorList
+
+	for _, kafka := range kafkas {
+		if kafka.ActualKafkaBillingModel != "" {
+			continue
+		}
+		// infer the billing model from the subscription
+		quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
+		if factoryErr != nil {
+			svcErrors = append(svcErrors, errors.Wrap(factoryErr,
+				"unable to get the quota service",
+			))
+			// if we are not able to get the quota service, there is no point in continuing the loop
+			break
+		}
+
+		amsQuotaService, ok := quotaService.(quota.AMSQuotaService)
+		if !ok {
+			// we are not using AMS: we can't infer the billing model from the subscription
+			break
+		}
+
+		subscription, ok, err := amsQuotaService.GetSubscriptionByID(kafka.SubscriptionId)
+		if err != nil {
+			svcErrors = append(svcErrors, errors.Wrapf(err, "unable to find a subscription with ID %q for cluster with ID %q", kafka.SubscriptionId, kafka.ClusterID))
+			continue
+		}
+		if !ok {
+			svcErrors = append(svcErrors, errors.New(fmt.Sprintf("subscription with ID %q for cluster with ID %q not found", kafka.SubscriptionId, kafka.ClusterID)))
+			continue
+		}
+		kafka.ActualKafkaBillingModel = string(subscription.ClusterBillingModel())
+		kafka.DesiredKafkaBillingModel = kafka.ActualKafkaBillingModel
+
+		if err := k.kafkaService.Update(kafka); err != nil {
+			svcErrors = append(svcErrors, errors.Wrap(err,
+				"unable to get the update kafka",
+			))
+		} else {
+			logger.Logger.Infof("billing model for kafka %q updated to %q", kafka.ClusterID, kafka.ActualKafkaBillingModel)
+		}
+	}
+
+	return svcErrors
 }
 
 func (k *KafkaManager) reconcileKafkaExpiresAt(kafkas dbapi.KafkaList) serviceErr.ErrorList {

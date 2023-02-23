@@ -619,7 +619,7 @@ func TestKafkaManager_setKafkaStatusCountMetric(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			k := NewKafkaManager(tt.fields.kafkaService, nil, nil, nil, nil, workers.Reconciler{}, nil)
+			k := NewKafkaManager(tt.fields.kafkaService, nil, nil, nil, nil, workers.Reconciler{}, nil, nil)
 
 			g.Expect(k.setKafkaStatusCountMetric() != nil).To(gomega.Equal(tt.wantErr))
 		})
