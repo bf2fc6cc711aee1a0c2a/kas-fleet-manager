@@ -250,8 +250,10 @@ func TestEnterpriseClusterGet(t *testing.T) {
 	g.Expect(standardInstanceType.Id).To(gomega.Equal(types.STANDARD.String()))
 	g.Expect(standardInstanceType.SupportedBillingModels).To(gomega.HaveLen(1))
 	g.Expect(standardInstanceType.SupportedBillingModels[0].Id).To(gomega.Equal(constants.BillingModelEnterprise.String()))
-	g.Expect(standardInstanceType.Sizes).To(gomega.HaveLen(1))
+	g.Expect(standardInstanceType.Sizes).To(gomega.HaveLen(2))
 	g.Expect(standardInstanceType.Sizes[0].Id).To(gomega.Equal("x1"))
+	g.Expect(standardInstanceType.Sizes[1].Id).To(gomega.Equal("x2"))
+
 	// get cluster addons parameters
 	clusterWithAddonParameters, resp11, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterWithAddonParameters(adminCtx, entCluster.ClusterID)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
