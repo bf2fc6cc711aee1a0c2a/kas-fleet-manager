@@ -21,7 +21,7 @@ jobs:
           - "redhat-developer/app-services-sdk-core"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: dorny/paths-filter@v2
         id: filter
         with:
