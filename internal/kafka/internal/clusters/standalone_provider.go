@@ -285,10 +285,6 @@ func (s *StandaloneProvider) buildKASFleetShardSyncSecret(params []types.Paramet
 	}
 }
 
-func (s *StandaloneProvider) InstallClusterLogging(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
-	return true, nil // NOOP for now
-}
-
 func (s *StandaloneProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
 	spec.Status = api.ClusterProvisioned
 	return spec, nil

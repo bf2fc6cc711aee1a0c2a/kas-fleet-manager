@@ -78,8 +78,6 @@ type ClusterService interface {
 	RemoveResources(cluster *api.Cluster, syncSetName string) *apiErrors.ServiceError
 	// Install the strimzi operator in a given cluster
 	InstallStrimzi(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
-	// Install the cluster logging operator for a given cluster
-	InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
 	CheckStrimziVersionReady(cluster *api.Cluster, strimziVersion string) (bool, error)
 	IsStrimziKafkaVersionAvailableInCluster(cluster *api.Cluster, strimziVersion string, kafkaVersion string, ibpVersion string) (bool, error)
 	// FindStreamingUnitCountByClusterAndInstanceType returns kafka streaming unit counts per region, cloud provider, cluster id and instance type.
@@ -696,18 +694,6 @@ func (c clusterService) InstallStrimzi(cluster *api.Cluster) (bool, *apiErrors.S
 	}
 	if ready, err := p.InstallStrimzi(buildClusterSpec(cluster)); err != nil {
 		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install strimzi for cluster %s", cluster.ClusterID)
-	} else {
-		return ready, nil
-	}
-}
-
-func (c clusterService) InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
-	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
-	if err != nil {
-		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
-	}
-	if ready, err := p.InstallClusterLogging(buildClusterSpec(cluster), params); err != nil {
-		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install cluster-logging for cluster %s", cluster.ClusterID)
 	} else {
 		return ready, nil
 	}
