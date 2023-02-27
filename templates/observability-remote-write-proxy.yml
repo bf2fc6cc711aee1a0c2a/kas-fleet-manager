@@ -141,39 +141,6 @@ objects:
       selector:
         matchLabels:
           app.kubernetes.io/name: observability-remote-write-proxy
-  - kind: NetworkPolicy
-    apiVersion: networking.k8s.io/v1
-    metadata:
-      labels:
-        app.kubernetes.io/component: prometheus-remote-write-proxy
-        app.kubernetes.io/name: observability-remote-write-proxy
-      name: observability-remote-write-proxy
-    spec:
-      podSelector:
-        matchLabels:
-          app.kubernetes.io/component: prometheus-remote-write-proxy
-          app.kubernetes.io/name: observability-remote-write-proxy
-      policyTypes:
-      - Ingress
-      ingress:
-      - from:
-          # Allow access from the default OpenShift Ingress Controller pods.
-          # The default OpenShift Ingress Controller pods are located in a K8s
-          # Namespace that contains the 'network.openshift.io/policy-group' K8s
-          # label key with the value 'ingress' and the 'name' label with the
-          # value 'openshift-ingress'. Additionally, those pods have the label
-          # 'ingresscontroller.operator.openshift.io/deployment-ingresscontroller'
-          # with the value 'default'.
-        - namespaceSelector:
-            matchLabels:
-              network.openshift.io/policy-group: ingress
-              name: openshift-ingress
-          podSelector:
-            matchLabels:
-              ingresscontroller.operator.openshift.io/deployment-ingresscontroller: default
-        ports:
-        - port: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_PORT}}
-          protocol: TCP
 
 parameters:
 - name: OBSERVABILITY_REMOTE_WRITE_PROXY_IMAGE_NAME
