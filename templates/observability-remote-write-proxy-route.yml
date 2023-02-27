@@ -1,0 +1,23 @@
+# This file contains an OpenShift template that creates a route helping to
+# directly access the Observability Remote Write Proxy in the
+# development environment.
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+name: observability-remote-write-proxy-route
+metadata:
+  name: observability-remote-write-proxy
+objects:
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: observability-rw-proxy
+    labels:
+      app.kubernetes.io/name: observability-remote-write-proxy
+  spec:
+    to:
+      kind: Service
+      name: observability-rw-proxy
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
