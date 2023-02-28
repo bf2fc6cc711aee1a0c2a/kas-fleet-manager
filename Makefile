@@ -2,6 +2,7 @@ MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 DOCS_DIR := $(PROJECT_PATH)/docs
 SECRETS_DIR := $(PROJECT_PATH)/secrets
+OCP_TEMPLATES_DIR :=$(PROJECT_PATH)/templates
 
 .DEFAULT_GOAL := help
 SHELL = bash
@@ -200,60 +201,63 @@ endif
 help:
 	@echo "Kafka Service Fleet Manager make targets"
 	@echo ""
-	@echo "make verify                              verify source code"
-	@echo "make lint                                lint go files and .yaml templates"
-	@echo "make binary                              compile binaries"
-	@echo "make install                             compile binaries and install in GOPATH bin"
-	@echo "make run                                 run the application"
-	@echo "make run/docs                            run swagger and host the api spec"
-	@echo "make run/docs/teardown                   remove the swagger container"
-	@echo "make test                                run unit tests"
-	@echo "make test/output/coverage/report         generate test coverage report in the terminal"
-	@echo "make test/html/coverage/report           generate test coverage html report and see it in browser"
-	@echo "make test/integration                    run integration tests"
-	@echo "make test/cluster/cleanup                remove OSD cluster after running tests against real OCM"
-	@echo "make test/run                            Run the test container"
-	@echo "make code/fix                            format files"
-	@echo "make generate                            generate go and openapi modules"
-	@echo "make openapi/generate                    generate openapi modules"
-	@echo "make openapi/validate                    validate openapi schema"
-	@echo "make image/build                         build docker image"
-	@echo "make image/build/internal                build the binary and image for Openshift deployment"
-	@echo "make image/build/test                    build the binary and test the image"
-	@echo "make image/push                          push docker image to the external image registry"
-	@echo "make image/push/internal                 push the image to the Openshift internal registry"
-	@echo "make setup/git/hooks                     setup git hooks"
-	@echo "make secrets/setup/empty                 setup needed secrets files for the fleet manager to be able to start"
-	@echo "make keycloak/setup                      setup mas sso clientId, clientSecret & crt"
-	@echo "make gcp/setup/credentials               setup GCP credentials"
-	@echo "make kafkacert/setup                     setup the kafka certificate used for Kafka Brokers"
-	@echo "make observatorium/setup                 setup observatorium secrets used by CI"
-	@echo "make observatorium/token-refresher/setup setup a local observatorium token refresher"
-	@echo "make docker/login/internal               login to an openshift cluster image registry"
-	@echo "make docker/login                        login to the quay.io container registry"
-	@echo "make image/build/push/internal           build and push image to an openshift cluster image registry."
-	@echo "make deploy/db                           deploy the postgres db via templates to an openshift cluster"
-	@echo "make deploy/secrets                      deploy the secrets via templates to an openshift cluster"
-	@echo "make deploy/envoy                        deploy the envoy config via templates to an openshift cluster"
-	@echo "make deploy/service                      deploy the service via templates to an openshift cluster"
-	@echo "make deploy/route                        deploy the envoy route via templates to an openshift cluster"
-	@echo "make deploy/project                      create a project where the services will be deployed in an openshift cluster"
-	@echo "make deploy/token-refresher              deploys an Observatorium token refresher on an OpenShift cluster"
-	@echo "make undeploy                            remove the service deployments from an openshift cluster"
-	@echo "make openapi/spec/validate               validate OpenAPI spec using spectral"
-	@echo "make db/setup                            setup and run a postgresql container"
-	@echo "make db/migrate                          run kas-fleet-manager data migrations"
-	@echo "make db/login                            log into the psql shell"
-	@echo "make make db/generate/insert/cluster     generate an example insert command for the clusters table"
-	@echo "make db/teardown                         remove and cleanup the postgresql container"
-	@echo "make docs/generate/mermaid               generate mermaid diagrams"
-	@echo "make ocm/setup                           generate secrets specific to ocm authentication"
-	@echo "make ocm/login                           ocm login"
-	@echo "make sso/setup                           local keycloak instance"
-	@echo "make sso/config                          local configure realm"
-	@echo "make sso/teardown                        teardown keycloak instance"
-	@echo "make redhatsso/setup                     setup mas sso clientId & clientSecret"
-	@echo "make dataplane/imagepull/secret/setup    setup dockerconfig image pull secret"
+	@echo "make verify                                             verify source code"
+	@echo "make lint                                               lint go files and .yaml templates"
+	@echo "make binary                                             compile binaries"
+	@echo "make install                                            compile binaries and install in GOPATH bin"
+	@echo "make run                                                run the application"
+	@echo "make run/docs                                           run swagger and host the api spec"
+	@echo "make run/docs/teardown                                  remove the swagger container"
+	@echo "make test                                               run unit tests"
+	@echo "make test/output/coverage/report                        generate test coverage report in the terminal"
+	@echo "make test/html/coverage/report                          generate test coverage html report and see it in browser"
+	@echo "make test/integration                                   run integration tests"
+	@echo "make test/cluster/cleanup                               remove OSD cluster after running tests against real OCM"
+	@echo "make test/run                                           Run the test container"
+	@echo "make code/fix                                           format files"
+	@echo "make generate                                           generate go and openapi modules"
+	@echo "make openapi/generate                                   generate openapi modules"
+	@echo "make openapi/validate                                   validate openapi schema"
+	@echo "make image/build                                        build docker image"
+	@echo "make image/build/internal                               build the binary and image for Openshift deployment"
+	@echo "make image/build/test                                   build the binary and test the image"
+	@echo "make image/push                                         push docker image to the external image registry"
+	@echo "make image/push/internal                                push the image to the Openshift internal registry"
+	@echo "make setup/git/hooks                                    setup git hooks"
+	@echo "make secrets/setup/empty                                setup needed secrets files for the fleet manager to be able to start"
+	@echo "make keycloak/setup                                     setup mas sso clientId, clientSecret & crt"
+	@echo "make gcp/setup/credentials                              setup GCP credentials"
+	@echo "make kafkacert/setup                                    setup the kafka certificate used for Kafka Brokers"
+	@echo "make observatorium/setup                                setup observatorium secrets used by CI"
+	@echo "make observatorium/token-refresher/setup                setup a local observatorium token refresher"
+	@echo "make docker/login/internal                              login to an openshift cluster image registry"
+	@echo "make docker/login                                       login to the quay.io container registry"
+	@echo "make image/build/push/internal                          build and push image to an openshift cluster image registry."
+	@echo "make deploy/db                                          deploy the postgres db via templates to an openshift cluster"
+	@echo "make deploy/secrets                                     deploy the secrets via templates to an openshift cluster"
+	@echo "make deploy/envoy                                       deploy the envoy config via templates to an openshift cluster"
+	@echo "make deploy/service                                     deploy the service via templates to an openshift cluster"
+	@echo "make deploy/route                                       deploy the envoy route via templates to an openshift cluster"
+	@echo "make deploy/project                                     create a project where the services will be deployed in an openshift cluster"
+	@echo "make deploy/token-refresher                             deploys an Observatorium token refresher on an OpenShift cluster"
+	@echo "make deploy/observability-remote-write-proxy            deploys an Observability Remote Write Proxy on an OpenShift cluster"
+	@echo "make deploy/observability-remote-write-proxy/secrets    setup and deploy the needed secrets for Observability Remote Write Proxy"
+	@echo "make deploy/observability-remote-write-proxy/route      deploys the OCP Route used for Observability Remote Write Proxy access"
+	@echo "make undeploy                                           remove the service deployments from an openshift cluster"
+	@echo "make openapi/spec/validate                              validate OpenAPI spec using spectral"
+	@echo "make db/setup                                           setup and run a postgresql container"
+	@echo "make db/migrate                                         run kas-fleet-manager data migrations"
+	@echo "make db/login                                           log into the psql shell"
+	@echo "make make db/generate/insert/cluster                    generate an example insert command for the clusters table"
+	@echo "make db/teardown                                        remove and cleanup the postgresql container"
+	@echo "make docs/generate/mermaid                              generate mermaid diagrams"
+	@echo "make ocm/setup                                          generate secrets specific to ocm authentication"
+	@echo "make ocm/login                                          ocm login"
+	@echo "make sso/setup                                          local keycloak instance"
+	@echo "make sso/config                                         local configure realm"
+	@echo "make sso/teardown                                       teardown keycloak instance"
+	@echo "make redhatsso/setup                                    setup mas sso clientId & clientSecret"
+	@echo "make dataplane/imagepull/secret/setup                   setup dockerconfig image pull secret"
 	@echo "$(fake)"
 .PHONY: help
 
@@ -527,7 +531,7 @@ cos-fleet-catalog-camel/teardown:
 # Touch all the necessary files for fleet manager to start
 # See docs/populating-configuration.md for more information
 secrets/setup/empty:
-	touch ${SECRETS_DIR}/ocm-service.clientId
+	touch $(SECRETS_DIR)/ocm-service.clientId
 	touch $(SECRETS_DIR)/ocm-service.clientSecret
 	touch $(SECRETS_DIR)/ocm-service.token
 	touch $(SECRETS_DIR)/aws.accountid
@@ -972,6 +976,35 @@ deploy/token-refresher:
 		-p OBSERVATORIUM_TOKEN_REFRESHER_REPLICAS=${OBSERVATORIUM_TOKEN_REFRESHER_REPLICAS} \
 		 | $(OC) apply -f - -n $(NAMESPACE)
 .PHONY: deploy/token-refresher
+
+deploy/observability-remote-write-proxy/route:
+	@$(OC) process -f $(OCP_TEMPLATES_DIR)/observability-remote-write-proxy-route.yml | $(OC) apply -f - -n $(NAMESPACE)
+
+deploy/observability-remote-write-proxy/secrets: OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEPATH ?= ""
+deploy/observability-remote-write-proxy/secrets:
+	@if [ -z "$(OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEPATH)" ]; then echo "OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEPATH is required"; exit 1; fi
+	@if [ ! -f $(OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEPATH) ]; then echo "'${OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEPATH}' file cannot be found"; exit 1; fi
+
+	@$(OC) process -f $(OCP_TEMPLATES_DIR)/observability-remote-write-proxy-oidc-secret.yml \
+	-p OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG="$(shell cat $(OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEPATH) | base64 -w 0)" \
+	| $(OC) apply -f - -n $(NAMESPACE)
+.PHONY: deploy/observability-remote-write-proxy
+
+deploy/observability-remote-write-proxy: OBSERVABILITY_REMOTE_WRITE_PROXY_FORWARD_URL ?= ""
+deploy/observability-remote-write-proxy: OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED ?= "true"
+deploy/observability-remote-write-proxy: OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_URL ?= ""
+deploy/observability-remote-write-proxy: OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_ENABLED ?= "true"
+deploy/observability-remote-write-proxy:
+	@if [ -z "$(OBSERVABILITY_REMOTE_WRITE_PROXY_FORWARD_URL)" ]; then echo "OBSERVABILITY_REMOTE_WRITE_PROXY_FORWARD_URL is required"; exit 1; fi
+	@if [ ! -z "$(OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED)" ] && [ "$(OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED)" == "true" ] && [ -z "$(OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_URL)" ]; then echo "OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_URL is required"; exit 1; fi
+
+	@-$(OC) process -f $(OCP_TEMPLATES_DIR)/observability-remote-write-proxy.yml \
+		-p OBSERVABILITY_REMOTE_WRITE_PROXY_FORWARD_URL=${OBSERVABILITY_REMOTE_WRITE_PROXY_FORWARD_URL} \
+		-p OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_ENABLED=${OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_ENABLED} \
+		-p OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED=${OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED} \
+		-p OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_URL=${OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_URL} \
+		 | $(OC) apply -f - -n $(NAMESPACE)
+.PHONY: deploy/observability-remote-write-proxy
 
 docs/generate/mermaid:
 	@for f in $(shell ls $(DOCS_DIR)/mermaid-diagrams-source/*.mmd); do \

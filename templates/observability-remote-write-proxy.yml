@@ -1,0 +1,302 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: observability-remote-write-proxy
+  annotations:
+    description: "Prometheus Remote Write Proxy for Observability"
+objects:
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      labels:
+        app.kubernetes.io/component: prometheus-remote-write-proxy
+        app.kubernetes.io/name: observability-remote-write-proxy
+        app.kubernetes.io/version: ${OBSERVABILITY_REMOTE_WRITE_PROXY_IMAGE_TAG}
+      name: observability-remote-write-proxy
+    spec:
+      replicas: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_REPLICAS}}
+      strategy:
+        rollingUpdate:
+          maxSurge: 25%
+          maxUnavailable: 25%
+        type: RollingUpdate
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: prometheus-remote-write-proxy
+          app.kubernetes.io/name: observability-remote-write-proxy
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/component: prometheus-remote-write-proxy
+            app.kubernetes.io/name: observability-remote-write-proxy
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          affinity:
+            # Prefer not co-locating Observability Remote Write Proxy pods in the
+            # same zone. This means that K8s scheduler will try to spread
+            # the different Observability Remote Write Proxy pods among the
+            # available zones (logical failure domains)
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                      - observability-remote-write-proxy
+                  topologyKey: topology.kubernetes.io/zone
+                weight: 100
+          containers:
+          - name: observability-remote-write-proxy
+            image: ${OBSERVABILITY_REMOTE_WRITE_PROXY_IMAGE_NAME}:${OBSERVABILITY_REMOTE_WRITE_PROXY_IMAGE_TAG}
+            imagePullPolicy: ${OBSERVABILITY_REMOTE_WRITE_PROXY_IMAGE_PULL_POLICY}
+            ports:
+            - containerPort: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_PORT}}
+              name: http
+            - containerPort: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_METRICS_PORT}}
+              name: metrics
+            command:
+              - /proxy
+              - --proxy.listen.port=${OBSERVABILITY_REMOTE_WRITE_PROXY_PORT}
+              - --proxy.metrics.port=${OBSERVABILITY_REMOTE_WRITE_PROXY_METRICS_PORT}
+              - --proxy.forwardUrl=${OBSERVABILITY_REMOTE_WRITE_PROXY_FORWARD_URL}
+              - --oidc.enabled=${OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_ENABLED}
+              - --oidc.filename=${OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEDIR}/${OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILENAME}
+              - --token.verification.enabled=${OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED}
+              - --token.verification.url=${OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_URL}
+            resources:
+              requests:
+                cpu: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_CPU_RESOURCE_REQUESTS}}
+                memory: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_MEMORY_RESOURCE_REQUESTS}}
+              limits:
+                cpu: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_CPU_RESOURCE_LIMITS}}
+                memory: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_MEMORY_RESOURCE_LIMITS}}
+            readinessProbe:
+              httpGet:
+                path: /healthcheck
+                port: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_PORT}}
+                scheme: HTTP
+                httpHeaders:
+                - name: User-Agent
+                  value: Probe
+              initialDelaySeconds: 5
+              periodSeconds: 10
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            volumeMounts:
+            - name: observability-remote-write-proxy-oidc-config
+              mountPath: ${OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEDIR}
+          volumes:
+           - name: observability-remote-write-proxy-oidc-config
+             secret:
+               secretName: observability-remote-write-proxy-oidc-config
+               defaultMode: 288 # 0440 in octal mode permissions
+               optional: true
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      labels:
+        app.kubernetes.io/component: prometheus-remote-write-proxy
+        app.kubernetes.io/name: observability-remote-write-proxy
+      name: observability-rw-proxy
+    spec:
+      ports:
+        - name: http
+          port: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_PORT}}
+          targetPort: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_PORT}}
+          protocol: TCP
+      selector:
+        app.kubernetes.io/component: prometheus-remote-write-proxy
+        app.kubernetes.io/name: observability-remote-write-proxy
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      labels:
+        app.kubernetes.io/component: prometheus-remote-write-proxy-metrics
+        app.kubernetes.io/name: observability-remote-write-proxy-metrics
+      name: observability-rw-proxy-metrics
+    spec:
+      ports:
+        - name: metrics
+          port: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_METRICS_PORT}}
+          targetPort: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_METRICS_PORT}}
+          protocol: TCP
+      selector:
+        app.kubernetes.io/component: prometheus-remote-write-proxy
+        app.kubernetes.io/name: observability-remote-write-proxy
+  - kind: PodDisruptionBudget
+    apiVersion: policy/v1
+    metadata:
+      name: observability-remote-write-proxy-pdb
+    spec:
+      minAvailable: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_PDB_MIN_AVAILABLE}}
+      selector:
+        matchLabels:
+          app.kubernetes.io/name: observability-remote-write-proxy
+
+parameters:
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_IMAGE_NAME
+  description: Observability Remote Write Proxy container image name
+  value: "quay.io/rhoas/observability-remote-write-proxy"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_IMAGE_TAG
+  description: Observability Remote Write Proxy container image tag
+  value: "latest"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_IMAGE_PULL_POLICY
+  description: >-
+    Observability Remote Write Proxy container image pull policy.
+    Accepted values: ['Always', 'IfNotPresent', 'Never']"
+  value: "Always"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_REPLICAS
+  description: >-
+    Number of replicas of the Observability Remote Write Proxy K8s Deployment
+  value: "1"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_PORT
+  description: >-
+    Port number used to configure the Observability Remote Write Proxy
+    endpoint and associated K8s Service
+  value: "8080"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_METRICS_PORT
+  description: >-
+    Port number used to configure the Observability Remote Write Proxy
+    Prometheus metrics endpoint and associated K8s Service
+  value: "9090"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_ENABLED
+  description: >-
+    Enables OIDC token retrieval. If set to true, the provided
+    OIDC ClientID/Secret pair configured in the file pointed by
+    OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEDIR/OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEPATH
+    is used to retrieve an OIDC token from the OIDC token
+    endpoint, which is also specified in the file pointed by
+    OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEDIR/OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEPATH.
+    Then, the retrieved OIDC token is provided when
+    Observability Remote Write Proxy forwards the request to the
+    Prometheus Remote Write Receiver Endpoint specified in
+    OBSERVABILITY_REMOTE_WRITE_PROXY_FORWARD_URL
+  value: "true"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEDIR
+  description: >-
+    Directory in the Observability Remote Write Proxy container's filesystem
+    that contains the OIDC configuration file.
+    The value must be a directory and must not contain the file name.
+    See https://github.com/bf2fc6cc711aee1a0c2a/observability-remote-write-proxy
+    for details on the configuration format.
+    Only takes effect when OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_ENABLED
+    is "true".
+    Required when OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_ENABLED
+    is "true"
+  value: "/obs-rw-proxy-oidc-config"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILENAME
+  description: >-
+    File name within the directory specified in
+    OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEDIR where to find the
+    Observability Remote Write Proxy OIDC configuration.
+    The value must be a file name and not a path.
+    Only takes effect when OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_ENABLED
+    is "true".
+    Required when OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_ENABLED
+    is "true".
+    See https://github.com/bf2fc6cc711aee1a0c2a/observability-remote-write-proxy
+    for details on the configuration format.
+    Only takes effect when OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_ENABLED
+    is "true".
+    Required when OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_ENABLED
+    is "true"
+  value: "oidc-config"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_FORWARD_URL
+  description: >-
+    URL of a Prometheus Remote Write Receiver Endpoint to which requests of the
+    Observability Remote Write Proxy will be forwarded to after they
+    are successfully verified
+  required: true
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED
+  description: >-
+    Enables Token verification on requests that arrive to the Observability
+    Remote Write Proxy.
+    If enabled, Observability Remote Write Proxy performs
+    verification of the token provided as part of the 'Authorization' HTTP
+    Header of the requests that receives.
+    The verification that is performed is that a request is authorized
+    if the call to the OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_URL
+    URL with the '/<cluster_id>' suffix appended returns a
+    HTTP 200 Status Code. <cluster_id> is part of the information
+    provided in the HTTP Body of the request to Observability
+    Remote Write Proxy.
+    The provided token that is received by Observability Remote Write Proxy
+    is used for the request to
+    OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_URL/<cluster_id> but
+    the token itself is not verified in Observability Remote Write Proxy.
+    Requests to the /healthcheck URL path are not Token verified
+  value: "true"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_URL
+  description: >-
+    URL endpoint used as part of the Token Verification on requests that arrive to
+    the Observability Remote Write Proxy. The '/<cluster_id>' suffix is appended
+    to the provided URL, where <cluster_id> is part of the information
+    provided in the HTTP Body of the request to Observability Remote Write Proxy.
+    See the description of the
+    OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED parameter for
+    more information about details of the verification.
+    Only takes effect when OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED
+    is "true".
+    Required when OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED
+    is "true"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_PDB_MIN_AVAILABLE
+  description: >-
+    Configures the 'minAvailable' attribute of the PodDisruptionBudget
+    associated to the Observability Remote Write Proxy K8s Deployment. An
+    eviction is allowed if at least 'minAvailable' will still be available
+    after the eviction, i.e. even in the absence of the evicted pod. It can
+    be a number or a percentage (e.g. '50%')
+  value: "1"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_MEMORY_RESOURCE_REQUESTS
+  description: >-
+    Memory K8s Resource Requests for the Observability Remote Write Proxy.
+    This parameter can be set to "null" to unset the Memory Resource Requests.
+    See https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits
+    for details on the accepted values.
+  value: "128Mi"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_MEMORY_RESOURCE_LIMITS
+  description: >-
+    Memory K8s Resource Limits for the Observability Remote Write Proxy.
+    This parameter can be set to "null" to unset the Memory Resource Limits.
+    See https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits
+    for details on the accepted values.
+  value: "1Gi"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_CPU_RESOURCE_REQUESTS
+  description: >-
+    CPU K8s Resource Requests for the Observability Remote Write Proxy.
+    This parameter can be set to "null" to unset the CPU Resource Limits.
+    See https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits
+    for details on the accepted values.
+  value: "200m"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_CPU_RESOURCE_LIMITS
+  description: >-
+    CPU K8s Resource Limits for the Observability Remote Write Proxy.
+    This parameter can be set to "null" to unset the CPU Resource Limits.
+    See https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits
+    for details on the accepted values.
+  value: "null"
