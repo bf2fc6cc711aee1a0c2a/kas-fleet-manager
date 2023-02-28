@@ -160,6 +160,15 @@ data:
                     route:
                       cluster: backend
 
+                  # Route kas-fleet-manager's observability proxy verification
+                  # related endpoints directly to the service
+                  # without rate limiting
+                  - name: kas-fleet-manager-v1-obsproxy-verification-routes
+                    match:
+                      prefix: /api/kafkas_mgmt/v1/obs-proxy-verification/
+                    route:
+                      cluster: backend
+
                   # Apply rate limit to all other kas-fleet-manager endpoints
                   - name: kas-fleet-manager-v1-routes
                     match:
