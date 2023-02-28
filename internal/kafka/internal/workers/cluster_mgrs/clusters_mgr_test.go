@@ -2538,8 +2538,8 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 			Namespace: "kas-fleet-shard-namespace",
 		},
 		ObservabilityOperatorOLMConfig: config.OperatorInstallationConfig{
-			IndexImage:              "quay.io/rhoas/observability-operator-index:v4.0.2",
-			SubscriptionStartingCSV: "observability-operator.v4.0.2",
+			IndexImage:              "quay.io/rhoas/observability-operator-index:v4.1.2",
+			SubscriptionStartingCSV: "observability-operator.v4.1.2",
 		},
 	}
 	type fields struct {
