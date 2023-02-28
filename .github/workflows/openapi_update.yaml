@@ -32,7 +32,7 @@ jobs:
               - 'openapi/*.yaml'
       - if: contains(steps.filter.outputs.openapi_files, 'openapi/kas-fleet-manager.yaml')
         name: KAS Fleet Manager OpenAPI changed
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ env.APP_SERVICES_CI_TOKEN }}
           repository: ${{ matrix.repo }}
@@ -41,7 +41,7 @@ jobs:
 
       - if: contains(steps.filter.outputs.openapi_files, 'openapi/connector_mgmt.yaml')
         name: Connector Service Fleet Manager OpenAPI changed
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ env.APP_SERVICES_CI_TOKEN }}
           repository: ${{ matrix.repo }}
