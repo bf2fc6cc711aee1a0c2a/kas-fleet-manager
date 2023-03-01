@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
@@ -179,15 +180,16 @@ func deleteLeftOverServiceAccounts(h *test.Helper) {
 }
 
 func deleteClustersServiceAccountsFromSSOService(cluster *api.Cluster, keycloakConfig *keycloak.KeycloakConfig) {
-	kafkaSsoService := sso.NewKeycloakServiceBuilder().
-		ForKFM().
-		WithConfiguration(keycloakConfig).
-		Build()
+	if !shared.StringEmpty(cluster.ClientID) { // only delete the agent service account if it is set avoid unneeded calls to SSO if it is not set
+		kafkaSsoService := sso.NewKeycloakServiceBuilder().
+			ForKFM().
+			WithConfiguration(keycloakConfig).
+			Build()
 
-	err := kafkaSsoService.DeleteServiceAccountInternal(cluster.ClientID)
-
-	if err != nil {
-		glog.Warningf("Failed to delete Fleetshard client from SSO for cluster %q. The sso provider is %q", cluster.ClusterID, keycloakConfig.SelectSSOProvider)
+		err := kafkaSsoService.DeleteServiceAccountInternal(cluster.ClientID)
+		if err != nil {
+			glog.Warningf("Failed to delete Fleetshard client from SSO for cluster %q. The sso provider is %q", cluster.ClusterID, keycloakConfig.SelectSSOProvider)
+		}
 	}
 
 	if keycloakConfig.SelectSSOProvider != keycloak.MAS_SSO {
@@ -200,7 +202,7 @@ func deleteClustersServiceAccountsFromSSOService(cluster *api.Cluster, keycloakC
 		WithRealmConfig(keycloakConfig.OSDClusterIDPRealm).
 		Build()
 
-	err = osdSSOService.DeRegisterClientInSSO(cluster.ID)
+	err := osdSSOService.DeRegisterClientInSSO(cluster.ID)
 
 	if err != nil {
 		glog.Warningf("Failed to delete IDP configuration client from SSO for cluster %q. The sso provider is %q", cluster.ClusterID, keycloakConfig.SelectSSOProvider)
@@ -208,6 +210,10 @@ func deleteClustersServiceAccountsFromSSOService(cluster *api.Cluster, keycloakC
 }
 
 func deleteKafkasServiceAccountsFromSSOService(kafka *dbapi.KafkaRequest, keycloakConfig *keycloak.KeycloakConfig) {
+	if shared.StringEmpty(kafka.CanaryServiceAccountClientID) { // only delete the canary service account if it is set avoid unneeded calls to SSO if it is not set
+		return
+	}
+
 	kafkaSsoService := sso.NewKeycloakServiceBuilder().
 		ForKFM().
 		WithConfiguration(keycloakConfig).
