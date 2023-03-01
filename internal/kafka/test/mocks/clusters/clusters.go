@@ -10,6 +10,8 @@ import (
 )
 
 var (
+	testClientID                = "some-client-id"
+	testClientSecret            = "some-client-secret"
 	testRegion                  = "us-west-1"
 	testProvider                = "aws"
 	testCloudProvider           = "aws"
@@ -75,6 +77,8 @@ func BuildCluster(modifyFn func(cluster *api.Cluster)) *api.Cluster {
 		MultiAZ:       testMultiAZ,
 		ClusterID:     TestClusterID,
 		ExternalID:    TestClusterID,
+		ClientID:      testClientID,
+		ClientSecret:  testClientSecret,
 		Status:        testStatus,
 		ClusterSpec:   clusterSpec,
 		ProviderSpec:  providerSpec,

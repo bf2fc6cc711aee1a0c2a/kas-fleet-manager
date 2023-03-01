@@ -17,16 +17,18 @@ import (
 )
 
 const (
-	DefaultKafkaRequestRegion   = "us-east-1"
-	DefaultKafkaRequestProvider = "aws"
-	DefaultKafkaRequestName     = "test-cluster"
-	DefaultClusterID            = "test-cluster-id"
-	user                        = "test-user"
-	DefaultMultiAz              = true
-	DefaultBootstrapServerHost  = "test-bootstrap-server-host"
-	DefaultPlacementId          = "test-placement-id"
-	DefaultOrganisationId       = "13640203"
-	DefaultKafkaID              = "test-kafka-id"
+	DefaultKafkaRequestRegion               = "us-east-1"
+	DefaultKafkaRequestProvider             = "aws"
+	DefaultKafkaRequestName                 = "test-cluster"
+	DefaultClusterID                        = "test-cluster-id"
+	user                                    = "test-user"
+	DefaultMultiAz                          = true
+	DefaultBootstrapServerHost              = "test-bootstrap-server-host"
+	DefaultPlacementId                      = "test-placement-id"
+	DefaultOrganisationId                   = "13640203"
+	DefaultKafkaID                          = "test-kafka-id"
+	defaultCanaryServiceAccountClientID     = "canary-service-account-client-id"
+	defaultCanaryServiceAccountClientSecret = "canary-service-acccount-client-secret"
 )
 
 var (
@@ -60,6 +62,8 @@ const (
 	ACTUAL_KAFKA_BILLING_MODEL
 	PROMOTION_STATUS
 	PROMOTION_DETAILS
+	CANARY_SERVICE_ACCOUNT_CLIENT_ID
+	CANARY_SERVICE_ACCOUNT_CLIENT_SECRET
 )
 
 type KafkaAttribute int
@@ -117,6 +121,10 @@ func With(attribute KafkaRequestAttribute, value string) KafkaRequestBuildOption
 			request.PromotionStatus = dbapi.KafkaPromotionStatus(value)
 		case PROMOTION_DETAILS:
 			request.PromotionDetails = value
+		case CANARY_SERVICE_ACCOUNT_CLIENT_ID:
+			request.CanaryServiceAccountClientID = value
+		case CANARY_SERVICE_ACCOUNT_CLIENT_SECRET:
+			request.CanaryServiceAccountClientSecret = value
 		}
 	}
 }
@@ -175,6 +183,8 @@ func WithPredefinedTestValues() KafkaRequestBuildOption {
 		request.Status = constants.KafkaRequestStatusReady.String()
 		request.MaxDataRetentionSize = mocksupportedinstancetypes.DefaultMaxDataRetentionSize
 		request.OrganisationId = DefaultOrganisationId
+		request.CanaryServiceAccountClientID = defaultCanaryServiceAccountClientID
+		request.CanaryServiceAccountClientSecret = defaultCanaryServiceAccountClientSecret
 	}
 }
 
