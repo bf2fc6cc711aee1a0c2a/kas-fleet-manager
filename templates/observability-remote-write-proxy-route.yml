@@ -4,9 +4,8 @@
 ---
 apiVersion: template.openshift.io/v1
 kind: Template
-name: observability-remote-write-proxy-route
 metadata:
-  name: observability-remote-write-proxy
+  name: observability-remote-write-proxy-route
 objects:
 - apiVersion: route.openshift.io/v1
   kind: Route

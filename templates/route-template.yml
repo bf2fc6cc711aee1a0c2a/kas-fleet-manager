@@ -16,17 +16,12 @@
 # Note that the CaCertificate is the same value as the Certificate
 #
 # In production no such route exists, all access is through gateway.
-
 ---
-
 apiVersion: template.openshift.io/v1
 kind: Template
-name: kas-fleet-manager-routes
 metadata:
-  name: route
-
+  name: kas-fleet-manager-route
 objects:
-
 - apiVersion: route.openshift.io/v1
   kind: Route
   metadata:
