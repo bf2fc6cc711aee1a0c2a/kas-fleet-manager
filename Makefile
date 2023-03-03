@@ -514,7 +514,6 @@ run/docs:
 # Remove Swagger container
 run/docs/teardown:
 	$(DOCKER) container stop swagger_ui_docs
-	$(DOCKER) container rm swagger_ui_docs
 .PHONY: run/docs/teardown
 
 cos-fleet-catalog-camel/setup:
