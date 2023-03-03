@@ -22,10 +22,10 @@ func NewObservatoriumProxyHandler(clusterService services.ClusterService) *obser
 
 // ValidateTokenAndExternalClusterID validates combination of external cluster ID parameter against client ID from the claims
 func (h observatoriumProxyHandler) ValidateTokenAndExternalClusterID(w http.ResponseWriter, r *http.Request) {
-	external_id := mux.Vars(r)["cluster_external_id"]
+	externalID := mux.Vars(r)["cluster_external_id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.ValidateExternalClusterId(&external_id, "external cluster id"),
+			handlers.ValidateExternalClusterId(&externalID, "external cluster id"),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			ctx := r.Context()
@@ -40,16 +40,16 @@ func (h observatoriumProxyHandler) ValidateTokenAndExternalClusterID(w http.Resp
 				return nil, errors.Unauthenticated("unable to get client ID from the token")
 			}
 
-			cluster, err := h.clusterService.FindCluster(services.FindClusterCriteria{ExternalID: external_id, MultiAZ: true})
+			cluster, err := h.clusterService.FindCluster(services.FindClusterCriteria{ExternalID: externalID})
 			if err != nil {
 				return nil, errors.GeneralError("failed to validate the request: %v" + err.Error())
 			}
 
 			if cluster == nil {
-				return nil, errors.NotFound("unable to find cluster with external cluster ID: %s", external_id)
+				return nil, errors.NotFound("unable to find cluster with external cluster ID: %s", externalID)
 			}
 			if clientID != cluster.ClientID {
-				return nil, errors.Forbidden("failed to match the client ID in the token against provided external cluster ID: %s" + external_id)
+				return nil, errors.Forbidden("failed to match the client ID in the token against provided external cluster ID: %s" + externalID)
 			}
 			return nil, nil
 		},
