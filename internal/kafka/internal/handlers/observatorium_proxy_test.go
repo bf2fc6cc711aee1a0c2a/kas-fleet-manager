@@ -12,6 +12,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 	"github.com/onsi/gomega"
+
+	stderr "errors"
 )
 
 func contextWithClientIDinClaims(clientID string) context.Context {
@@ -112,6 +114,28 @@ func Test_ValidateTokenAndExternalClusterID(t *testing.T) {
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
+						return &api.Cluster{
+							ExternalID: validFormatExternalClusterId,
+							ClientID:   "test",
+						}, nil
+					},
+				},
+			},
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			name: "successful validation should not depend on cluster multi-az value",
+			args: args{
+				externalID: validFormatExternalClusterId,
+				ctx:        contextWithClientIDinClaims("test"),
+			},
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, error) {
+						if criteria.MultiAZ != false {
+							return nil, stderr.New("multi-az criteria must not be set")
+						}
+
 						return &api.Cluster{
 							ExternalID: validFormatExternalClusterId,
 							ClientID:   "test",
