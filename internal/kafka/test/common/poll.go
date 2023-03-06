@@ -292,7 +292,7 @@ func (b *pollerBuilder) ShouldLog(shouldLog ShouldLogFunc) PollerBuilder {
 }
 
 func (b *pollerBuilder) DumpCluster(id string) PollerBuilder {
-	return b.DumpDB("clusters", fmt.Sprintf("cluster_id = '%s'", id), "cluster_id", "status", "updated_at")
+	return b.DumpDB("clusters", fmt.Sprintf("cluster_id = '%s'", id), "cluster_id", "external_id", "status", "updated_at")
 }
 
 func (b *pollerBuilder) DumpDB(name string, filter string, columns ...string) PollerBuilder {

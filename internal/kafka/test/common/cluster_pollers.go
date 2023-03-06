@@ -44,6 +44,7 @@ func WaitForClusterIDToBeAssigned(db *db.ConnectionFactory, clusterService *serv
 	return clusterID, NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, clusterIDAssignmentTimeout).
 		RetryLogMessagef("Waiting for an ID to be assigned to the cluster (%+v)", criteria).
+		DumpDB("clusters", "", "id", "created_at", "updated_at", "cluster_id", "external_id", "status").
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			foundCluster, svcErr := (*clusterService).FindCluster(*criteria)
 
