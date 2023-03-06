@@ -69,6 +69,8 @@ objects:
               - --oidc.filename=${OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEDIR}/${OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILENAME}
               - --token.verification.enabled=${OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED}
               - --token.verification.url=${OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_URL}
+              - --token.verification.cacert.filename=${OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_FILEDIR}/${OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_FILENAME}
+              - --token.verification.cacert.enabled=${OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_ENABLED}
             resources:
               requests:
                 cpu: ${{OBSERVABILITY_REMOTE_WRITE_PROXY_CPU_RESOURCE_REQUESTS}}
@@ -94,10 +96,17 @@ objects:
             volumeMounts:
             - name: observability-remote-write-proxy-oidc-config
               mountPath: ${OBSERVABILITY_REMOTE_WRITE_PROXY_OIDC_CONFIG_FILEDIR}
+            - name: observability-remote-write-proxy-service-serving-ca
+              mountPath: ${OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_FILEDIR}
           volumes:
            - name: observability-remote-write-proxy-oidc-config
              secret:
                secretName: observability-remote-write-proxy-oidc-config
+               defaultMode: 288 # 0440 in octal mode permissions
+               optional: true
+           - name: observability-remote-write-proxy-service-serving-ca
+             configMap:
+               name: observability-remote-write-proxy-service-serving-ca
                defaultMode: 288 # 0440 in octal mode permissions
                optional: true
   - kind: Service
@@ -141,6 +150,28 @@ objects:
       selector:
         matchLabels:
           app.kubernetes.io/name: observability-remote-write-proxy
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      # This ConfigMap contains the Cluster's Service CA certificate, which
+      # issues the Service certificates.
+      # The CA certificate is automatically stored in the ConfigMap
+      # by using the `service.beta.openshift.io/inject-cabundle` K8s annotation
+      # set to true.
+      # The ConfigMap key name corresponding to the stored CA certificate
+      # is `service-ca.crt`.
+      # The CA cert is valid for 26 months and is automatically rotated
+      # when there is less than 13 months validity left. After rotation, the
+      # previous service CA configuration is still trusted until its expiration.
+      # This allows a grace period for all affected services to refresh their
+      # key material before the expiration. If you do not upgrade your cluster
+      # during this grace period, which restarts services and refreshes
+      # their key material, you might need to manually restart services
+      # to avoid failures after the previous service CA expires.
+      name: observability-remote-write-proxy-service-serving-ca
+      annotations:
+        qontract.recycle: "true"
+        service.beta.openshift.io/inject-cabundle: "true"
 
 parameters:
 - name: OBSERVABILITY_REMOTE_WRITE_PROXY_IMAGE_NAME
@@ -259,6 +290,44 @@ parameters:
     is "true".
     Required when OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED
     is "true"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_ENABLED
+  description: >-
+    If set to true, the provided Service Serving CA certificate
+    specified in the file pointed by
+    OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_FILEDIR/OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_FILENAME
+    is appended to the system's certificate trusted store when token verification
+    is performed. See OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED
+    for details on token verification.
+    The Serivce Serving CA certificate has to be a X.509 certificate encoded
+    in PEM format.
+    Only takes effect when OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_ENABLED
+    is set to true.
+  value: "false"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_FILEDIR
+  description: >-
+    Directory in the Observability Remote Write Proxy container's filesystem
+    that contains the Service Service CA certificate.
+    The value must be a directory and must not contain the file name.
+    Only takes effect when
+    OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_ENABLED
+    is "true".
+    Required when OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_ENABLED
+    is "true"
+  value: "/obs-rw-proxy-service-serving-ca"
+
+- name: OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_FILENAME
+  description: >-
+    File name within the directory specified in
+    OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_FILEDIR
+    where to find the Service Service CA certificate.
+    The value must be a file name and not a path.
+    Only takes effect when OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_ENABLED
+    is "true".
+    Required when OBSERVABILITY_REMOTE_WRITE_PROXY_TOKEN_VERIFICATION_SERVICE_SERVING_CA_ENABLED
+    is "true".
+  value: "service-ca.crt"
 
 - name: OBSERVABILITY_REMOTE_WRITE_PROXY_PDB_MIN_AVAILABLE
   description: >-
