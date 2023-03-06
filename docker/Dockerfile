@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9-minimal:9.1.0
+FROM registry.access.redhat.com/ubi9-minimal:9.1.0-1793
 
 RUN curl -Lo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.18.1/yq_linux_amd64 && \
     chmod +x /usr/local/bin/yq
