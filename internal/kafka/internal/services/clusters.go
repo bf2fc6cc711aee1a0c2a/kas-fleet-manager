@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -626,9 +627,19 @@ func (c clusterService) CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, 
 	cluster.Status = clusterSpec.Status
 	cluster.StatusDetails = clusterSpec.StatusDetails
 	cluster.ClusterSpec = clusterSpec.AdditionalInfo
-	if clusterSpec.ExternalID != "" && cluster.ExternalID == "" {
-		cluster.ExternalID = clusterSpec.ExternalID
+
+	if clusterSpec.ExternalID != "" {
+		if cluster.ExternalID == "" {
+			cluster.ExternalID = clusterSpec.ExternalID
+		}
+
+		// log a warning if the external id of the cluster, registered in the db, does not match the external id retrieved
+		// from the provider as the external id should not change during the lifetime of a cluster.
+		if cluster.ExternalID != clusterSpec.ExternalID {
+			logger.Logger.Warningf("data plane cluster %q has unmatched external ids from the database (%q) and from the provider (%q)", cluster.ClusterID, cluster.ExternalID, clusterSpec.ExternalID)
+		}
 	}
+
 	if err := c.Update(*cluster); err != nil {
 		return nil, err
 	}
