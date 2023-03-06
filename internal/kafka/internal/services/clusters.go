@@ -193,6 +193,7 @@ func (c clusterService) Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.S
 		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to save data to db")
 	}
 
+	logger.Logger.Infof("data plane cluster %q created with external id %q", cluster.ClusterID, cluster.ExternalID)
 	return cluster, nil
 }
 
