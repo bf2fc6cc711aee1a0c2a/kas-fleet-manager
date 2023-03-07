@@ -2123,6 +2123,82 @@ Feature: create a connector
       }
       """
 
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      { "connector_type_id": "new-connector-type-id" }
+      """
+    Then the response code should be 409
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "An attempt was made to modify one or more immutable field(s): connector_type_id"
+      }
+      """
+
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      { "namespace_id": "new-namespace_id" }
+      """
+    Then the response code should be 409
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "An attempt was made to modify one or more immutable field(s): namespace_id"
+      }
+      """
+
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      { "channel": "beta" }
+      """
+    Then the response code should be 409
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "An attempt was made to modify one or more immutable field(s): channel"
+      }
+      """
+
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
+      """
+      {
+        "connector_type_id": "new-connector-type-id",
+        "namespace_id": "new-namespace_id",
+        "channel": "beta"
+      }
+      """
+    Then the response code should be 409
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "An attempt was made to modify one or more immutable field(s): connector_type_id, namespace_id, channel"
+      }
+      """
+
     # Check update using content type application/json-patch+json
     Given I set the "Content-Type" header to "application/json-patch+json"
     When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
