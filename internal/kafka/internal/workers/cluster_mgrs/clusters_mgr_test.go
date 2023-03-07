@@ -2315,23 +2315,39 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 		})
 
 	if observabilityConfig.ObservabilityCloudWatchLoggingConfig.CloudwatchLoggingEnabled {
-		stringDataMap := map[string]string{
-			"aws_access_key_id":     observabilityConfig.ObservabilityCloudWatchLoggingConfig.Credentials.AccessKey,
-			"aws_secret_access_key": observabilityConfig.ObservabilityCloudWatchLoggingConfig.Credentials.SecretAccessKey,
+		cloudwatchLoggingSecret := &k8sCoreV1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      observabilityConfig.ObservabilityCloudWatchLoggingConfig.K8sCredentialsSecretName,
+				Namespace: observabilityConfig.ObservabilityCloudWatchLoggingConfig.K8sCredentialsSecretNamespace,
+			},
+			Type: k8sCoreV1.SecretTypeOpaque,
 		}
-		resources = append(resources,
-			&k8sCoreV1.Secret{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
-					Kind:       "Secret",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      observabilityConfig.ObservabilityCloudWatchLoggingConfig.K8sCredentialsSecretName,
-					Namespace: observabilityConfig.ObservabilityCloudWatchLoggingConfig.K8sCredentialsSecretNamespace,
-				},
-				Type:       k8sCoreV1.SecretTypeOpaque,
-				StringData: stringDataMap,
-			})
+
+		if cluster.ClusterType == api.EnterpriseDataPlaneClusterType.String() {
+			credentials := observabilityConfig.ObservabilityCloudWatchLoggingConfig.GetEnterpriseCredentials(cluster.OrganizationID)
+			if credentials != nil {
+				stringData := map[string]string{
+					"aws_access_key":        credentials.AccessKey,
+					"aws_secret_access_key": credentials.SecretAccessKey,
+				}
+				cloudwatchLoggingSecret.StringData = stringData
+				resources = append(resources, cloudwatchLoggingSecret)
+			} else {
+				resources = append(resources, cloudwatchLoggingSecret)
+			}
+		} else {
+			stringDataMap := map[string]string{
+				"aws_access_key_id":     observabilityConfig.ObservabilityCloudWatchLoggingConfig.Credentials.AccessKey,
+				"aws_secret_access_key": observabilityConfig.ObservabilityCloudWatchLoggingConfig.Credentials.SecretAccessKey,
+			}
+			cloudwatchLoggingSecret.StringData = stringDataMap
+			resources = append(resources, cloudwatchLoggingSecret)
+		}
+		fmt.Println(cloudwatchLoggingSecret.StringData)
 	}
 
 	resources = append(resources,
@@ -2527,6 +2543,15 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 			AccessKey:       "myaccesskey",
 			SecretAccessKey: "mysecretaccesskey",
 		},
+		EnterpriseCredentials: []observatorium.ObservabilityEnterpriseCloudwatchLoggingConfigCredentials{
+			{
+				OrgID: "123456",
+				Credentials: observatorium.ObservabilityCloudwatchLoggingConfigCredentials{
+					AccessKey:       "anenterpriseaccesskey",
+					SecretAccessKey: "anenterprisesecretaccesskey",
+				},
+			},
+		},
 	}
 
 	clusterConfig := config.DataplaneClusterConfig{
@@ -2595,6 +2620,22 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 				},
 			},
 			arg: api.Cluster{ClusterID: "test-cluster-id", ProviderType: "ocm", ClusterType: api.ManagedDataPlaneClusterType.String()},
+		},
+		{
+			name: "test should pass and resourceset should be created for enterprise cluster with oservability cloudwatchlogging enabled",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						want, _ := buildResourceSet(testObservabilityConfigWithCloudWatchLoggingEnabled, clusterConfig, ingressDNS, cluster)
+						g.Expect(resources).To(gomega.Equal(want))
+						return nil
+					},
+				},
+				observabilityConfigFactory: func() observatorium.ObservabilityConfiguration {
+					return testObservabilityConfigWithCloudWatchLoggingEnabled
+				},
+			},
+			arg: api.Cluster{ClusterID: "test-cluster-id", ProviderType: "ocm", ClusterType: api.EnterpriseDataPlaneClusterType.String(), OrganizationID: "123456"},
 		},
 		{
 			name: "should receive error when ApplyResources returns error",
