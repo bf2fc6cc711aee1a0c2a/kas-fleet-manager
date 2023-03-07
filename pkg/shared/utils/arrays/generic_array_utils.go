@@ -99,3 +99,9 @@ func ForEach[T any](values []T, consumer ConsumerFunc[T]) {
 		consumer(values[i])
 	}
 }
+
+// IsEmpty returns true if the array is empty, otherwise returns false.
+// An array is considered empty if the array is nil or if the array is not nil but has zero elements
+func IsEmpty[T any](values []T) bool {
+	return len(values) == 0
+}

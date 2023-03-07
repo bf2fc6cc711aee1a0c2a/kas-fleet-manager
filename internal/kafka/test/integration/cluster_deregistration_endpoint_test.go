@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
@@ -25,7 +26,15 @@ func TestEnterpriseClusterDeregistration(t *testing.T) {
 	g := gomega.NewWithT(t)
 	// create a mock ocm api server, keep all endpoints as defaults
 	// see the mocks package for more information on the configurable mock server
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	org := amsv1.NewOrganization().ID("some-org-id").Capabilities(amsv1.NewCapability().Name("s").Value("s"))
+	orgList, err := amsv1.NewOrganizationList().Items(org).Build()
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	ocmServerBuilder.SetGetOrganizations(orgList, nil)
+	subscriptions, err := amsv1.NewSubscriptionList().Items(amsv1.NewSubscription()).Build()
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	ocmServerBuilder.SetSubscriptionSearchResponse(subscriptions, nil)
+	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
 	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, nil)
@@ -128,7 +137,7 @@ func TestEnterpriseClusterDeregistration(t *testing.T) {
 		kr.ActualKafkaBillingModel = "enterprise"
 	})
 
-	err := db.Create(entCluster).Error
+	err = db.Create(entCluster).Error
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	err = db.Create(anotherEntCluster).Error

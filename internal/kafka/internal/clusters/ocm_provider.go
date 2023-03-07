@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	svcErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -533,4 +534,23 @@ func (o *OCMProvider) GetClusterResourceQuotaCosts() ([]types.QuotaCost, error) 
 		})
 	}
 	return quotaCostList, nil
+}
+
+func (o *OCMProvider) CheckIfOrganizationIsTheClusterOwner(externalOrganizationID, clusterID, clusterExternalID string) error {
+	organizationID, err := o.ocmClient.GetOrganisationIdFromExternalId(externalOrganizationID)
+	if err != nil || shared.StringEmpty(organizationID) {
+		return svcErrors.NewWithCause(svcErrors.ErrorGeneral, err, "failed to retrieve organization details")
+	}
+
+	query := fmt.Sprintf("cluster_id = '%s' AND external_cluster_id = '%s' AND organization_id = '%s'", clusterID, clusterExternalID, organizationID)
+	subcriptions, err := o.ocmClient.FindSubscriptions(query)
+	if err != nil {
+		return svcErrors.NewWithCause(svcErrors.ErrorGeneral, err, "failed to validate if the organization with id %q owns the cluster with id %q", externalOrganizationID, clusterID)
+	}
+
+	if arrays.IsEmpty(subcriptions) {
+		return svcErrors.Forbidden("organization with id %q does not own the cluster with id %q", externalOrganizationID, clusterID)
+	}
+
+	return nil
 }

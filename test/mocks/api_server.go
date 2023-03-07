@@ -73,6 +73,7 @@ const (
 	EndpointPathSubscriptionSearch    = "/api/accounts_mgmt/v1/subscriptions"
 	EndpointPathServiceAccount        = "/api/accounts_mgmt/v1/current_account"
 	EndpointPathOrganisationQuotaCost = "/api/accounts_mgmt/v1/organizations/{orgId}/quota_cost"
+	EndpointPathOrganisationList      = "/api/accounts_mgmt/v1/organizations"
 
 	EndpointPathTermsReview = "/api/authorizations/v1/terms_review"
 
@@ -159,6 +160,7 @@ var (
 	EndpointMachinePoolGet                               = Endpoint{EndpointPathMachinePool, http.MethodGet}
 	EndpointServiceAccountGet                            = Endpoint{EndpointPathServiceAccount, http.MethodGet}
 	EndpointOrganizationQuotaCostGet                     = Endpoint{EndpointPathOrganisationQuotaCost, http.MethodGet}
+	EndpointOrganizationList                             = Endpoint{EndpointPathOrganisationList, http.MethodGet}
 	EndpointIdentityProviderPost                         = Endpoint{EndpointPathClusterIdentityProviders, http.MethodPost}
 	EndpointIdentityProviderPatch                        = Endpoint{EndpointPathClusterIdentityProvider, http.MethodPatch}
 	EndpointAddonInstallationsPost                       = Endpoint{EndpointPathAddonInstallations, http.MethodPost}
@@ -365,6 +367,10 @@ func (b *MockConfigurableServerBuilder) SetGetServiceAccountResponse(acc *amsv1.
 
 func (b *MockConfigurableServerBuilder) SetGetOrganizationQuotaCost(list *amsv1.QuotaCostList, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointOrganizationQuotaCostGet] = buildMockRequestHandler(list, err)
+}
+
+func (b *MockConfigurableServerBuilder) SetGetOrganizations(list *amsv1.OrganizationList, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointOrganizationList] = buildMockRequestHandler(list, err)
 }
 
 // SetIdentityProviderPatchResponse set a mock response for Patch /api/clusters_mgmt/v1/clusters/{id}/identity_providers/{idp_id}
@@ -642,10 +648,20 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 		return amsv1.MarshalClusterAuthorizationResponse(v, w)
 	case *amsv1.Subscription:
 		return amsv1.MarshalSubscription(t.(*amsv1.Subscription), w)
+	case *amsv1.Organization:
+		return amsv1.MarshalOrganization(t.(*amsv1.Organization), w)
 	case *authorizationsv1.TermsReviewResponse:
 		return authorizationsv1.MarshalTermsReviewResponse(v, w)
 	case []*amsv1.Subscription:
 		return amsv1.MarshalSubscriptionList(v, w)
+	case []*amsv1.Organization:
+		return amsv1.MarshalOrganizationList(v, w)
+	case *amsv1.OrganizationList:
+		organizationList, err := NewOrganizationList().WithItems(v.Slice())
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(w).Encode(organizationList)
 	case *amsv1.SubscriptionList:
 		subscList, err := NewSubscriptionList().WithItems(v.Slice())
 		if err != nil {
@@ -713,6 +729,31 @@ func (l *subscriptionList) WithItems(items interface{}) (*subscriptionList, erro
 
 func NewSubscriptionList() *subscriptionList {
 	return &subscriptionList{
+		Page:  0,
+		Size:  0,
+		Total: 0,
+		Items: nil,
+	}
+}
+
+type organizationList struct {
+	Page  int             `json:"page"`
+	Size  int             `json:"size"`
+	Total int             `json:"total"`
+	Items json.RawMessage `json:"items"`
+}
+
+func (l *organizationList) WithItems(items any) (*organizationList, error) {
+	var b bytes.Buffer
+	if err := marshalOCMType(items, &b); err != nil {
+		return l, err
+	}
+	l.Items = b.Bytes()
+	return l, nil
+}
+
+func NewOrganizationList() *organizationList {
+	return &organizationList{
 		Page:  0,
 		Size:  0,
 		Total: 0,

@@ -82,6 +82,9 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
 							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
+							},
 						}, nil
 					},
 				},
@@ -100,6 +103,9 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 						return &clusters.ProviderMock{
 							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
+							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
 							},
 						}, nil
 					},
@@ -125,6 +131,9 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
 							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
+							},
 						}, nil
 					},
 				},
@@ -148,6 +157,9 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 						return &clusters.ProviderMock{
 							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
+							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
 							},
 						}, nil
 					},
@@ -173,6 +185,9 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
 							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
+							},
 						}, nil
 					},
 				},
@@ -197,6 +212,9 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
 							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
+							},
 						}, nil
 					},
 				},
@@ -220,6 +238,9 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 						return &clusters.ProviderMock{
 							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
 								return types.ClusterSpec{}, nil
+							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
 							},
 						}, nil
 					},
@@ -251,7 +272,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 			name: "should return an error if cluster is single AZ",
 			args: args{
 				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 6}`, validLengthClusterId, validDnsName)),
-				ctx:  context.TODO(),
+				ctx:  ctxWithClaims,
 			},
 			fields: fields{
 				providerFactory: &clusters.ProviderFactoryMock{
@@ -262,6 +283,9 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 									MultiAZ: false,
 									Status:  api.ClusterProvisioned,
 								}, nil
+							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
 							},
 						}, nil
 					},
@@ -289,6 +313,9 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 									MultiAZ: true,
 									Status:  api.ClusterAccepted,
 								}, nil
+							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
 							},
 						}, nil
 					},
@@ -323,6 +350,77 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 									Status:     api.ClusterProvisioned,
 								}, nil
 							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
+							},
+						}, nil
+					},
+				},
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name: "should return a forbidden error if organization doesn't own the cluster",
+			args: args{
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": true, "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validDnsName)),
+				ctx:  ctxWithClaims,
+			},
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					GetAddonParamsFunc: nil, // should not be called
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{
+									MultiAZ:    true,
+									InternalID: validLengthClusterId,
+									Status:     api.ClusterReady,
+								}, nil
+							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return errors.Forbidden("forbidden")
+							},
+						}, nil
+					},
+				},
+			},
+			wantStatusCode: http.StatusForbidden,
+		},
+		{
+			name: "should return an internal error if cluster ownership check fails",
+			args: args{
+				body: []byte(fmt.Sprintf(`{"cluster_id": "%s", "access_kafkas_via_private_network": true, "cluster_ingress_dns_name": "%s", "kafka_machine_pool_node_count": 3}`, validLengthClusterId, validDnsName)),
+				ctx:  ctxWithClaims,
+			},
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return nil, nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					GetAddonParamsFunc: nil, // should not be called
+				},
+				providerFactory: &clusters.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+						return &clusters.ProviderMock{
+							GetClusterSpecFunc: func(clusterID string) (types.ClusterSpec, error) {
+								return types.ClusterSpec{
+									MultiAZ:    true,
+									InternalID: validLengthClusterId,
+									Status:     api.ClusterReady,
+								}, nil
+							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return fmt.Errorf("some internal error")
+							},
 						}, nil
 					},
 				},
@@ -355,6 +453,9 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 									InternalID: validLengthClusterId,
 									Status:     api.ClusterProvisioned,
 								}, nil
+							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
 							},
 						}, nil
 					},
@@ -396,6 +497,9 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 									InternalID: validLengthClusterId,
 									Status:     api.ClusterProvisioned,
 								}, nil
+							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
 							},
 						}, nil
 					},
@@ -439,6 +543,9 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 									CloudProvider: "aws",
 									Status:        api.ClusterProvisioned,
 								}, nil
+							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
 							},
 						}, nil
 					},
@@ -505,6 +612,9 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 									CloudProvider: mocks.DefaultKafkaRequestProvider,
 									Status:        api.ClusterProvisioned,
 								}, nil
+							},
+							CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID, clusterID, clusterExternalID string) error {
+								return nil
 							},
 						}, nil
 					},

@@ -403,3 +403,45 @@ func Test_ForEach(t *testing.T) {
 	g := gomega.NewWithT(t)
 	g.Expect(sum).To(gomega.Equal(45))
 }
+
+func TestIsEmpty(t *testing.T) {
+	type args struct {
+		values []int
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "return true if array is nil",
+			args: args{
+				values: nil,
+			},
+			want: true,
+		},
+		{
+			name: "return true if array has zero elements",
+			args: args{
+				values: []int{},
+			},
+			want: true,
+		},
+		{
+			name: "return false if array has elements",
+			args: args{
+				values: []int{1, 2},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(testcase.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			got := IsEmpty(testcase.args.values)
+			g.Expect(got).To(gomega.Equal(testcase.want))
+		})
+	}
+}
