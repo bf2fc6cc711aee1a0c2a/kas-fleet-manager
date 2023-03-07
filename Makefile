@@ -1,3 +1,8 @@
+### Environment-sourced variables with defaults
+# Can be overriden by setting environment var before running
+# Example:
+#   OCM_ENV=testing make run
+#   export OCM_ENV=testing; make run
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 DOCS_DIR := $(PROJECT_PATH)/docs
@@ -58,6 +63,9 @@ else
 GOBIN=$(shell $(GO) env GOBIN)
 endif
 
+export GOPROXY=https://proxy.golang.org
+export GOPRIVATE=gitlab.cee.redhat.com
+
 LOCAL_BIN_PATH := ${PROJECT_PATH}/bin
 # Add the project-level bin directory into PATH. Needed in order
 # for `go generate` to use project-level bin directory binaries first
@@ -70,6 +78,9 @@ CURL ?= curl
 
 OC ?= oc
 OCM ?= ocm
+
+# Set the environment to integration by default
+OCM_ENV ?= integration
 
 GOLANGCI_LINT ?= $(LOCAL_BIN_PATH)/golangci-lint
 golangci-lint:
@@ -159,43 +170,6 @@ openapi/spec/validate: specinstall
 	cd ${LOCAL_BIN_PATH}/rhoasapi-installation ;\
 	${SPECTRAL} lint ../../openapi/kas-fleet-manager.yaml ../../openapi/kas-fleet-manager-private-admin.yaml ;\
 	}
-
-	
-
-ifeq ($(shell uname -s | tr A-Z a-z), darwin)
-        PGHOST:="127.0.0.1"
-else
-        PGHOST:="172.18.0.22"
-endif
-
-### Environment-sourced variables with defaults
-# Can be overriden by setting environment var before running
-# Example:
-#   OCM_ENV=testing make run
-#   export OCM_ENV=testing; make run
-# Set the environment to development by default
-ifndef OCM_ENV
-	OCM_ENV:=integration
-endif
-
-ifndef TEST_SUMMARY_FORMAT
-	TEST_SUMMARY_FORMAT=short-verbose
-endif
-
-export GOPROXY=https://proxy.golang.org
-export GOPRIVATE=gitlab.cee.redhat.com
-
-ifndef SERVER_URL
-	SERVER_URL:=http://localhost:8000
-endif
-
-ifndef TEST_TIMEOUT
-	ifeq ($(OCM_ENV), integration)
-		TEST_TIMEOUT=15m
-	else
-		TEST_TIMEOUT=5h
-	endif
-endif
 
 # Prints a list of useful targets.
 help:
@@ -311,6 +285,19 @@ binary:
 install: verify lint
 	$(GO) install ./cmd/kas-fleet-manager
 .PHONY: install
+
+# --------------------- Test Targets --------------------- #
+# Make targets for running tests related commands
+
+# Set var defaults for test targets
+TEST_SUMMARY_FORMAT ?= short-verbose
+ifndef TEST_TIMEOUT
+	ifeq ($(OCM_ENV), integration)
+		TEST_TIMEOUT=15m
+	else
+		TEST_TIMEOUT=5h
+	endif
+endif
 
 # Runs the unit tests.
 #
@@ -594,6 +581,14 @@ db/generate/insert/cluster:
 	echo -e "Run this command in your database:\n\nINSERT INTO clusters (id, created_at, updated_at, cloud_provider, cluster_id, external_id, multi_az, region, status, provider_type) VALUES ('"$$id"', current_timestamp, current_timestamp, '"$$provider"', '"$$id"', '"$$external_id"', "$$multi_az", '"$$region"', 'cluster_provisioned', 'ocm');";
 .PHONY: db/generate/insert/cluster
 
+# --------------------- Image Targets --------------------- #
+# make targets for building and pushing images to a registry
+
+# Set var defaults for image targets based on os
+ifeq ($(shell uname -s | tr A-Z a-z), darwin)
+CONTAINER_IMAGE_BUILD_PLATFORM ?= --platform linux/amd64
+endif
+
 # Login to docker
 docker/login:
 	$(DOCKER) --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
@@ -606,7 +601,7 @@ docker/login/internal:
 
 # Build the binary and image
 image/build:
-	$(DOCKER) --config="${DOCKER_CONFIG}" build --pull -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
+	$(DOCKER) --config="${DOCKER_CONFIG}" build $(CONTAINER_IMAGE_BUILD_PLATFORM) --pull -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
 .PHONY: image/build
 
 # Build and push the image
@@ -617,7 +612,7 @@ image/push: image/build
 # build binary and image for OpenShift deployment
 image/build/internal: IMAGE_TAG ?= $(image_tag)
 image/build/internal:
-	$(DOCKER) build -t "$(shell $(OC) get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
+	$(DOCKER) build $(CONTAINER_IMAGE_BUILD_PLATFORM) -t "$(shell $(OC) get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
 .PHONY: image/build/internal
 
 # push the image to the OpenShift internal registry
@@ -706,6 +701,7 @@ observatorium/token-refresher/setup:
 .PHONY: observatorium/token-refresher/setup
 
 # OCM login
+ocm/login: SERVER_URL ?= http://localhost:8000
 ocm/login:
 	@$(OCM) login --url="$(SERVER_URL)" --token="$(OCM_OFFLINE_TOKEN)"
 .PHONY: ocm/login
