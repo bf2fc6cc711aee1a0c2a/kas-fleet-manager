@@ -197,7 +197,7 @@ func createCertMagicClient(awsConfig *config.AWSConfig,
 	kafkaTLSCertificateManagementConfig *config.KafkaTLSCertificateManagementConfig,
 	storage certmagic.Storage) *certmagic.Config {
 	provider := &route53.Provider{
-		WaitForPropagation: true,
+		WaitForPropagation: false,
 		AccessKeyId:        awsConfig.Route53.AccessKey,
 		SecretAccessKey:    awsConfig.Route53.SecretAccessKey,
 	}
