@@ -361,15 +361,18 @@ func (b *MockConfigurableServerBuilder) SetIdentityProviderPostResponse(idp *clu
 	b.handlerRegister[EndpointIdentityProviderPost] = buildMockRequestHandler(idp, err)
 }
 
+// SetGetServiceAccountResponse set a mock response for GET /api/accounts_mgmt/v1/accounts/{id}
 func (b *MockConfigurableServerBuilder) SetGetServiceAccountResponse(acc *amsv1.Account, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointServiceAccountGet] = buildMockRequestHandler(acc, err)
 }
 
-func (b *MockConfigurableServerBuilder) SetGetOrganizationQuotaCost(list *amsv1.QuotaCostList, err *ocmErrors.ServiceError) {
+// SetGetOrganizationQuotaCostResponse set a mock response for GET /api/accounts_mgmt/v1/organizations/{id}/quota_cost
+func (b *MockConfigurableServerBuilder) SetGetOrganizationQuotaCostResponse(list *amsv1.QuotaCostList, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointOrganizationQuotaCostGet] = buildMockRequestHandler(list, err)
 }
 
-func (b *MockConfigurableServerBuilder) SetGetOrganizations(list *amsv1.OrganizationList, err *ocmErrors.ServiceError) {
+// SetOrganizationsGetResponse set a mock response for GET /api/accounts_mgmt/v1/organizations
+func (b *MockConfigurableServerBuilder) SetOrganizationsGetResponse(list *amsv1.OrganizationList, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointOrganizationList] = buildMockRequestHandler(list, err)
 }
 

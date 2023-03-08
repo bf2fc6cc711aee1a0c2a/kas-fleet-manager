@@ -207,7 +207,7 @@ func TestClusterRegistration_ClusterOwnershipFailure(t *testing.T) {
 	orgList, err := amsv1.NewOrganizationList().Items(org).Build()
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
-	ocmServerBuilder.SetGetOrganizations(orgList, nil)
+	ocmServerBuilder.SetOrganizationsGetResponse(orgList, nil)
 	subscriptions, err := amsv1.NewSubscriptionList().Items().Build() // no subscription means that the cluster subscription was not found for the given organization id
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	ocmServerBuilder.SetSubscriptionSearchResponse(subscriptions, nil)
@@ -252,7 +252,7 @@ func TestClusterRegistration_Successful(t *testing.T) {
 	orgList, err := amsv1.NewOrganizationList().Items(org).Build()
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
-	ocmServerBuilder.SetGetOrganizations(orgList, nil)
+	ocmServerBuilder.SetOrganizationsGetResponse(orgList, nil)
 	subscriptions, err := amsv1.NewSubscriptionList().Items(amsv1.NewSubscription()).Build()
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	ocmServerBuilder.SetSubscriptionSearchResponse(subscriptions, nil)

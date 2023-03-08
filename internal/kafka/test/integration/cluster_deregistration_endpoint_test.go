@@ -30,7 +30,7 @@ func TestEnterpriseClusterDeregistration(t *testing.T) {
 	orgList, err := amsv1.NewOrganizationList().Items(org).Build()
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
-	ocmServerBuilder.SetGetOrganizations(orgList, nil)
+	ocmServerBuilder.SetOrganizationsGetResponse(orgList, nil)
 	subscriptions, err := amsv1.NewSubscriptionList().Items(amsv1.NewSubscription()).Build()
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	ocmServerBuilder.SetSubscriptionSearchResponse(subscriptions, nil)
