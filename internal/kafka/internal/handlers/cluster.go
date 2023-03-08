@@ -57,7 +57,7 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			clusterSpec, getClusterErr := provider.GetClusterSpec(clusterPayload.ClusterId)
-			if getClusterErr != nil && shared.IsNil(clusterSpec) {
+			if getClusterErr != nil {
 				return nil, errors.GeneralError("failed to get cluster by ID: %s", clusterPayload.ClusterId)
 			}
 
