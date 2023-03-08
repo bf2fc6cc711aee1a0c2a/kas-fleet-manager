@@ -28,6 +28,9 @@ var _ Provider = &ProviderMock{}
 //			CheckClusterStatusFunc: func(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
 //				panic("mock out the CheckClusterStatus method")
 //			},
+//			CheckIfOrganizationIsTheClusterOwnerFunc: func(externalOrganizationID string, clusterID string, clusterExternalID string) error {
+//				panic("mock out the CheckIfOrganizationIsTheClusterOwner method")
+//			},
 //			CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 //				panic("mock out the Create method")
 //			},
@@ -82,6 +85,9 @@ type ProviderMock struct {
 
 	// CheckClusterStatusFunc mocks the CheckClusterStatus method.
 	CheckClusterStatusFunc func(spec *types.ClusterSpec) (*types.ClusterSpec, error)
+
+	// CheckIfOrganizationIsTheClusterOwnerFunc mocks the CheckIfOrganizationIsTheClusterOwner method.
+	CheckIfOrganizationIsTheClusterOwnerFunc func(externalOrganizationID string, clusterID string, clusterExternalID string) error
 
 	// CreateFunc mocks the Create method.
 	CreateFunc func(request *types.ClusterRequest) (*types.ClusterSpec, error)
@@ -142,6 +148,15 @@ type ProviderMock struct {
 		CheckClusterStatus []struct {
 			// Spec is the spec argument value.
 			Spec *types.ClusterSpec
+		}
+		// CheckIfOrganizationIsTheClusterOwner holds details about calls to the CheckIfOrganizationIsTheClusterOwner method.
+		CheckIfOrganizationIsTheClusterOwner []struct {
+			// ExternalOrganizationID is the externalOrganizationID argument value.
+			ExternalOrganizationID string
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+			// ClusterExternalID is the clusterExternalID argument value.
+			ClusterExternalID string
 		}
 		// Create holds details about calls to the Create method.
 		Create []struct {
@@ -213,22 +228,23 @@ type ProviderMock struct {
 			SyncSetName string
 		}
 	}
-	lockAddIdentityProvider          sync.RWMutex
-	lockApplyResources               sync.RWMutex
-	lockCheckClusterStatus           sync.RWMutex
-	lockCreate                       sync.RWMutex
-	lockCreateMachinePool            sync.RWMutex
-	lockDelete                       sync.RWMutex
-	lockGetCloudProviderRegions      sync.RWMutex
-	lockGetCloudProviders            sync.RWMutex
-	lockGetClusterDNS                sync.RWMutex
-	lockGetClusterResourceQuotaCosts sync.RWMutex
-	lockGetClusterSpec               sync.RWMutex
-	lockGetMachinePool               sync.RWMutex
-	lockInstallClusterLogging        sync.RWMutex
-	lockInstallKasFleetshard         sync.RWMutex
-	lockInstallStrimzi               sync.RWMutex
-	lockRemoveResources              sync.RWMutex
+	lockAddIdentityProvider                  sync.RWMutex
+	lockApplyResources                       sync.RWMutex
+	lockCheckClusterStatus                   sync.RWMutex
+	lockCheckIfOrganizationIsTheClusterOwner sync.RWMutex
+	lockCreate                               sync.RWMutex
+	lockCreateMachinePool                    sync.RWMutex
+	lockDelete                               sync.RWMutex
+	lockGetCloudProviderRegions              sync.RWMutex
+	lockGetCloudProviders                    sync.RWMutex
+	lockGetClusterDNS                        sync.RWMutex
+	lockGetClusterResourceQuotaCosts         sync.RWMutex
+	lockGetClusterSpec                       sync.RWMutex
+	lockGetMachinePool                       sync.RWMutex
+	lockInstallClusterLogging                sync.RWMutex
+	lockInstallKasFleetshard                 sync.RWMutex
+	lockInstallStrimzi                       sync.RWMutex
+	lockRemoveResources                      sync.RWMutex
 }
 
 // AddIdentityProvider calls AddIdentityProviderFunc.
@@ -332,6 +348,46 @@ func (mock *ProviderMock) CheckClusterStatusCalls() []struct {
 	mock.lockCheckClusterStatus.RLock()
 	calls = mock.calls.CheckClusterStatus
 	mock.lockCheckClusterStatus.RUnlock()
+	return calls
+}
+
+// CheckIfOrganizationIsTheClusterOwner calls CheckIfOrganizationIsTheClusterOwnerFunc.
+func (mock *ProviderMock) CheckIfOrganizationIsTheClusterOwner(externalOrganizationID string, clusterID string, clusterExternalID string) error {
+	if mock.CheckIfOrganizationIsTheClusterOwnerFunc == nil {
+		panic("ProviderMock.CheckIfOrganizationIsTheClusterOwnerFunc: method is nil but Provider.CheckIfOrganizationIsTheClusterOwner was just called")
+	}
+	callInfo := struct {
+		ExternalOrganizationID string
+		ClusterID              string
+		ClusterExternalID      string
+	}{
+		ExternalOrganizationID: externalOrganizationID,
+		ClusterID:              clusterID,
+		ClusterExternalID:      clusterExternalID,
+	}
+	mock.lockCheckIfOrganizationIsTheClusterOwner.Lock()
+	mock.calls.CheckIfOrganizationIsTheClusterOwner = append(mock.calls.CheckIfOrganizationIsTheClusterOwner, callInfo)
+	mock.lockCheckIfOrganizationIsTheClusterOwner.Unlock()
+	return mock.CheckIfOrganizationIsTheClusterOwnerFunc(externalOrganizationID, clusterID, clusterExternalID)
+}
+
+// CheckIfOrganizationIsTheClusterOwnerCalls gets all the calls that were made to CheckIfOrganizationIsTheClusterOwner.
+// Check the length with:
+//
+//	len(mockedProvider.CheckIfOrganizationIsTheClusterOwnerCalls())
+func (mock *ProviderMock) CheckIfOrganizationIsTheClusterOwnerCalls() []struct {
+	ExternalOrganizationID string
+	ClusterID              string
+	ClusterExternalID      string
+} {
+	var calls []struct {
+		ExternalOrganizationID string
+		ClusterID              string
+		ClusterExternalID      string
+	}
+	mock.lockCheckIfOrganizationIsTheClusterOwner.RLock()
+	calls = mock.calls.CheckIfOrganizationIsTheClusterOwner
+	mock.lockCheckIfOrganizationIsTheClusterOwner.RUnlock()
 	return calls
 }
 

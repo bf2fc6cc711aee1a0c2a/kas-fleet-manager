@@ -17,6 +17,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 
 	"github.com/onsi/gomega"
+	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
 
 // Test cluster registration endpoint with invalid body
@@ -200,10 +201,62 @@ func TestClusterRegistration_ClusterIDUniquenessChecks(t *testing.T) {
 	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusConflict))
 }
 
+func TestClusterRegistration_ClusterOwnershipFailure(t *testing.T) {
+	g := gomega.NewWithT(t)
+	org := amsv1.NewOrganization().ID("some-org-id").Capabilities(amsv1.NewCapability().Name("s").Value("s"))
+	orgList, err := amsv1.NewOrganizationList().Items(org).Build()
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	ocmServerBuilder.SetOrganizationsGetResponse(orgList, nil)
+	subscriptions, err := amsv1.NewSubscriptionList().Items().Build() // no subscription means that the cluster subscription was not found for the given organization id
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	ocmServerBuilder.SetSubscriptionSearchResponse(subscriptions, nil)
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, nil)
+	defer teardown()
+
+	// only run test in integration env
+	ocmConfig := test.TestServices.OCMConfig
+	if ocmConfig.MockMode != ocm.MockModeEmulateServer || h.Env.Name != environments.IntegrationEnv {
+		t.SkipNow()
+	}
+
+	claims := jwt.MapClaims{
+		"is_org_admin": true,
+	}
+
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account, claims)
+
+	payload := public.EnterpriseOsdClusterPayload{
+		ClusterId:                     "1234abcd1234abcd1234abcd1234abcd",
+		ClusterIngressDnsName:         "apps.example.com",
+		KafkaMachinePoolNodeCount:     12,
+		AccessKafkasViaPrivateNetwork: true,
+	}
+
+	_, resp, err := client.EnterpriseDataplaneClustersApi.RegisterEnterpriseOsdCluster(ctx, payload)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+
+	g.Expect(err).To(gomega.HaveOccurred())
+	g.Expect(resp.StatusCode).To(gomega.Equal(http.StatusForbidden)) // the request should have been refused since there was no matching subscription found as per the test setup
+}
+
 func TestClusterRegistration_Successful(t *testing.T) {
 	g := gomega.NewWithT(t)
-
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	org := amsv1.NewOrganization().ID("some-org-id").Capabilities(amsv1.NewCapability().Name("s").Value("s"))
+	orgList, err := amsv1.NewOrganizationList().Items(org).Build()
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	ocmServerBuilder.SetOrganizationsGetResponse(orgList, nil)
+	subscriptions, err := amsv1.NewSubscriptionList().Items(amsv1.NewSubscription()).Build()
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	ocmServerBuilder.SetSubscriptionSearchResponse(subscriptions, nil)
+	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
 	h, client, teardown := kafkatest.NewKafkaHelperWithHooks(t, ocmServer, nil)

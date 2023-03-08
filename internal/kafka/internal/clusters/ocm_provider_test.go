@@ -1622,3 +1622,130 @@ func TestOCMProvider_GetClusterResourceQuotaCosts(t *testing.T) {
 		})
 	}
 }
+
+func TestOCMProvider_CheckIfOrganizationIsTheClusterOwner(t *testing.T) {
+	g := gomega.NewWithT(t)
+	type fields struct {
+		ocmClient *ocm.ClientMock
+	}
+	type args struct {
+		externalOrganizationID string
+		clusterID              string
+		clusterExternalID      string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "return an error when getting the ams organization id fails",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetOrganisationIdFromExternalIdFunc: func(externalID string) (string, error) {
+						return "", fmt.Errorf("error")
+					},
+				},
+			},
+			args: args{
+				externalOrganizationID: "org-id",
+				clusterID:              "cluster-id",
+				clusterExternalID:      "cluster-external-id",
+			},
+			wantErr: true,
+		},
+		{
+			name: "return an error when getting the organization is not found from AMS",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetOrganisationIdFromExternalIdFunc: func(externalID string) (string, error) {
+						return "", nil
+					},
+				},
+			},
+			args: args{
+				externalOrganizationID: "org-id",
+				clusterID:              "cluster-id",
+				clusterExternalID:      "cluster-external-id",
+			},
+			wantErr: true,
+		},
+		{
+			name: "return an error when getting the cluster subscription fails",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetOrganisationIdFromExternalIdFunc: func(externalID string) (string, error) {
+						return "some-ams-org-id", nil
+					},
+					FindSubscriptionsFunc: func(query string) ([]*accountsmgmtv1.Subscription, error) {
+						g.Expect(query).To(gomega.Equal(`cluster_id = 'cluster-id' AND external_cluster_id = 'cluster-external-id' AND organization_id = 'some-ams-org-id'`))
+						return nil, fmt.Errorf("some error")
+					},
+				},
+			},
+			args: args{
+				externalOrganizationID: "org-id",
+				clusterID:              "cluster-id",
+				clusterExternalID:      "cluster-external-id",
+			},
+			wantErr: true,
+		},
+		{
+			name: "return an error when no subscription is found for the given cluster information",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetOrganisationIdFromExternalIdFunc: func(externalID string) (string, error) {
+						return "some-ams-org-id", nil
+					},
+					FindSubscriptionsFunc: func(query string) ([]*accountsmgmtv1.Subscription, error) {
+						g.Expect(query).To(gomega.Equal(`cluster_id = 'cluster-id' AND external_cluster_id = 'cluster-external-id' AND organization_id = 'some-ams-org-id'`))
+						return []*accountsmgmtv1.Subscription{}, nil
+					},
+				},
+			},
+			args: args{
+				externalOrganizationID: "org-id",
+				clusterID:              "cluster-id",
+				clusterExternalID:      "cluster-external-id",
+			},
+			wantErr: true,
+		},
+		{
+			name: "do not return an error when subscription is found for the given cluster information",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetOrganisationIdFromExternalIdFunc: func(externalID string) (string, error) {
+						return "some-ams-org-id", nil
+					},
+					FindSubscriptionsFunc: func(query string) ([]*accountsmgmtv1.Subscription, error) {
+						g.Expect(query).To(gomega.Equal(`cluster_id = 'cluster-id' AND external_cluster_id = 'cluster-external-id' AND organization_id = 'some-ams-org-id'`))
+						return []*accountsmgmtv1.Subscription{
+							{},
+						}, nil
+					},
+				},
+			},
+			args: args{
+				externalOrganizationID: "org-id",
+				clusterID:              "cluster-id",
+				clusterExternalID:      "cluster-external-id",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		testcase := tt
+		t.Run(testcase.name, func(t *testing.T) {
+			t.Parallel()
+			g := gomega.NewWithT(t)
+			o := &OCMProvider{
+				ocmClient: testcase.fields.ocmClient,
+			}
+
+			err := o.CheckIfOrganizationIsTheClusterOwner(testcase.args.externalOrganizationID, testcase.args.clusterID, testcase.args.clusterExternalID)
+			g.Expect(err != nil).To(gomega.Equal(testcase.wantErr))
+			g.Expect(testcase.fields.ocmClient.GetOrganisationIdFromExternalIdCalls()[0].ExternalId).To(gomega.Equal(testcase.args.externalOrganizationID))
+		})
+	}
+}

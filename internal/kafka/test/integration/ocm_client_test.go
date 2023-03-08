@@ -32,7 +32,7 @@ func TestOCMClientGetQuotaCosts(t *testing.T) {
 
 	quotaCostList, err := amsv1.NewQuotaCostList().Items(mockQuotaCostBuilderItem1, mockQuotaCostBuilderItem2).Build()
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to build mock quota list")
-	ocmServerBuilder.SetGetOrganizationQuotaCost(quotaCostList, nil)
+	ocmServerBuilder.SetGetOrganizationQuotaCostResponse(quotaCostList, nil)
 
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()

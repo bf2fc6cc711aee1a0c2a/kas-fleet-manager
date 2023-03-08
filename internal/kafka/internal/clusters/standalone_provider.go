@@ -583,3 +583,7 @@ func (s *StandaloneProvider) GetClusterResourceQuotaCosts() ([]types.QuotaCost, 
 	var quotaCostList []types.QuotaCost
 	return quotaCostList, nil
 }
+
+func (s *StandaloneProvider) CheckIfOrganizationIsTheClusterOwner(externalOrganizationID, clusterID, clusterExternalID string) error {
+	return nil
+}

@@ -56,27 +56,16 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 			validateKafkaMachinePoolNodeCount(&clusterPayload),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-
 			clusterSpec, getClusterErr := provider.GetClusterSpec(clusterPayload.ClusterId)
 			if getClusterErr != nil && shared.IsNil(clusterSpec) {
 				return nil, errors.GeneralError("failed to get cluster by ID: %s", clusterPayload.ClusterId)
 			}
 
-			if !clusterSpec.MultiAZ {
-				return nil, errors.BadRequest("single AZ clusters are not supported")
-			}
-
-			if !shared.StringEqualsIgnoreCase(clusterSpec.Status.String(), api.ClusterProvisioned.String()) {
-				return nil, errors.BadRequest("cluster that are not yet fully provisioned are not accepted")
-			}
-
 			claims, claimsErr := getClaims(ctx)
-
 			if claimsErr != nil {
 				return nil, claimsErr
 			}
 
-			// TODO - validate that the org also owns the cluster.
 			orgId, getOrgIdErr := claims.GetOrgId()
 			if getOrgIdErr != nil {
 				return nil, errors.GeneralError(getOrgIdErr.Error())
@@ -86,6 +75,23 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 				return nil, errors.New(errors.ErrorUnauthorized, "non admin user not authorized to perform this action")
 			}
 
+			ownershipCheckErr := provider.CheckIfOrganizationIsTheClusterOwner(orgId, clusterPayload.ClusterId, clusterSpec.ExternalID)
+			if ownershipCheckErr != nil {
+				serviceErr, ok := ownershipCheckErr.(*errors.ServiceError)
+				if ok {
+					return nil, serviceErr
+				}
+
+				return nil, errors.NewWithCause(errors.ErrorGeneral, ownershipCheckErr, ownershipCheckErr.Error())
+			}
+
+			if !clusterSpec.MultiAZ {
+				return nil, errors.BadRequest("single AZ clusters are not supported")
+			}
+
+			if !shared.StringEqualsIgnoreCase(clusterSpec.Status.String(), api.ClusterProvisioned.String()) {
+				return nil, errors.BadRequest("cluster that are not yet fully provisioned are not accepted")
+			}
 			supportedKafkaInstanceType := api.StandardTypeSupport.String()
 			clusterRequest := &api.Cluster{
 				ClusterType:                   api.EnterpriseDataPlaneClusterType.String(),

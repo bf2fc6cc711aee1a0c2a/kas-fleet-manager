@@ -46,6 +46,8 @@ type Provider interface {
 	// GetClusterResourceQuotaCosts returns a list of quota cost information related to resources used for the provisioning and
 	// terraforming of data plane clusters for the authenticated user.
 	GetClusterResourceQuotaCosts() ([]types.QuotaCost, error)
+	// CheckIfOrganizationIsTheClusterOwner perform the check to verify if the organization (given by the external organization id) owns the cluster with the given cluster id and cluster external id
+	CheckIfOrganizationIsTheClusterOwner(externalOrganizationID, clusterID, clusterExternalID string) error
 }
 
 // ProviderFactory used to return an instance of Provider implementation
