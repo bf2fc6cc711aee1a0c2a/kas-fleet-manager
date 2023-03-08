@@ -197,8 +197,9 @@ func createCertMagicClient(awsConfig *config.AWSConfig,
 	kafkaTLSCertificateManagementConfig *config.KafkaTLSCertificateManagementConfig,
 	storage certmagic.Storage) *certmagic.Config {
 	provider := &route53.Provider{
-		AccessKeyId:     awsConfig.Route53.AccessKey,
-		SecretAccessKey: awsConfig.Route53.SecretAccessKey,
+		WaitForPropagation: false,
+		AccessKeyId:        awsConfig.Route53.AccessKey,
+		SecretAccessKey:    awsConfig.Route53.SecretAccessKey,
 	}
 
 	certmagic.Default.RenewalWindowRatio = kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.RenewalWindowRatio
