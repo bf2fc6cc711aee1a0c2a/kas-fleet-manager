@@ -25,6 +25,8 @@ func ConvertCluster(cluster *api.Cluster) []map[string]interface{} {
 			"multi_az":                cluster.MultiAZ,
 			"status":                  cluster.Status,
 			"cluster_id":              cluster.ClusterID,
+			"client_id":               cluster.ClientID,
+			"client_secret":           cluster.ClientSecret,
 			"external_id":             cluster.ExternalID,
 			"created_at":              cluster.Meta.CreatedAt,
 			"updated_at":              cluster.Meta.UpdatedAt,

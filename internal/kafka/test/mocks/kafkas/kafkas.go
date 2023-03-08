@@ -17,16 +17,18 @@ import (
 )
 
 const (
-	DefaultKafkaRequestRegion   = "us-east-1"
-	DefaultKafkaRequestProvider = "aws"
-	DefaultKafkaRequestName     = "test-cluster"
-	DefaultClusterID            = "test-cluster-id"
-	user                        = "test-user"
-	DefaultMultiAz              = true
-	DefaultBootstrapServerHost  = "test-bootstrap-server-host"
-	DefaultPlacementId          = "test-placement-id"
-	DefaultOrganisationId       = "13640203"
-	DefaultKafkaID              = "test-kafka-id"
+	DefaultKafkaRequestRegion               = "us-east-1"
+	DefaultKafkaRequestProvider             = "aws"
+	DefaultKafkaRequestName                 = "test-cluster"
+	DefaultClusterID                        = "test-cluster-id"
+	user                                    = "test-user"
+	DefaultMultiAz                          = true
+	DefaultBootstrapServerHost              = "test-bootstrap-server-host"
+	DefaultPlacementId                      = "test-placement-id"
+	DefaultOrganisationId                   = "13640203"
+	DefaultKafkaID                          = "test-kafka-id"
+	defaultCanaryServiceAccountClientID     = "canary-service-account-client-id"
+	defaultCanaryServiceAccountClientSecret = "canary-service-acccount-client-secret"
 )
 
 var (
@@ -181,6 +183,8 @@ func WithPredefinedTestValues() KafkaRequestBuildOption {
 		request.Status = constants.KafkaRequestStatusReady.String()
 		request.MaxDataRetentionSize = mocksupportedinstancetypes.DefaultMaxDataRetentionSize
 		request.OrganisationId = DefaultOrganisationId
+		request.CanaryServiceAccountClientID = defaultCanaryServiceAccountClientID
+		request.CanaryServiceAccountClientSecret = defaultCanaryServiceAccountClientSecret
 	}
 }
 

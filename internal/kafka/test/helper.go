@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
@@ -179,15 +180,16 @@ func deleteLeftOverServiceAccounts(h *test.Helper) {
 }
 
 func deleteClustersServiceAccountsFromSSOService(cluster *api.Cluster, keycloakConfig *keycloak.KeycloakConfig) {
-	kafkaSsoService := sso.NewKeycloakServiceBuilder().
-		ForKFM().
-		WithConfiguration(keycloakConfig).
-		Build()
+	if !shared.StringEmpty(cluster.ClientID) { // only delete the agent service account if it is set avoid unneeded calls to SSO if it is not set
+		kafkaSsoService := sso.NewKeycloakServiceBuilder().
+			ForKFM().
+			WithConfiguration(keycloakConfig).
+			Build()
 
-	err := kafkaSsoService.DeleteServiceAccountInternal(cluster.ClientID)
-
-	if err != nil {
-		glog.Warningf("Failed to delete Fleetshard client from SSO for cluster %q. The sso provider is %q", cluster.ClusterID, keycloakConfig.SelectSSOProvider)
+		err := kafkaSsoService.DeleteServiceAccountInternal(cluster.ClientID)
+		if err != nil {
+			glog.Warningf("Failed to delete Fleetshard client with id %q from SSO for cluster %q due to %q. The sso provider is %q", cluster.ClientID, cluster.ClusterID, err.Error(), keycloakConfig.SelectSSOProvider)
+		}
 	}
 
 	if keycloakConfig.SelectSSOProvider != keycloak.MAS_SSO {
@@ -200,14 +202,18 @@ func deleteClustersServiceAccountsFromSSOService(cluster *api.Cluster, keycloakC
 		WithRealmConfig(keycloakConfig.OSDClusterIDPRealm).
 		Build()
 
-	err = osdSSOService.DeRegisterClientInSSO(cluster.ID)
+	err := osdSSOService.DeRegisterClientInSSO(cluster.ID)
 
 	if err != nil {
-		glog.Warningf("Failed to delete IDP configuration client from SSO for cluster %q. The sso provider is %q", cluster.ClusterID, keycloakConfig.SelectSSOProvider)
+		glog.Warningf("Failed to delete IDP configuration client from SSO for cluster %q due to %q. The sso provider is %q", cluster.ClusterID, err.Error(), keycloakConfig.SelectSSOProvider)
 	}
 }
 
 func deleteKafkasServiceAccountsFromSSOService(kafka *dbapi.KafkaRequest, keycloakConfig *keycloak.KeycloakConfig) {
+	if shared.StringEmpty(kafka.CanaryServiceAccountClientID) { // only delete the canary service account if it is set avoid unneeded calls to SSO if it is not set
+		return
+	}
+
 	kafkaSsoService := sso.NewKeycloakServiceBuilder().
 		ForKFM().
 		WithConfiguration(keycloakConfig).
@@ -216,6 +222,6 @@ func deleteKafkasServiceAccountsFromSSOService(kafka *dbapi.KafkaRequest, keyclo
 	err := kafkaSsoService.DeleteServiceAccountInternal(kafka.CanaryServiceAccountClientID)
 
 	if err != nil {
-		glog.Warningf("Failed to delete Kafka canary service account from SSO service for kafka %q. The sso provider is %q", kafka.Name, keycloakConfig.SelectSSOProvider)
+		glog.Warningf("Failed to delete Kafka canary service account with id %q from SSO service for kafka %q due to %q. The sso provider is %q", kafka.CanaryServiceAccountClientID, kafka.Name, err.Error(), keycloakConfig.SelectSSOProvider)
 	}
 }
