@@ -2335,9 +2335,6 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 					"aws_secret_access_key": credentials.SecretAccessKey,
 				}
 				cloudwatchLoggingSecret.StringData = stringData
-				resources = append(resources, cloudwatchLoggingSecret)
-			} else {
-				resources = append(resources, cloudwatchLoggingSecret)
 			}
 		} else {
 			stringDataMap := map[string]string{
@@ -2345,9 +2342,8 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				"aws_secret_access_key": observabilityConfig.ObservabilityCloudWatchLoggingConfig.Credentials.SecretAccessKey,
 			}
 			cloudwatchLoggingSecret.StringData = stringDataMap
-			resources = append(resources, cloudwatchLoggingSecret)
 		}
-		fmt.Println(cloudwatchLoggingSecret.StringData)
+		resources = append(resources, cloudwatchLoggingSecret)
 	}
 
 	resources = append(resources,

@@ -125,14 +125,14 @@ func (c *ObservabilityCloudWatchLoggingConfig) GetEnterpriseCredentials(orgID st
 	idx, enterpriseCredential := arrays.FindFirst(c.EnterpriseCredentials, func(enterpriseCredential ObservabilityEnterpriseCloudwatchLoggingConfigCredentials) bool {
 		return orgID == enterpriseCredential.OrgID
 	})
-	if idx != arrays.ElementNotFound {
-		credentials.AccessKey = enterpriseCredential.Credentials.AccessKey
-		credentials.SecretAccessKey = enterpriseCredential.Credentials.SecretAccessKey
-
-		return credentials
+	if idx == arrays.ElementNotFound {
+		return nil
 	}
 
-	return nil
+	credentials.AccessKey = enterpriseCredential.Credentials.AccessKey
+	credentials.SecretAccessKey = enterpriseCredential.Credentials.SecretAccessKey
+
+	return credentials
 }
 
 type ObservabilityCloudwatchLoggingConfigCredentials struct {
