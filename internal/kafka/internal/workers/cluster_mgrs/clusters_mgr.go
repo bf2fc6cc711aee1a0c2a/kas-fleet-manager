@@ -760,9 +760,15 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 	r = append(r, c.buildObservabilityNamespaceResource())
 
 	if c.ObservabilityConfiguration.ObservabilityCloudWatchLoggingConfig.CloudwatchLoggingEnabled {
-		r = append(r,
-			c.buildObservabilityCloudwatchLoggingCredentialsSecret(),
-		)
+		if cluster.ClusterType == api.EnterpriseDataPlaneClusterType.String() {
+			r = append(r,
+				c.buildObservabilityEnterpriseCloudwatchLoggingCredentialsSecret(cluster.OrganizationID, cluster.ClusterID),
+			)
+		} else {
+			r = append(r,
+				c.buildObservabilityCloudwatchLoggingCredentialsSecret(),
+			)
+		}
 	}
 
 	r = append(r,
@@ -852,6 +858,33 @@ func (c *ClusterManager) buildObservabilityCloudwatchLoggingCredentialsSecret() 
 		Type:       k8sCoreV1.SecretTypeOpaque,
 		StringData: stringDataMap,
 	}
+}
+
+func (c *ClusterManager) buildObservabilityEnterpriseCloudwatchLoggingCredentialsSecret(orgID string, clusterID string) *k8sCoreV1.Secret {
+	cloudwatchCredentialSecret := &k8sCoreV1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      c.ObservabilityConfiguration.ObservabilityCloudWatchLoggingConfig.K8sCredentialsSecretName,
+			Namespace: c.ObservabilityConfiguration.ObservabilityCloudWatchLoggingConfig.K8sCredentialsSecretNamespace,
+		},
+		Type: k8sCoreV1.SecretTypeOpaque,
+	}
+
+	credentials := c.ObservabilityConfiguration.ObservabilityCloudWatchLoggingConfig.GetEnterpriseCredentials(orgID)
+	if credentials == nil {
+		glog.Warningf("Failed to find cloudwatch logging secret for cluster %q from organization with ID %q", clusterID, orgID)
+		return cloudwatchCredentialSecret
+	}
+
+	stringData := map[string]string{
+		"aws_access_key":        credentials.AccessKey,
+		"aws_secret_access_key": credentials.SecretAccessKey,
+	}
+	cloudwatchCredentialSecret.StringData = stringData
+	return cloudwatchCredentialSecret
 }
 
 func (c *ClusterManager) buildObservatoriumDexSecretResource() *k8sCoreV1.Secret {

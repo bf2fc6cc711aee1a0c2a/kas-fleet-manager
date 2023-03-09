@@ -6,6 +6,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/pflag"
 )
@@ -71,11 +72,12 @@ var _ environments.ConfigModule = &ObservabilityConfiguration{}
 var _ environments.ServiceValidator = &ObservabilityConfiguration{}
 
 type ObservabilityCloudWatchLoggingConfig struct {
-	Credentials                   ObservabilityCloudwatchLoggingConfigCredentials `yaml:"aws_iam_credentials" validate:"dive"`
-	K8sCredentialsSecretName      string                                          `yaml:"k8s_credentials_secret_name" validate:"omitempty,oneof=clo-cloudwatchlogs-creds"`
-	K8sCredentialsSecretNamespace string                                          `yaml:"k8s_credentials_secret_namespace" validate:"omitempty,oneof=openshift-logging"`
-	CloudwatchLoggingEnabled      bool                                            `validate:"-"`
-	configFilePath                string                                          `validate:"-"`
+	Credentials                   ObservabilityCloudwatchLoggingConfigCredentials             `yaml:"aws_iam_credentials" validate:"dive"`
+	EnterpriseCredentials         []ObservabilityEnterpriseCloudwatchLoggingConfigCredentials `yaml:"aws_iam_credentials_enterprise" validate:"dive"`
+	K8sCredentialsSecretName      string                                                      `yaml:"k8s_credentials_secret_name" validate:"omitempty,oneof=clo-cloudwatchlogs-creds"`
+	K8sCredentialsSecretNamespace string                                                      `yaml:"k8s_credentials_secret_namespace" validate:"omitempty,oneof=openshift-logging"`
+	CloudwatchLoggingEnabled      bool                                                        `validate:"-"`
+	configFilePath                string                                                      `validate:"-"`
 }
 
 func (c *ObservabilityCloudWatchLoggingConfig) validate() error {
@@ -118,9 +120,29 @@ func (c *ObservabilityCloudWatchLoggingConfig) setDefaults() {
 	}
 }
 
+func (c *ObservabilityCloudWatchLoggingConfig) GetEnterpriseCredentials(orgID string) *ObservabilityCloudwatchLoggingConfigCredentials {
+	credentials := &ObservabilityCloudwatchLoggingConfigCredentials{}
+	idx, enterpriseCredential := arrays.FindFirst(c.EnterpriseCredentials, func(enterpriseCredential ObservabilityEnterpriseCloudwatchLoggingConfigCredentials) bool {
+		return orgID == enterpriseCredential.OrgID
+	})
+	if idx == arrays.ElementNotFound {
+		return nil
+	}
+
+	credentials.AccessKey = enterpriseCredential.Credentials.AccessKey
+	credentials.SecretAccessKey = enterpriseCredential.Credentials.SecretAccessKey
+
+	return credentials
+}
+
 type ObservabilityCloudwatchLoggingConfigCredentials struct {
 	AccessKey       string `yaml:"aws_access_key" validate:"required"`
 	SecretAccessKey string `yaml:"aws_secret_access_key" validate:"required"`
+}
+
+type ObservabilityEnterpriseCloudwatchLoggingConfigCredentials struct {
+	Credentials ObservabilityCloudwatchLoggingConfigCredentials `yaml:"credentials" validate:"dive"`
+	OrgID       string                                          `yaml:"org_id" validate:"required"`
 }
 
 func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
