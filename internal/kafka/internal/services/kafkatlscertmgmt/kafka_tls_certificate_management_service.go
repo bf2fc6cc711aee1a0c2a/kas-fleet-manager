@@ -218,6 +218,7 @@ func createCertMagicClient(awsConfig *config.AWSConfig,
 		AccountKeyPEM:           kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.AcmeIssuerAccountKey,
 		DNS01Solver: &certmagic.DNS01Solver{
 			DNSProvider: provider,
+			TTL:         awsConfig.Route53.RecordTTL,
 		},
 	})
 

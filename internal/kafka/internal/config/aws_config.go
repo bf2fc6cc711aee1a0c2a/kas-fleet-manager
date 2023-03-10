@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 )
@@ -34,6 +36,7 @@ type awsRoute53Config struct {
 	SecretAccessKey         string
 	accessKeyFilePath       string
 	secretAccessKeyFilePath string
+	RecordTTL               time.Duration
 }
 
 func NewAWSConfig() *AWSConfig {
@@ -46,6 +49,7 @@ func NewAWSConfig() *AWSConfig {
 		Route53: awsRoute53Config{
 			accessKeyFilePath:       "secrets/aws.route53accesskey",
 			secretAccessKeyFilePath: "secrets/aws.route53secretaccesskey",
+			RecordTTL:               300 * time.Second,
 		},
 		SecretManager: awsSecretManagerConfig{
 			accessKeyFilePath:       "secrets/aws-secret-manager/aws_access_key_id",

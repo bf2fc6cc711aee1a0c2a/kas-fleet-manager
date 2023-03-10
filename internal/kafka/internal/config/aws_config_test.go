@@ -2,6 +2,7 @@ package config
 
 import (
 	"testing"
+	"time"
 
 	"github.com/onsi/gomega"
 )
@@ -22,6 +23,7 @@ func Test_NewAwsConfig(t *testing.T) {
 				Route53: awsRoute53Config{
 					accessKeyFilePath:       "secrets/aws.route53accesskey",
 					secretAccessKeyFilePath: "secrets/aws.route53secretaccesskey",
+					RecordTTL:               300 * time.Second,
 				},
 				SecretManager: awsSecretManagerConfig{
 					accessKeyFilePath:       "secrets/aws-secret-manager/aws_access_key_id",

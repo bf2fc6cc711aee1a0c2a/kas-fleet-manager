@@ -1061,7 +1061,7 @@ func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest,
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
 	}
 
-	domainRecordBatch := buildKafkaClusterCNAMESRecordBatch(routes, action)
+	domainRecordBatch := buildKafkaClusterCNAMESRecordBatch(routes, action, int64(k.awsConfig.Route53.RecordTTL.Seconds()))
 
 	awsConfig := aws.Config{
 		AccessKeyID:     k.awsConfig.Route53.AccessKey,
@@ -1341,10 +1341,10 @@ func buildKafkaOwner(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.Kafka
 	}
 }
 
-func buildKafkaClusterCNAMESRecordBatch(routes []dbapi.DataPlaneKafkaRoute, action KafkaRoutesAction) *route53.ChangeBatch {
+func buildKafkaClusterCNAMESRecordBatch(routes []dbapi.DataPlaneKafkaRoute, action KafkaRoutesAction, recordTTL int64) *route53.ChangeBatch {
 	var changes []*route53.Change
 	for _, r := range routes {
-		c := buildResourceRecordChange(r.Domain, r.Router, action)
+		c := buildResourceRecordChange(r.Domain, r.Router, action, recordTTL)
 		changes = append(changes, c)
 	}
 	recordChangeBatch := &route53.ChangeBatch{
@@ -1354,10 +1354,8 @@ func buildKafkaClusterCNAMESRecordBatch(routes []dbapi.DataPlaneKafkaRoute, acti
 	return recordChangeBatch
 }
 
-func buildResourceRecordChange(recordName string, clusterIngress string, action KafkaRoutesAction) *route53.Change {
+func buildResourceRecordChange(recordName string, clusterIngress string, action KafkaRoutesAction, recordTTL int64) *route53.Change {
 	recordType := "CNAME"
-	recordTTL := int64(300)
-
 	actionStr := action.String()
 	resourceRecordChange := &route53.Change{
 		Action: &actionStr,
