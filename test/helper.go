@@ -141,7 +141,6 @@ func NewHelperWithHooksAndDBsetup(t *testing.T, httpServer *httptest.Server, set
 		glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
 	}
 
-	h.CleanDB()
 	h.ResetDB()
 	h.SetupDB(setupDBsqlStatements)
 	env.Start()
