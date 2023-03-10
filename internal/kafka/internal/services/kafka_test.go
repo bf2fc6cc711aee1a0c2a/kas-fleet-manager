@@ -3671,6 +3671,29 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 			},
 		}, kafkatlscertmgmt.Certificate{TLSCert: "crt-cert", TLSKey: "key-cert"}, true)
 
+	managedkafkaCRWithPausedReconciliation, _ := buildManagedKafkaCR(
+		&dbapi.KafkaRequest{
+			ClusterID:    testClusterID,
+			InstanceType: "developer",
+			SizeId:       "x1",
+		},
+		&config.KafkaConfig{
+			EnableKafkaCNAMERegistration: true,
+			SupportedInstanceTypes:       &kafkaSupportedInstanceTypesConfig,
+		},
+		&sso.KeycloakServiceMock{
+			GetConfigFunc: func() *keycloak.KeycloakConfig {
+				return &keycloak.KeycloakConfig{
+					EnableAuthenticationOnKafka: true,
+				}
+			},
+			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+				return &keycloak.KeycloakRealmConfig{}
+			},
+		}, kafkatlscertmgmt.Certificate{}, true)
+
+	managedkafkaCRWithPausedReconciliation.Annotations[managedkafka.ManagedKafkaBf2PauseReconciliationAnnotationKey] = "true"
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -3769,7 +3792,7 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 			},
 		},
 		{
-			name: "should return an error when fetching certificates fails",
+			name: "should pause reconciliation of the ManagedKafka in the data plane when fetching certificates fails",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				kafkaTLSCertificateManagementService: &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{
@@ -3803,8 +3826,8 @@ func Test_kafkaService_GetManagedKafkaByClusterID(t *testing.T) {
 			args: args{
 				clusterID: testClusterID,
 			},
-			wantErr: true,
-			want:    nil,
+			wantErr: false,
+			want:    []managedkafka.ManagedKafka{*managedkafkaCRWithPausedReconciliation},
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)

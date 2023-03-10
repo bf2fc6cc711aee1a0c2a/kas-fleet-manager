@@ -23,6 +23,7 @@ import (
 const ManagedKafkaBf2DeploymentLabelKey = "bf2.org/deployment"
 const ManagedKafkaBf2DeploymentLabelValueReserved = "reserved"
 const ManagedKafkaBf2SuspendedLabelKey = "bf2.org/suspended"
+const ManagedKafkaBf2PauseReconciliationAnnotationKey = "managedkafka.bf2.org/pause-reconciliation"
 
 type Capacity struct {
 	IngressPerSec               string `json:"ingressPerSec"`

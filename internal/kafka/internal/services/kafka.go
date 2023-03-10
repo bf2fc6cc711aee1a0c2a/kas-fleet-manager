@@ -942,6 +942,7 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 	var res []managedkafka.ManagedKafka
 	// convert kafka requests to managed kafka
 	for _, kafkaRequest := range kafkaRequestList {
+		var getCertificateErr error
 		var certificate kafkatlscertmgmt.Certificate
 
 		if enableKafkaExternalCertificate { // only fetch certs when Kafka external certificates is enabled
@@ -950,18 +951,19 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 				TLSKeyRef:  kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef,
 			}
 
-			var err error
-			certificate, err = k.kafkaTLSCertificateManagementService.GetCertificate(context.Background(), certRequest)
-			// TODO - gracefully handle errors so that we do not block reconciliation of others Kafkas
-			if err != nil {
-				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find kafka %q certificates", kafkaRequest.ID)
+			certificate, getCertificateErr = k.kafkaTLSCertificateManagementService.GetCertificate(context.Background(), certRequest)
+			if getCertificateErr != nil {
+				logger.Logger.V(10).Infof("failed to find TLS certificate for kafka with id %q in the data plane cluster with id %q. The corresponding ManagedKafkaCR will be paused for reconciliation", kafkaRequest.ID, clusterID)
 			}
-
 		}
 
 		mk, err := buildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService, certificate, enableKafkaExternalCertificate)
 		if err != nil {
 			return nil, err
+		}
+
+		if getCertificateErr != nil { // indicate that the ManagedKafkaCR can be paused for reconciliation in the database
+			mk.Annotations[managedkafka.ManagedKafkaBf2PauseReconciliationAnnotationKey] = "true"
 		}
 
 		res = append(res, *mk)
