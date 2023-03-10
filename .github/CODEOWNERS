@@ -10,11 +10,11 @@ internal/kafka/**/* @bf2fc6cc711aee1a0c2a/kas-fleet-manager-reviewers
 .github/**/* @bf2fc6cc711aee1a0c2a/kas-fleet-manager-reviewers 
 
 # connectors
-internal/connector/**/*  @valdar @dhirajsb @lburgazzoli
+internal/connector/**/* @bf2fc6cc711aee1a0c2a/cos-fleet-manager-reviewers
 
 # common
-pkg/**/*  @bf2fc6cc711aee1a0c2a/kas-fleet-manager-reviewers @valdar @dhirajsb
-test/**/* @bf2fc6cc711aee1a0c2a/kas-fleet-manager-reviewers @valdar @dhirajsb
+pkg/**/*  @bf2fc6cc711aee1a0c2a/kas-fleet-manager-reviewers @bf2fc6cc711aee1a0c2a/cos-fleet-manager-reviewers
+test/**/* @bf2fc6cc711aee1a0c2a/kas-fleet-manager-reviewers @bf2fc6cc711aee1a0c2a/cos-fleet-manager-reviewers
 
 # api
 openapi/ @bf2fc6cc711aee1a0c2a/devexp-sdks
