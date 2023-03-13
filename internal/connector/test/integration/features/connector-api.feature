@@ -646,6 +646,9 @@ Feature: create a connector
             "version": "0.1"
           },
           {
+            "channels": [
+                "stable"
+            ],
             "href": "/api/connector_mgmt/v1/kafka_connector_types/OldConnectorTypeStillInUseId",
             "id": "OldConnectorTypeStillInUseId",
             "kind": "ConnectorType",
@@ -671,6 +674,9 @@ Feature: create a connector
       {
         "items": [
           {
+            "channels": [
+                "stable"
+            ],
             "deprecated": true,
             "href": "/api/connector_mgmt/v1/kafka_connector_types/OldConnectorTypeStillInUseId",
             "id": "OldConnectorTypeStillInUseId",
@@ -1987,7 +1993,7 @@ Feature: create a connector
       """
 
   Scenario: Gary creates lists and deletes a connector verifying that Evil Bob can't access Garys Connectors
-  but Coworker Sally can.
+  but Coworker Sally can. Gary can't create connectors from unsupported channels
     Given I am logged in as "Gary"
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
@@ -2358,6 +2364,48 @@ Feature: create a connector
     Given I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "410"
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 410
+
+    Given I am logged in as "Gary"
+    When I POST path "/v1/kafka_connectors?async=true" with json body:
+      """
+      {
+        "kind": "Connector",
+        "name": "connector with unsupported chanel",
+        "connector_type_id": "postgresql_sink_0.1",
+        "channel": "alpha",
+        "kafka": {
+          "id":"mykafka",
+          "url": "kafka.hostname"
+        },
+        "schema_registry": {
+          "id":"myregistry",
+          "url": "registry.hostname"
+        },
+        "service_account": {
+          "client_secret": "test",
+          "client_id": "myclient"
+        },
+        "connector": {
+            "aws_queue_name_or_arn": "test",
+            "aws_access_key": "test",
+            "aws_secret_key": "test",
+            "aws_region": "east",
+            "kafka_topic": "test"
+        }
+      }
+      """
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "channel is not valid. Must be one of: stable, beta"
+      }
+      """
 
   Scenario: Gary can discover the API endpoints
     Given I am logged in as "Gary"
