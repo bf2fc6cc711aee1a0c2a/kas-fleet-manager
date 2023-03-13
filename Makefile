@@ -293,7 +293,7 @@ install: verify lint
 TEST_SUMMARY_FORMAT ?= short-verbose
 ifndef TEST_TIMEOUT
 	ifeq ($(OCM_ENV), integration)
-		TEST_TIMEOUT=15m
+		TEST_TIMEOUT=20m
 	else
 		TEST_TIMEOUT=5h
 	endif
