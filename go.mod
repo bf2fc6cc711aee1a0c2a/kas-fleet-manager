@@ -13,7 +13,7 @@ require (
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 	github.com/evanphx/json-patch v5.6.0+incompatible
-	github.com/getsentry/sentry-go v0.18.0
+	github.com/getsentry/sentry-go v0.19.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-faker/faker/v4 v4.1.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
