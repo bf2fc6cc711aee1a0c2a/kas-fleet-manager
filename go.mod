@@ -13,7 +13,7 @@ require (
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 	github.com/evanphx/json-patch v5.6.0+incompatible
-	github.com/getsentry/sentry-go v0.18.0
+	github.com/getsentry/sentry-go v0.19.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-faker/faker/v4 v4.1.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
@@ -27,13 +27,13 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/itchyny/gojq v0.12.11
 	github.com/lib/pq v1.10.7
-	github.com/libdns/route53 v1.3.0
+	github.com/libdns/route53 v1.3.1
 	github.com/looplab/fsm v1.0.1
 	github.com/mattn/go-sqlite3 v1.14.3 // indirect
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/onsi/gomega v1.27.2
-	github.com/openshift-online/ocm-sdk-go v0.1.320
+	github.com/onsi/gomega v1.27.3
+	github.com/openshift-online/ocm-sdk-go v0.1.323
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/operator-framework/api v0.17.3
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -66,16 +66,16 @@ require (
 require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.10.0 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.9.0 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.5.0 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.7.0 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.2.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.4.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/route53 v1.12.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.5.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.8.0 // indirect
-	github.com/aws/smithy-go v1.8.1 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.17.5 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.18.15 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.15 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.23 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.30 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.23 // indirect
+	github.com/aws/aws-sdk-go-v2/service/route53 v1.27.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.12.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.18.5 // indirect
+	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/caddyserver/certmagic v0.17.2
@@ -96,7 +96,7 @@ require (
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
@@ -159,4 +159,10 @@ require (
 	sigs.k8s.io/controller-runtime v0.13.0 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
+)
+
+require (
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.29 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.23 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.14.4 // indirect
 )
