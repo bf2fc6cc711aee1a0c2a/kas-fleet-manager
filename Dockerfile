@@ -1,10 +1,11 @@
 FROM registry.access.redhat.com/ubi9-minimal:9.1.0 AS builder
  
+ARG TARGETOS TARGETARCH
 RUN microdnf install -y tar gzip make which git
 
 # install go 1.19.6
-RUN curl -O -J https://dl.google.com/go/go1.19.6.linux-amd64.tar.gz
-RUN tar -C /usr/local -xzf go1.19.6.linux-amd64.tar.gz
+RUN curl -O -J https://dl.google.com/go/go1.19.6.$TARGETOS-$TARGETARCH.tar.gz
+RUN tar -C /usr/local -xzf go1.19.6.$TARGETOS-$TARGETARCH.tar.gz
 RUN ln -s /usr/local/go/bin/go /usr/local/bin/go
 
 WORKDIR /workspace
