@@ -90,7 +90,7 @@ jobs:
 
     steps:
       - name: Set up Go 1.19.6
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           go-version: "1.19.6"
       - name: Check out code into the Go module directory
@@ -109,13 +109,6 @@ jobs:
         run: docker restart --time 0 kas-fleet-manager-db
       - name: Setup Keycloak realm config
         run: make sso/config
-      - name: Cache go module
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
       - name: Run Golang-ci linters
         uses: golangci/golangci-lint-action@v3
         with:
