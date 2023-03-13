@@ -138,7 +138,7 @@ jobs:
           export GOPATH=$(go env GOPATH)
           export PATH=${PATH}:$GOPATH/bin
           make verify lint/templates binary test test/integration
-        timeout-minutes: 14
+        timeout-minutes: 20
       - name: Upload unit tests code coverage to codecov
         uses: codecov/codecov-action@v3
         with:
