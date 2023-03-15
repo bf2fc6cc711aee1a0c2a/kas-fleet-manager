@@ -172,9 +172,7 @@ func NewKafkaTLSCertificateManagementService(
 			Path: "secrets/tls/",
 		}
 	case config.InMemoryTLSCertStorageType:
-		storage = &inMemoryStorage{
-			store: map[string]inMemoryStorageItem{},
-		}
+		storage = newInMemoryStorage()
 	case config.SecureTLSCertStorageType:
 		storage, err = newSecureStorage(awsConfig, kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig)
 	}

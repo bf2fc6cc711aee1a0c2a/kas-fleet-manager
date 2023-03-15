@@ -121,7 +121,7 @@ func (storage *secureStorage) Exists(ctx context.Context, key string) bool {
 
 func (storage *secureStorage) List(ctx context.Context, prefix string, recursive bool) ([]string, error) {
 	filterKey := "name"
-	filterValue := fmt.Sprintf("%s/", storage.secretPrefix)
+	filterValue := storage.constructSecretName(prefix)
 
 	input := &secretsmanager.ListSecretsInput{
 		Filters: []*secretsmanager.Filter{
