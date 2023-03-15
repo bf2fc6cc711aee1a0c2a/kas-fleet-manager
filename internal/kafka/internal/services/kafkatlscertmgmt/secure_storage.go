@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
@@ -19,9 +20,11 @@ import (
 var _ certmagic.Storage = &secureStorage{}
 
 type secureStorage struct {
-	secretCache  *secretcache.Cache
-	secretClient *secretsmanager.SecretsManager
-	secretPrefix string
+	secretPrefix     string
+	lock             sync.Mutex
+	secretCache      *secretcache.Cache
+	storageItemLocks map[string]*sync.Mutex
+	secretClient     *secretsmanager.SecretsManager
 }
 
 func newSecureStorage(config *config.AWSConfig, automaticCertificateManagementConfig config.AutomaticCertificateManagementConfig) (*secureStorage, error) {
@@ -48,18 +51,41 @@ func newSecureStorage(config *config.AWSConfig, automaticCertificateManagementCo
 		return nil, err
 	}
 	return &secureStorage{
-		secretClient: secretClient,
-		secretCache:  secretCache,
-		secretPrefix: config.SecretManager.SecretPrefix,
+		secretClient:     secretClient,
+		secretCache:      secretCache,
+		lock:             sync.Mutex{},
+		storageItemLocks: map[string]*sync.Mutex{},
+		secretPrefix:     config.SecretManager.SecretPrefix,
 	}, nil
 }
 
+// Lock blocks until it can acquire the name-specific lock.
+// The process of obtaining a name-specific lock is atomic, as required per the certmagic.Locker
+// interface documentation: https://github.com/caddyserver/certmagic/blob/master/storage.go#L87.
+// NOTE: The intent here is to not implement a distributed locking mechanism but an in-process locking mechanism good enough for
+// our certificate management logic which happens within one reconciliater leader.
 func (storage *secureStorage) Lock(ctx context.Context, key string) error {
-	return nil // NOOP as AWS Secret manager uses versioning mechanism to achieve optimistic locking
+	storage.lock.Lock()
+	mu, ok := storage.storageItemLocks[key]
+	if !ok {
+		// initialize the storage item lock the first time if it does not exist yet
+		mu = &sync.Mutex{}
+		storage.storageItemLocks[key] = mu
+	}
+	storage.lock.Unlock()
+	mu.Lock()
+	return nil
+
 }
 
 func (storage *secureStorage) Unlock(ctx context.Context, key string) error {
-	return nil // NOOP as AWS Secret manager uses versioning mechanism to achieve optimistic locking
+	mu, ok := storage.storageItemLocks[key]
+	if !ok {
+		return fs.ErrNotExist
+	}
+
+	mu.Unlock()
+	return nil
 }
 
 func (storage *secureStorage) Store(ctx context.Context, key string, value []byte) error {
@@ -157,9 +183,9 @@ func (storage *secureStorage) Stat(ctx context.Context, key string) (certmagic.K
 	}
 	return certmagic.KeyInfo{
 		Key:        key,
-		Modified:   *describeOutput.LastChangedDate,
 		Size:       int64(len(result)),
 		IsTerminal: strings.HasSuffix(key, "/"),
+		Modified:   *describeOutput.LastChangedDate,
 	}, nil
 }
 

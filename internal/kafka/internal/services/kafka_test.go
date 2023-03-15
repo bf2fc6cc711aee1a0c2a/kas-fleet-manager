@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"strconv"
 	"strings"
@@ -653,6 +654,72 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 				kafkaTLSCertificateManagementService: &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{
 					IsAutomaticCertificateManagementEnabledFunc: func() bool {
 						return false
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafkatlscertmgmt.CertificateManagementOutput, error) {
+						return kafkatlscertmgmt.CertificateManagementOutput{}, nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			wantErr: true,
+		},
+		{
+			name: "should not return an error when automatic certificate management is enabled but the Kafka certificate doesn't exist",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterService: &ClusterServiceMock{
+					GetClusterDNSFunc: nil, // should never be called
+				},
+				keycloakService: &sso.KeycloakServiceMock{
+					GetConfigFunc:                    nil,
+					CreateServiceAccountInternalFunc: nil,
+				},
+				kafkaTLSCertificateManagementService: &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+					GetCertificateFunc: func(ctx context.Context, request kafkatlscertmgmt.GetCertificateRequest) (kafkatlscertmgmt.Certificate, error) {
+						return kafkatlscertmgmt.Certificate{}, fs.ErrNotExist
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafkatlscertmgmt.CertificateManagementOutput, error) {
+						return kafkatlscertmgmt.CertificateManagementOutput{}, nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return an error when automatic certificate management is enabled but there is an error which is different than not exist error returned when retrieving the certificate",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterService: &ClusterServiceMock{
+					GetClusterDNSFunc: nil, // should never be called
+				},
+				keycloakService: &sso.KeycloakServiceMock{
+					GetConfigFunc:                    nil,
+					CreateServiceAccountInternalFunc: nil,
+				},
+				kafkaTLSCertificateManagementService: &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+					GetCertificateFunc: func(ctx context.Context, request kafkatlscertmgmt.GetCertificateRequest) (kafkatlscertmgmt.Certificate, error) {
+						return kafkatlscertmgmt.Certificate{}, fmt.Errorf("some error")
 					},
 					ManageCertificateFunc: func(ctx context.Context, domain string) (kafkatlscertmgmt.CertificateManagementOutput, error) {
 						return kafkatlscertmgmt.CertificateManagementOutput{}, nil
