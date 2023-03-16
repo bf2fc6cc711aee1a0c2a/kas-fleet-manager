@@ -12,10 +12,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
 	"github.com/aws/aws-secretsmanager-caching-go/secretcache"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/caddyserver/certmagic"
 )
+
+//go:generate moq -out secretmanager_client_moq.go . SecretManagerClient
+type SecretManagerClient = secretsmanageriface.SecretsManagerAPI
 
 var _ certmagic.Storage = &secureStorage{}
 
@@ -24,7 +28,7 @@ type secureStorage struct {
 	lock             sync.Mutex
 	secretCache      *secretcache.Cache
 	storageItemLocks map[string]*sync.Mutex
-	secretClient     *secretsmanager.SecretsManager
+	secretClient     SecretManagerClient
 }
 
 func newSecureStorage(config *config.AWSConfig, automaticCertificateManagementConfig config.AutomaticCertificateManagementConfig) (*secureStorage, error) {
@@ -172,12 +176,11 @@ func (storage *secureStorage) List(ctx context.Context, prefix string, recursive
 
 func (storage *secureStorage) Stat(ctx context.Context, key string) (certmagic.KeyInfo, error) {
 	result, err := storage.Load(ctx, key)
-
 	if err != nil {
 		return certmagic.KeyInfo{}, err
 	}
 	name := storage.constructSecretName(key)
-	describeOutput, err := storage.secretClient.DescribeSecret(&secretsmanager.DescribeSecretInput{
+	describeOutput, err := storage.secretClient.DescribeSecretWithContext(ctx, &secretsmanager.DescribeSecretInput{
 		SecretId: &name,
 	})
 	if err != nil {
