@@ -155,10 +155,12 @@ func (storage *secureStorage) List(ctx context.Context, prefix string, recursive
 	}
 
 	keys := []string{}
+	awsSecretManagerKeysPrefix := storage.constructAWSSecretManagerKeysPrefix()
 	err := storage.secretClient.ListSecretsPages(input, func(output *secretsmanager.ListSecretsOutput, lastPage bool) bool {
 		for _, entry := range output.SecretList {
 			if entry.Name != nil {
-				name := strings.TrimPrefix(*entry.Name, filterValue)
+				// we trim to remove the aws key prefix that's applied to all keys when it is being stored: see Store(ctx,key) implementation
+				name := strings.TrimPrefix(*entry.Name, awsSecretManagerKeysPrefix)
 				keys = append(keys, name)
 			}
 		}
@@ -194,5 +196,9 @@ func (storage *secureStorage) String() string {
 }
 
 func (storage *secureStorage) constructSecretName(key string) string {
-	return fmt.Sprintf("%s/%s", storage.secretPrefix, key)
+	return fmt.Sprintf("%s%s", storage.constructAWSSecretManagerKeysPrefix(), key)
+}
+
+func (storage *secureStorage) constructAWSSecretManagerKeysPrefix() string {
+	return fmt.Sprintf("%s/", storage.secretPrefix)
 }
