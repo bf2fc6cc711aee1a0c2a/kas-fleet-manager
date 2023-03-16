@@ -146,7 +146,10 @@ jobs:
           flags: unittests # optional
           name: codecov-kas-fleet-manager # optional
           fail_ci_if_error: true # optional (default = false)
-          verbose: true # optional (default = false)
+          verbose: true # optional (default = false)    
+      - name: Validate that kas-fleet-manager images can be built successful.
+        if: github.event_name == 'pull_request'
+        run: make image/build
       - name: Build and publish image to quay.io
         if: github.event_name == 'push'
         env:
@@ -156,4 +159,3 @@ jobs:
         run: |
           chmod +x ./build_deploy.sh
           ./build_deploy.sh
-
