@@ -584,6 +584,11 @@ db/generate/insert/cluster:
 # --------------------- Image Targets --------------------- #
 # make targets for building and pushing images to a registry
 
+# Set var defaults for image targets based on os
+ifeq ($(shell uname -s | tr A-Z a-z), darwin)
+CONTAINER_IMAGE_BUILD_PLATFORM ?= --platform linux/amd64
+endif
+
 # Login to docker
 docker/login:
 	$(DOCKER) --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
@@ -596,7 +601,7 @@ docker/login/internal:
 
 # Build the binary and image
 image/build:
-	$(DOCKER) --config="${DOCKER_CONFIG}" build --pull -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
+	$(DOCKER) --config="${DOCKER_CONFIG}" build $(CONTAINER_IMAGE_BUILD_PLATFORM) --pull -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
 .PHONY: image/build
 
 # Build and push the image
@@ -607,7 +612,7 @@ image/push: image/build
 # build binary and image for OpenShift deployment
 image/build/internal: IMAGE_TAG ?= $(image_tag)
 image/build/internal:
-	$(DOCKER) build -t "$(shell $(OC) get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
+	$(DOCKER) build $(CONTAINER_IMAGE_BUILD_PLATFORM) -t "$(shell $(OC) get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
 .PHONY: image/build/internal
 
 # push the image to the OpenShift internal registry
