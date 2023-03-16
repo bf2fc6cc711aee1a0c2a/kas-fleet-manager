@@ -4,8 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io/fs"
 	"strings"
 	"sync"
+
+	coreErrors "errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sso"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
@@ -500,6 +503,23 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 	err := k.ManagedKafkasRoutesTLSCertificate(kafkaRequest)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "error managing certificate for kafka %q", kafkaRequest.ID)
+	}
+
+	if k.kafkaTLSCertificateManagementService.IsAutomaticCertificateManagementEnabled() {
+		_, err = k.kafkaTLSCertificateManagementService.GetCertificate(context.Background(), kafkatlscertmgmt.GetCertificateRequest{
+			TLSCertRef: kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef,
+			TLSKeyRef:  kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef,
+		})
+
+		if err != nil {
+			if !coreErrors.Is(err, fs.ErrNotExist) {
+				return errors.NewWithCause(errors.ErrorGeneral, err, "error checking if certificate for kafka %q has been created", kafkaRequest.ID)
+			}
+
+			logger.Logger.V(10).Infof("asynchronous management of tls certificate for the domain %q of kafka with id %q has not finished yet. The certificate is not present in storage yet", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
+			// do not continue the reconciliation of a preparing Kafka if the certificate has not been generated yet.
+			return nil
+		}
 	}
 
 	err = k.AssignBootstrapServerHost(kafkaRequest)
@@ -1421,25 +1441,26 @@ func (k *kafkaService) ManagedKafkasRoutesTLSCertificate(kafkaRequest *dbapi.Kaf
 		}
 	}
 
-	logger.Logger.Infof("starting management of tls certificate for the domain %q of kafka with id %q", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
-
+	logger.Logger.Infof("starting asynchronous management of tls certificate for the domain %q of kafka with id %q", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
 	certManagementOutput, err := k.kafkaTLSCertificateManagementService.ManageCertificate(context.Background(), kafkaRequest.KafkasRoutesBaseDomainName)
 	if err != nil {
 		return err
 	}
 
+	kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef = certManagementOutput.TLSKeyRef
+	kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef = certManagementOutput.TLSCertRef
+
+	// only update the fields we are interested in
 	values := map[string]interface{}{
-		"kafkas_routes_base_domain_name":        kafkaRequest.KafkasRoutesBaseDomainName,
-		"kafkas_routes_base_domain_tls_crt_ref": certManagementOutput.TLSCertRef,
 		"kafkas_routes_base_domain_tls_key_ref": certManagementOutput.TLSKeyRef,
+		"kafkas_routes_base_domain_tls_crt_ref": certManagementOutput.TLSCertRef,
+		"kafkas_routes_base_domain_name":        kafkaRequest.KafkasRoutesBaseDomainName,
+	}
+	if svcErr := k.Updates(kafkaRequest, values); svcErr != nil {
+		return svcErr
 	}
 
-	dbConn := k.connectionFactory.New().Model(kafkaRequest)
-	if err := dbConn.Updates(values).Error; err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update kafka %q", kafkaRequest.ID)
-	}
-
-	logger.Logger.Infof("management of tls certificate for the domain %q of kafka with id %q successfully finished", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
+	logger.Logger.Infof("asynchronous management of tls certificate for the domain %q of kafka with id %q has been started successful", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
 	return nil
 }
 

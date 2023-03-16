@@ -3,12 +3,17 @@ package kafkatlscertmgmt
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/caddyserver/certmagic"
 	"github.com/libdns/route53"
+	"go.uber.org/zap"
 )
+
+const certmagicCertFailedEvent = "cert_failed"
 
 // CertificateManagementOutput is the output indicating the certificates references
 type CertificateManagementOutput struct {
@@ -77,7 +82,7 @@ type wrapper struct {
 }
 
 func (w wrapper) ManageCertificate(ctx context.Context, domainNames []string) error {
-	return w.wrappedClient.ManageSync(ctx, domainNames)
+	return w.wrappedClient.ManageAsync(ctx, domainNames)
 }
 
 func (w wrapper) RevokeCertificate(ctx context.Context, domain string, reason int) error {
@@ -147,9 +152,18 @@ func (certManagementService *kafkaTLSCertificateManagementService) RevokeCertifi
 		return nil // the certificate is revoked manually in manual mode
 	}
 
+	wildcardDomain := fmt.Sprintf("*.%s", domain)
+	refs := certManagementService.certManagementClient.GetCerticateRefs(wildcardDomain)
+
+	// No need to revoke the certificate if it does not exists
+	if !certManagementService.storage.Exists(ctx, refs.TLSCertRef) {
+		logger.NewUHCLogger(ctx).V(10).Infof("certificate for domain %q does not exist in Storage. It is not going to be revoked", domain)
+		return nil
+	}
+
 	// We revoke the wildcard certificate of the given domain
 	// see ADR-90 https://github.com/bf2fc6cc711aee1a0c2a/architecture/blob/main/_adr/90/index.adoc for context
-	return certManagementService.certManagementClient.RevokeCertificate(ctx, fmt.Sprintf("*.%s", domain), reason.AsInt())
+	return certManagementService.certManagementClient.RevokeCertificate(ctx, wildcardDomain, reason.AsInt())
 }
 
 func (certManagementService *kafkaTLSCertificateManagementService) IsKafkaExternalCertificateEnabled() bool {
@@ -186,8 +200,8 @@ func NewKafkaTLSCertificateManagementService(
 
 	return &kafkaTLSCertificateManagementService{
 		storage:              storage,
-		config:               kafkaTLSCertificateManagementConfig,
 		certManagementClient: certManagementClient,
+		config:               kafkaTLSCertificateManagementConfig,
 	}, err
 }
 
@@ -195,32 +209,42 @@ func createCertMagicClient(awsConfig *config.AWSConfig,
 	kafkaTLSCertificateManagementConfig *config.KafkaTLSCertificateManagementConfig,
 	storage certmagic.Storage) *certmagic.Config {
 	provider := &route53.Provider{
-		WaitForPropagation: false,
-		AccessKeyId:        awsConfig.Route53.AccessKey,
-		SecretAccessKey:    awsConfig.Route53.SecretAccessKey,
+		WaitForPropagation: true,
+		// wait up to 150 seconds for the temporary txt record to be propagated.
+		// this is a blocking operation but it is acceptable since the management of certificate for each domain is done async
+		MaxWaitDur:      150 * time.Second,
+		AccessKeyId:     awsConfig.Route53.AccessKey,
+		SecretAccessKey: awsConfig.Route53.SecretAccessKey,
 	}
 
-	certmagic.Default.RenewalWindowRatio = kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.RenewalWindowRatio
 	certmagic.Default.MustStaple = kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.MustStaple
+	certmagic.Default.RenewalWindowRatio = kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.RenewalWindowRatio
 
 	magic := certmagic.NewDefault()
-
 	magic.Storage = storage
 
-	myACME := certmagic.NewACMEIssuer(magic, certmagic.ACMEIssuer{
-		CA:                      kafkaTLSCertificateManagementConfig.CertificateAuthorityEndpoint,
-		Email:                   kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.EmailToSendNotificationTo,
+	acmeIssuer := certmagic.NewACMEIssuer(magic, certmagic.ACMEIssuer{
 		Agreed:                  true,
 		DisableHTTPChallenge:    true,
 		DisableTLSALPNChallenge: true,
+		DNS01Solver:             &certmagic.DNS01Solver{DNSProvider: provider},
+		CA:                      kafkaTLSCertificateManagementConfig.CertificateAuthorityEndpoint,
 		AccountKeyPEM:           kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.AcmeIssuerAccountKey,
-		DNS01Solver: &certmagic.DNS01Solver{
-			DNSProvider: provider,
-		},
+		Email:                   kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.EmailToSendNotificationTo,
 	})
 
-	magic.Issuers = []certmagic.Issuer{myACME}
+	magic.Issuers = []certmagic.Issuer{acmeIssuer}
 	magic.KeySource = certmagic.StandardKeyGenerator{KeyType: certmagic.RSA4096}
+	magic.Logger = zap.NewNop()
+	magic.OnEvent = func(ctx context.Context, event string, data map[string]any) error {
+		if event == certmagicCertFailedEvent {
+			logger.NewUHCLogger(ctx).Errorf("certificate management failed with the following event details: %v", data)
+			return nil
+		}
+
+		logger.NewUHCLogger(ctx).V(10).Infof("event %q received with data %v", event, data)
+		return nil
+	}
 
 	return magic
 }
