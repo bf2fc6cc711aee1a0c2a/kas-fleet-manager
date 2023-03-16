@@ -12,22 +12,21 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/authz"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/phase"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services/vault"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
+	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/golang/glog"
+	"github.com/gorilla/mux"
 	"github.com/spyzhov/ajson"
 	"io"
 	"net/http"
 	"reflect"
 	"strings"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	jsonpatch "github.com/evanphx/json-patch"
-	"github.com/golang/glog"
-	"github.com/gorilla/mux"
 )
 
 const (
@@ -244,11 +243,6 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			// If we didn't change anything, then just skip the update...
-			if reflect.DeepEqual(originalResource, resource) {
-				return originalResource, nil
-			}
-
 			// revalidate
 			user := h.authZService.GetValidationUser(r.Context())
 			validates := []handlers.Validate{
@@ -256,6 +250,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
 				handlers.Validation("service_account.client_id", &resource.ServiceAccount.ClientId, handlers.MinLen(1)),
 				handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
+				validateConnectorImmutableProperties(patch, originalResource),
 				validatePatchAnnotations(resource.Annotations, originalResource.Annotations),
 				validateConnector(h.connectorTypesService, &resource),
 			}
@@ -270,6 +265,11 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					return nil, err
 				}
+			}
+
+			// If we didn't change anything, then just skip the update...
+			if reflect.DeepEqual(originalResource, resource) {
+				return originalResource, nil
 			}
 
 			p, svcErr := presenters.ConvertConnector(resource)
@@ -387,6 +387,29 @@ func validateConnectorPatch(bytes []byte, ct *dbapi.ConnectorType) *errors.Servi
 		}
 	}
 	return nil
+}
+
+func validateConnectorImmutableProperties(patch public.ConnectorRequest, originalResource public.Connector) handlers.Validate {
+	// Check User is not attempting to patch an immutable property
+	return func() *errors.ServiceError {
+		immutableProperties := make([]string, 0, 3)
+		if patch.ConnectorTypeId != originalResource.ConnectorTypeId {
+			immutableProperties = append(immutableProperties, "connector_type_id")
+		}
+		if patch.NamespaceId != originalResource.NamespaceId {
+			immutableProperties = append(immutableProperties, "namespace_id")
+		}
+		if patch.Channel != originalResource.Channel {
+			immutableProperties = append(immutableProperties, "channel")
+		}
+
+		if len(immutableProperties) != 0 {
+			err := errors.BadRequest("An attempt was made to modify one or more immutable field(s): %s", strings.Join(immutableProperties, ", "))
+			err.HttpCode = 409
+			return err
+		}
+		return nil
+	}
 }
 
 func StringListSubtract(l []string, items ...string) (result []string) {
