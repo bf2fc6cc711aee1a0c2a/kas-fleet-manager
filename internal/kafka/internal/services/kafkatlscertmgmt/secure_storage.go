@@ -61,7 +61,7 @@ func newSecureStorage(config *config.AWSConfig, automaticCertificateManagementCo
 
 // Lock blocks until it can acquire the name-specific lock.
 // The process of obtaining a name-specific lock is atomic, as required per the certmagic.Locker
-// interface documentation: https://github.com/caddyserver/certmagic/blob/master/storage.go#L87.
+// interface documentation: https://pkg.go.dev/github.com/caddyserver/certmagic#Locker.
 // NOTE: The intent here is to not implement a distributed locking mechanism but an in-process locking mechanism good enough for
 // our certificate management logic which happens within one reconciliater leader.
 func (storage *secureStorage) Lock(ctx context.Context, key string) error {

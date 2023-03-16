@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const certFailedEvent = "cert_failed"
+const certmagicCertFailedEvent = "cert_failed"
 
 // CertificateManagementOutput is the output indicating the certificates references
 type CertificateManagementOutput struct {
@@ -237,7 +237,7 @@ func createCertMagicClient(awsConfig *config.AWSConfig,
 	magic.KeySource = certmagic.StandardKeyGenerator{KeyType: certmagic.RSA4096}
 	magic.Logger = zap.NewNop()
 	magic.OnEvent = func(ctx context.Context, event string, data map[string]any) error {
-		if event == certFailedEvent {
+		if event == certmagicCertFailedEvent {
 			logger.NewUHCLogger(ctx).Errorf("certificate management failed with the following event details: %v", data)
 			return nil
 		}

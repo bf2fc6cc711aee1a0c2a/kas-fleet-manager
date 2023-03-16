@@ -516,6 +516,7 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 				return errors.NewWithCause(errors.ErrorGeneral, err, "error checking if certificate for kafka %q has been created", kafkaRequest.ID)
 			}
 
+			logger.Logger.V(10).Infof("asynchronous management of tls certificate for the domain %q of kafka with id %q has not finished yet. The certificate is not present in storage yet", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
 			// do not continue the reconciliation of a preparing Kafka if the certificate has not been generated yet.
 			return nil
 		}
@@ -1440,8 +1441,7 @@ func (k *kafkaService) ManagedKafkasRoutesTLSCertificate(kafkaRequest *dbapi.Kaf
 		}
 	}
 
-	logger.Logger.Infof("starting management of tls certificate for the domain %q of kafka with id %q", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
-
+	logger.Logger.Infof("starting asynchronous management of tls certificate for the domain %q of kafka with id %q", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
 	certManagementOutput, err := k.kafkaTLSCertificateManagementService.ManageCertificate(context.Background(), kafkaRequest.KafkasRoutesBaseDomainName)
 	if err != nil {
 		return err
@@ -1450,11 +1450,17 @@ func (k *kafkaService) ManagedKafkasRoutesTLSCertificate(kafkaRequest *dbapi.Kaf
 	kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef = certManagementOutput.TLSKeyRef
 	kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef = certManagementOutput.TLSCertRef
 
-	if svcErr := k.Update(kafkaRequest); svcErr != nil {
+	// only update the fields we are interested in
+	values := map[string]interface{}{
+		"kafkas_routes_base_domain_tls_key_ref": certManagementOutput.TLSKeyRef,
+		"kafkas_routes_base_domain_tls_crt_ref": certManagementOutput.TLSCertRef,
+		"kafkas_routes_base_domain_name":        kafkaRequest.KafkasRoutesBaseDomainName,
+	}
+	if svcErr := k.Updates(kafkaRequest, values); svcErr != nil {
 		return svcErr
 	}
 
-	logger.Logger.Infof("management of tls certificate for the domain %q of kafka with id %q successfully finished", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
+	logger.Logger.Infof("asynchronous management of tls certificate for the domain %q of kafka with id %q has been started successful", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
 	return nil
 }
 

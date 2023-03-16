@@ -157,7 +157,7 @@ func Test_kafkaTLSCertificateManagementService_RevokeCertificate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "should not revoke the certificae if running in manual mode",
+			name: "should not revoke the certificate if running in manual mode",
 			fields: fields{
 				config: &config.KafkaTLSCertificateManagementConfig{
 					CertificateManagementStrategy: config.ManualCertificateManagement,
