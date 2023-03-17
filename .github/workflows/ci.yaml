@@ -103,6 +103,10 @@ jobs:
           filters: |
             openapi:
               - 'openapi/*.yaml'
+      - name: Show ubuntu version being used
+        run:  cat /etc/lsb-release
+      - name: Show docker version being used
+        run:  docker version
       - name: Increase Postgres max_connections limit
         run: docker exec -i kas-fleet-manager-db /bin/bash docker-entrypoint.sh psql -U kas_fleet_manager -d serviceapitests -c 'alter system set max_connections=200;'
       - name: Restart Postgres container
