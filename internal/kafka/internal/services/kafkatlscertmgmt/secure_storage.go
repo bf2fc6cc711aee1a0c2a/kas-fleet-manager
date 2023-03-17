@@ -12,10 +12,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
 	"github.com/aws/aws-secretsmanager-caching-go/secretcache"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/caddyserver/certmagic"
 )
+
+//go:generate moq -out secretmanager_client_moq.go . SecretManagerClient
+type SecretManagerClient = secretsmanageriface.SecretsManagerAPI
 
 var _ certmagic.Storage = &secureStorage{}
 
@@ -24,7 +28,7 @@ type secureStorage struct {
 	lock             sync.Mutex
 	secretCache      *secretcache.Cache
 	storageItemLocks map[string]*sync.Mutex
-	secretClient     *secretsmanager.SecretsManager
+	secretClient     SecretManagerClient
 }
 
 func newSecureStorage(config *config.AWSConfig, automaticCertificateManagementConfig config.AutomaticCertificateManagementConfig) (*secureStorage, error) {
@@ -155,10 +159,12 @@ func (storage *secureStorage) List(ctx context.Context, prefix string, recursive
 	}
 
 	keys := []string{}
+	awsSecretManagerKeysPrefix := storage.constructAWSSecretManagerKeysPrefix()
 	err := storage.secretClient.ListSecretsPages(input, func(output *secretsmanager.ListSecretsOutput, lastPage bool) bool {
 		for _, entry := range output.SecretList {
 			if entry.Name != nil {
-				name := strings.TrimPrefix(*entry.Name, filterValue)
+				// we trim to remove the aws key prefix that's applied to all keys when it is being stored: see Store(ctx,key) implementation
+				name := strings.TrimPrefix(*entry.Name, awsSecretManagerKeysPrefix)
 				keys = append(keys, name)
 			}
 		}
@@ -170,12 +176,11 @@ func (storage *secureStorage) List(ctx context.Context, prefix string, recursive
 
 func (storage *secureStorage) Stat(ctx context.Context, key string) (certmagic.KeyInfo, error) {
 	result, err := storage.Load(ctx, key)
-
 	if err != nil {
 		return certmagic.KeyInfo{}, err
 	}
 	name := storage.constructSecretName(key)
-	describeOutput, err := storage.secretClient.DescribeSecret(&secretsmanager.DescribeSecretInput{
+	describeOutput, err := storage.secretClient.DescribeSecretWithContext(ctx, &secretsmanager.DescribeSecretInput{
 		SecretId: &name,
 	})
 	if err != nil {
@@ -194,5 +199,9 @@ func (storage *secureStorage) String() string {
 }
 
 func (storage *secureStorage) constructSecretName(key string) string {
-	return fmt.Sprintf("%s/%s", storage.secretPrefix, key)
+	return fmt.Sprintf("%s%s", storage.constructAWSSecretManagerKeysPrefix(), key)
+}
+
+func (storage *secureStorage) constructAWSSecretManagerKeysPrefix() string {
+	return fmt.Sprintf("%s/", storage.secretPrefix)
 }
