@@ -59,35 +59,39 @@ var (
 		ClusterType: api.EnterpriseDataPlaneClusterType.String(),
 	}
 	observabilityConfig = &observatorium.ObservabilityConfiguration{
-		DexUrl:                             "http://dummy",
-		DexUsername:                        "dummy",
-		DexPassword:                        "dummy",
-		DexSecret:                          "dummy",
-		DexSecretFile:                      "dummy",
-		DexPasswordFile:                    "dummy",
-		RedHatSsoGatewayUrl:                "http://dummy",
-		RedHatSsoAuthServerUrl:             "http://dummy",
-		RedHatSsoRealm:                     "dummy",
-		RedHatSsoTenant:                    "dummy",
-		RedHatSsoTokenRefresherUrl:         "http://dummy",
-		MetricsClientId:                    "dummy",
-		MetricsClientIdFile:                "dummy",
-		MetricsSecret:                      "dummy",
-		MetricsSecretFile:                  "dummy",
-		LogsClientId:                       "dummy",
-		LogsClientIdFile:                   "dummy",
-		LogsSecret:                         "dummy",
-		LogsSecretFile:                     "dummy",
-		ObservatoriumGateway:               "http://dummy",
-		ObservatoriumTenant:                "dummy",
-		AuthType:                           "redhat",
-		AuthToken:                          "dummy",
-		AuthTokenFile:                      "dummy",
-		ObservabilityConfigTag:             "main",
-		ObservabilityConfigRepo:            "dummy",
-		ObservabilityConfigChannel:         "resources",
-		ObservabilityConfigAccessToken:     "dummy",
-		ObservabilityConfigAccessTokenFile: "dummy",
+		DexUrl:                     "http://dummy",
+		DexUsername:                "dummy",
+		DexPassword:                "dummy",
+		DexSecret:                  "dummy",
+		DexSecretFile:              "dummy",
+		DexPasswordFile:            "dummy",
+		RedHatSsoAuthServerUrl:     "http://dummy",
+		RedHatSsoRealm:             "dummy",
+		RedHatSsoTenant:            "dummy",
+		RedHatSsoTokenRefresherUrl: "http://dummy",
+		ObservatoriumGateway:       "http://dummy",
+		ObservatoriumTenant:        "dummy",
+		AuthType:                   "redhat",
+		AuthToken:                  "dummy",
+		AuthTokenFile:              "dummy",
+		ObservabilityConfigTag:     "main",
+		ObservabilityConfigRepo:    "dummy",
+		ObservabilityConfigChannel: "resources",
+		DataPlaneObservabilityConfig: observatorium.DataPlaneObservabilityConfig{
+			Enabled: true,
+			RemoteWriteConfiguration: &observatorium.DataPlaneObservabilityRemoteWriteConfiguration{
+				RemoteWriteUrl: "https://dummy",
+				OIDCConfiguration: &observatorium.DataPlaneObservabilityOIDCConfiguration{
+					AuthorizationServer: "https://dummy",
+					Realm:               "dummy",
+					Credentials: &observatorium.DataPlaneObservabilityOIDCCredentials{
+						ClientID:     "dummy",
+						ClientSecret: "dummy",
+					},
+				},
+			},
+			GithubResourcesAuthToken: "dummy",
+		},
 	}
 	dataplaneClusterConfig = &config.DataplaneClusterConfig{
 		ImagePullDockerConfigContent: "dummy",
@@ -735,7 +739,7 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 					ClusterConfig:               &config.ClusterConfig{},
 				},
 				supportedProviders:         &config.ProviderConfig{},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 				agentOperator: &services.KasFleetshardOperatorAddonMock{
 					ProvisionFunc: func(cluster api.Cluster) (bool, services.ParameterList, *apiErrors.ServiceError) {
 						return true, services.ParameterList{}, nil
@@ -768,8 +772,14 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 		{
 			name: "should apply correct resource set when dealing with an enterprise cluster",
 			fields: fields{
-				observabilityConfiguration: observabilityConfig,
-				dataplaneClusterConfig:     dataplaneClusterConfig,
+				observabilityConfiguration: &observatorium.ObservabilityConfiguration{
+					DataPlaneObservabilityConfig: observatorium.DataPlaneObservabilityConfig{
+						RemoteWriteConfiguration: &observatorium.DataPlaneObservabilityRemoteWriteConfiguration{
+							RemoteWriteUrl: "https://dummy",
+						},
+					},
+				},
+				dataplaneClusterConfig: dataplaneClusterConfig,
 				clusterService: &services.ClusterServiceMock{
 					ListByStatusFunc: func(api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError) {
 						return []api.Cluster{
@@ -2211,23 +2221,25 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 // buildObservabilityConfig builds a observability coreConfig used for testing
 func buildObservabilityConfig() observatorium.ObservabilityConfiguration {
 	observabilityConfig := observatorium.ObservabilityConfiguration{
-		DexUrl:                         "dex-url",
-		DexPassword:                    "dex-password",
-		DexUsername:                    "dex-username",
-		DexSecret:                      "dex-secret",
-		ObservatoriumTenant:            "tenant",
-		ObservatoriumGateway:           "gateway",
-		ObservabilityConfigRepo:        "obs-config-repo",
-		ObservabilityConfigChannel:     "obs-config-channel",
-		ObservabilityConfigAccessToken: "obs-config-token",
-		ObservabilityConfigTag:         "obs-config-tag",
-		RedHatSsoAuthServerUrl:         "red-hat-sso-auth-server-url",
-		RedHatSsoRealm:                 "red-hat-sso-realm",
-		MetricsClientId:                "metrics-client",
-		MetricsSecret:                  "metrics-secret",
-		LogsClientId:                   "logs-client",
-		LogsSecret:                     "logs-secret",
-		AuthType:                       "dex",
+		DexUrl:                     "dex-url",
+		DexPassword:                "dex-password",
+		DexUsername:                "dex-username",
+		DexSecret:                  "dex-secret",
+		ObservatoriumTenant:        "tenant",
+		ObservatoriumGateway:       "gateway",
+		ObservabilityConfigRepo:    "obs-config-repo",
+		ObservabilityConfigChannel: "obs-config-channel",
+		ObservabilityConfigTag:     "obs-config-tag",
+		RedHatSsoAuthServerUrl:     "red-hat-sso-auth-server-url",
+		RedHatSsoRealm:             "red-hat-sso-realm",
+		AuthType:                   "dex",
+		DataPlaneObservabilityConfig: observatorium.DataPlaneObservabilityConfig{
+			Enabled: true,
+			RemoteWriteConfiguration: &observatorium.DataPlaneObservabilityRemoteWriteConfiguration{
+				RemoteWriteUrl: "https://dummy",
+			},
+			GithubResourcesAuthToken: "dummy",
+		},
 	}
 	return observabilityConfig
 }
@@ -2379,14 +2391,12 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 			Type: k8sCoreV1.SecretTypeOpaque,
 			StringData: map[string]string{
 				"authType":               observatorium.AuthTypeSso,
-				"gateway":                observabilityConfig.RedHatSsoGatewayUrl,
+				"gateway":                observabilityConfig.DataPlaneObservabilityConfig.GetRemoteWriteUrl(),
 				"tenant":                 observabilityConfig.RedHatSsoTenant,
-				"redHatSsoAuthServerUrl": observabilityConfig.RedHatSsoAuthServerUrl,
-				"redHatSsoRealm":         observabilityConfig.RedHatSsoRealm,
-				"metricsClientId":        observabilityConfig.MetricsClientId,
-				"metricsSecret":          observabilityConfig.MetricsSecret,
-				"logsClientId":           observabilityConfig.LogsClientId,
-				"logsSecret":             observabilityConfig.LogsSecret,
+				"redHatSsoAuthServerUrl": observabilityConfig.DataPlaneObservabilityConfig.GetOIDCAuthorizationServer(),
+				"redHatSsoRealm":         observabilityConfig.DataPlaneObservabilityConfig.GetOIDCRealm(),
+				"metricsClientId":        observabilityConfig.DataPlaneObservabilityConfig.GetOIDCClientID(),
+				"metricsSecret":          observabilityConfig.DataPlaneObservabilityConfig.GetOIDCClientSecret(),
 			},
 		},
 		&v1alpha1.CatalogSource{
@@ -2434,7 +2444,10 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				Package:                observabilitySubscriptionName,
 			},
 		},
-		&k8sCoreV1.Secret{
+	)
+
+	if observabilityConfig.DataPlaneObservabilityConfig.HasOIDCConfiguration() == false {
+		resources = append(resources, &k8sCoreV1.Secret{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
 				Kind:       "Secret",
@@ -2449,6 +2462,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				"issuer_url":    "dummy",
 			},
 		})
+	}
 
 	if cluster.ProviderType == api.ClusterProviderStandalone {
 		strimziNamespace = clusterConfig.StrimziOperatorOLMConfig.Namespace

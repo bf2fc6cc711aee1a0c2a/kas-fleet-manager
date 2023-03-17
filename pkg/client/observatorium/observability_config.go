@@ -31,19 +31,10 @@ type ObservabilityConfiguration struct {
 	DexPasswordFile string `json:"password_file" yaml:"password_file"`
 
 	// Red Hat SSO configuration
-	RedHatSsoGatewayUrl        string `json:"redhat_sso_gateway_url" yaml:"redhat_sso_gateway_url"`
 	RedHatSsoAuthServerUrl     string `json:"redhat_sso_auth_server_url" yaml:"redhat_sso_auth_server_url"`
 	RedHatSsoRealm             string `json:"redhat_sso_realm" yaml:"redhat_sso_realm"`
 	RedHatSsoTenant            string `json:"redhat_sso_tenant" yaml:"redhat_sso_tenant"`
 	RedHatSsoTokenRefresherUrl string `json:"redhat_sso_token_refresher_url" yaml:"redhat_sso_token_refresher_url"`
-	MetricsClientId            string `json:"redhat_sso_metrics_client_id" yaml:"redhat_sso_metrics_client_id"`
-	MetricsClientIdFile        string `json:"redhat_sso_metrics_client_id_file" yaml:"redhat_sso_metrics_client_id_file"`
-	MetricsSecret              string `json:"redhat_sso_metrics_secret" yaml:"redhat_sso_metrics_secret"`
-	MetricsSecretFile          string `json:"redhat_sso_metrics_secret_file" yaml:"redhat_sso_metrics_secret_file"`
-	LogsClientId               string `json:"redhat_sso_logs_client_id" yaml:"redhat_sso_logs_client_id"`
-	LogsClientIdFile           string `json:"redhat_sso_logs_client_id_file" yaml:"redhat_sso_logs_client_id_file"`
-	LogsSecret                 string `json:"redhat_sso_logs_secret" yaml:"redhat_sso_logs_secret"`
-	LogsSecretFile             string `json:"redhat_sso_logs_secret_file" yaml:"redhat_sso_logs_secret_file"`
 
 	// Observatorium configuration
 	ObservatoriumGateway string        `json:"gateway" yaml:"gateway"`
@@ -58,14 +49,13 @@ type ObservabilityConfiguration struct {
 	EnableMock           bool          `json:"enable_mock"`
 
 	// Configuration repo for the Observability operator
-	ObservabilityConfigTag             string `json:"observability_config_tag"`
-	ObservabilityConfigRepo            string `json:"observability_config_repo"`
-	ObservabilityConfigChannel         string `json:"observability_config_channel"`
-	ObservabilityConfigAccessToken     string `json:"observability_config_access_token"`
-	ObservabilityConfigAccessTokenFile string `json:"observability_config_access_token_file"`
+	ObservabilityConfigTag     string `json:"observability_config_tag"`
+	ObservabilityConfigRepo    string `json:"observability_config_repo"`
+	ObservabilityConfigChannel string `json:"observability_config_channel"`
 
 	// Configuration of AWS CloudWatch Logging for Observability
 	ObservabilityCloudWatchLoggingConfig ObservabilityCloudWatchLoggingConfig
+	DataPlaneObservabilityConfig         DataPlaneObservabilityConfig
 }
 
 var _ environments.ConfigModule = &ObservabilityConfiguration{}
@@ -80,6 +70,74 @@ type ObservabilityCloudWatchLoggingConfig struct {
 	configFilePath                string                                                      `validate:"-"`
 }
 
+type DataPlaneObservabilityOIDCCredentials struct {
+	ClientID     string `yaml:"client_id" validate:"required"`
+	ClientSecret string `yaml:"client_secret" validate:"required"`
+}
+
+type DataPlaneObservabilityOIDCConfiguration struct {
+	AuthorizationServer string                                 `yaml:"authorization_server" validate:"required"`
+	Realm               string                                 `yaml:"realm" validate:"required"`
+	Credentials         *DataPlaneObservabilityOIDCCredentials `yaml:"credentials" validate:"required,dive"`
+}
+
+type DataPlaneObservabilityRemoteWriteConfiguration struct {
+	RemoteWriteUrl    string                                   `yaml:"remote_write_url" validate:"required"`
+	OIDCConfiguration *DataPlaneObservabilityOIDCConfiguration `yaml:"oidc_configuration" validate:"omitempty,dive"`
+}
+
+type DataPlaneObservabilityConfig struct {
+	configFilePath string
+	Enabled        bool
+
+	RemoteWriteConfiguration *DataPlaneObservabilityRemoteWriteConfiguration `yaml:"remote_write_configuration" validate:"required,dive"`
+	GithubResourcesAuthToken string
+}
+
+func (c *DataPlaneObservabilityConfig) GetOIDCClientID() string {
+	if c.Enabled && c.RemoteWriteConfiguration.OIDCConfiguration != nil {
+		return c.RemoteWriteConfiguration.OIDCConfiguration.Credentials.ClientID
+	}
+
+	return ""
+}
+
+func (c *DataPlaneObservabilityConfig) GetOIDCClientSecret() string {
+	if c.Enabled && c.RemoteWriteConfiguration.OIDCConfiguration != nil {
+		return c.RemoteWriteConfiguration.OIDCConfiguration.Credentials.ClientSecret
+	}
+
+	return ""
+}
+
+func (c *DataPlaneObservabilityConfig) GetOIDCAuthorizationServer() string {
+	if c.Enabled && c.RemoteWriteConfiguration.OIDCConfiguration != nil {
+		return c.RemoteWriteConfiguration.OIDCConfiguration.AuthorizationServer
+	}
+
+	return ""
+}
+
+func (c *DataPlaneObservabilityConfig) GetOIDCRealm() string {
+	if c.Enabled && c.RemoteWriteConfiguration.OIDCConfiguration != nil {
+		return c.RemoteWriteConfiguration.OIDCConfiguration.Realm
+	}
+
+	return ""
+}
+
+func (c *DataPlaneObservabilityConfig) GetRemoteWriteUrl() string {
+	if c.Enabled && c.RemoteWriteConfiguration != nil {
+		return c.RemoteWriteConfiguration.RemoteWriteUrl
+	}
+
+	return ""
+}
+
+func (c *DataPlaneObservabilityConfig) HasOIDCConfiguration() bool {
+	return c.Enabled && c.RemoteWriteConfiguration.OIDCConfiguration != nil
+}
+
 func (c *ObservabilityCloudWatchLoggingConfig) validate() error {
 	if !c.CloudwatchLoggingEnabled {
 		return nil
@@ -89,6 +147,37 @@ func (c *ObservabilityCloudWatchLoggingConfig) validate() error {
 	err := validate.Struct(c)
 	if err != nil {
 		return fmt.Errorf("error validating Observability CloudWatch Logging config: %v", err)
+	}
+
+	return nil
+}
+
+func (c *DataPlaneObservabilityConfig) validate() error {
+	if !c.Enabled {
+		return nil
+	}
+
+	validate := validator.New()
+	err := validate.Struct(c)
+	if err != nil {
+		return fmt.Errorf("error validating data plane observability config config: %v", err)
+	}
+
+	return nil
+}
+
+func (c *DataPlaneObservabilityConfig) readConfigFile() error {
+	if !c.Enabled {
+		return nil
+	}
+
+	if c.configFilePath == "" {
+		return fmt.Errorf("error reading data plane observability configuration: file path cannot be empty")
+	}
+
+	err := shared.ReadYamlFile(c.configFilePath, c)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -147,33 +236,26 @@ type ObservabilityEnterpriseCloudwatchLoggingConfigCredentials struct {
 
 func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 	return &ObservabilityConfiguration{
-		DexUrl:                             "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io",
-		DexSecretFile:                      "secrets/dex.secret",
-		DexPasswordFile:                    "secrets/dex.password",
-		DexUsername:                        "admin@example.com",
-		ObservatoriumGateway:               "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io",
-		ObservatoriumTenant:                "test",
-		AuthType:                           "dex",
-		AuthToken:                          "",
-		AuthTokenFile:                      "secrets/observatorium.token",
-		Timeout:                            240 * time.Second,
-		Debug:                              true, // TODO: false
-		EnableMock:                         false,
-		Insecure:                           true, // TODO: false
-		ObservabilityConfigRepo:            "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents",
-		ObservabilityConfigChannel:         "resources", // Pointing to resources as the individual directories for prod and staging are no longer needed
-		ObservabilityConfigAccessToken:     "",
-		ObservabilityConfigAccessTokenFile: "secrets/observability-config-access.token",
-		ObservabilityConfigTag:             "main",
-		MetricsClientIdFile:                "secrets/rhsso-metrics.clientId",
-		MetricsSecretFile:                  "secrets/rhsso-metrics.clientSecret",
-		LogsClientIdFile:                   "secrets/rhsso-logs.clientId",
-		LogsSecretFile:                     "secrets/rhsso-logs.clientSecret",
-		RedHatSsoTenant:                    "",
-		RedHatSsoAuthServerUrl:             "",
-		RedHatSsoRealm:                     "",
-		RedHatSsoTokenRefresherUrl:         "",
-		RedHatSsoGatewayUrl:                "",
+		DexUrl:                     "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io",
+		DexSecretFile:              "secrets/dex.secret",
+		DexPasswordFile:            "secrets/dex.password",
+		DexUsername:                "admin@example.com",
+		ObservatoriumGateway:       "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io",
+		ObservatoriumTenant:        "test",
+		AuthType:                   "dex",
+		AuthToken:                  "",
+		AuthTokenFile:              "secrets/observatorium.token",
+		Timeout:                    240 * time.Second,
+		Debug:                      true, // TODO: false
+		EnableMock:                 false,
+		Insecure:                   true, // TODO: false
+		ObservabilityConfigRepo:    "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents",
+		ObservabilityConfigChannel: "resources", // Pointing to resources as the individual directories for prod and staging are no longer needed
+		ObservabilityConfigTag:     "main",
+		RedHatSsoTenant:            "",
+		RedHatSsoAuthServerUrl:     "",
+		RedHatSsoRealm:             "",
+		RedHatSsoTokenRefresherUrl: "",
 	}
 }
 
@@ -186,12 +268,7 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 
 	fs.StringVar(&c.RedHatSsoTenant, "observability-red-hat-sso-tenant", c.RedHatSsoTenant, "Red Hat SSO tenant")
 	fs.StringVar(&c.RedHatSsoAuthServerUrl, "observability-red-hat-sso-auth-server-url", c.RedHatSsoAuthServerUrl, "Red Hat SSO auth server URL")
-	fs.StringVar(&c.RedHatSsoGatewayUrl, "observability-red-hat-sso-observatorium-gateway", c.RedHatSsoGatewayUrl, "Red Hat SSO gateway URL")
 	fs.StringVar(&c.RedHatSsoTokenRefresherUrl, "observability-red-hat-sso-token-refresher-url", c.RedHatSsoTokenRefresherUrl, "Red Hat SSO token refresher URL")
-	fs.StringVar(&c.LogsClientIdFile, "observability-red-hat-sso-logs-client-id-file", c.LogsClientIdFile, "Red Hat SSO logs client id file")
-	fs.StringVar(&c.MetricsClientIdFile, "observability-red-hat-sso-metrics-client-id-file", c.MetricsClientIdFile, "Red Hat SSO metrics client id file")
-	fs.StringVar(&c.LogsSecretFile, "observability-red-hat-sso-logs-secret-file", c.LogsSecretFile, "Red Hat SSO logs secret file")
-	fs.StringVar(&c.MetricsSecretFile, "observability-red-hat-sso-metrics-secret-file", c.MetricsSecretFile, "Red Hat SSO metrics secret file")
 	fs.StringVar(&c.RedHatSsoRealm, "observability-red-hat-sso-realm", c.RedHatSsoRealm, "Red Hat SSO realm")
 
 	fs.StringVar(&c.ObservatoriumGateway, "observatorium-gateway", c.ObservatoriumGateway, "Observatorium gateway")
@@ -205,11 +282,13 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 
 	fs.StringVar(&c.ObservabilityConfigRepo, "observability-config-repo", c.ObservabilityConfigRepo, "Repo for the observability operator configuration repo")
 	fs.StringVar(&c.ObservabilityConfigChannel, "observability-config-channel", c.ObservabilityConfigChannel, "Channel for the observability operator configuration repo")
-	fs.StringVar(&c.ObservabilityConfigAccessTokenFile, "observability-config-access-token-file", c.ObservabilityConfigAccessTokenFile, "File contains the access token to the observability operator configuration repo")
 	fs.StringVar(&c.ObservabilityConfigTag, "observability-config-tag", c.ObservabilityConfigTag, "Tag or branch to use inside the observability configuration repo")
 
 	fs.StringVar(&c.ObservabilityCloudWatchLoggingConfig.configFilePath, "observability-cloudwatchlogging-config-file-path", "secrets/observability-cloudwatchlogs-config.yaml", "Path to a file containing the configuration for Observability related to AWS CloudWatch Logging in YAML format. Only takes effect when --observability-cloudwatchlogging-enable is set")
 	fs.BoolVar(&c.ObservabilityCloudWatchLoggingConfig.CloudwatchLoggingEnabled, "observability-cloudwatchlogging-enable", false, "Enable Observability to deliver data plane logs to AWS CloudWatch")
+
+	fs.StringVar(&c.DataPlaneObservabilityConfig.configFilePath, "dataplane-observability-config", "secrets/dataplane-observability-config.yaml", "Path to a file containing the observability configuration for the data plane")
+	fs.BoolVar(&c.DataPlaneObservabilityConfig.Enabled, "dataplane-observability-config-enabled", true, "Determines if the data plane observability config file must be provided")
 }
 
 func (c *ObservabilityConfiguration) ReadFiles() error {
@@ -231,19 +310,12 @@ func (c *ObservabilityConfiguration) ReadFiles() error {
 		}
 	}
 
-	configFileError := c.ReadObservatoriumConfigFiles()
-	if configFileError != nil {
-		return configFileError
-	}
-
-	if c.ObservabilityConfigAccessToken == "" && c.ObservabilityConfigAccessTokenFile != "" {
-		err := shared.ReadFileValueString(c.ObservabilityConfigAccessTokenFile, &c.ObservabilityConfigAccessToken)
-		if err != nil {
-			return err
-		}
-	}
-
 	err = c.ObservabilityCloudWatchLoggingConfig.readConfigFile()
+	if err != nil {
+		return err
+	}
+
+	err = c.DataPlaneObservabilityConfig.readConfigFile()
 	if err != nil {
 		return err
 	}
@@ -252,29 +324,10 @@ func (c *ObservabilityConfiguration) ReadFiles() error {
 }
 
 func (c *ObservabilityConfiguration) Validate(env *environments.Env) error {
-	return c.ObservabilityCloudWatchLoggingConfig.validate()
-}
-
-func (c *ObservabilityConfiguration) ReadObservatoriumConfigFiles() error {
-	logsClientIdErr := shared.ReadFileValueString(c.LogsClientIdFile, &c.LogsClientId)
-	if logsClientIdErr != nil {
-		return logsClientIdErr
+	err := c.ObservabilityCloudWatchLoggingConfig.validate()
+	if err != nil {
+		return err
 	}
 
-	logsSecretErr := shared.ReadFileValueString(c.LogsSecretFile, &c.LogsSecret)
-	if logsSecretErr != nil {
-		return logsSecretErr
-	}
-
-	metricsClientIdErr := shared.ReadFileValueString(c.MetricsClientIdFile, &c.MetricsClientId)
-	if metricsClientIdErr != nil {
-		return metricsClientIdErr
-	}
-
-	metricsSecretErr := shared.ReadFileValueString(c.MetricsSecretFile, &c.MetricsSecret)
-	if metricsSecretErr != nil {
-		return metricsSecretErr
-	}
-
-	return nil
+	return c.DataPlaneObservabilityConfig.validate()
 }

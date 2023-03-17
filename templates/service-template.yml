@@ -246,11 +246,6 @@ parameters:
   description: A URL to an Observatorium instance where observability metrics will sent to.
   value: ""
 
-- name: OBSERVATORIUM_RHSSO_GATEWAY
-  displayName: Observatorium Red Hat SSO gateway
-  description: A URL to an Observatorium instance where observability metrics will sent to.
-  value: ""
-
 - name: OBSERVATORIUM_TENANT
   displayName: Observatorium tenant
   description: Observatorium tenant where observability metrics will sent to.
@@ -1085,14 +1080,9 @@ objects:
             - --observatorium-timeout=${OBSERVATORIUM_TIMEOUT}
             - --observatorium-auth-type=${OBSERVATORIUM_AUTH_TYPE}
             - --observatorium-token-file=/secrets/service/observatorium.token
-            - --observability-red-hat-sso-logs-client-id-file=/secrets/observatorium/logs.clientId
-            - --observability-red-hat-sso-logs-secret-file=/secrets/observatorium/logs.clientSecret
-            - --observability-red-hat-sso-metrics-client-id-file=/secrets/observatorium/metrics.clientId
-            - --observability-red-hat-sso-metrics-secret-file=/secrets/observatorium/metrics.clientSecret
             - --observability-red-hat-sso-auth-server-url=${OBSERVATORIUM_RHSSO_AUTH_SERVER_URL}
             - --observability-red-hat-sso-realm=${OBSERVATORIUM_RHSSO_REALM}
             - --observability-red-hat-sso-token-refresher-url=${OBSERVATORIUM_TOKEN_REFRESHER_URL}
-            - --observability-red-hat-sso-observatorium-gateway=${OBSERVATORIUM_RHSSO_GATEWAY}
             - --observability-red-hat-sso-tenant=${OBSERVATORIUM_RHSSO_TENANT}
             - --observability-cloudwatchlogging-config-file-path=/secrets/observability/observability-cloudwatchlogs-config.yaml
             - --observability-cloudwatchlogging-enable=${OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING}
@@ -1168,7 +1158,6 @@ objects:
             - --quota-type=${QUOTA_TYPE}
             - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
             - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}
-            - --observability-config-access-token-file=/secrets/service/observability-config-access.token
             - --observability-config-tag=${OBSERVABILITY_CONFIG_TAG}
             - --image-pull-docker-config-file=/secrets/service/image-pull.dockerconfigjson
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}

@@ -56,27 +56,6 @@ func Test_ReadFiles_ObservabilityConfiguration(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should return an error with misconfigured LogsClientIdFile when reading observatorium config files",
-			fields: fields{
-				config: NewObservabilityConfigurationConfig(),
-			},
-			modifyFn: func(config *ObservabilityConfiguration) {
-				config.LogsClientIdFile = "invalid"
-			},
-			wantErr: true,
-		},
-		{
-			name: "should return no error with with all config provided but ObservabilityConfigAccessToken(File)",
-			fields: fields{
-				config: NewObservabilityConfigurationConfig(),
-			},
-			modifyFn: func(config *ObservabilityConfiguration) {
-				config.ObservabilityConfigAccessToken = ""
-				config.ObservabilityConfigAccessTokenFile = ""
-			},
-			wantErr: false,
-		},
-		{
 			name: "should return an error when observability cloudwatchlogs enabled but no file path for their configuration is provided",
 			fields: fields{
 				config: NewObservabilityConfigurationConfig(),
@@ -103,61 +82,112 @@ func Test_ReadFiles_ObservabilityConfiguration(t *testing.T) {
 	}
 }
 
-func Test_ReadObservatoriumConfigFiles_ObservabilityConfiguration(t *testing.T) {
+func Test_DataPlaneObservabilityConfig_validate(t *testing.T) {
 	type fields struct {
-		config *ObservabilityConfiguration
+		DataPlaneObservabilityConfig DataPlaneObservabilityConfig
 	}
 
 	tests := []struct {
-		name     string
-		fields   fields
-		modifyFn func(config *ObservabilityConfiguration)
-		wantErr  bool
+		name    string
+		fields  fields
+		wantErr bool
 	}{
 		{
-			name: "should return no error when running ReadObservatoriumConfigFiles with default ObservabilityConfiguration",
+			name: "should succeed when disabled",
 			fields: fields{
-				config: NewObservabilityConfigurationConfig(),
+				DataPlaneObservabilityConfig: DataPlaneObservabilityConfig{
+					Enabled: false,
+				},
 			},
 			wantErr: false,
 		},
 		{
-			name: "should return an error with misconfigured LogsClientIdFile",
+			name: "should succeed when remote write url is provided, but no oidc config",
 			fields: fields{
-				config: NewObservabilityConfigurationConfig(),
+				DataPlaneObservabilityConfig: DataPlaneObservabilityConfig{
+					Enabled: true,
+					RemoteWriteConfiguration: &DataPlaneObservabilityRemoteWriteConfiguration{
+						RemoteWriteUrl: "https://dummy",
+					},
+				},
 			},
-			modifyFn: func(config *ObservabilityConfiguration) {
-				config.LogsClientIdFile = "invalid"
+			wantErr: false,
+		},
+		{
+			name: "should succeed when remote write url is provided and full oidc configuration is provided",
+			fields: fields{
+				DataPlaneObservabilityConfig: DataPlaneObservabilityConfig{
+					Enabled: true,
+					RemoteWriteConfiguration: &DataPlaneObservabilityRemoteWriteConfiguration{
+						RemoteWriteUrl: "https://dummy",
+						OIDCConfiguration: &DataPlaneObservabilityOIDCConfiguration{
+							AuthorizationServer: "https://dummy",
+							Realm:               "dummy",
+							Credentials: &DataPlaneObservabilityOIDCCredentials{
+								ClientID:     "dummy",
+								ClientSecret: "dummy",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should fail when remote write url is provided and oidc configuration is missing credentials",
+			fields: fields{
+				DataPlaneObservabilityConfig: DataPlaneObservabilityConfig{
+					Enabled: true,
+					RemoteWriteConfiguration: &DataPlaneObservabilityRemoteWriteConfiguration{
+						RemoteWriteUrl: "https://dummy",
+						OIDCConfiguration: &DataPlaneObservabilityOIDCConfiguration{
+							AuthorizationServer: "https://dummy",
+							Realm:               "dummy",
+						},
+					},
+				},
 			},
 			wantErr: true,
 		},
 		{
-			name: "should return an error with misconfigured LogsSecretFile",
+			name: "should fail when remote write url is provided and oidc configuration is missing realm",
 			fields: fields{
-				config: NewObservabilityConfigurationConfig(),
-			},
-			modifyFn: func(config *ObservabilityConfiguration) {
-				config.LogsSecretFile = "invalid"
+				DataPlaneObservabilityConfig: DataPlaneObservabilityConfig{
+					Enabled: true,
+					RemoteWriteConfiguration: &DataPlaneObservabilityRemoteWriteConfiguration{
+						RemoteWriteUrl: "https://dummy",
+						OIDCConfiguration: &DataPlaneObservabilityOIDCConfiguration{
+							AuthorizationServer: "https://dummy",
+							Credentials: &DataPlaneObservabilityOIDCCredentials{
+								ClientID:     "dummy",
+								ClientSecret: "dummy",
+							},
+						},
+					},
+				},
 			},
 			wantErr: true,
 		},
 		{
-			name: "should return an error with misconfigured MetricsClientIdFile",
+			name: "should fail when remote write configuration is missing",
 			fields: fields{
-				config: NewObservabilityConfigurationConfig(),
-			},
-			modifyFn: func(config *ObservabilityConfiguration) {
-				config.MetricsClientIdFile = "invalid"
+				DataPlaneObservabilityConfig: DataPlaneObservabilityConfig{
+					Enabled:                  true,
+					GithubResourcesAuthToken: "dummy",
+				},
 			},
 			wantErr: true,
 		},
 		{
-			name: "should return an error with misconfigured MetricsSecretFile when reading observatorium config files",
+			name: "should fail when remote write url is missing",
 			fields: fields{
-				config: NewObservabilityConfigurationConfig(),
-			},
-			modifyFn: func(config *ObservabilityConfiguration) {
-				config.MetricsSecretFile = "invalid"
+				DataPlaneObservabilityConfig: DataPlaneObservabilityConfig{
+					Enabled: true,
+					RemoteWriteConfiguration: &DataPlaneObservabilityRemoteWriteConfiguration{
+						RemoteWriteUrl: "",
+					},
+					GithubResourcesAuthToken: "dummy",
+				},
 			},
 			wantErr: true,
 		},
@@ -165,14 +195,10 @@ func Test_ReadObservatoriumConfigFiles_ObservabilityConfiguration(t *testing.T) 
 
 	for _, testcase := range tests {
 		tt := testcase
-
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			config := tt.fields.config
-			if tt.modifyFn != nil {
-				tt.modifyFn(config)
-			}
-			g.Expect(config.ReadObservatoriumConfigFiles() != nil).To(gomega.Equal(tt.wantErr))
+			err := tt.fields.DataPlaneObservabilityConfig.validate()
+			g.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

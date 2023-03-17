@@ -52,7 +52,7 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 
 	return &dbapi.DataPlaneClusterConfig{
 		Observability: dbapi.DataPlaneClusterConfigObservability{
-			AccessToken: d.ObservabilityConfig.ObservabilityConfigAccessToken,
+			AccessToken: d.ObservabilityConfig.DataPlaneObservabilityConfig.GithubResourcesAuthToken,
 			Channel:     d.ObservabilityConfig.ObservabilityConfigChannel,
 			Repository:  d.ObservabilityConfig.ObservabilityConfigRepo,
 			Tag:         d.ObservabilityConfig.ObservabilityConfigTag,

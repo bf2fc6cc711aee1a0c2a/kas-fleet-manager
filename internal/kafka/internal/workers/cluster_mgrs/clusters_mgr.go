@@ -777,8 +777,14 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 		c.buildObservabilityCatalogSourceResource(),
 		c.buildObservabilityOperatorGroupResource(),
 		c.buildObservabilitySubscriptionResource(),
-		c.buildObservabilityRemoteWriteServiceAccountCredential(&cluster),
 	)
+
+	// if no oidc configuration is provided, use the dataplane service account
+	if !c.ObservabilityConfiguration.DataPlaneObservabilityConfig.HasOIDCConfiguration() {
+		r = append(r,
+			c.buildObservabilityRemoteWriteServiceAccountCredential(&cluster),
+		)
+	}
 
 	strimziNamespace := strimziAddonNamespace
 	if c.OCMConfig.StrimziOperatorAddonID == "managed-kafka-qe" {
@@ -934,14 +940,12 @@ func (c *ClusterManager) buildObservatoriumSSOSecretResource() *k8sCoreV1.Secret
 	observabilityConfig := c.ObservabilityConfiguration
 	stringDataMap := map[string]string{
 		"authType":               observatorium.AuthTypeSso,
-		"gateway":                observabilityConfig.RedHatSsoGatewayUrl,
+		"gateway":                observabilityConfig.DataPlaneObservabilityConfig.GetRemoteWriteUrl(),
 		"tenant":                 observabilityConfig.RedHatSsoTenant,
-		"redHatSsoAuthServerUrl": observabilityConfig.RedHatSsoAuthServerUrl,
-		"redHatSsoRealm":         observabilityConfig.RedHatSsoRealm,
-		"metricsClientId":        observabilityConfig.MetricsClientId,
-		"metricsSecret":          observabilityConfig.MetricsSecret,
-		"logsClientId":           observabilityConfig.LogsClientId,
-		"logsSecret":             observabilityConfig.LogsSecret,
+		"redHatSsoAuthServerUrl": observabilityConfig.DataPlaneObservabilityConfig.GetOIDCAuthorizationServer(),
+		"redHatSsoRealm":         observabilityConfig.DataPlaneObservabilityConfig.GetOIDCRealm(),
+		"metricsClientId":        observabilityConfig.DataPlaneObservabilityConfig.GetOIDCClientID(),
+		"metricsSecret":          observabilityConfig.DataPlaneObservabilityConfig.GetOIDCClientSecret(),
 	}
 	return &k8sCoreV1.Secret{
 		TypeMeta: metav1.TypeMeta{
