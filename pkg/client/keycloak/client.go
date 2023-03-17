@@ -4,9 +4,10 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"net/http"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/Nerzal/gocloak/v11"
 	"github.com/golang-jwt/jwt/v4"
@@ -69,7 +70,7 @@ type ClientRepresentation struct {
 }
 
 type kcClient struct {
-	kcClient    gocloak.GoCloak
+	kcClient    goCloakClientInterface
 	ctx         context.Context
 	config      *KeycloakConfig
 	realmConfig *KeycloakRealmConfig

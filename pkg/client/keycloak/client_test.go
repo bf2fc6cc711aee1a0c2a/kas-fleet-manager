@@ -156,7 +156,7 @@ func Test_kcClient_CreateClient(t *testing.T) {
 		accessToken string
 	}
 	type fields struct {
-		kc gocloak.GoCloak
+		kc goCloakClientInterface
 	}
 	tests := []struct {
 		name    string
@@ -168,7 +168,7 @@ func Test_kcClient_CreateClient(t *testing.T) {
 		{
 			name: "should create gocloak client and return its id",
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					CreateClientFunc: func(ctx context.Context, accessToken, realm string, newClient gocloak.Client) (string, error) {
 						return testValue, nil
 					},
@@ -180,7 +180,7 @@ func Test_kcClient_CreateClient(t *testing.T) {
 		{
 			name: "should fail to create client if gocloak CreateClient fails",
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					CreateClientFunc: func(ctx context.Context, accessToken, realm string, newClient gocloak.Client) (string, error) {
 						return "", errors.New("test")
 					},
@@ -216,7 +216,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 
 	type fields struct {
-		goCloakClient gocloak.GoCloak
+		goCloakClient goCloakClientInterface
 		ctx           context.Context
 		config        *KeycloakConfig
 		realmConfig   *KeycloakRealmConfig
@@ -251,7 +251,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 					JwksEndpointURI:  JwksEndpointURI,
 					Realm:            Realm,
 				},
-				goCloakClient: &GoCloakMock{
+				goCloakClient: &goCloakClientInterfaceMock{
 					GetTokenFunc: func(ctx context.Context, realm string, options gocloak.TokenOptions) (*gocloak.JWT, error) {
 						return nil, errors.Errorf("failed to get token")
 					},
@@ -271,7 +271,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 					JwksEndpointURI:  JwksEndpointURI,
 					Realm:            Realm,
 				},
-				goCloakClient: &GoCloakMock{
+				goCloakClient: &goCloakClientInterfaceMock{
 					GetTokenFunc: func(ctx context.Context, realm string, options gocloak.TokenOptions) (*gocloak.JWT, error) {
 						goCloakToken.AccessToken = accessToken
 						return &goCloakToken, nil
@@ -297,7 +297,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 					Realm:            Realm,
 				},
 				cache: cache.New(tokenLifeDuration, cacheCleanupInterval),
-				goCloakClient: &GoCloakMock{
+				goCloakClient: &goCloakClientInterfaceMock{
 					GetTokenFunc: func(ctx context.Context, realm string, options gocloak.TokenOptions) (*gocloak.JWT, error) {
 						goCloakToken.AccessToken = accessToken
 						return &goCloakToken, nil
@@ -336,7 +336,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 
 func Test_kcClient_IsClientExist(t *testing.T) {
 	type fields struct {
-		goCloakClient gocloak.GoCloak
+		goCloakClient goCloakClientInterface
 		realmConfig   *KeycloakRealmConfig
 	}
 
@@ -355,7 +355,7 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 		{
 			name: "error when no client exists with request clientId",
 			fields: fields{
-				goCloakClient: &GoCloakMock{
+				goCloakClient: &goCloakClientInterfaceMock{
 					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
 						return nil, errors.Errorf("no client exists with requested clientId")
 					},
@@ -378,7 +378,7 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 		{
 			name: "success when correct internal ID is returned",
 			fields: fields{
-				goCloakClient: &GoCloakMock{
+				goCloakClient: &goCloakClientInterfaceMock{
 					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
 						return []*gocloak.Client{
 							{
@@ -410,7 +410,7 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 		{
 			name: "empty string returned when no clients exist",
 			fields: fields{
-				goCloakClient: &GoCloakMock{
+				goCloakClient: &goCloakClientInterfaceMock{
 					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
 						return []*gocloak.Client{}, nil
 					},
@@ -459,7 +459,7 @@ func Test_kcClient_IsClientExist(t *testing.T) {
 
 func Test_kcClient_GetClient(t *testing.T) {
 	type fields struct {
-		goCloakClient gocloak.GoCloak
+		goCloakClient goCloakClientInterface
 		realmConfig   *KeycloakRealmConfig
 	}
 
@@ -478,7 +478,7 @@ func Test_kcClient_GetClient(t *testing.T) {
 		{
 			name: "error when no client exists with request clientId",
 			fields: fields{
-				goCloakClient: &GoCloakMock{
+				goCloakClient: &goCloakClientInterfaceMock{
 					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
 						return nil, errors.Errorf("no client exists with requested clientId")
 					},
@@ -500,7 +500,7 @@ func Test_kcClient_GetClient(t *testing.T) {
 		{
 			name: "success when correct internal ID is returned",
 			fields: fields{
-				goCloakClient: &GoCloakMock{
+				goCloakClient: &goCloakClientInterfaceMock{
 					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
 						return []*gocloak.Client{
 							{
@@ -532,7 +532,7 @@ func Test_kcClient_GetClient(t *testing.T) {
 		{
 			name: "should return nil if no error is thrown and no clients are returned",
 			fields: fields{
-				goCloakClient: &GoCloakMock{
+				goCloakClient: &goCloakClientInterfaceMock{
 					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
 						return []*gocloak.Client{}, nil
 					},
@@ -574,7 +574,7 @@ func Test_kcClient_GetClientSecret(t *testing.T) {
 		accessToken string
 	}
 	type fields struct {
-		kc gocloak.GoCloak
+		kc goCloakClientInterface
 	}
 	tests := []struct {
 		name    string
@@ -590,7 +590,7 @@ func Test_kcClient_GetClientSecret(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetClientSecretFunc: func(ctx context.Context, token, realm, idOfClient string) (*gocloak.CredentialRepresentation, error) {
 						return nil, errors.Errorf("failed to get client secret")
 					},
@@ -606,7 +606,7 @@ func Test_kcClient_GetClientSecret(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetClientSecretFunc: func(ctx context.Context, token, realm, idOfClient string) (*gocloak.CredentialRepresentation, error) {
 						return &gocloak.CredentialRepresentation{}, nil
 					},
@@ -622,7 +622,7 @@ func Test_kcClient_GetClientSecret(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetClientSecretFunc: func(ctx context.Context, token, realm, idOfClient string) (*gocloak.CredentialRepresentation, error) {
 						return &gocloak.CredentialRepresentation{
 							Value: &testValue,
@@ -657,7 +657,7 @@ func Test_kcClient_DeleteClient(t *testing.T) {
 		accessToken string
 	}
 	type fields struct {
-		kc gocloak.GoCloak
+		kc goCloakClientInterface
 	}
 	tests := []struct {
 		name    string
@@ -672,7 +672,7 @@ func Test_kcClient_DeleteClient(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					DeleteClientFunc: func(ctx context.Context, token, realm, idOfClient string) error {
 						return errors.Errorf("failed to delete client")
 					},
@@ -687,7 +687,7 @@ func Test_kcClient_DeleteClient(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					DeleteClientFunc: func(ctx context.Context, token, realm, idOfClient string) error {
 						return nil
 					},
@@ -717,7 +717,7 @@ func Test_kcClient_GetClientById(t *testing.T) {
 		accessToken string
 	}
 	type fields struct {
-		kc gocloak.GoCloak
+		kc goCloakClientInterface
 	}
 	tests := []struct {
 		name    string
@@ -733,7 +733,7 @@ func Test_kcClient_GetClientById(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetClientFunc: func(ctx context.Context, token, realm, idOfClient string) (*gocloak.Client, error) {
 						return nil, errors.Errorf("failed to get client by id")
 					},
@@ -748,7 +748,7 @@ func Test_kcClient_GetClientById(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetClientFunc: func(ctx context.Context, token, realm, idOfClient string) (*gocloak.Client, error) {
 						return &gocloak.Client{
 							ID: &testValue,
@@ -826,7 +826,7 @@ func Test_kcClient_GetClientServiceAccount(t *testing.T) {
 		accessToken    string
 	}
 	type fields struct {
-		kc gocloak.GoCloak
+		kc goCloakClientInterface
 	}
 	tests := []struct {
 		name    string
@@ -842,7 +842,7 @@ func Test_kcClient_GetClientServiceAccount(t *testing.T) {
 				accessToken:    accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetClientServiceAccountFunc: func(ctx context.Context, token, realm, idOfClient string) (*gocloak.User, error) {
 						return nil, errors.Errorf("failed to get service account")
 					},
@@ -857,7 +857,7 @@ func Test_kcClient_GetClientServiceAccount(t *testing.T) {
 				accessToken:    accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetClientServiceAccountFunc: func(ctx context.Context, token, realm, idOfClient string) (*gocloak.User, error) {
 						return &gocloak.User{}, nil
 					},
@@ -890,7 +890,7 @@ func Test_kcClient_UpdateUser(t *testing.T) {
 		serviceAccountUser gocloak.User
 	}
 	type fields struct {
-		kc gocloak.GoCloak
+		kc goCloakClientInterface
 	}
 	tests := []struct {
 		name    string
@@ -905,7 +905,7 @@ func Test_kcClient_UpdateUser(t *testing.T) {
 				serviceAccountUser: gocloak.User{},
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					UpdateUserFunc: func(ctx context.Context, accessToken, realm string, user gocloak.User) error {
 						return errors.Errorf("failed to update service account")
 					},
@@ -920,7 +920,7 @@ func Test_kcClient_UpdateUser(t *testing.T) {
 				serviceAccountUser: gocloak.User{},
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					UpdateUserFunc: func(ctx context.Context, accessToken, realm string, user gocloak.User) error {
 						return nil
 					},
@@ -950,7 +950,7 @@ func Test_kcClient_GetClients(t *testing.T) {
 		first, max             int
 	}
 	type fields struct {
-		kc gocloak.GoCloak
+		kc goCloakClientInterface
 	}
 	tests := []struct {
 		name    string
@@ -968,7 +968,7 @@ func Test_kcClient_GetClients(t *testing.T) {
 				max:         0,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
 						return nil, errors.Errorf("failed to get clients")
 					},
@@ -984,7 +984,7 @@ func Test_kcClient_GetClients(t *testing.T) {
 				first:       0,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
 						return []*gocloak.Client{}, nil
 					},
@@ -1000,7 +1000,7 @@ func Test_kcClient_GetClients(t *testing.T) {
 				first:       0,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetClientsFunc: func(ctx context.Context, accessToken, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
 						return []*gocloak.Client{
 							{
@@ -1143,7 +1143,7 @@ func Test_kcClient_RegenerateClientSecret(t *testing.T) {
 		accessToken string
 	}
 	type fields struct {
-		kc gocloak.GoCloak
+		kc goCloakClientInterface
 	}
 	tests := []struct {
 		name    string
@@ -1159,7 +1159,7 @@ func Test_kcClient_RegenerateClientSecret(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					RegenerateClientSecretFunc: func(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.CredentialRepresentation, error) {
 						return nil, errors.Errorf("failed to regenerate service account credentials")
 					},
@@ -1174,7 +1174,7 @@ func Test_kcClient_RegenerateClientSecret(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					RegenerateClientSecretFunc: func(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.CredentialRepresentation, error) {
 						return &gocloak.CredentialRepresentation{SecretData: &testValue}, nil
 					},
@@ -1207,7 +1207,7 @@ func Test_kcClient_GetRealmRole(t *testing.T) {
 		accessToken string
 	}
 	type fields struct {
-		kc gocloak.GoCloak
+		kc goCloakClientInterface
 	}
 	tests := []struct {
 		name    string
@@ -1223,7 +1223,7 @@ func Test_kcClient_GetRealmRole(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetRealmRoleFunc: func(ctx context.Context, token, realm, roleName string) (*gocloak.Role, error) {
 						return nil, errors.Errorf("failed to get realm role")
 					},
@@ -1238,7 +1238,7 @@ func Test_kcClient_GetRealmRole(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetRealmRoleFunc: func(ctx context.Context, token, realm, roleName string) (*gocloak.Role, error) {
 						return nil, &goCloakNotFoundError
 					},
@@ -1253,7 +1253,7 @@ func Test_kcClient_GetRealmRole(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetRealmRoleFunc: func(ctx context.Context, token, realm, roleName string) (*gocloak.Role, error) {
 						return &gocloak.Role{}, nil
 					},
@@ -1286,7 +1286,7 @@ func Test_kcClient_CreateRealmRole(t *testing.T) {
 		accessToken string
 	}
 	type fields struct {
-		kc gocloak.GoCloak
+		kc goCloakClientInterface
 	}
 	tests := []struct {
 		name    string
@@ -1302,7 +1302,7 @@ func Test_kcClient_CreateRealmRole(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					CreateRealmRoleFunc: func(ctx context.Context, token, realm string, role gocloak.Role) (string, error) {
 						return "", errors.Errorf("failed to create realm role")
 					},
@@ -1317,7 +1317,7 @@ func Test_kcClient_CreateRealmRole(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					CreateRealmRoleFunc: func(ctx context.Context, token, realm string, role gocloak.Role) (string, error) {
 						return testValue, nil
 					},
@@ -1335,7 +1335,7 @@ func Test_kcClient_CreateRealmRole(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					CreateRealmRoleFunc: func(ctx context.Context, token, realm string, role gocloak.Role) (string, error) {
 						return testValue, nil
 					},
@@ -1372,7 +1372,7 @@ func Test_kcClient_UserHasRealmRole(t *testing.T) {
 		accessToken string
 	}
 	type fields struct {
-		kc gocloak.GoCloak
+		kc goCloakClientInterface
 	}
 	tests := []struct {
 		name    string
@@ -1389,7 +1389,7 @@ func Test_kcClient_UserHasRealmRole(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetRealmRolesByUserIDFunc: func(ctx context.Context, accessToken, realm, userID string) ([]*gocloak.Role, error) {
 						return nil, errors.Errorf("failed to get realm roles by userId")
 					},
@@ -1405,7 +1405,7 @@ func Test_kcClient_UserHasRealmRole(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetRealmRolesByUserIDFunc: func(ctx context.Context, accessToken, realm, userID string) ([]*gocloak.Role, error) {
 						return nil, nil
 					},
@@ -1421,7 +1421,7 @@ func Test_kcClient_UserHasRealmRole(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					GetRealmRolesByUserIDFunc: func(ctx context.Context, accessToken, realm, userID string) ([]*gocloak.Role, error) {
 						return []*gocloak.Role{
 							&testRole,
@@ -1457,7 +1457,7 @@ func Test_kcClient_AddRealmRoleToUser(t *testing.T) {
 		accessToken string
 	}
 	type fields struct {
-		kc gocloak.GoCloak
+		kc goCloakClientInterface
 	}
 	tests := []struct {
 		name    string
@@ -1473,7 +1473,7 @@ func Test_kcClient_AddRealmRoleToUser(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					AddRealmRoleToUserFunc: func(ctx context.Context, token, realm, userID string, roles []gocloak.Role) error {
 						return errors.Errorf("failed to add realm role to a user")
 					},
@@ -1489,7 +1489,7 @@ func Test_kcClient_AddRealmRoleToUser(t *testing.T) {
 				accessToken: accessToken,
 			},
 			fields: fields{
-				kc: &GoCloakMock{
+				kc: &goCloakClientInterfaceMock{
 					AddRealmRoleToUserFunc: func(ctx context.Context, token, realm, userID string, roles []gocloak.Role) error {
 						return nil
 					},
