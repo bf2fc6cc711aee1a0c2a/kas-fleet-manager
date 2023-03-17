@@ -218,6 +218,7 @@ func createCertMagicClient(awsConfig *config.AWSConfig,
 	}
 
 	certmagic.Default.MustStaple = kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.MustStaple
+	certmagic.Default.OCSP.DisableStapling = !kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.MustStaple
 	certmagic.Default.RenewalWindowRatio = kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.RenewalWindowRatio
 
 	magic := certmagic.NewDefault()
