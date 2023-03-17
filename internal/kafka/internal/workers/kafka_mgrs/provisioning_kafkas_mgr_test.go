@@ -64,42 +64,6 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *svcErrors.ServiceError {
 						return nil
 					},
-					ManagedKafkasRoutesTLSCertificateFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
-						return nil
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
-			name: "Should throw an error when managing kafka tls certificates returns an error",
-			fields: fields{
-				clusterPlacementStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
-						return &api.Cluster{
-							ClusterID:                "",
-							AvailableStrimziVersions: mockClusters.AvailableStrimziVersions,
-						}, nil
-					},
-				},
-				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *svcErrors.ServiceError) {
-						return []*dbapi.KafkaRequest{
-							mockKafkas.BuildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-								kafkaRequest.ClusterID = ""
-								kafkaRequest.Status = constants.KafkaRequestStatusProvisioning.String()
-							}),
-						}, nil
-					},
-					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
-						return nil
-					},
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *svcErrors.ServiceError {
-						return nil
-					},
-					ManagedKafkasRoutesTLSCertificateFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
-						return fmt.Errorf("some errors")
-					},
 				},
 			},
 			wantErr: true,
@@ -139,9 +103,6 @@ func Test_ProvisioningKafkaManager_Reconcile(t *testing.T) {
 						return nil
 					},
 					AssignBootstrapServerHostFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
-						return nil
-					},
-					ManagedKafkasRoutesTLSCertificateFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
 						return nil
 					},
 				},

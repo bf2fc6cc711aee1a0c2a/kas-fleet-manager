@@ -66,10 +66,6 @@ func (k *ReadyKafkaManager) Reconcile() []error {
 	for _, kafka := range readyKafkas {
 		glog.V(10).Infof("ready kafka id = %s", kafka.ID)
 
-		if err := k.kafkaService.ManagedKafkasRoutesTLSCertificate(kafka); err != nil {
-			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to create ready kafka routes tls certificates%q", kafka.ID))
-		}
-
 		if err := k.reconcileCanaryServiceAccount(kafka); err != nil {
 			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to create ready kafka canary service account: %q", kafka.ID))
 		}
