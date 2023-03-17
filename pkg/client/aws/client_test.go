@@ -5,7 +5,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 	"github.com/onsi/gomega"
 )
 
@@ -36,7 +35,7 @@ var (
 
 type testClientFactory struct{}
 
-func (t testClientFactory) NewClient(route53Client *route53iface.Route53API) AWSClient {
+func (t testClientFactory) NewClient(route53Client *route53Client) AWSClient {
 	return &awsCl{
 		route53Client: *route53Client,
 	}
@@ -109,7 +108,7 @@ func TestAwsClient_NewClientFromFactory(t *testing.T) {
 
 func TestAwsClient_GetChange(t *testing.T) {
 	type fields struct {
-		route53Client route53iface.Route53API
+		route53Client route53Client
 	}
 	type args struct {
 		changeId string
@@ -126,7 +125,7 @@ func TestAwsClient_GetChange(t *testing.T) {
 				changeId: testValue,
 			},
 			fields: fields{
-				route53Client: &Route53APIMock{
+				route53Client: &route53ClientMock{
 					GetChangeFunc: func(in1 *route53.GetChangeInput) (*route53.GetChangeOutput, error) {
 						return nil, awsErr
 					},
@@ -140,7 +139,7 @@ func TestAwsClient_GetChange(t *testing.T) {
 				changeId: testValue,
 			},
 			fields: fields{
-				route53Client: &Route53APIMock{
+				route53Client: &route53ClientMock{
 					GetChangeFunc: func(in1 *route53.GetChangeInput) (*route53.GetChangeOutput, error) {
 						return &route53.GetChangeOutput{}, nil
 					},
@@ -163,7 +162,7 @@ func TestAwsClient_GetChange(t *testing.T) {
 
 func TestAwsClient_ListHostedZonesByNameInput(t *testing.T) {
 	type fields struct {
-		route53Client route53iface.Route53API
+		route53Client route53Client
 	}
 	tests := []struct {
 		name    string
@@ -173,7 +172,7 @@ func TestAwsClient_ListHostedZonesByNameInput(t *testing.T) {
 		{
 			name: "Should fail to return list of hosted zones by name output",
 			fields: fields{
-				route53Client: &Route53APIMock{
+				route53Client: &route53ClientMock{
 					ListHostedZonesByNameFunc: func(in1 *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error) {
 						return nil, awsErr
 					},
@@ -184,7 +183,7 @@ func TestAwsClient_ListHostedZonesByNameInput(t *testing.T) {
 		{
 			name: "Should successfully return list of hosted zones by name output",
 			fields: fields{
-				route53Client: &Route53APIMock{
+				route53Client: &route53ClientMock{
 					ListHostedZonesByNameFunc: func(in1 *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error) {
 						return &route53.ListHostedZonesByNameOutput{}, nil
 					},
@@ -207,7 +206,7 @@ func TestAwsClient_ListHostedZonesByNameInput(t *testing.T) {
 
 func TestAwsClient_ChangeResourceRecordSets(t *testing.T) {
 	type fields struct {
-		route53Client route53iface.Route53API
+		route53Client route53Client
 	}
 	tests := []struct {
 		name    string
@@ -217,7 +216,7 @@ func TestAwsClient_ChangeResourceRecordSets(t *testing.T) {
 		{
 			name: "Should fail when ListHostedZonesByNameInput returns an error",
 			fields: fields{
-				route53Client: &Route53APIMock{
+				route53Client: &route53ClientMock{
 					ListHostedZonesByNameFunc: func(in1 *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error) {
 						return nil, awsErr
 					},
@@ -228,7 +227,7 @@ func TestAwsClient_ChangeResourceRecordSets(t *testing.T) {
 		{
 			name: "Should fail when ListHostedZonesByNameInput returns an empty list of hosted zones",
 			fields: fields{
-				route53Client: &Route53APIMock{
+				route53Client: &route53ClientMock{
 					ListHostedZonesByNameFunc: func(in1 *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error) {
 						return &route53.ListHostedZonesByNameOutput{}, nil
 					},
@@ -239,7 +238,7 @@ func TestAwsClient_ChangeResourceRecordSets(t *testing.T) {
 		{
 			name: "Should fail when ChangeResourceRecordSets returns an error",
 			fields: fields{
-				route53Client: &Route53APIMock{
+				route53Client: &route53ClientMock{
 					ListHostedZonesByNameFunc: func(in1 *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error) {
 						return testHostedZones, nil
 					},
@@ -253,7 +252,7 @@ func TestAwsClient_ChangeResourceRecordSets(t *testing.T) {
 		{
 			name: "Should not fail when ChangeResourceRecordSets returns an error with expected message",
 			fields: fields{
-				route53Client: &Route53APIMock{
+				route53Client: &route53ClientMock{
 					ListHostedZonesByNameFunc: func(in1 *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error) {
 						return testHostedZones, nil
 					},
@@ -267,7 +266,7 @@ func TestAwsClient_ChangeResourceRecordSets(t *testing.T) {
 		{
 			name: "Should successfully execute ChangeResourceRecordSets",
 			fields: fields{
-				route53Client: &Route53APIMock{
+				route53Client: &route53ClientMock{
 					ListHostedZonesByNameFunc: func(in1 *route53.ListHostedZonesByNameInput) (*route53.ListHostedZonesByNameOutput, error) {
 						return testHostedZones, nil
 					},

@@ -12,16 +12,16 @@ import (
 	"sync"
 )
 
-// Ensure, that GoCloakMock does implement gocloak.GoCloak.
+// Ensure, that goCloakClientInterfaceMock does implement goCloakClientInterface.
 // If this is not the case, regenerate this file with moq.
-var _ gocloak.GoCloak = &GoCloakMock{}
+var _ goCloakClientInterface = &goCloakClientInterfaceMock{}
 
-// GoCloakMock is a mock implementation of gocloak.GoCloak.
+// goCloakClientInterfaceMock is a mock implementation of goCloakClientInterface.
 //
-//	func TestSomethingThatUsesGoCloak(t *testing.T) {
+//	func TestSomethingThatUsesgoCloakClientInterface(t *testing.T) {
 //
-//		// make and configure a mocked gocloak.GoCloak
-//		mockedGoCloak := &GoCloakMock{
+//		// make and configure a mocked goCloakClientInterface
+//		mockedgoCloakClientInterface := &goCloakClientInterfaceMock{
 //			AddClientRoleCompositeFunc: func(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
 //				panic("mock out the AddClientRoleComposite method")
 //			},
@@ -729,11 +729,11 @@ var _ gocloak.GoCloak = &GoCloakMock{}
 //			},
 //		}
 //
-//		// use mockedGoCloak in code that requires gocloak.GoCloak
+//		// use mockedgoCloakClientInterface in code that requires goCloakClientInterface
 //		// and then make assertions.
 //
 //	}
-type GoCloakMock struct {
+type goCloakClientInterfaceMock struct {
 	// AddClientRoleCompositeFunc mocks the AddClientRoleComposite method.
 	AddClientRoleCompositeFunc func(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error
 
@@ -4455,9 +4455,9 @@ type GoCloakMock struct {
 }
 
 // AddClientRoleComposite calls AddClientRoleCompositeFunc.
-func (mock *GoCloakMock) AddClientRoleComposite(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) AddClientRoleComposite(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
 	if mock.AddClientRoleCompositeFunc == nil {
-		panic("GoCloakMock.AddClientRoleCompositeFunc: method is nil but GoCloak.AddClientRoleComposite was just called")
+		panic("goCloakClientInterfaceMock.AddClientRoleCompositeFunc: method is nil but goCloakClientInterface.AddClientRoleComposite was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -4481,8 +4481,8 @@ func (mock *GoCloakMock) AddClientRoleComposite(ctx context.Context, token strin
 // AddClientRoleCompositeCalls gets all the calls that were made to AddClientRoleComposite.
 // Check the length with:
 //
-//	len(mockedGoCloak.AddClientRoleCompositeCalls())
-func (mock *GoCloakMock) AddClientRoleCompositeCalls() []struct {
+//	len(mockedgoCloakClientInterface.AddClientRoleCompositeCalls())
+func (mock *goCloakClientInterfaceMock) AddClientRoleCompositeCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -4503,9 +4503,9 @@ func (mock *GoCloakMock) AddClientRoleCompositeCalls() []struct {
 }
 
 // AddClientRoleToGroup calls AddClientRoleToGroupFunc.
-func (mock *GoCloakMock) AddClientRoleToGroup(ctx context.Context, token string, realm string, idOfClient string, groupID string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) AddClientRoleToGroup(ctx context.Context, token string, realm string, idOfClient string, groupID string, roles []gocloak.Role) error {
 	if mock.AddClientRoleToGroupFunc == nil {
-		panic("GoCloakMock.AddClientRoleToGroupFunc: method is nil but GoCloak.AddClientRoleToGroup was just called")
+		panic("goCloakClientInterfaceMock.AddClientRoleToGroupFunc: method is nil but goCloakClientInterface.AddClientRoleToGroup was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -4531,8 +4531,8 @@ func (mock *GoCloakMock) AddClientRoleToGroup(ctx context.Context, token string,
 // AddClientRoleToGroupCalls gets all the calls that were made to AddClientRoleToGroup.
 // Check the length with:
 //
-//	len(mockedGoCloak.AddClientRoleToGroupCalls())
-func (mock *GoCloakMock) AddClientRoleToGroupCalls() []struct {
+//	len(mockedgoCloakClientInterface.AddClientRoleToGroupCalls())
+func (mock *goCloakClientInterfaceMock) AddClientRoleToGroupCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -4555,9 +4555,9 @@ func (mock *GoCloakMock) AddClientRoleToGroupCalls() []struct {
 }
 
 // AddClientRoleToUser calls AddClientRoleToUserFunc.
-func (mock *GoCloakMock) AddClientRoleToUser(ctx context.Context, token string, realm string, idOfClient string, userID string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) AddClientRoleToUser(ctx context.Context, token string, realm string, idOfClient string, userID string, roles []gocloak.Role) error {
 	if mock.AddClientRoleToUserFunc == nil {
-		panic("GoCloakMock.AddClientRoleToUserFunc: method is nil but GoCloak.AddClientRoleToUser was just called")
+		panic("goCloakClientInterfaceMock.AddClientRoleToUserFunc: method is nil but goCloakClientInterface.AddClientRoleToUser was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -4583,8 +4583,8 @@ func (mock *GoCloakMock) AddClientRoleToUser(ctx context.Context, token string, 
 // AddClientRoleToUserCalls gets all the calls that were made to AddClientRoleToUser.
 // Check the length with:
 //
-//	len(mockedGoCloak.AddClientRoleToUserCalls())
-func (mock *GoCloakMock) AddClientRoleToUserCalls() []struct {
+//	len(mockedgoCloakClientInterface.AddClientRoleToUserCalls())
+func (mock *goCloakClientInterfaceMock) AddClientRoleToUserCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -4607,9 +4607,9 @@ func (mock *GoCloakMock) AddClientRoleToUserCalls() []struct {
 }
 
 // AddDefaultGroup calls AddDefaultGroupFunc.
-func (mock *GoCloakMock) AddDefaultGroup(ctx context.Context, accessToken string, realm string, groupID string) error {
+func (mock *goCloakClientInterfaceMock) AddDefaultGroup(ctx context.Context, accessToken string, realm string, groupID string) error {
 	if mock.AddDefaultGroupFunc == nil {
-		panic("GoCloakMock.AddDefaultGroupFunc: method is nil but GoCloak.AddDefaultGroup was just called")
+		panic("goCloakClientInterfaceMock.AddDefaultGroupFunc: method is nil but goCloakClientInterface.AddDefaultGroup was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -4631,8 +4631,8 @@ func (mock *GoCloakMock) AddDefaultGroup(ctx context.Context, accessToken string
 // AddDefaultGroupCalls gets all the calls that were made to AddDefaultGroup.
 // Check the length with:
 //
-//	len(mockedGoCloak.AddDefaultGroupCalls())
-func (mock *GoCloakMock) AddDefaultGroupCalls() []struct {
+//	len(mockedgoCloakClientInterface.AddDefaultGroupCalls())
+func (mock *goCloakClientInterfaceMock) AddDefaultGroupCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -4651,9 +4651,9 @@ func (mock *GoCloakMock) AddDefaultGroupCalls() []struct {
 }
 
 // AddDefaultScopeToClient calls AddDefaultScopeToClientFunc.
-func (mock *GoCloakMock) AddDefaultScopeToClient(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
+func (mock *goCloakClientInterfaceMock) AddDefaultScopeToClient(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
 	if mock.AddDefaultScopeToClientFunc == nil {
-		panic("GoCloakMock.AddDefaultScopeToClientFunc: method is nil but GoCloak.AddDefaultScopeToClient was just called")
+		panic("goCloakClientInterfaceMock.AddDefaultScopeToClientFunc: method is nil but goCloakClientInterface.AddDefaultScopeToClient was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -4677,8 +4677,8 @@ func (mock *GoCloakMock) AddDefaultScopeToClient(ctx context.Context, token stri
 // AddDefaultScopeToClientCalls gets all the calls that were made to AddDefaultScopeToClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.AddDefaultScopeToClientCalls())
-func (mock *GoCloakMock) AddDefaultScopeToClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.AddDefaultScopeToClientCalls())
+func (mock *goCloakClientInterfaceMock) AddDefaultScopeToClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -4699,9 +4699,9 @@ func (mock *GoCloakMock) AddDefaultScopeToClientCalls() []struct {
 }
 
 // AddOptionalScopeToClient calls AddOptionalScopeToClientFunc.
-func (mock *GoCloakMock) AddOptionalScopeToClient(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
+func (mock *goCloakClientInterfaceMock) AddOptionalScopeToClient(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
 	if mock.AddOptionalScopeToClientFunc == nil {
-		panic("GoCloakMock.AddOptionalScopeToClientFunc: method is nil but GoCloak.AddOptionalScopeToClient was just called")
+		panic("goCloakClientInterfaceMock.AddOptionalScopeToClientFunc: method is nil but goCloakClientInterface.AddOptionalScopeToClient was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -4725,8 +4725,8 @@ func (mock *GoCloakMock) AddOptionalScopeToClient(ctx context.Context, token str
 // AddOptionalScopeToClientCalls gets all the calls that were made to AddOptionalScopeToClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.AddOptionalScopeToClientCalls())
-func (mock *GoCloakMock) AddOptionalScopeToClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.AddOptionalScopeToClientCalls())
+func (mock *goCloakClientInterfaceMock) AddOptionalScopeToClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -4747,9 +4747,9 @@ func (mock *GoCloakMock) AddOptionalScopeToClientCalls() []struct {
 }
 
 // AddRealmRoleComposite calls AddRealmRoleCompositeFunc.
-func (mock *GoCloakMock) AddRealmRoleComposite(ctx context.Context, token string, realm string, roleName string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) AddRealmRoleComposite(ctx context.Context, token string, realm string, roleName string, roles []gocloak.Role) error {
 	if mock.AddRealmRoleCompositeFunc == nil {
-		panic("GoCloakMock.AddRealmRoleCompositeFunc: method is nil but GoCloak.AddRealmRoleComposite was just called")
+		panic("goCloakClientInterfaceMock.AddRealmRoleCompositeFunc: method is nil but goCloakClientInterface.AddRealmRoleComposite was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -4773,8 +4773,8 @@ func (mock *GoCloakMock) AddRealmRoleComposite(ctx context.Context, token string
 // AddRealmRoleCompositeCalls gets all the calls that were made to AddRealmRoleComposite.
 // Check the length with:
 //
-//	len(mockedGoCloak.AddRealmRoleCompositeCalls())
-func (mock *GoCloakMock) AddRealmRoleCompositeCalls() []struct {
+//	len(mockedgoCloakClientInterface.AddRealmRoleCompositeCalls())
+func (mock *goCloakClientInterfaceMock) AddRealmRoleCompositeCalls() []struct {
 	Ctx      context.Context
 	Token    string
 	Realm    string
@@ -4795,9 +4795,9 @@ func (mock *GoCloakMock) AddRealmRoleCompositeCalls() []struct {
 }
 
 // AddRealmRoleToGroup calls AddRealmRoleToGroupFunc.
-func (mock *GoCloakMock) AddRealmRoleToGroup(ctx context.Context, token string, realm string, groupID string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) AddRealmRoleToGroup(ctx context.Context, token string, realm string, groupID string, roles []gocloak.Role) error {
 	if mock.AddRealmRoleToGroupFunc == nil {
-		panic("GoCloakMock.AddRealmRoleToGroupFunc: method is nil but GoCloak.AddRealmRoleToGroup was just called")
+		panic("goCloakClientInterfaceMock.AddRealmRoleToGroupFunc: method is nil but goCloakClientInterface.AddRealmRoleToGroup was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -4821,8 +4821,8 @@ func (mock *GoCloakMock) AddRealmRoleToGroup(ctx context.Context, token string, 
 // AddRealmRoleToGroupCalls gets all the calls that were made to AddRealmRoleToGroup.
 // Check the length with:
 //
-//	len(mockedGoCloak.AddRealmRoleToGroupCalls())
-func (mock *GoCloakMock) AddRealmRoleToGroupCalls() []struct {
+//	len(mockedgoCloakClientInterface.AddRealmRoleToGroupCalls())
+func (mock *goCloakClientInterfaceMock) AddRealmRoleToGroupCalls() []struct {
 	Ctx     context.Context
 	Token   string
 	Realm   string
@@ -4843,9 +4843,9 @@ func (mock *GoCloakMock) AddRealmRoleToGroupCalls() []struct {
 }
 
 // AddRealmRoleToUser calls AddRealmRoleToUserFunc.
-func (mock *GoCloakMock) AddRealmRoleToUser(ctx context.Context, token string, realm string, userID string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) AddRealmRoleToUser(ctx context.Context, token string, realm string, userID string, roles []gocloak.Role) error {
 	if mock.AddRealmRoleToUserFunc == nil {
-		panic("GoCloakMock.AddRealmRoleToUserFunc: method is nil but GoCloak.AddRealmRoleToUser was just called")
+		panic("goCloakClientInterfaceMock.AddRealmRoleToUserFunc: method is nil but goCloakClientInterface.AddRealmRoleToUser was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -4869,8 +4869,8 @@ func (mock *GoCloakMock) AddRealmRoleToUser(ctx context.Context, token string, r
 // AddRealmRoleToUserCalls gets all the calls that were made to AddRealmRoleToUser.
 // Check the length with:
 //
-//	len(mockedGoCloak.AddRealmRoleToUserCalls())
-func (mock *GoCloakMock) AddRealmRoleToUserCalls() []struct {
+//	len(mockedgoCloakClientInterface.AddRealmRoleToUserCalls())
+func (mock *goCloakClientInterfaceMock) AddRealmRoleToUserCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -4891,9 +4891,9 @@ func (mock *GoCloakMock) AddRealmRoleToUserCalls() []struct {
 }
 
 // AddUserToGroup calls AddUserToGroupFunc.
-func (mock *GoCloakMock) AddUserToGroup(ctx context.Context, token string, realm string, userID string, groupID string) error {
+func (mock *goCloakClientInterfaceMock) AddUserToGroup(ctx context.Context, token string, realm string, userID string, groupID string) error {
 	if mock.AddUserToGroupFunc == nil {
-		panic("GoCloakMock.AddUserToGroupFunc: method is nil but GoCloak.AddUserToGroup was just called")
+		panic("goCloakClientInterfaceMock.AddUserToGroupFunc: method is nil but goCloakClientInterface.AddUserToGroup was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -4917,8 +4917,8 @@ func (mock *GoCloakMock) AddUserToGroup(ctx context.Context, token string, realm
 // AddUserToGroupCalls gets all the calls that were made to AddUserToGroup.
 // Check the length with:
 //
-//	len(mockedGoCloak.AddUserToGroupCalls())
-func (mock *GoCloakMock) AddUserToGroupCalls() []struct {
+//	len(mockedgoCloakClientInterface.AddUserToGroupCalls())
+func (mock *goCloakClientInterfaceMock) AddUserToGroupCalls() []struct {
 	Ctx     context.Context
 	Token   string
 	Realm   string
@@ -4939,9 +4939,9 @@ func (mock *GoCloakMock) AddUserToGroupCalls() []struct {
 }
 
 // ClearKeysCache calls ClearKeysCacheFunc.
-func (mock *GoCloakMock) ClearKeysCache(ctx context.Context, token string, realm string) error {
+func (mock *goCloakClientInterfaceMock) ClearKeysCache(ctx context.Context, token string, realm string) error {
 	if mock.ClearKeysCacheFunc == nil {
-		panic("GoCloakMock.ClearKeysCacheFunc: method is nil but GoCloak.ClearKeysCache was just called")
+		panic("goCloakClientInterfaceMock.ClearKeysCacheFunc: method is nil but goCloakClientInterface.ClearKeysCache was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -4961,8 +4961,8 @@ func (mock *GoCloakMock) ClearKeysCache(ctx context.Context, token string, realm
 // ClearKeysCacheCalls gets all the calls that were made to ClearKeysCache.
 // Check the length with:
 //
-//	len(mockedGoCloak.ClearKeysCacheCalls())
-func (mock *GoCloakMock) ClearKeysCacheCalls() []struct {
+//	len(mockedgoCloakClientInterface.ClearKeysCacheCalls())
+func (mock *goCloakClientInterfaceMock) ClearKeysCacheCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -4979,9 +4979,9 @@ func (mock *GoCloakMock) ClearKeysCacheCalls() []struct {
 }
 
 // ClearRealmCache calls ClearRealmCacheFunc.
-func (mock *GoCloakMock) ClearRealmCache(ctx context.Context, token string, realm string) error {
+func (mock *goCloakClientInterfaceMock) ClearRealmCache(ctx context.Context, token string, realm string) error {
 	if mock.ClearRealmCacheFunc == nil {
-		panic("GoCloakMock.ClearRealmCacheFunc: method is nil but GoCloak.ClearRealmCache was just called")
+		panic("goCloakClientInterfaceMock.ClearRealmCacheFunc: method is nil but goCloakClientInterface.ClearRealmCache was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -5001,8 +5001,8 @@ func (mock *GoCloakMock) ClearRealmCache(ctx context.Context, token string, real
 // ClearRealmCacheCalls gets all the calls that were made to ClearRealmCache.
 // Check the length with:
 //
-//	len(mockedGoCloak.ClearRealmCacheCalls())
-func (mock *GoCloakMock) ClearRealmCacheCalls() []struct {
+//	len(mockedgoCloakClientInterface.ClearRealmCacheCalls())
+func (mock *goCloakClientInterfaceMock) ClearRealmCacheCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -5019,9 +5019,9 @@ func (mock *GoCloakMock) ClearRealmCacheCalls() []struct {
 }
 
 // ClearUserCache calls ClearUserCacheFunc.
-func (mock *GoCloakMock) ClearUserCache(ctx context.Context, token string, realm string) error {
+func (mock *goCloakClientInterfaceMock) ClearUserCache(ctx context.Context, token string, realm string) error {
 	if mock.ClearUserCacheFunc == nil {
-		panic("GoCloakMock.ClearUserCacheFunc: method is nil but GoCloak.ClearUserCache was just called")
+		panic("goCloakClientInterfaceMock.ClearUserCacheFunc: method is nil but goCloakClientInterface.ClearUserCache was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -5041,8 +5041,8 @@ func (mock *GoCloakMock) ClearUserCache(ctx context.Context, token string, realm
 // ClearUserCacheCalls gets all the calls that were made to ClearUserCache.
 // Check the length with:
 //
-//	len(mockedGoCloak.ClearUserCacheCalls())
-func (mock *GoCloakMock) ClearUserCacheCalls() []struct {
+//	len(mockedgoCloakClientInterface.ClearUserCacheCalls())
+func (mock *goCloakClientInterfaceMock) ClearUserCacheCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -5059,9 +5059,9 @@ func (mock *GoCloakMock) ClearUserCacheCalls() []struct {
 }
 
 // CreateAuthenticationExecution calls CreateAuthenticationExecutionFunc.
-func (mock *GoCloakMock) CreateAuthenticationExecution(ctx context.Context, token string, realm string, flow string, execution gocloak.CreateAuthenticationExecutionRepresentation) error {
+func (mock *goCloakClientInterfaceMock) CreateAuthenticationExecution(ctx context.Context, token string, realm string, flow string, execution gocloak.CreateAuthenticationExecutionRepresentation) error {
 	if mock.CreateAuthenticationExecutionFunc == nil {
-		panic("GoCloakMock.CreateAuthenticationExecutionFunc: method is nil but GoCloak.CreateAuthenticationExecution was just called")
+		panic("goCloakClientInterfaceMock.CreateAuthenticationExecutionFunc: method is nil but goCloakClientInterface.CreateAuthenticationExecution was just called")
 	}
 	callInfo := struct {
 		Ctx       context.Context
@@ -5085,8 +5085,8 @@ func (mock *GoCloakMock) CreateAuthenticationExecution(ctx context.Context, toke
 // CreateAuthenticationExecutionCalls gets all the calls that were made to CreateAuthenticationExecution.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateAuthenticationExecutionCalls())
-func (mock *GoCloakMock) CreateAuthenticationExecutionCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateAuthenticationExecutionCalls())
+func (mock *goCloakClientInterfaceMock) CreateAuthenticationExecutionCalls() []struct {
 	Ctx       context.Context
 	Token     string
 	Realm     string
@@ -5107,9 +5107,9 @@ func (mock *GoCloakMock) CreateAuthenticationExecutionCalls() []struct {
 }
 
 // CreateAuthenticationExecutionFlow calls CreateAuthenticationExecutionFlowFunc.
-func (mock *GoCloakMock) CreateAuthenticationExecutionFlow(ctx context.Context, token string, realm string, flow string, execution gocloak.CreateAuthenticationExecutionFlowRepresentation) error {
+func (mock *goCloakClientInterfaceMock) CreateAuthenticationExecutionFlow(ctx context.Context, token string, realm string, flow string, execution gocloak.CreateAuthenticationExecutionFlowRepresentation) error {
 	if mock.CreateAuthenticationExecutionFlowFunc == nil {
-		panic("GoCloakMock.CreateAuthenticationExecutionFlowFunc: method is nil but GoCloak.CreateAuthenticationExecutionFlow was just called")
+		panic("goCloakClientInterfaceMock.CreateAuthenticationExecutionFlowFunc: method is nil but goCloakClientInterface.CreateAuthenticationExecutionFlow was just called")
 	}
 	callInfo := struct {
 		Ctx       context.Context
@@ -5133,8 +5133,8 @@ func (mock *GoCloakMock) CreateAuthenticationExecutionFlow(ctx context.Context, 
 // CreateAuthenticationExecutionFlowCalls gets all the calls that were made to CreateAuthenticationExecutionFlow.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateAuthenticationExecutionFlowCalls())
-func (mock *GoCloakMock) CreateAuthenticationExecutionFlowCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateAuthenticationExecutionFlowCalls())
+func (mock *goCloakClientInterfaceMock) CreateAuthenticationExecutionFlowCalls() []struct {
 	Ctx       context.Context
 	Token     string
 	Realm     string
@@ -5155,9 +5155,9 @@ func (mock *GoCloakMock) CreateAuthenticationExecutionFlowCalls() []struct {
 }
 
 // CreateAuthenticationFlow calls CreateAuthenticationFlowFunc.
-func (mock *GoCloakMock) CreateAuthenticationFlow(ctx context.Context, token string, realm string, flow gocloak.AuthenticationFlowRepresentation) error {
+func (mock *goCloakClientInterfaceMock) CreateAuthenticationFlow(ctx context.Context, token string, realm string, flow gocloak.AuthenticationFlowRepresentation) error {
 	if mock.CreateAuthenticationFlowFunc == nil {
-		panic("GoCloakMock.CreateAuthenticationFlowFunc: method is nil but GoCloak.CreateAuthenticationFlow was just called")
+		panic("goCloakClientInterfaceMock.CreateAuthenticationFlowFunc: method is nil but goCloakClientInterface.CreateAuthenticationFlow was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -5179,8 +5179,8 @@ func (mock *GoCloakMock) CreateAuthenticationFlow(ctx context.Context, token str
 // CreateAuthenticationFlowCalls gets all the calls that were made to CreateAuthenticationFlow.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateAuthenticationFlowCalls())
-func (mock *GoCloakMock) CreateAuthenticationFlowCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateAuthenticationFlowCalls())
+func (mock *goCloakClientInterfaceMock) CreateAuthenticationFlowCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -5199,9 +5199,9 @@ func (mock *GoCloakMock) CreateAuthenticationFlowCalls() []struct {
 }
 
 // CreateChildGroup calls CreateChildGroupFunc.
-func (mock *GoCloakMock) CreateChildGroup(ctx context.Context, token string, realm string, groupID string, group gocloak.Group) (string, error) {
+func (mock *goCloakClientInterfaceMock) CreateChildGroup(ctx context.Context, token string, realm string, groupID string, group gocloak.Group) (string, error) {
 	if mock.CreateChildGroupFunc == nil {
-		panic("GoCloakMock.CreateChildGroupFunc: method is nil but GoCloak.CreateChildGroup was just called")
+		panic("goCloakClientInterfaceMock.CreateChildGroupFunc: method is nil but goCloakClientInterface.CreateChildGroup was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -5225,8 +5225,8 @@ func (mock *GoCloakMock) CreateChildGroup(ctx context.Context, token string, rea
 // CreateChildGroupCalls gets all the calls that were made to CreateChildGroup.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateChildGroupCalls())
-func (mock *GoCloakMock) CreateChildGroupCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateChildGroupCalls())
+func (mock *goCloakClientInterfaceMock) CreateChildGroupCalls() []struct {
 	Ctx     context.Context
 	Token   string
 	Realm   string
@@ -5247,9 +5247,9 @@ func (mock *GoCloakMock) CreateChildGroupCalls() []struct {
 }
 
 // CreateClient calls CreateClientFunc.
-func (mock *GoCloakMock) CreateClient(ctx context.Context, accessToken string, realm string, newClient gocloak.Client) (string, error) {
+func (mock *goCloakClientInterfaceMock) CreateClient(ctx context.Context, accessToken string, realm string, newClient gocloak.Client) (string, error) {
 	if mock.CreateClientFunc == nil {
-		panic("GoCloakMock.CreateClientFunc: method is nil but GoCloak.CreateClient was just called")
+		panic("goCloakClientInterfaceMock.CreateClientFunc: method is nil but goCloakClientInterface.CreateClient was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -5271,8 +5271,8 @@ func (mock *GoCloakMock) CreateClient(ctx context.Context, accessToken string, r
 // CreateClientCalls gets all the calls that were made to CreateClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateClientCalls())
-func (mock *GoCloakMock) CreateClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateClientCalls())
+func (mock *goCloakClientInterfaceMock) CreateClientCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -5291,9 +5291,9 @@ func (mock *GoCloakMock) CreateClientCalls() []struct {
 }
 
 // CreateClientProtocolMapper calls CreateClientProtocolMapperFunc.
-func (mock *GoCloakMock) CreateClientProtocolMapper(ctx context.Context, token string, realm string, idOfClient string, mapper gocloak.ProtocolMapperRepresentation) (string, error) {
+func (mock *goCloakClientInterfaceMock) CreateClientProtocolMapper(ctx context.Context, token string, realm string, idOfClient string, mapper gocloak.ProtocolMapperRepresentation) (string, error) {
 	if mock.CreateClientProtocolMapperFunc == nil {
-		panic("GoCloakMock.CreateClientProtocolMapperFunc: method is nil but GoCloak.CreateClientProtocolMapper was just called")
+		panic("goCloakClientInterfaceMock.CreateClientProtocolMapperFunc: method is nil but goCloakClientInterface.CreateClientProtocolMapper was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -5317,8 +5317,8 @@ func (mock *GoCloakMock) CreateClientProtocolMapper(ctx context.Context, token s
 // CreateClientProtocolMapperCalls gets all the calls that were made to CreateClientProtocolMapper.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateClientProtocolMapperCalls())
-func (mock *GoCloakMock) CreateClientProtocolMapperCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateClientProtocolMapperCalls())
+func (mock *goCloakClientInterfaceMock) CreateClientProtocolMapperCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -5339,9 +5339,9 @@ func (mock *GoCloakMock) CreateClientProtocolMapperCalls() []struct {
 }
 
 // CreateClientRepresentation calls CreateClientRepresentationFunc.
-func (mock *GoCloakMock) CreateClientRepresentation(ctx context.Context, realm string) (*gocloak.Client, error) {
+func (mock *goCloakClientInterfaceMock) CreateClientRepresentation(ctx context.Context, realm string) (*gocloak.Client, error) {
 	if mock.CreateClientRepresentationFunc == nil {
-		panic("GoCloakMock.CreateClientRepresentationFunc: method is nil but GoCloak.CreateClientRepresentation was just called")
+		panic("goCloakClientInterfaceMock.CreateClientRepresentationFunc: method is nil but goCloakClientInterface.CreateClientRepresentation was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -5359,8 +5359,8 @@ func (mock *GoCloakMock) CreateClientRepresentation(ctx context.Context, realm s
 // CreateClientRepresentationCalls gets all the calls that were made to CreateClientRepresentation.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateClientRepresentationCalls())
-func (mock *GoCloakMock) CreateClientRepresentationCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateClientRepresentationCalls())
+func (mock *goCloakClientInterfaceMock) CreateClientRepresentationCalls() []struct {
 	Ctx   context.Context
 	Realm string
 } {
@@ -5375,9 +5375,9 @@ func (mock *GoCloakMock) CreateClientRepresentationCalls() []struct {
 }
 
 // CreateClientRole calls CreateClientRoleFunc.
-func (mock *GoCloakMock) CreateClientRole(ctx context.Context, accessToken string, realm string, idOfClient string, role gocloak.Role) (string, error) {
+func (mock *goCloakClientInterfaceMock) CreateClientRole(ctx context.Context, accessToken string, realm string, idOfClient string, role gocloak.Role) (string, error) {
 	if mock.CreateClientRoleFunc == nil {
-		panic("GoCloakMock.CreateClientRoleFunc: method is nil but GoCloak.CreateClientRole was just called")
+		panic("goCloakClientInterfaceMock.CreateClientRoleFunc: method is nil but goCloakClientInterface.CreateClientRole was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -5401,8 +5401,8 @@ func (mock *GoCloakMock) CreateClientRole(ctx context.Context, accessToken strin
 // CreateClientRoleCalls gets all the calls that were made to CreateClientRole.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateClientRoleCalls())
-func (mock *GoCloakMock) CreateClientRoleCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateClientRoleCalls())
+func (mock *goCloakClientInterfaceMock) CreateClientRoleCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -5423,9 +5423,9 @@ func (mock *GoCloakMock) CreateClientRoleCalls() []struct {
 }
 
 // CreateClientScope calls CreateClientScopeFunc.
-func (mock *GoCloakMock) CreateClientScope(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) (string, error) {
+func (mock *goCloakClientInterfaceMock) CreateClientScope(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) (string, error) {
 	if mock.CreateClientScopeFunc == nil {
-		panic("GoCloakMock.CreateClientScopeFunc: method is nil but GoCloak.CreateClientScope was just called")
+		panic("goCloakClientInterfaceMock.CreateClientScopeFunc: method is nil but goCloakClientInterface.CreateClientScope was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -5447,8 +5447,8 @@ func (mock *GoCloakMock) CreateClientScope(ctx context.Context, accessToken stri
 // CreateClientScopeCalls gets all the calls that were made to CreateClientScope.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateClientScopeCalls())
-func (mock *GoCloakMock) CreateClientScopeCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateClientScopeCalls())
+func (mock *goCloakClientInterfaceMock) CreateClientScopeCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -5467,9 +5467,9 @@ func (mock *GoCloakMock) CreateClientScopeCalls() []struct {
 }
 
 // CreateClientScopeMappingsClientRoles calls CreateClientScopeMappingsClientRolesFunc.
-func (mock *GoCloakMock) CreateClientScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) CreateClientScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string, roles []gocloak.Role) error {
 	if mock.CreateClientScopeMappingsClientRolesFunc == nil {
-		panic("GoCloakMock.CreateClientScopeMappingsClientRolesFunc: method is nil but GoCloak.CreateClientScopeMappingsClientRoles was just called")
+		panic("goCloakClientInterfaceMock.CreateClientScopeMappingsClientRolesFunc: method is nil but goCloakClientInterface.CreateClientScopeMappingsClientRoles was just called")
 	}
 	callInfo := struct {
 		Ctx                context.Context
@@ -5495,8 +5495,8 @@ func (mock *GoCloakMock) CreateClientScopeMappingsClientRoles(ctx context.Contex
 // CreateClientScopeMappingsClientRolesCalls gets all the calls that were made to CreateClientScopeMappingsClientRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateClientScopeMappingsClientRolesCalls())
-func (mock *GoCloakMock) CreateClientScopeMappingsClientRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateClientScopeMappingsClientRolesCalls())
+func (mock *goCloakClientInterfaceMock) CreateClientScopeMappingsClientRolesCalls() []struct {
 	Ctx                context.Context
 	Token              string
 	Realm              string
@@ -5519,9 +5519,9 @@ func (mock *GoCloakMock) CreateClientScopeMappingsClientRolesCalls() []struct {
 }
 
 // CreateClientScopeMappingsRealmRoles calls CreateClientScopeMappingsRealmRolesFunc.
-func (mock *GoCloakMock) CreateClientScopeMappingsRealmRoles(ctx context.Context, token string, realm string, idOfClient string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) CreateClientScopeMappingsRealmRoles(ctx context.Context, token string, realm string, idOfClient string, roles []gocloak.Role) error {
 	if mock.CreateClientScopeMappingsRealmRolesFunc == nil {
-		panic("GoCloakMock.CreateClientScopeMappingsRealmRolesFunc: method is nil but GoCloak.CreateClientScopeMappingsRealmRoles was just called")
+		panic("goCloakClientInterfaceMock.CreateClientScopeMappingsRealmRolesFunc: method is nil but goCloakClientInterface.CreateClientScopeMappingsRealmRoles was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -5545,8 +5545,8 @@ func (mock *GoCloakMock) CreateClientScopeMappingsRealmRoles(ctx context.Context
 // CreateClientScopeMappingsRealmRolesCalls gets all the calls that were made to CreateClientScopeMappingsRealmRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateClientScopeMappingsRealmRolesCalls())
-func (mock *GoCloakMock) CreateClientScopeMappingsRealmRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateClientScopeMappingsRealmRolesCalls())
+func (mock *goCloakClientInterfaceMock) CreateClientScopeMappingsRealmRolesCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -5567,9 +5567,9 @@ func (mock *GoCloakMock) CreateClientScopeMappingsRealmRolesCalls() []struct {
 }
 
 // CreateClientScopeProtocolMapper calls CreateClientScopeProtocolMapperFunc.
-func (mock *GoCloakMock) CreateClientScopeProtocolMapper(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) (string, error) {
+func (mock *goCloakClientInterfaceMock) CreateClientScopeProtocolMapper(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) (string, error) {
 	if mock.CreateClientScopeProtocolMapperFunc == nil {
-		panic("GoCloakMock.CreateClientScopeProtocolMapperFunc: method is nil but GoCloak.CreateClientScopeProtocolMapper was just called")
+		panic("goCloakClientInterfaceMock.CreateClientScopeProtocolMapperFunc: method is nil but goCloakClientInterface.CreateClientScopeProtocolMapper was just called")
 	}
 	callInfo := struct {
 		Ctx            context.Context
@@ -5593,8 +5593,8 @@ func (mock *GoCloakMock) CreateClientScopeProtocolMapper(ctx context.Context, ac
 // CreateClientScopeProtocolMapperCalls gets all the calls that were made to CreateClientScopeProtocolMapper.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateClientScopeProtocolMapperCalls())
-func (mock *GoCloakMock) CreateClientScopeProtocolMapperCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateClientScopeProtocolMapperCalls())
+func (mock *goCloakClientInterfaceMock) CreateClientScopeProtocolMapperCalls() []struct {
 	Ctx            context.Context
 	AccessToken    string
 	Realm          string
@@ -5615,9 +5615,9 @@ func (mock *GoCloakMock) CreateClientScopeProtocolMapperCalls() []struct {
 }
 
 // CreateClientScopesScopeMappingsClientRoles calls CreateClientScopesScopeMappingsClientRolesFunc.
-func (mock *GoCloakMock) CreateClientScopesScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) CreateClientScopesScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string, roles []gocloak.Role) error {
 	if mock.CreateClientScopesScopeMappingsClientRolesFunc == nil {
-		panic("GoCloakMock.CreateClientScopesScopeMappingsClientRolesFunc: method is nil but GoCloak.CreateClientScopesScopeMappingsClientRoles was just called")
+		panic("goCloakClientInterfaceMock.CreateClientScopesScopeMappingsClientRolesFunc: method is nil but goCloakClientInterface.CreateClientScopesScopeMappingsClientRoles was just called")
 	}
 	callInfo := struct {
 		Ctx             context.Context
@@ -5643,8 +5643,8 @@ func (mock *GoCloakMock) CreateClientScopesScopeMappingsClientRoles(ctx context.
 // CreateClientScopesScopeMappingsClientRolesCalls gets all the calls that were made to CreateClientScopesScopeMappingsClientRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateClientScopesScopeMappingsClientRolesCalls())
-func (mock *GoCloakMock) CreateClientScopesScopeMappingsClientRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateClientScopesScopeMappingsClientRolesCalls())
+func (mock *goCloakClientInterfaceMock) CreateClientScopesScopeMappingsClientRolesCalls() []struct {
 	Ctx             context.Context
 	Token           string
 	Realm           string
@@ -5667,9 +5667,9 @@ func (mock *GoCloakMock) CreateClientScopesScopeMappingsClientRolesCalls() []str
 }
 
 // CreateClientScopesScopeMappingsRealmRoles calls CreateClientScopesScopeMappingsRealmRolesFunc.
-func (mock *GoCloakMock) CreateClientScopesScopeMappingsRealmRoles(ctx context.Context, token string, realm string, idOfClientScope string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) CreateClientScopesScopeMappingsRealmRoles(ctx context.Context, token string, realm string, idOfClientScope string, roles []gocloak.Role) error {
 	if mock.CreateClientScopesScopeMappingsRealmRolesFunc == nil {
-		panic("GoCloakMock.CreateClientScopesScopeMappingsRealmRolesFunc: method is nil but GoCloak.CreateClientScopesScopeMappingsRealmRoles was just called")
+		panic("goCloakClientInterfaceMock.CreateClientScopesScopeMappingsRealmRolesFunc: method is nil but goCloakClientInterface.CreateClientScopesScopeMappingsRealmRoles was just called")
 	}
 	callInfo := struct {
 		Ctx             context.Context
@@ -5693,8 +5693,8 @@ func (mock *GoCloakMock) CreateClientScopesScopeMappingsRealmRoles(ctx context.C
 // CreateClientScopesScopeMappingsRealmRolesCalls gets all the calls that were made to CreateClientScopesScopeMappingsRealmRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateClientScopesScopeMappingsRealmRolesCalls())
-func (mock *GoCloakMock) CreateClientScopesScopeMappingsRealmRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateClientScopesScopeMappingsRealmRolesCalls())
+func (mock *goCloakClientInterfaceMock) CreateClientScopesScopeMappingsRealmRolesCalls() []struct {
 	Ctx             context.Context
 	Token           string
 	Realm           string
@@ -5715,9 +5715,9 @@ func (mock *GoCloakMock) CreateClientScopesScopeMappingsRealmRolesCalls() []stru
 }
 
 // CreateComponent calls CreateComponentFunc.
-func (mock *GoCloakMock) CreateComponent(ctx context.Context, accessToken string, realm string, component gocloak.Component) (string, error) {
+func (mock *goCloakClientInterfaceMock) CreateComponent(ctx context.Context, accessToken string, realm string, component gocloak.Component) (string, error) {
 	if mock.CreateComponentFunc == nil {
-		panic("GoCloakMock.CreateComponentFunc: method is nil but GoCloak.CreateComponent was just called")
+		panic("goCloakClientInterfaceMock.CreateComponentFunc: method is nil but goCloakClientInterface.CreateComponent was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -5739,8 +5739,8 @@ func (mock *GoCloakMock) CreateComponent(ctx context.Context, accessToken string
 // CreateComponentCalls gets all the calls that were made to CreateComponent.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateComponentCalls())
-func (mock *GoCloakMock) CreateComponentCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateComponentCalls())
+func (mock *goCloakClientInterfaceMock) CreateComponentCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -5759,9 +5759,9 @@ func (mock *GoCloakMock) CreateComponentCalls() []struct {
 }
 
 // CreateGroup calls CreateGroupFunc.
-func (mock *GoCloakMock) CreateGroup(ctx context.Context, accessToken string, realm string, group gocloak.Group) (string, error) {
+func (mock *goCloakClientInterfaceMock) CreateGroup(ctx context.Context, accessToken string, realm string, group gocloak.Group) (string, error) {
 	if mock.CreateGroupFunc == nil {
-		panic("GoCloakMock.CreateGroupFunc: method is nil but GoCloak.CreateGroup was just called")
+		panic("goCloakClientInterfaceMock.CreateGroupFunc: method is nil but goCloakClientInterface.CreateGroup was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -5783,8 +5783,8 @@ func (mock *GoCloakMock) CreateGroup(ctx context.Context, accessToken string, re
 // CreateGroupCalls gets all the calls that were made to CreateGroup.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateGroupCalls())
-func (mock *GoCloakMock) CreateGroupCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateGroupCalls())
+func (mock *goCloakClientInterfaceMock) CreateGroupCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -5803,9 +5803,9 @@ func (mock *GoCloakMock) CreateGroupCalls() []struct {
 }
 
 // CreateIdentityProvider calls CreateIdentityProviderFunc.
-func (mock *GoCloakMock) CreateIdentityProvider(ctx context.Context, token string, realm string, providerRep gocloak.IdentityProviderRepresentation) (string, error) {
+func (mock *goCloakClientInterfaceMock) CreateIdentityProvider(ctx context.Context, token string, realm string, providerRep gocloak.IdentityProviderRepresentation) (string, error) {
 	if mock.CreateIdentityProviderFunc == nil {
-		panic("GoCloakMock.CreateIdentityProviderFunc: method is nil but GoCloak.CreateIdentityProvider was just called")
+		panic("goCloakClientInterfaceMock.CreateIdentityProviderFunc: method is nil but goCloakClientInterface.CreateIdentityProvider was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -5827,8 +5827,8 @@ func (mock *GoCloakMock) CreateIdentityProvider(ctx context.Context, token strin
 // CreateIdentityProviderCalls gets all the calls that were made to CreateIdentityProvider.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateIdentityProviderCalls())
-func (mock *GoCloakMock) CreateIdentityProviderCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateIdentityProviderCalls())
+func (mock *goCloakClientInterfaceMock) CreateIdentityProviderCalls() []struct {
 	Ctx         context.Context
 	Token       string
 	Realm       string
@@ -5847,9 +5847,9 @@ func (mock *GoCloakMock) CreateIdentityProviderCalls() []struct {
 }
 
 // CreateIdentityProviderMapper calls CreateIdentityProviderMapperFunc.
-func (mock *GoCloakMock) CreateIdentityProviderMapper(ctx context.Context, token string, realm string, alias string, mapper gocloak.IdentityProviderMapper) (string, error) {
+func (mock *goCloakClientInterfaceMock) CreateIdentityProviderMapper(ctx context.Context, token string, realm string, alias string, mapper gocloak.IdentityProviderMapper) (string, error) {
 	if mock.CreateIdentityProviderMapperFunc == nil {
-		panic("GoCloakMock.CreateIdentityProviderMapperFunc: method is nil but GoCloak.CreateIdentityProviderMapper was just called")
+		panic("goCloakClientInterfaceMock.CreateIdentityProviderMapperFunc: method is nil but goCloakClientInterface.CreateIdentityProviderMapper was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -5873,8 +5873,8 @@ func (mock *GoCloakMock) CreateIdentityProviderMapper(ctx context.Context, token
 // CreateIdentityProviderMapperCalls gets all the calls that were made to CreateIdentityProviderMapper.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateIdentityProviderMapperCalls())
-func (mock *GoCloakMock) CreateIdentityProviderMapperCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateIdentityProviderMapperCalls())
+func (mock *goCloakClientInterfaceMock) CreateIdentityProviderMapperCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -5895,9 +5895,9 @@ func (mock *GoCloakMock) CreateIdentityProviderMapperCalls() []struct {
 }
 
 // CreatePermission calls CreatePermissionFunc.
-func (mock *GoCloakMock) CreatePermission(ctx context.Context, token string, realm string, idOfClient string, permission gocloak.PermissionRepresentation) (*gocloak.PermissionRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) CreatePermission(ctx context.Context, token string, realm string, idOfClient string, permission gocloak.PermissionRepresentation) (*gocloak.PermissionRepresentation, error) {
 	if mock.CreatePermissionFunc == nil {
-		panic("GoCloakMock.CreatePermissionFunc: method is nil but GoCloak.CreatePermission was just called")
+		panic("goCloakClientInterfaceMock.CreatePermissionFunc: method is nil but goCloakClientInterface.CreatePermission was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -5921,8 +5921,8 @@ func (mock *GoCloakMock) CreatePermission(ctx context.Context, token string, rea
 // CreatePermissionCalls gets all the calls that were made to CreatePermission.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreatePermissionCalls())
-func (mock *GoCloakMock) CreatePermissionCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreatePermissionCalls())
+func (mock *goCloakClientInterfaceMock) CreatePermissionCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -5943,9 +5943,9 @@ func (mock *GoCloakMock) CreatePermissionCalls() []struct {
 }
 
 // CreatePermissionTicket calls CreatePermissionTicketFunc.
-func (mock *GoCloakMock) CreatePermissionTicket(ctx context.Context, token string, realm string, permissions []gocloak.CreatePermissionTicketParams) (*gocloak.PermissionTicketResponseRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) CreatePermissionTicket(ctx context.Context, token string, realm string, permissions []gocloak.CreatePermissionTicketParams) (*gocloak.PermissionTicketResponseRepresentation, error) {
 	if mock.CreatePermissionTicketFunc == nil {
-		panic("GoCloakMock.CreatePermissionTicketFunc: method is nil but GoCloak.CreatePermissionTicket was just called")
+		panic("goCloakClientInterfaceMock.CreatePermissionTicketFunc: method is nil but goCloakClientInterface.CreatePermissionTicket was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -5967,8 +5967,8 @@ func (mock *GoCloakMock) CreatePermissionTicket(ctx context.Context, token strin
 // CreatePermissionTicketCalls gets all the calls that were made to CreatePermissionTicket.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreatePermissionTicketCalls())
-func (mock *GoCloakMock) CreatePermissionTicketCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreatePermissionTicketCalls())
+func (mock *goCloakClientInterfaceMock) CreatePermissionTicketCalls() []struct {
 	Ctx         context.Context
 	Token       string
 	Realm       string
@@ -5987,9 +5987,9 @@ func (mock *GoCloakMock) CreatePermissionTicketCalls() []struct {
 }
 
 // CreatePolicy calls CreatePolicyFunc.
-func (mock *GoCloakMock) CreatePolicy(ctx context.Context, token string, realm string, idOfClient string, policy gocloak.PolicyRepresentation) (*gocloak.PolicyRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) CreatePolicy(ctx context.Context, token string, realm string, idOfClient string, policy gocloak.PolicyRepresentation) (*gocloak.PolicyRepresentation, error) {
 	if mock.CreatePolicyFunc == nil {
-		panic("GoCloakMock.CreatePolicyFunc: method is nil but GoCloak.CreatePolicy was just called")
+		panic("goCloakClientInterfaceMock.CreatePolicyFunc: method is nil but goCloakClientInterface.CreatePolicy was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -6013,8 +6013,8 @@ func (mock *GoCloakMock) CreatePolicy(ctx context.Context, token string, realm s
 // CreatePolicyCalls gets all the calls that were made to CreatePolicy.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreatePolicyCalls())
-func (mock *GoCloakMock) CreatePolicyCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreatePolicyCalls())
+func (mock *goCloakClientInterfaceMock) CreatePolicyCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -6035,9 +6035,9 @@ func (mock *GoCloakMock) CreatePolicyCalls() []struct {
 }
 
 // CreateRealm calls CreateRealmFunc.
-func (mock *GoCloakMock) CreateRealm(ctx context.Context, token string, realm gocloak.RealmRepresentation) (string, error) {
+func (mock *goCloakClientInterfaceMock) CreateRealm(ctx context.Context, token string, realm gocloak.RealmRepresentation) (string, error) {
 	if mock.CreateRealmFunc == nil {
-		panic("GoCloakMock.CreateRealmFunc: method is nil but GoCloak.CreateRealm was just called")
+		panic("goCloakClientInterfaceMock.CreateRealmFunc: method is nil but goCloakClientInterface.CreateRealm was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -6057,8 +6057,8 @@ func (mock *GoCloakMock) CreateRealm(ctx context.Context, token string, realm go
 // CreateRealmCalls gets all the calls that were made to CreateRealm.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateRealmCalls())
-func (mock *GoCloakMock) CreateRealmCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateRealmCalls())
+func (mock *goCloakClientInterfaceMock) CreateRealmCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm gocloak.RealmRepresentation
@@ -6075,9 +6075,9 @@ func (mock *GoCloakMock) CreateRealmCalls() []struct {
 }
 
 // CreateRealmRole calls CreateRealmRoleFunc.
-func (mock *GoCloakMock) CreateRealmRole(ctx context.Context, token string, realm string, role gocloak.Role) (string, error) {
+func (mock *goCloakClientInterfaceMock) CreateRealmRole(ctx context.Context, token string, realm string, role gocloak.Role) (string, error) {
 	if mock.CreateRealmRoleFunc == nil {
-		panic("GoCloakMock.CreateRealmRoleFunc: method is nil but GoCloak.CreateRealmRole was just called")
+		panic("goCloakClientInterfaceMock.CreateRealmRoleFunc: method is nil but goCloakClientInterface.CreateRealmRole was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -6099,8 +6099,8 @@ func (mock *GoCloakMock) CreateRealmRole(ctx context.Context, token string, real
 // CreateRealmRoleCalls gets all the calls that were made to CreateRealmRole.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateRealmRoleCalls())
-func (mock *GoCloakMock) CreateRealmRoleCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateRealmRoleCalls())
+func (mock *goCloakClientInterfaceMock) CreateRealmRoleCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -6119,9 +6119,9 @@ func (mock *GoCloakMock) CreateRealmRoleCalls() []struct {
 }
 
 // CreateResource calls CreateResourceFunc.
-func (mock *GoCloakMock) CreateResource(ctx context.Context, token string, realm string, idOfClient string, resource gocloak.ResourceRepresentation) (*gocloak.ResourceRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) CreateResource(ctx context.Context, token string, realm string, idOfClient string, resource gocloak.ResourceRepresentation) (*gocloak.ResourceRepresentation, error) {
 	if mock.CreateResourceFunc == nil {
-		panic("GoCloakMock.CreateResourceFunc: method is nil but GoCloak.CreateResource was just called")
+		panic("goCloakClientInterfaceMock.CreateResourceFunc: method is nil but goCloakClientInterface.CreateResource was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -6145,8 +6145,8 @@ func (mock *GoCloakMock) CreateResource(ctx context.Context, token string, realm
 // CreateResourceCalls gets all the calls that were made to CreateResource.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateResourceCalls())
-func (mock *GoCloakMock) CreateResourceCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateResourceCalls())
+func (mock *goCloakClientInterfaceMock) CreateResourceCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -6167,9 +6167,9 @@ func (mock *GoCloakMock) CreateResourceCalls() []struct {
 }
 
 // CreateResourceClient calls CreateResourceClientFunc.
-func (mock *GoCloakMock) CreateResourceClient(ctx context.Context, token string, realm string, resource gocloak.ResourceRepresentation) (*gocloak.ResourceRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) CreateResourceClient(ctx context.Context, token string, realm string, resource gocloak.ResourceRepresentation) (*gocloak.ResourceRepresentation, error) {
 	if mock.CreateResourceClientFunc == nil {
-		panic("GoCloakMock.CreateResourceClientFunc: method is nil but GoCloak.CreateResourceClient was just called")
+		panic("goCloakClientInterfaceMock.CreateResourceClientFunc: method is nil but goCloakClientInterface.CreateResourceClient was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -6191,8 +6191,8 @@ func (mock *GoCloakMock) CreateResourceClient(ctx context.Context, token string,
 // CreateResourceClientCalls gets all the calls that were made to CreateResourceClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateResourceClientCalls())
-func (mock *GoCloakMock) CreateResourceClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateResourceClientCalls())
+func (mock *goCloakClientInterfaceMock) CreateResourceClientCalls() []struct {
 	Ctx      context.Context
 	Token    string
 	Realm    string
@@ -6211,9 +6211,9 @@ func (mock *GoCloakMock) CreateResourceClientCalls() []struct {
 }
 
 // CreateResourcePolicy calls CreateResourcePolicyFunc.
-func (mock *GoCloakMock) CreateResourcePolicy(ctx context.Context, token string, realm string, resourceID string, policy gocloak.ResourcePolicyRepresentation) (*gocloak.ResourcePolicyRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) CreateResourcePolicy(ctx context.Context, token string, realm string, resourceID string, policy gocloak.ResourcePolicyRepresentation) (*gocloak.ResourcePolicyRepresentation, error) {
 	if mock.CreateResourcePolicyFunc == nil {
-		panic("GoCloakMock.CreateResourcePolicyFunc: method is nil but GoCloak.CreateResourcePolicy was just called")
+		panic("goCloakClientInterfaceMock.CreateResourcePolicyFunc: method is nil but goCloakClientInterface.CreateResourcePolicy was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -6237,8 +6237,8 @@ func (mock *GoCloakMock) CreateResourcePolicy(ctx context.Context, token string,
 // CreateResourcePolicyCalls gets all the calls that were made to CreateResourcePolicy.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateResourcePolicyCalls())
-func (mock *GoCloakMock) CreateResourcePolicyCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateResourcePolicyCalls())
+func (mock *goCloakClientInterfaceMock) CreateResourcePolicyCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -6259,9 +6259,9 @@ func (mock *GoCloakMock) CreateResourcePolicyCalls() []struct {
 }
 
 // CreateScope calls CreateScopeFunc.
-func (mock *GoCloakMock) CreateScope(ctx context.Context, token string, realm string, idOfClient string, scope gocloak.ScopeRepresentation) (*gocloak.ScopeRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) CreateScope(ctx context.Context, token string, realm string, idOfClient string, scope gocloak.ScopeRepresentation) (*gocloak.ScopeRepresentation, error) {
 	if mock.CreateScopeFunc == nil {
-		panic("GoCloakMock.CreateScopeFunc: method is nil but GoCloak.CreateScope was just called")
+		panic("goCloakClientInterfaceMock.CreateScopeFunc: method is nil but goCloakClientInterface.CreateScope was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -6285,8 +6285,8 @@ func (mock *GoCloakMock) CreateScope(ctx context.Context, token string, realm st
 // CreateScopeCalls gets all the calls that were made to CreateScope.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateScopeCalls())
-func (mock *GoCloakMock) CreateScopeCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateScopeCalls())
+func (mock *goCloakClientInterfaceMock) CreateScopeCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -6307,9 +6307,9 @@ func (mock *GoCloakMock) CreateScopeCalls() []struct {
 }
 
 // CreateUser calls CreateUserFunc.
-func (mock *GoCloakMock) CreateUser(ctx context.Context, token string, realm string, user gocloak.User) (string, error) {
+func (mock *goCloakClientInterfaceMock) CreateUser(ctx context.Context, token string, realm string, user gocloak.User) (string, error) {
 	if mock.CreateUserFunc == nil {
-		panic("GoCloakMock.CreateUserFunc: method is nil but GoCloak.CreateUser was just called")
+		panic("goCloakClientInterfaceMock.CreateUserFunc: method is nil but goCloakClientInterface.CreateUser was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -6331,8 +6331,8 @@ func (mock *GoCloakMock) CreateUser(ctx context.Context, token string, realm str
 // CreateUserCalls gets all the calls that were made to CreateUser.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateUserCalls())
-func (mock *GoCloakMock) CreateUserCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateUserCalls())
+func (mock *goCloakClientInterfaceMock) CreateUserCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -6351,9 +6351,9 @@ func (mock *GoCloakMock) CreateUserCalls() []struct {
 }
 
 // CreateUserFederatedIdentity calls CreateUserFederatedIdentityFunc.
-func (mock *GoCloakMock) CreateUserFederatedIdentity(ctx context.Context, token string, realm string, userID string, providerID string, federatedIdentityRep gocloak.FederatedIdentityRepresentation) error {
+func (mock *goCloakClientInterfaceMock) CreateUserFederatedIdentity(ctx context.Context, token string, realm string, userID string, providerID string, federatedIdentityRep gocloak.FederatedIdentityRepresentation) error {
 	if mock.CreateUserFederatedIdentityFunc == nil {
-		panic("GoCloakMock.CreateUserFederatedIdentityFunc: method is nil but GoCloak.CreateUserFederatedIdentity was just called")
+		panic("goCloakClientInterfaceMock.CreateUserFederatedIdentityFunc: method is nil but goCloakClientInterface.CreateUserFederatedIdentity was just called")
 	}
 	callInfo := struct {
 		Ctx                  context.Context
@@ -6379,8 +6379,8 @@ func (mock *GoCloakMock) CreateUserFederatedIdentity(ctx context.Context, token 
 // CreateUserFederatedIdentityCalls gets all the calls that were made to CreateUserFederatedIdentity.
 // Check the length with:
 //
-//	len(mockedGoCloak.CreateUserFederatedIdentityCalls())
-func (mock *GoCloakMock) CreateUserFederatedIdentityCalls() []struct {
+//	len(mockedgoCloakClientInterface.CreateUserFederatedIdentityCalls())
+func (mock *goCloakClientInterfaceMock) CreateUserFederatedIdentityCalls() []struct {
 	Ctx                  context.Context
 	Token                string
 	Realm                string
@@ -6403,9 +6403,9 @@ func (mock *GoCloakMock) CreateUserFederatedIdentityCalls() []struct {
 }
 
 // DecodeAccessToken calls DecodeAccessTokenFunc.
-func (mock *GoCloakMock) DecodeAccessToken(ctx context.Context, accessToken string, realm string) (*jwt.Token, *jwt.MapClaims, error) {
+func (mock *goCloakClientInterfaceMock) DecodeAccessToken(ctx context.Context, accessToken string, realm string) (*jwt.Token, *jwt.MapClaims, error) {
 	if mock.DecodeAccessTokenFunc == nil {
-		panic("GoCloakMock.DecodeAccessTokenFunc: method is nil but GoCloak.DecodeAccessToken was just called")
+		panic("goCloakClientInterfaceMock.DecodeAccessTokenFunc: method is nil but goCloakClientInterface.DecodeAccessToken was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -6425,8 +6425,8 @@ func (mock *GoCloakMock) DecodeAccessToken(ctx context.Context, accessToken stri
 // DecodeAccessTokenCalls gets all the calls that were made to DecodeAccessToken.
 // Check the length with:
 //
-//	len(mockedGoCloak.DecodeAccessTokenCalls())
-func (mock *GoCloakMock) DecodeAccessTokenCalls() []struct {
+//	len(mockedgoCloakClientInterface.DecodeAccessTokenCalls())
+func (mock *goCloakClientInterfaceMock) DecodeAccessTokenCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -6443,9 +6443,9 @@ func (mock *GoCloakMock) DecodeAccessTokenCalls() []struct {
 }
 
 // DecodeAccessTokenCustomClaims calls DecodeAccessTokenCustomClaimsFunc.
-func (mock *GoCloakMock) DecodeAccessTokenCustomClaims(ctx context.Context, accessToken string, realm string, claims jwt.Claims) (*jwt.Token, error) {
+func (mock *goCloakClientInterfaceMock) DecodeAccessTokenCustomClaims(ctx context.Context, accessToken string, realm string, claims jwt.Claims) (*jwt.Token, error) {
 	if mock.DecodeAccessTokenCustomClaimsFunc == nil {
-		panic("GoCloakMock.DecodeAccessTokenCustomClaimsFunc: method is nil but GoCloak.DecodeAccessTokenCustomClaims was just called")
+		panic("goCloakClientInterfaceMock.DecodeAccessTokenCustomClaimsFunc: method is nil but goCloakClientInterface.DecodeAccessTokenCustomClaims was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -6467,8 +6467,8 @@ func (mock *GoCloakMock) DecodeAccessTokenCustomClaims(ctx context.Context, acce
 // DecodeAccessTokenCustomClaimsCalls gets all the calls that were made to DecodeAccessTokenCustomClaims.
 // Check the length with:
 //
-//	len(mockedGoCloak.DecodeAccessTokenCustomClaimsCalls())
-func (mock *GoCloakMock) DecodeAccessTokenCustomClaimsCalls() []struct {
+//	len(mockedgoCloakClientInterface.DecodeAccessTokenCustomClaimsCalls())
+func (mock *goCloakClientInterfaceMock) DecodeAccessTokenCustomClaimsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -6487,9 +6487,9 @@ func (mock *GoCloakMock) DecodeAccessTokenCustomClaimsCalls() []struct {
 }
 
 // DeleteAuthenticationExecution calls DeleteAuthenticationExecutionFunc.
-func (mock *GoCloakMock) DeleteAuthenticationExecution(ctx context.Context, token string, realm string, executionID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteAuthenticationExecution(ctx context.Context, token string, realm string, executionID string) error {
 	if mock.DeleteAuthenticationExecutionFunc == nil {
-		panic("GoCloakMock.DeleteAuthenticationExecutionFunc: method is nil but GoCloak.DeleteAuthenticationExecution was just called")
+		panic("goCloakClientInterfaceMock.DeleteAuthenticationExecutionFunc: method is nil but goCloakClientInterface.DeleteAuthenticationExecution was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -6511,8 +6511,8 @@ func (mock *GoCloakMock) DeleteAuthenticationExecution(ctx context.Context, toke
 // DeleteAuthenticationExecutionCalls gets all the calls that were made to DeleteAuthenticationExecution.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteAuthenticationExecutionCalls())
-func (mock *GoCloakMock) DeleteAuthenticationExecutionCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteAuthenticationExecutionCalls())
+func (mock *goCloakClientInterfaceMock) DeleteAuthenticationExecutionCalls() []struct {
 	Ctx         context.Context
 	Token       string
 	Realm       string
@@ -6531,9 +6531,9 @@ func (mock *GoCloakMock) DeleteAuthenticationExecutionCalls() []struct {
 }
 
 // DeleteAuthenticationFlow calls DeleteAuthenticationFlowFunc.
-func (mock *GoCloakMock) DeleteAuthenticationFlow(ctx context.Context, token string, realm string, flowID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteAuthenticationFlow(ctx context.Context, token string, realm string, flowID string) error {
 	if mock.DeleteAuthenticationFlowFunc == nil {
-		panic("GoCloakMock.DeleteAuthenticationFlowFunc: method is nil but GoCloak.DeleteAuthenticationFlow was just called")
+		panic("goCloakClientInterfaceMock.DeleteAuthenticationFlowFunc: method is nil but goCloakClientInterface.DeleteAuthenticationFlow was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -6555,8 +6555,8 @@ func (mock *GoCloakMock) DeleteAuthenticationFlow(ctx context.Context, token str
 // DeleteAuthenticationFlowCalls gets all the calls that were made to DeleteAuthenticationFlow.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteAuthenticationFlowCalls())
-func (mock *GoCloakMock) DeleteAuthenticationFlowCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteAuthenticationFlowCalls())
+func (mock *goCloakClientInterfaceMock) DeleteAuthenticationFlowCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -6575,9 +6575,9 @@ func (mock *GoCloakMock) DeleteAuthenticationFlowCalls() []struct {
 }
 
 // DeleteClient calls DeleteClientFunc.
-func (mock *GoCloakMock) DeleteClient(ctx context.Context, accessToken string, realm string, idOfClient string) error {
+func (mock *goCloakClientInterfaceMock) DeleteClient(ctx context.Context, accessToken string, realm string, idOfClient string) error {
 	if mock.DeleteClientFunc == nil {
-		panic("GoCloakMock.DeleteClientFunc: method is nil but GoCloak.DeleteClient was just called")
+		panic("goCloakClientInterfaceMock.DeleteClientFunc: method is nil but goCloakClientInterface.DeleteClient was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -6599,8 +6599,8 @@ func (mock *GoCloakMock) DeleteClient(ctx context.Context, accessToken string, r
 // DeleteClientCalls gets all the calls that were made to DeleteClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteClientCalls())
-func (mock *GoCloakMock) DeleteClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteClientCalls())
+func (mock *goCloakClientInterfaceMock) DeleteClientCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -6619,9 +6619,9 @@ func (mock *GoCloakMock) DeleteClientCalls() []struct {
 }
 
 // DeleteClientProtocolMapper calls DeleteClientProtocolMapperFunc.
-func (mock *GoCloakMock) DeleteClientProtocolMapper(ctx context.Context, token string, realm string, idOfClient string, mapperID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteClientProtocolMapper(ctx context.Context, token string, realm string, idOfClient string, mapperID string) error {
 	if mock.DeleteClientProtocolMapperFunc == nil {
-		panic("GoCloakMock.DeleteClientProtocolMapperFunc: method is nil but GoCloak.DeleteClientProtocolMapper was just called")
+		panic("goCloakClientInterfaceMock.DeleteClientProtocolMapperFunc: method is nil but goCloakClientInterface.DeleteClientProtocolMapper was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -6645,8 +6645,8 @@ func (mock *GoCloakMock) DeleteClientProtocolMapper(ctx context.Context, token s
 // DeleteClientProtocolMapperCalls gets all the calls that were made to DeleteClientProtocolMapper.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteClientProtocolMapperCalls())
-func (mock *GoCloakMock) DeleteClientProtocolMapperCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteClientProtocolMapperCalls())
+func (mock *goCloakClientInterfaceMock) DeleteClientProtocolMapperCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -6667,9 +6667,9 @@ func (mock *GoCloakMock) DeleteClientProtocolMapperCalls() []struct {
 }
 
 // DeleteClientRepresentation calls DeleteClientRepresentationFunc.
-func (mock *GoCloakMock) DeleteClientRepresentation(ctx context.Context, accessToken string, realm string, clientID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteClientRepresentation(ctx context.Context, accessToken string, realm string, clientID string) error {
 	if mock.DeleteClientRepresentationFunc == nil {
-		panic("GoCloakMock.DeleteClientRepresentationFunc: method is nil but GoCloak.DeleteClientRepresentation was just called")
+		panic("goCloakClientInterfaceMock.DeleteClientRepresentationFunc: method is nil but goCloakClientInterface.DeleteClientRepresentation was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -6691,8 +6691,8 @@ func (mock *GoCloakMock) DeleteClientRepresentation(ctx context.Context, accessT
 // DeleteClientRepresentationCalls gets all the calls that were made to DeleteClientRepresentation.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteClientRepresentationCalls())
-func (mock *GoCloakMock) DeleteClientRepresentationCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteClientRepresentationCalls())
+func (mock *goCloakClientInterfaceMock) DeleteClientRepresentationCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -6711,9 +6711,9 @@ func (mock *GoCloakMock) DeleteClientRepresentationCalls() []struct {
 }
 
 // DeleteClientRole calls DeleteClientRoleFunc.
-func (mock *GoCloakMock) DeleteClientRole(ctx context.Context, accessToken string, realm string, idOfClient string, roleName string) error {
+func (mock *goCloakClientInterfaceMock) DeleteClientRole(ctx context.Context, accessToken string, realm string, idOfClient string, roleName string) error {
 	if mock.DeleteClientRoleFunc == nil {
-		panic("GoCloakMock.DeleteClientRoleFunc: method is nil but GoCloak.DeleteClientRole was just called")
+		panic("goCloakClientInterfaceMock.DeleteClientRoleFunc: method is nil but goCloakClientInterface.DeleteClientRole was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -6737,8 +6737,8 @@ func (mock *GoCloakMock) DeleteClientRole(ctx context.Context, accessToken strin
 // DeleteClientRoleCalls gets all the calls that were made to DeleteClientRole.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteClientRoleCalls())
-func (mock *GoCloakMock) DeleteClientRoleCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteClientRoleCalls())
+func (mock *goCloakClientInterfaceMock) DeleteClientRoleCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -6759,9 +6759,9 @@ func (mock *GoCloakMock) DeleteClientRoleCalls() []struct {
 }
 
 // DeleteClientRoleComposite calls DeleteClientRoleCompositeFunc.
-func (mock *GoCloakMock) DeleteClientRoleComposite(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) DeleteClientRoleComposite(ctx context.Context, token string, realm string, roleID string, roles []gocloak.Role) error {
 	if mock.DeleteClientRoleCompositeFunc == nil {
-		panic("GoCloakMock.DeleteClientRoleCompositeFunc: method is nil but GoCloak.DeleteClientRoleComposite was just called")
+		panic("goCloakClientInterfaceMock.DeleteClientRoleCompositeFunc: method is nil but goCloakClientInterface.DeleteClientRoleComposite was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -6785,8 +6785,8 @@ func (mock *GoCloakMock) DeleteClientRoleComposite(ctx context.Context, token st
 // DeleteClientRoleCompositeCalls gets all the calls that were made to DeleteClientRoleComposite.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteClientRoleCompositeCalls())
-func (mock *GoCloakMock) DeleteClientRoleCompositeCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteClientRoleCompositeCalls())
+func (mock *goCloakClientInterfaceMock) DeleteClientRoleCompositeCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -6807,9 +6807,9 @@ func (mock *GoCloakMock) DeleteClientRoleCompositeCalls() []struct {
 }
 
 // DeleteClientRoleFromGroup calls DeleteClientRoleFromGroupFunc.
-func (mock *GoCloakMock) DeleteClientRoleFromGroup(ctx context.Context, token string, realm string, idOfClient string, groupID string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) DeleteClientRoleFromGroup(ctx context.Context, token string, realm string, idOfClient string, groupID string, roles []gocloak.Role) error {
 	if mock.DeleteClientRoleFromGroupFunc == nil {
-		panic("GoCloakMock.DeleteClientRoleFromGroupFunc: method is nil but GoCloak.DeleteClientRoleFromGroup was just called")
+		panic("goCloakClientInterfaceMock.DeleteClientRoleFromGroupFunc: method is nil but goCloakClientInterface.DeleteClientRoleFromGroup was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -6835,8 +6835,8 @@ func (mock *GoCloakMock) DeleteClientRoleFromGroup(ctx context.Context, token st
 // DeleteClientRoleFromGroupCalls gets all the calls that were made to DeleteClientRoleFromGroup.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteClientRoleFromGroupCalls())
-func (mock *GoCloakMock) DeleteClientRoleFromGroupCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteClientRoleFromGroupCalls())
+func (mock *goCloakClientInterfaceMock) DeleteClientRoleFromGroupCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -6859,9 +6859,9 @@ func (mock *GoCloakMock) DeleteClientRoleFromGroupCalls() []struct {
 }
 
 // DeleteClientRoleFromUser calls DeleteClientRoleFromUserFunc.
-func (mock *GoCloakMock) DeleteClientRoleFromUser(ctx context.Context, token string, realm string, idOfClient string, userID string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) DeleteClientRoleFromUser(ctx context.Context, token string, realm string, idOfClient string, userID string, roles []gocloak.Role) error {
 	if mock.DeleteClientRoleFromUserFunc == nil {
-		panic("GoCloakMock.DeleteClientRoleFromUserFunc: method is nil but GoCloak.DeleteClientRoleFromUser was just called")
+		panic("goCloakClientInterfaceMock.DeleteClientRoleFromUserFunc: method is nil but goCloakClientInterface.DeleteClientRoleFromUser was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -6887,8 +6887,8 @@ func (mock *GoCloakMock) DeleteClientRoleFromUser(ctx context.Context, token str
 // DeleteClientRoleFromUserCalls gets all the calls that were made to DeleteClientRoleFromUser.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteClientRoleFromUserCalls())
-func (mock *GoCloakMock) DeleteClientRoleFromUserCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteClientRoleFromUserCalls())
+func (mock *goCloakClientInterfaceMock) DeleteClientRoleFromUserCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -6911,9 +6911,9 @@ func (mock *GoCloakMock) DeleteClientRoleFromUserCalls() []struct {
 }
 
 // DeleteClientScope calls DeleteClientScopeFunc.
-func (mock *GoCloakMock) DeleteClientScope(ctx context.Context, accessToken string, realm string, scopeID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteClientScope(ctx context.Context, accessToken string, realm string, scopeID string) error {
 	if mock.DeleteClientScopeFunc == nil {
-		panic("GoCloakMock.DeleteClientScopeFunc: method is nil but GoCloak.DeleteClientScope was just called")
+		panic("goCloakClientInterfaceMock.DeleteClientScopeFunc: method is nil but goCloakClientInterface.DeleteClientScope was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -6935,8 +6935,8 @@ func (mock *GoCloakMock) DeleteClientScope(ctx context.Context, accessToken stri
 // DeleteClientScopeCalls gets all the calls that were made to DeleteClientScope.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteClientScopeCalls())
-func (mock *GoCloakMock) DeleteClientScopeCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteClientScopeCalls())
+func (mock *goCloakClientInterfaceMock) DeleteClientScopeCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -6955,9 +6955,9 @@ func (mock *GoCloakMock) DeleteClientScopeCalls() []struct {
 }
 
 // DeleteClientScopeMappingsClientRoles calls DeleteClientScopeMappingsClientRolesFunc.
-func (mock *GoCloakMock) DeleteClientScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) DeleteClientScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string, roles []gocloak.Role) error {
 	if mock.DeleteClientScopeMappingsClientRolesFunc == nil {
-		panic("GoCloakMock.DeleteClientScopeMappingsClientRolesFunc: method is nil but GoCloak.DeleteClientScopeMappingsClientRoles was just called")
+		panic("goCloakClientInterfaceMock.DeleteClientScopeMappingsClientRolesFunc: method is nil but goCloakClientInterface.DeleteClientScopeMappingsClientRoles was just called")
 	}
 	callInfo := struct {
 		Ctx                context.Context
@@ -6983,8 +6983,8 @@ func (mock *GoCloakMock) DeleteClientScopeMappingsClientRoles(ctx context.Contex
 // DeleteClientScopeMappingsClientRolesCalls gets all the calls that were made to DeleteClientScopeMappingsClientRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteClientScopeMappingsClientRolesCalls())
-func (mock *GoCloakMock) DeleteClientScopeMappingsClientRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteClientScopeMappingsClientRolesCalls())
+func (mock *goCloakClientInterfaceMock) DeleteClientScopeMappingsClientRolesCalls() []struct {
 	Ctx                context.Context
 	Token              string
 	Realm              string
@@ -7007,9 +7007,9 @@ func (mock *GoCloakMock) DeleteClientScopeMappingsClientRolesCalls() []struct {
 }
 
 // DeleteClientScopeMappingsRealmRoles calls DeleteClientScopeMappingsRealmRolesFunc.
-func (mock *GoCloakMock) DeleteClientScopeMappingsRealmRoles(ctx context.Context, token string, realm string, idOfClient string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) DeleteClientScopeMappingsRealmRoles(ctx context.Context, token string, realm string, idOfClient string, roles []gocloak.Role) error {
 	if mock.DeleteClientScopeMappingsRealmRolesFunc == nil {
-		panic("GoCloakMock.DeleteClientScopeMappingsRealmRolesFunc: method is nil but GoCloak.DeleteClientScopeMappingsRealmRoles was just called")
+		panic("goCloakClientInterfaceMock.DeleteClientScopeMappingsRealmRolesFunc: method is nil but goCloakClientInterface.DeleteClientScopeMappingsRealmRoles was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -7033,8 +7033,8 @@ func (mock *GoCloakMock) DeleteClientScopeMappingsRealmRoles(ctx context.Context
 // DeleteClientScopeMappingsRealmRolesCalls gets all the calls that were made to DeleteClientScopeMappingsRealmRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteClientScopeMappingsRealmRolesCalls())
-func (mock *GoCloakMock) DeleteClientScopeMappingsRealmRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteClientScopeMappingsRealmRolesCalls())
+func (mock *goCloakClientInterfaceMock) DeleteClientScopeMappingsRealmRolesCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -7055,9 +7055,9 @@ func (mock *GoCloakMock) DeleteClientScopeMappingsRealmRolesCalls() []struct {
 }
 
 // DeleteClientScopeProtocolMapper calls DeleteClientScopeProtocolMapperFunc.
-func (mock *GoCloakMock) DeleteClientScopeProtocolMapper(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapperID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteClientScopeProtocolMapper(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapperID string) error {
 	if mock.DeleteClientScopeProtocolMapperFunc == nil {
-		panic("GoCloakMock.DeleteClientScopeProtocolMapperFunc: method is nil but GoCloak.DeleteClientScopeProtocolMapper was just called")
+		panic("goCloakClientInterfaceMock.DeleteClientScopeProtocolMapperFunc: method is nil but goCloakClientInterface.DeleteClientScopeProtocolMapper was just called")
 	}
 	callInfo := struct {
 		Ctx              context.Context
@@ -7081,8 +7081,8 @@ func (mock *GoCloakMock) DeleteClientScopeProtocolMapper(ctx context.Context, ac
 // DeleteClientScopeProtocolMapperCalls gets all the calls that were made to DeleteClientScopeProtocolMapper.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteClientScopeProtocolMapperCalls())
-func (mock *GoCloakMock) DeleteClientScopeProtocolMapperCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteClientScopeProtocolMapperCalls())
+func (mock *goCloakClientInterfaceMock) DeleteClientScopeProtocolMapperCalls() []struct {
 	Ctx              context.Context
 	AccessToken      string
 	Realm            string
@@ -7103,9 +7103,9 @@ func (mock *GoCloakMock) DeleteClientScopeProtocolMapperCalls() []struct {
 }
 
 // DeleteClientScopesScopeMappingsClientRoles calls DeleteClientScopesScopeMappingsClientRolesFunc.
-func (mock *GoCloakMock) DeleteClientScopesScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClientScope string, ifOfClient string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) DeleteClientScopesScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClientScope string, ifOfClient string, roles []gocloak.Role) error {
 	if mock.DeleteClientScopesScopeMappingsClientRolesFunc == nil {
-		panic("GoCloakMock.DeleteClientScopesScopeMappingsClientRolesFunc: method is nil but GoCloak.DeleteClientScopesScopeMappingsClientRoles was just called")
+		panic("goCloakClientInterfaceMock.DeleteClientScopesScopeMappingsClientRolesFunc: method is nil but goCloakClientInterface.DeleteClientScopesScopeMappingsClientRoles was just called")
 	}
 	callInfo := struct {
 		Ctx             context.Context
@@ -7131,8 +7131,8 @@ func (mock *GoCloakMock) DeleteClientScopesScopeMappingsClientRoles(ctx context.
 // DeleteClientScopesScopeMappingsClientRolesCalls gets all the calls that were made to DeleteClientScopesScopeMappingsClientRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteClientScopesScopeMappingsClientRolesCalls())
-func (mock *GoCloakMock) DeleteClientScopesScopeMappingsClientRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteClientScopesScopeMappingsClientRolesCalls())
+func (mock *goCloakClientInterfaceMock) DeleteClientScopesScopeMappingsClientRolesCalls() []struct {
 	Ctx             context.Context
 	Token           string
 	Realm           string
@@ -7155,9 +7155,9 @@ func (mock *GoCloakMock) DeleteClientScopesScopeMappingsClientRolesCalls() []str
 }
 
 // DeleteClientScopesScopeMappingsRealmRoles calls DeleteClientScopesScopeMappingsRealmRolesFunc.
-func (mock *GoCloakMock) DeleteClientScopesScopeMappingsRealmRoles(ctx context.Context, token string, realm string, idOfClientScope string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) DeleteClientScopesScopeMappingsRealmRoles(ctx context.Context, token string, realm string, idOfClientScope string, roles []gocloak.Role) error {
 	if mock.DeleteClientScopesScopeMappingsRealmRolesFunc == nil {
-		panic("GoCloakMock.DeleteClientScopesScopeMappingsRealmRolesFunc: method is nil but GoCloak.DeleteClientScopesScopeMappingsRealmRoles was just called")
+		panic("goCloakClientInterfaceMock.DeleteClientScopesScopeMappingsRealmRolesFunc: method is nil but goCloakClientInterface.DeleteClientScopesScopeMappingsRealmRoles was just called")
 	}
 	callInfo := struct {
 		Ctx             context.Context
@@ -7181,8 +7181,8 @@ func (mock *GoCloakMock) DeleteClientScopesScopeMappingsRealmRoles(ctx context.C
 // DeleteClientScopesScopeMappingsRealmRolesCalls gets all the calls that were made to DeleteClientScopesScopeMappingsRealmRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteClientScopesScopeMappingsRealmRolesCalls())
-func (mock *GoCloakMock) DeleteClientScopesScopeMappingsRealmRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteClientScopesScopeMappingsRealmRolesCalls())
+func (mock *goCloakClientInterfaceMock) DeleteClientScopesScopeMappingsRealmRolesCalls() []struct {
 	Ctx             context.Context
 	Token           string
 	Realm           string
@@ -7203,9 +7203,9 @@ func (mock *GoCloakMock) DeleteClientScopesScopeMappingsRealmRolesCalls() []stru
 }
 
 // DeleteComponent calls DeleteComponentFunc.
-func (mock *GoCloakMock) DeleteComponent(ctx context.Context, accessToken string, realm string, componentID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteComponent(ctx context.Context, accessToken string, realm string, componentID string) error {
 	if mock.DeleteComponentFunc == nil {
-		panic("GoCloakMock.DeleteComponentFunc: method is nil but GoCloak.DeleteComponent was just called")
+		panic("goCloakClientInterfaceMock.DeleteComponentFunc: method is nil but goCloakClientInterface.DeleteComponent was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -7227,8 +7227,8 @@ func (mock *GoCloakMock) DeleteComponent(ctx context.Context, accessToken string
 // DeleteComponentCalls gets all the calls that were made to DeleteComponent.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteComponentCalls())
-func (mock *GoCloakMock) DeleteComponentCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteComponentCalls())
+func (mock *goCloakClientInterfaceMock) DeleteComponentCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -7247,9 +7247,9 @@ func (mock *GoCloakMock) DeleteComponentCalls() []struct {
 }
 
 // DeleteCredentials calls DeleteCredentialsFunc.
-func (mock *GoCloakMock) DeleteCredentials(ctx context.Context, token string, realm string, UserID string, CredentialID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteCredentials(ctx context.Context, token string, realm string, UserID string, CredentialID string) error {
 	if mock.DeleteCredentialsFunc == nil {
-		panic("GoCloakMock.DeleteCredentialsFunc: method is nil but GoCloak.DeleteCredentials was just called")
+		panic("goCloakClientInterfaceMock.DeleteCredentialsFunc: method is nil but goCloakClientInterface.DeleteCredentials was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -7273,8 +7273,8 @@ func (mock *GoCloakMock) DeleteCredentials(ctx context.Context, token string, re
 // DeleteCredentialsCalls gets all the calls that were made to DeleteCredentials.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteCredentialsCalls())
-func (mock *GoCloakMock) DeleteCredentialsCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteCredentialsCalls())
+func (mock *goCloakClientInterfaceMock) DeleteCredentialsCalls() []struct {
 	Ctx          context.Context
 	Token        string
 	Realm        string
@@ -7295,9 +7295,9 @@ func (mock *GoCloakMock) DeleteCredentialsCalls() []struct {
 }
 
 // DeleteGroup calls DeleteGroupFunc.
-func (mock *GoCloakMock) DeleteGroup(ctx context.Context, accessToken string, realm string, groupID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteGroup(ctx context.Context, accessToken string, realm string, groupID string) error {
 	if mock.DeleteGroupFunc == nil {
-		panic("GoCloakMock.DeleteGroupFunc: method is nil but GoCloak.DeleteGroup was just called")
+		panic("goCloakClientInterfaceMock.DeleteGroupFunc: method is nil but goCloakClientInterface.DeleteGroup was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -7319,8 +7319,8 @@ func (mock *GoCloakMock) DeleteGroup(ctx context.Context, accessToken string, re
 // DeleteGroupCalls gets all the calls that were made to DeleteGroup.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteGroupCalls())
-func (mock *GoCloakMock) DeleteGroupCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteGroupCalls())
+func (mock *goCloakClientInterfaceMock) DeleteGroupCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -7339,9 +7339,9 @@ func (mock *GoCloakMock) DeleteGroupCalls() []struct {
 }
 
 // DeleteIdentityProvider calls DeleteIdentityProviderFunc.
-func (mock *GoCloakMock) DeleteIdentityProvider(ctx context.Context, token string, realm string, alias string) error {
+func (mock *goCloakClientInterfaceMock) DeleteIdentityProvider(ctx context.Context, token string, realm string, alias string) error {
 	if mock.DeleteIdentityProviderFunc == nil {
-		panic("GoCloakMock.DeleteIdentityProviderFunc: method is nil but GoCloak.DeleteIdentityProvider was just called")
+		panic("goCloakClientInterfaceMock.DeleteIdentityProviderFunc: method is nil but goCloakClientInterface.DeleteIdentityProvider was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -7363,8 +7363,8 @@ func (mock *GoCloakMock) DeleteIdentityProvider(ctx context.Context, token strin
 // DeleteIdentityProviderCalls gets all the calls that were made to DeleteIdentityProvider.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteIdentityProviderCalls())
-func (mock *GoCloakMock) DeleteIdentityProviderCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteIdentityProviderCalls())
+func (mock *goCloakClientInterfaceMock) DeleteIdentityProviderCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -7383,9 +7383,9 @@ func (mock *GoCloakMock) DeleteIdentityProviderCalls() []struct {
 }
 
 // DeleteIdentityProviderMapper calls DeleteIdentityProviderMapperFunc.
-func (mock *GoCloakMock) DeleteIdentityProviderMapper(ctx context.Context, token string, realm string, alias string, mapperID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteIdentityProviderMapper(ctx context.Context, token string, realm string, alias string, mapperID string) error {
 	if mock.DeleteIdentityProviderMapperFunc == nil {
-		panic("GoCloakMock.DeleteIdentityProviderMapperFunc: method is nil but GoCloak.DeleteIdentityProviderMapper was just called")
+		panic("goCloakClientInterfaceMock.DeleteIdentityProviderMapperFunc: method is nil but goCloakClientInterface.DeleteIdentityProviderMapper was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -7409,8 +7409,8 @@ func (mock *GoCloakMock) DeleteIdentityProviderMapper(ctx context.Context, token
 // DeleteIdentityProviderMapperCalls gets all the calls that were made to DeleteIdentityProviderMapper.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteIdentityProviderMapperCalls())
-func (mock *GoCloakMock) DeleteIdentityProviderMapperCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteIdentityProviderMapperCalls())
+func (mock *goCloakClientInterfaceMock) DeleteIdentityProviderMapperCalls() []struct {
 	Ctx      context.Context
 	Token    string
 	Realm    string
@@ -7431,9 +7431,9 @@ func (mock *GoCloakMock) DeleteIdentityProviderMapperCalls() []struct {
 }
 
 // DeletePermission calls DeletePermissionFunc.
-func (mock *GoCloakMock) DeletePermission(ctx context.Context, token string, realm string, idOfClient string, permissionID string) error {
+func (mock *goCloakClientInterfaceMock) DeletePermission(ctx context.Context, token string, realm string, idOfClient string, permissionID string) error {
 	if mock.DeletePermissionFunc == nil {
-		panic("GoCloakMock.DeletePermissionFunc: method is nil but GoCloak.DeletePermission was just called")
+		panic("goCloakClientInterfaceMock.DeletePermissionFunc: method is nil but goCloakClientInterface.DeletePermission was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -7457,8 +7457,8 @@ func (mock *GoCloakMock) DeletePermission(ctx context.Context, token string, rea
 // DeletePermissionCalls gets all the calls that were made to DeletePermission.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeletePermissionCalls())
-func (mock *GoCloakMock) DeletePermissionCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeletePermissionCalls())
+func (mock *goCloakClientInterfaceMock) DeletePermissionCalls() []struct {
 	Ctx          context.Context
 	Token        string
 	Realm        string
@@ -7479,9 +7479,9 @@ func (mock *GoCloakMock) DeletePermissionCalls() []struct {
 }
 
 // DeletePolicy calls DeletePolicyFunc.
-func (mock *GoCloakMock) DeletePolicy(ctx context.Context, token string, realm string, idOfClient string, policyID string) error {
+func (mock *goCloakClientInterfaceMock) DeletePolicy(ctx context.Context, token string, realm string, idOfClient string, policyID string) error {
 	if mock.DeletePolicyFunc == nil {
-		panic("GoCloakMock.DeletePolicyFunc: method is nil but GoCloak.DeletePolicy was just called")
+		panic("goCloakClientInterfaceMock.DeletePolicyFunc: method is nil but goCloakClientInterface.DeletePolicy was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -7505,8 +7505,8 @@ func (mock *GoCloakMock) DeletePolicy(ctx context.Context, token string, realm s
 // DeletePolicyCalls gets all the calls that were made to DeletePolicy.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeletePolicyCalls())
-func (mock *GoCloakMock) DeletePolicyCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeletePolicyCalls())
+func (mock *goCloakClientInterfaceMock) DeletePolicyCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -7527,9 +7527,9 @@ func (mock *GoCloakMock) DeletePolicyCalls() []struct {
 }
 
 // DeleteRealm calls DeleteRealmFunc.
-func (mock *GoCloakMock) DeleteRealm(ctx context.Context, token string, realm string) error {
+func (mock *goCloakClientInterfaceMock) DeleteRealm(ctx context.Context, token string, realm string) error {
 	if mock.DeleteRealmFunc == nil {
-		panic("GoCloakMock.DeleteRealmFunc: method is nil but GoCloak.DeleteRealm was just called")
+		panic("goCloakClientInterfaceMock.DeleteRealmFunc: method is nil but goCloakClientInterface.DeleteRealm was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -7549,8 +7549,8 @@ func (mock *GoCloakMock) DeleteRealm(ctx context.Context, token string, realm st
 // DeleteRealmCalls gets all the calls that were made to DeleteRealm.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteRealmCalls())
-func (mock *GoCloakMock) DeleteRealmCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteRealmCalls())
+func (mock *goCloakClientInterfaceMock) DeleteRealmCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -7567,9 +7567,9 @@ func (mock *GoCloakMock) DeleteRealmCalls() []struct {
 }
 
 // DeleteRealmRole calls DeleteRealmRoleFunc.
-func (mock *GoCloakMock) DeleteRealmRole(ctx context.Context, token string, realm string, roleName string) error {
+func (mock *goCloakClientInterfaceMock) DeleteRealmRole(ctx context.Context, token string, realm string, roleName string) error {
 	if mock.DeleteRealmRoleFunc == nil {
-		panic("GoCloakMock.DeleteRealmRoleFunc: method is nil but GoCloak.DeleteRealmRole was just called")
+		panic("goCloakClientInterfaceMock.DeleteRealmRoleFunc: method is nil but goCloakClientInterface.DeleteRealmRole was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -7591,8 +7591,8 @@ func (mock *GoCloakMock) DeleteRealmRole(ctx context.Context, token string, real
 // DeleteRealmRoleCalls gets all the calls that were made to DeleteRealmRole.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteRealmRoleCalls())
-func (mock *GoCloakMock) DeleteRealmRoleCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteRealmRoleCalls())
+func (mock *goCloakClientInterfaceMock) DeleteRealmRoleCalls() []struct {
 	Ctx      context.Context
 	Token    string
 	Realm    string
@@ -7611,9 +7611,9 @@ func (mock *GoCloakMock) DeleteRealmRoleCalls() []struct {
 }
 
 // DeleteRealmRoleComposite calls DeleteRealmRoleCompositeFunc.
-func (mock *GoCloakMock) DeleteRealmRoleComposite(ctx context.Context, token string, realm string, roleName string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) DeleteRealmRoleComposite(ctx context.Context, token string, realm string, roleName string, roles []gocloak.Role) error {
 	if mock.DeleteRealmRoleCompositeFunc == nil {
-		panic("GoCloakMock.DeleteRealmRoleCompositeFunc: method is nil but GoCloak.DeleteRealmRoleComposite was just called")
+		panic("goCloakClientInterfaceMock.DeleteRealmRoleCompositeFunc: method is nil but goCloakClientInterface.DeleteRealmRoleComposite was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -7637,8 +7637,8 @@ func (mock *GoCloakMock) DeleteRealmRoleComposite(ctx context.Context, token str
 // DeleteRealmRoleCompositeCalls gets all the calls that were made to DeleteRealmRoleComposite.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteRealmRoleCompositeCalls())
-func (mock *GoCloakMock) DeleteRealmRoleCompositeCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteRealmRoleCompositeCalls())
+func (mock *goCloakClientInterfaceMock) DeleteRealmRoleCompositeCalls() []struct {
 	Ctx      context.Context
 	Token    string
 	Realm    string
@@ -7659,9 +7659,9 @@ func (mock *GoCloakMock) DeleteRealmRoleCompositeCalls() []struct {
 }
 
 // DeleteRealmRoleFromGroup calls DeleteRealmRoleFromGroupFunc.
-func (mock *GoCloakMock) DeleteRealmRoleFromGroup(ctx context.Context, token string, realm string, groupID string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) DeleteRealmRoleFromGroup(ctx context.Context, token string, realm string, groupID string, roles []gocloak.Role) error {
 	if mock.DeleteRealmRoleFromGroupFunc == nil {
-		panic("GoCloakMock.DeleteRealmRoleFromGroupFunc: method is nil but GoCloak.DeleteRealmRoleFromGroup was just called")
+		panic("goCloakClientInterfaceMock.DeleteRealmRoleFromGroupFunc: method is nil but goCloakClientInterface.DeleteRealmRoleFromGroup was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -7685,8 +7685,8 @@ func (mock *GoCloakMock) DeleteRealmRoleFromGroup(ctx context.Context, token str
 // DeleteRealmRoleFromGroupCalls gets all the calls that were made to DeleteRealmRoleFromGroup.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteRealmRoleFromGroupCalls())
-func (mock *GoCloakMock) DeleteRealmRoleFromGroupCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteRealmRoleFromGroupCalls())
+func (mock *goCloakClientInterfaceMock) DeleteRealmRoleFromGroupCalls() []struct {
 	Ctx     context.Context
 	Token   string
 	Realm   string
@@ -7707,9 +7707,9 @@ func (mock *GoCloakMock) DeleteRealmRoleFromGroupCalls() []struct {
 }
 
 // DeleteRealmRoleFromUser calls DeleteRealmRoleFromUserFunc.
-func (mock *GoCloakMock) DeleteRealmRoleFromUser(ctx context.Context, token string, realm string, userID string, roles []gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) DeleteRealmRoleFromUser(ctx context.Context, token string, realm string, userID string, roles []gocloak.Role) error {
 	if mock.DeleteRealmRoleFromUserFunc == nil {
-		panic("GoCloakMock.DeleteRealmRoleFromUserFunc: method is nil but GoCloak.DeleteRealmRoleFromUser was just called")
+		panic("goCloakClientInterfaceMock.DeleteRealmRoleFromUserFunc: method is nil but goCloakClientInterface.DeleteRealmRoleFromUser was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -7733,8 +7733,8 @@ func (mock *GoCloakMock) DeleteRealmRoleFromUser(ctx context.Context, token stri
 // DeleteRealmRoleFromUserCalls gets all the calls that were made to DeleteRealmRoleFromUser.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteRealmRoleFromUserCalls())
-func (mock *GoCloakMock) DeleteRealmRoleFromUserCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteRealmRoleFromUserCalls())
+func (mock *goCloakClientInterfaceMock) DeleteRealmRoleFromUserCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -7755,9 +7755,9 @@ func (mock *GoCloakMock) DeleteRealmRoleFromUserCalls() []struct {
 }
 
 // DeleteResource calls DeleteResourceFunc.
-func (mock *GoCloakMock) DeleteResource(ctx context.Context, token string, realm string, idOfClient string, resourceID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteResource(ctx context.Context, token string, realm string, idOfClient string, resourceID string) error {
 	if mock.DeleteResourceFunc == nil {
-		panic("GoCloakMock.DeleteResourceFunc: method is nil but GoCloak.DeleteResource was just called")
+		panic("goCloakClientInterfaceMock.DeleteResourceFunc: method is nil but goCloakClientInterface.DeleteResource was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -7781,8 +7781,8 @@ func (mock *GoCloakMock) DeleteResource(ctx context.Context, token string, realm
 // DeleteResourceCalls gets all the calls that were made to DeleteResource.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteResourceCalls())
-func (mock *GoCloakMock) DeleteResourceCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteResourceCalls())
+func (mock *goCloakClientInterfaceMock) DeleteResourceCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -7803,9 +7803,9 @@ func (mock *GoCloakMock) DeleteResourceCalls() []struct {
 }
 
 // DeleteResourceClient calls DeleteResourceClientFunc.
-func (mock *GoCloakMock) DeleteResourceClient(ctx context.Context, token string, realm string, resourceID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteResourceClient(ctx context.Context, token string, realm string, resourceID string) error {
 	if mock.DeleteResourceClientFunc == nil {
-		panic("GoCloakMock.DeleteResourceClientFunc: method is nil but GoCloak.DeleteResourceClient was just called")
+		panic("goCloakClientInterfaceMock.DeleteResourceClientFunc: method is nil but goCloakClientInterface.DeleteResourceClient was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -7827,8 +7827,8 @@ func (mock *GoCloakMock) DeleteResourceClient(ctx context.Context, token string,
 // DeleteResourceClientCalls gets all the calls that were made to DeleteResourceClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteResourceClientCalls())
-func (mock *GoCloakMock) DeleteResourceClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteResourceClientCalls())
+func (mock *goCloakClientInterfaceMock) DeleteResourceClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -7847,9 +7847,9 @@ func (mock *GoCloakMock) DeleteResourceClientCalls() []struct {
 }
 
 // DeleteResourcePolicy calls DeleteResourcePolicyFunc.
-func (mock *GoCloakMock) DeleteResourcePolicy(ctx context.Context, token string, realm string, permissionID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteResourcePolicy(ctx context.Context, token string, realm string, permissionID string) error {
 	if mock.DeleteResourcePolicyFunc == nil {
-		panic("GoCloakMock.DeleteResourcePolicyFunc: method is nil but GoCloak.DeleteResourcePolicy was just called")
+		panic("goCloakClientInterfaceMock.DeleteResourcePolicyFunc: method is nil but goCloakClientInterface.DeleteResourcePolicy was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -7871,8 +7871,8 @@ func (mock *GoCloakMock) DeleteResourcePolicy(ctx context.Context, token string,
 // DeleteResourcePolicyCalls gets all the calls that were made to DeleteResourcePolicy.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteResourcePolicyCalls())
-func (mock *GoCloakMock) DeleteResourcePolicyCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteResourcePolicyCalls())
+func (mock *goCloakClientInterfaceMock) DeleteResourcePolicyCalls() []struct {
 	Ctx          context.Context
 	Token        string
 	Realm        string
@@ -7891,9 +7891,9 @@ func (mock *GoCloakMock) DeleteResourcePolicyCalls() []struct {
 }
 
 // DeleteScope calls DeleteScopeFunc.
-func (mock *GoCloakMock) DeleteScope(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteScope(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
 	if mock.DeleteScopeFunc == nil {
-		panic("GoCloakMock.DeleteScopeFunc: method is nil but GoCloak.DeleteScope was just called")
+		panic("goCloakClientInterfaceMock.DeleteScopeFunc: method is nil but goCloakClientInterface.DeleteScope was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -7917,8 +7917,8 @@ func (mock *GoCloakMock) DeleteScope(ctx context.Context, token string, realm st
 // DeleteScopeCalls gets all the calls that were made to DeleteScope.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteScopeCalls())
-func (mock *GoCloakMock) DeleteScopeCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteScopeCalls())
+func (mock *goCloakClientInterfaceMock) DeleteScopeCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -7939,9 +7939,9 @@ func (mock *GoCloakMock) DeleteScopeCalls() []struct {
 }
 
 // DeleteUser calls DeleteUserFunc.
-func (mock *GoCloakMock) DeleteUser(ctx context.Context, accessToken string, realm string, userID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteUser(ctx context.Context, accessToken string, realm string, userID string) error {
 	if mock.DeleteUserFunc == nil {
-		panic("GoCloakMock.DeleteUserFunc: method is nil but GoCloak.DeleteUser was just called")
+		panic("goCloakClientInterfaceMock.DeleteUserFunc: method is nil but goCloakClientInterface.DeleteUser was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -7963,8 +7963,8 @@ func (mock *GoCloakMock) DeleteUser(ctx context.Context, accessToken string, rea
 // DeleteUserCalls gets all the calls that were made to DeleteUser.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteUserCalls())
-func (mock *GoCloakMock) DeleteUserCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteUserCalls())
+func (mock *goCloakClientInterfaceMock) DeleteUserCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -7983,9 +7983,9 @@ func (mock *GoCloakMock) DeleteUserCalls() []struct {
 }
 
 // DeleteUserFederatedIdentity calls DeleteUserFederatedIdentityFunc.
-func (mock *GoCloakMock) DeleteUserFederatedIdentity(ctx context.Context, token string, realm string, userID string, providerID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteUserFederatedIdentity(ctx context.Context, token string, realm string, userID string, providerID string) error {
 	if mock.DeleteUserFederatedIdentityFunc == nil {
-		panic("GoCloakMock.DeleteUserFederatedIdentityFunc: method is nil but GoCloak.DeleteUserFederatedIdentity was just called")
+		panic("goCloakClientInterfaceMock.DeleteUserFederatedIdentityFunc: method is nil but goCloakClientInterface.DeleteUserFederatedIdentity was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -8009,8 +8009,8 @@ func (mock *GoCloakMock) DeleteUserFederatedIdentity(ctx context.Context, token 
 // DeleteUserFederatedIdentityCalls gets all the calls that were made to DeleteUserFederatedIdentity.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteUserFederatedIdentityCalls())
-func (mock *GoCloakMock) DeleteUserFederatedIdentityCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteUserFederatedIdentityCalls())
+func (mock *goCloakClientInterfaceMock) DeleteUserFederatedIdentityCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -8031,9 +8031,9 @@ func (mock *GoCloakMock) DeleteUserFederatedIdentityCalls() []struct {
 }
 
 // DeleteUserFromGroup calls DeleteUserFromGroupFunc.
-func (mock *GoCloakMock) DeleteUserFromGroup(ctx context.Context, token string, realm string, userID string, groupID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteUserFromGroup(ctx context.Context, token string, realm string, userID string, groupID string) error {
 	if mock.DeleteUserFromGroupFunc == nil {
-		panic("GoCloakMock.DeleteUserFromGroupFunc: method is nil but GoCloak.DeleteUserFromGroup was just called")
+		panic("goCloakClientInterfaceMock.DeleteUserFromGroupFunc: method is nil but goCloakClientInterface.DeleteUserFromGroup was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -8057,8 +8057,8 @@ func (mock *GoCloakMock) DeleteUserFromGroup(ctx context.Context, token string, 
 // DeleteUserFromGroupCalls gets all the calls that were made to DeleteUserFromGroup.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteUserFromGroupCalls())
-func (mock *GoCloakMock) DeleteUserFromGroupCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteUserFromGroupCalls())
+func (mock *goCloakClientInterfaceMock) DeleteUserFromGroupCalls() []struct {
 	Ctx     context.Context
 	Token   string
 	Realm   string
@@ -8079,9 +8079,9 @@ func (mock *GoCloakMock) DeleteUserFromGroupCalls() []struct {
 }
 
 // DeleteUserPermission calls DeleteUserPermissionFunc.
-func (mock *GoCloakMock) DeleteUserPermission(ctx context.Context, token string, realm string, ticketID string) error {
+func (mock *goCloakClientInterfaceMock) DeleteUserPermission(ctx context.Context, token string, realm string, ticketID string) error {
 	if mock.DeleteUserPermissionFunc == nil {
-		panic("GoCloakMock.DeleteUserPermissionFunc: method is nil but GoCloak.DeleteUserPermission was just called")
+		panic("goCloakClientInterfaceMock.DeleteUserPermissionFunc: method is nil but goCloakClientInterface.DeleteUserPermission was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -8103,8 +8103,8 @@ func (mock *GoCloakMock) DeleteUserPermission(ctx context.Context, token string,
 // DeleteUserPermissionCalls gets all the calls that were made to DeleteUserPermission.
 // Check the length with:
 //
-//	len(mockedGoCloak.DeleteUserPermissionCalls())
-func (mock *GoCloakMock) DeleteUserPermissionCalls() []struct {
+//	len(mockedgoCloakClientInterface.DeleteUserPermissionCalls())
+func (mock *goCloakClientInterfaceMock) DeleteUserPermissionCalls() []struct {
 	Ctx      context.Context
 	Token    string
 	Realm    string
@@ -8123,9 +8123,9 @@ func (mock *GoCloakMock) DeleteUserPermissionCalls() []struct {
 }
 
 // DisableAllCredentialsByType calls DisableAllCredentialsByTypeFunc.
-func (mock *GoCloakMock) DisableAllCredentialsByType(ctx context.Context, token string, realm string, userID string, types []string) error {
+func (mock *goCloakClientInterfaceMock) DisableAllCredentialsByType(ctx context.Context, token string, realm string, userID string, types []string) error {
 	if mock.DisableAllCredentialsByTypeFunc == nil {
-		panic("GoCloakMock.DisableAllCredentialsByTypeFunc: method is nil but GoCloak.DisableAllCredentialsByType was just called")
+		panic("goCloakClientInterfaceMock.DisableAllCredentialsByTypeFunc: method is nil but goCloakClientInterface.DisableAllCredentialsByType was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -8149,8 +8149,8 @@ func (mock *GoCloakMock) DisableAllCredentialsByType(ctx context.Context, token 
 // DisableAllCredentialsByTypeCalls gets all the calls that were made to DisableAllCredentialsByType.
 // Check the length with:
 //
-//	len(mockedGoCloak.DisableAllCredentialsByTypeCalls())
-func (mock *GoCloakMock) DisableAllCredentialsByTypeCalls() []struct {
+//	len(mockedgoCloakClientInterface.DisableAllCredentialsByTypeCalls())
+func (mock *goCloakClientInterfaceMock) DisableAllCredentialsByTypeCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -8171,9 +8171,9 @@ func (mock *GoCloakMock) DisableAllCredentialsByTypeCalls() []struct {
 }
 
 // ExecuteActionsEmail calls ExecuteActionsEmailFunc.
-func (mock *GoCloakMock) ExecuteActionsEmail(ctx context.Context, token string, realm string, params gocloak.ExecuteActionsEmail) error {
+func (mock *goCloakClientInterfaceMock) ExecuteActionsEmail(ctx context.Context, token string, realm string, params gocloak.ExecuteActionsEmail) error {
 	if mock.ExecuteActionsEmailFunc == nil {
-		panic("GoCloakMock.ExecuteActionsEmailFunc: method is nil but GoCloak.ExecuteActionsEmail was just called")
+		panic("goCloakClientInterfaceMock.ExecuteActionsEmailFunc: method is nil but goCloakClientInterface.ExecuteActionsEmail was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -8195,8 +8195,8 @@ func (mock *GoCloakMock) ExecuteActionsEmail(ctx context.Context, token string, 
 // ExecuteActionsEmailCalls gets all the calls that were made to ExecuteActionsEmail.
 // Check the length with:
 //
-//	len(mockedGoCloak.ExecuteActionsEmailCalls())
-func (mock *GoCloakMock) ExecuteActionsEmailCalls() []struct {
+//	len(mockedgoCloakClientInterface.ExecuteActionsEmailCalls())
+func (mock *goCloakClientInterfaceMock) ExecuteActionsEmailCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -8215,9 +8215,9 @@ func (mock *GoCloakMock) ExecuteActionsEmailCalls() []struct {
 }
 
 // ExportIDPPublicBrokerConfig calls ExportIDPPublicBrokerConfigFunc.
-func (mock *GoCloakMock) ExportIDPPublicBrokerConfig(ctx context.Context, token string, realm string, alias string) (*string, error) {
+func (mock *goCloakClientInterfaceMock) ExportIDPPublicBrokerConfig(ctx context.Context, token string, realm string, alias string) (*string, error) {
 	if mock.ExportIDPPublicBrokerConfigFunc == nil {
-		panic("GoCloakMock.ExportIDPPublicBrokerConfigFunc: method is nil but GoCloak.ExportIDPPublicBrokerConfig was just called")
+		panic("goCloakClientInterfaceMock.ExportIDPPublicBrokerConfigFunc: method is nil but goCloakClientInterface.ExportIDPPublicBrokerConfig was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -8239,8 +8239,8 @@ func (mock *GoCloakMock) ExportIDPPublicBrokerConfig(ctx context.Context, token 
 // ExportIDPPublicBrokerConfigCalls gets all the calls that were made to ExportIDPPublicBrokerConfig.
 // Check the length with:
 //
-//	len(mockedGoCloak.ExportIDPPublicBrokerConfigCalls())
-func (mock *GoCloakMock) ExportIDPPublicBrokerConfigCalls() []struct {
+//	len(mockedgoCloakClientInterface.ExportIDPPublicBrokerConfigCalls())
+func (mock *goCloakClientInterfaceMock) ExportIDPPublicBrokerConfigCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -8259,9 +8259,9 @@ func (mock *GoCloakMock) ExportIDPPublicBrokerConfigCalls() []struct {
 }
 
 // GetAdapterConfiguration calls GetAdapterConfigurationFunc.
-func (mock *GoCloakMock) GetAdapterConfiguration(ctx context.Context, accessToken string, realm string, clientID string) (*gocloak.AdapterConfiguration, error) {
+func (mock *goCloakClientInterfaceMock) GetAdapterConfiguration(ctx context.Context, accessToken string, realm string, clientID string) (*gocloak.AdapterConfiguration, error) {
 	if mock.GetAdapterConfigurationFunc == nil {
-		panic("GoCloakMock.GetAdapterConfigurationFunc: method is nil but GoCloak.GetAdapterConfiguration was just called")
+		panic("goCloakClientInterfaceMock.GetAdapterConfigurationFunc: method is nil but goCloakClientInterface.GetAdapterConfiguration was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -8283,8 +8283,8 @@ func (mock *GoCloakMock) GetAdapterConfiguration(ctx context.Context, accessToke
 // GetAdapterConfigurationCalls gets all the calls that were made to GetAdapterConfiguration.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetAdapterConfigurationCalls())
-func (mock *GoCloakMock) GetAdapterConfigurationCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetAdapterConfigurationCalls())
+func (mock *goCloakClientInterfaceMock) GetAdapterConfigurationCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -8303,9 +8303,9 @@ func (mock *GoCloakMock) GetAdapterConfigurationCalls() []struct {
 }
 
 // GetAuthenticationExecutions calls GetAuthenticationExecutionsFunc.
-func (mock *GoCloakMock) GetAuthenticationExecutions(ctx context.Context, token string, realm string, flow string) ([]*gocloak.ModifyAuthenticationExecutionRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetAuthenticationExecutions(ctx context.Context, token string, realm string, flow string) ([]*gocloak.ModifyAuthenticationExecutionRepresentation, error) {
 	if mock.GetAuthenticationExecutionsFunc == nil {
-		panic("GoCloakMock.GetAuthenticationExecutionsFunc: method is nil but GoCloak.GetAuthenticationExecutions was just called")
+		panic("goCloakClientInterfaceMock.GetAuthenticationExecutionsFunc: method is nil but goCloakClientInterface.GetAuthenticationExecutions was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -8327,8 +8327,8 @@ func (mock *GoCloakMock) GetAuthenticationExecutions(ctx context.Context, token 
 // GetAuthenticationExecutionsCalls gets all the calls that were made to GetAuthenticationExecutions.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetAuthenticationExecutionsCalls())
-func (mock *GoCloakMock) GetAuthenticationExecutionsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetAuthenticationExecutionsCalls())
+func (mock *goCloakClientInterfaceMock) GetAuthenticationExecutionsCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -8347,9 +8347,9 @@ func (mock *GoCloakMock) GetAuthenticationExecutionsCalls() []struct {
 }
 
 // GetAuthenticationFlows calls GetAuthenticationFlowsFunc.
-func (mock *GoCloakMock) GetAuthenticationFlows(ctx context.Context, token string, realm string) ([]*gocloak.AuthenticationFlowRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetAuthenticationFlows(ctx context.Context, token string, realm string) ([]*gocloak.AuthenticationFlowRepresentation, error) {
 	if mock.GetAuthenticationFlowsFunc == nil {
-		panic("GoCloakMock.GetAuthenticationFlowsFunc: method is nil but GoCloak.GetAuthenticationFlows was just called")
+		panic("goCloakClientInterfaceMock.GetAuthenticationFlowsFunc: method is nil but goCloakClientInterface.GetAuthenticationFlows was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -8369,8 +8369,8 @@ func (mock *GoCloakMock) GetAuthenticationFlows(ctx context.Context, token strin
 // GetAuthenticationFlowsCalls gets all the calls that were made to GetAuthenticationFlows.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetAuthenticationFlowsCalls())
-func (mock *GoCloakMock) GetAuthenticationFlowsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetAuthenticationFlowsCalls())
+func (mock *goCloakClientInterfaceMock) GetAuthenticationFlowsCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -8387,9 +8387,9 @@ func (mock *GoCloakMock) GetAuthenticationFlowsCalls() []struct {
 }
 
 // GetAuthorizationPolicyAssociatedPolicies calls GetAuthorizationPolicyAssociatedPoliciesFunc.
-func (mock *GoCloakMock) GetAuthorizationPolicyAssociatedPolicies(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PolicyRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetAuthorizationPolicyAssociatedPolicies(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PolicyRepresentation, error) {
 	if mock.GetAuthorizationPolicyAssociatedPoliciesFunc == nil {
-		panic("GoCloakMock.GetAuthorizationPolicyAssociatedPoliciesFunc: method is nil but GoCloak.GetAuthorizationPolicyAssociatedPolicies was just called")
+		panic("goCloakClientInterfaceMock.GetAuthorizationPolicyAssociatedPoliciesFunc: method is nil but goCloakClientInterface.GetAuthorizationPolicyAssociatedPolicies was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -8413,8 +8413,8 @@ func (mock *GoCloakMock) GetAuthorizationPolicyAssociatedPolicies(ctx context.Co
 // GetAuthorizationPolicyAssociatedPoliciesCalls gets all the calls that were made to GetAuthorizationPolicyAssociatedPolicies.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetAuthorizationPolicyAssociatedPoliciesCalls())
-func (mock *GoCloakMock) GetAuthorizationPolicyAssociatedPoliciesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetAuthorizationPolicyAssociatedPoliciesCalls())
+func (mock *goCloakClientInterfaceMock) GetAuthorizationPolicyAssociatedPoliciesCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -8435,9 +8435,9 @@ func (mock *GoCloakMock) GetAuthorizationPolicyAssociatedPoliciesCalls() []struc
 }
 
 // GetAuthorizationPolicyResources calls GetAuthorizationPolicyResourcesFunc.
-func (mock *GoCloakMock) GetAuthorizationPolicyResources(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PolicyResourceRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetAuthorizationPolicyResources(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PolicyResourceRepresentation, error) {
 	if mock.GetAuthorizationPolicyResourcesFunc == nil {
-		panic("GoCloakMock.GetAuthorizationPolicyResourcesFunc: method is nil but GoCloak.GetAuthorizationPolicyResources was just called")
+		panic("goCloakClientInterfaceMock.GetAuthorizationPolicyResourcesFunc: method is nil but goCloakClientInterface.GetAuthorizationPolicyResources was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -8461,8 +8461,8 @@ func (mock *GoCloakMock) GetAuthorizationPolicyResources(ctx context.Context, to
 // GetAuthorizationPolicyResourcesCalls gets all the calls that were made to GetAuthorizationPolicyResources.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetAuthorizationPolicyResourcesCalls())
-func (mock *GoCloakMock) GetAuthorizationPolicyResourcesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetAuthorizationPolicyResourcesCalls())
+func (mock *goCloakClientInterfaceMock) GetAuthorizationPolicyResourcesCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -8483,9 +8483,9 @@ func (mock *GoCloakMock) GetAuthorizationPolicyResourcesCalls() []struct {
 }
 
 // GetAuthorizationPolicyScopes calls GetAuthorizationPolicyScopesFunc.
-func (mock *GoCloakMock) GetAuthorizationPolicyScopes(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PolicyScopeRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetAuthorizationPolicyScopes(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PolicyScopeRepresentation, error) {
 	if mock.GetAuthorizationPolicyScopesFunc == nil {
-		panic("GoCloakMock.GetAuthorizationPolicyScopesFunc: method is nil but GoCloak.GetAuthorizationPolicyScopes was just called")
+		panic("goCloakClientInterfaceMock.GetAuthorizationPolicyScopesFunc: method is nil but goCloakClientInterface.GetAuthorizationPolicyScopes was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -8509,8 +8509,8 @@ func (mock *GoCloakMock) GetAuthorizationPolicyScopes(ctx context.Context, token
 // GetAuthorizationPolicyScopesCalls gets all the calls that were made to GetAuthorizationPolicyScopes.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetAuthorizationPolicyScopesCalls())
-func (mock *GoCloakMock) GetAuthorizationPolicyScopesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetAuthorizationPolicyScopesCalls())
+func (mock *goCloakClientInterfaceMock) GetAuthorizationPolicyScopesCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -8531,9 +8531,9 @@ func (mock *GoCloakMock) GetAuthorizationPolicyScopesCalls() []struct {
 }
 
 // GetAvailableClientRolesByGroupID calls GetAvailableClientRolesByGroupIDFunc.
-func (mock *GoCloakMock) GetAvailableClientRolesByGroupID(ctx context.Context, token string, realm string, idOfClient string, groupID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetAvailableClientRolesByGroupID(ctx context.Context, token string, realm string, idOfClient string, groupID string) ([]*gocloak.Role, error) {
 	if mock.GetAvailableClientRolesByGroupIDFunc == nil {
-		panic("GoCloakMock.GetAvailableClientRolesByGroupIDFunc: method is nil but GoCloak.GetAvailableClientRolesByGroupID was just called")
+		panic("goCloakClientInterfaceMock.GetAvailableClientRolesByGroupIDFunc: method is nil but goCloakClientInterface.GetAvailableClientRolesByGroupID was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -8557,8 +8557,8 @@ func (mock *GoCloakMock) GetAvailableClientRolesByGroupID(ctx context.Context, t
 // GetAvailableClientRolesByGroupIDCalls gets all the calls that were made to GetAvailableClientRolesByGroupID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetAvailableClientRolesByGroupIDCalls())
-func (mock *GoCloakMock) GetAvailableClientRolesByGroupIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetAvailableClientRolesByGroupIDCalls())
+func (mock *goCloakClientInterfaceMock) GetAvailableClientRolesByGroupIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -8579,9 +8579,9 @@ func (mock *GoCloakMock) GetAvailableClientRolesByGroupIDCalls() []struct {
 }
 
 // GetAvailableClientRolesByUserID calls GetAvailableClientRolesByUserIDFunc.
-func (mock *GoCloakMock) GetAvailableClientRolesByUserID(ctx context.Context, token string, realm string, idOfClient string, userID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetAvailableClientRolesByUserID(ctx context.Context, token string, realm string, idOfClient string, userID string) ([]*gocloak.Role, error) {
 	if mock.GetAvailableClientRolesByUserIDFunc == nil {
-		panic("GoCloakMock.GetAvailableClientRolesByUserIDFunc: method is nil but GoCloak.GetAvailableClientRolesByUserID was just called")
+		panic("goCloakClientInterfaceMock.GetAvailableClientRolesByUserIDFunc: method is nil but goCloakClientInterface.GetAvailableClientRolesByUserID was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -8605,8 +8605,8 @@ func (mock *GoCloakMock) GetAvailableClientRolesByUserID(ctx context.Context, to
 // GetAvailableClientRolesByUserIDCalls gets all the calls that were made to GetAvailableClientRolesByUserID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetAvailableClientRolesByUserIDCalls())
-func (mock *GoCloakMock) GetAvailableClientRolesByUserIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetAvailableClientRolesByUserIDCalls())
+func (mock *goCloakClientInterfaceMock) GetAvailableClientRolesByUserIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -8627,9 +8627,9 @@ func (mock *GoCloakMock) GetAvailableClientRolesByUserIDCalls() []struct {
 }
 
 // GetAvailableRealmRolesByGroupID calls GetAvailableRealmRolesByGroupIDFunc.
-func (mock *GoCloakMock) GetAvailableRealmRolesByGroupID(ctx context.Context, token string, realm string, groupID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetAvailableRealmRolesByGroupID(ctx context.Context, token string, realm string, groupID string) ([]*gocloak.Role, error) {
 	if mock.GetAvailableRealmRolesByGroupIDFunc == nil {
-		panic("GoCloakMock.GetAvailableRealmRolesByGroupIDFunc: method is nil but GoCloak.GetAvailableRealmRolesByGroupID was just called")
+		panic("goCloakClientInterfaceMock.GetAvailableRealmRolesByGroupIDFunc: method is nil but goCloakClientInterface.GetAvailableRealmRolesByGroupID was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -8651,8 +8651,8 @@ func (mock *GoCloakMock) GetAvailableRealmRolesByGroupID(ctx context.Context, to
 // GetAvailableRealmRolesByGroupIDCalls gets all the calls that were made to GetAvailableRealmRolesByGroupID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetAvailableRealmRolesByGroupIDCalls())
-func (mock *GoCloakMock) GetAvailableRealmRolesByGroupIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetAvailableRealmRolesByGroupIDCalls())
+func (mock *goCloakClientInterfaceMock) GetAvailableRealmRolesByGroupIDCalls() []struct {
 	Ctx     context.Context
 	Token   string
 	Realm   string
@@ -8671,9 +8671,9 @@ func (mock *GoCloakMock) GetAvailableRealmRolesByGroupIDCalls() []struct {
 }
 
 // GetAvailableRealmRolesByUserID calls GetAvailableRealmRolesByUserIDFunc.
-func (mock *GoCloakMock) GetAvailableRealmRolesByUserID(ctx context.Context, token string, realm string, userID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetAvailableRealmRolesByUserID(ctx context.Context, token string, realm string, userID string) ([]*gocloak.Role, error) {
 	if mock.GetAvailableRealmRolesByUserIDFunc == nil {
-		panic("GoCloakMock.GetAvailableRealmRolesByUserIDFunc: method is nil but GoCloak.GetAvailableRealmRolesByUserID was just called")
+		panic("goCloakClientInterfaceMock.GetAvailableRealmRolesByUserIDFunc: method is nil but goCloakClientInterface.GetAvailableRealmRolesByUserID was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -8695,8 +8695,8 @@ func (mock *GoCloakMock) GetAvailableRealmRolesByUserID(ctx context.Context, tok
 // GetAvailableRealmRolesByUserIDCalls gets all the calls that were made to GetAvailableRealmRolesByUserID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetAvailableRealmRolesByUserIDCalls())
-func (mock *GoCloakMock) GetAvailableRealmRolesByUserIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetAvailableRealmRolesByUserIDCalls())
+func (mock *goCloakClientInterfaceMock) GetAvailableRealmRolesByUserIDCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -8715,9 +8715,9 @@ func (mock *GoCloakMock) GetAvailableRealmRolesByUserIDCalls() []struct {
 }
 
 // GetCerts calls GetCertsFunc.
-func (mock *GoCloakMock) GetCerts(ctx context.Context, realm string) (*gocloak.CertResponse, error) {
+func (mock *goCloakClientInterfaceMock) GetCerts(ctx context.Context, realm string) (*gocloak.CertResponse, error) {
 	if mock.GetCertsFunc == nil {
-		panic("GoCloakMock.GetCertsFunc: method is nil but GoCloak.GetCerts was just called")
+		panic("goCloakClientInterfaceMock.GetCertsFunc: method is nil but goCloakClientInterface.GetCerts was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -8735,8 +8735,8 @@ func (mock *GoCloakMock) GetCerts(ctx context.Context, realm string) (*gocloak.C
 // GetCertsCalls gets all the calls that were made to GetCerts.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetCertsCalls())
-func (mock *GoCloakMock) GetCertsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetCertsCalls())
+func (mock *goCloakClientInterfaceMock) GetCertsCalls() []struct {
 	Ctx   context.Context
 	Realm string
 } {
@@ -8751,9 +8751,9 @@ func (mock *GoCloakMock) GetCertsCalls() []struct {
 }
 
 // GetClient calls GetClientFunc.
-func (mock *GoCloakMock) GetClient(ctx context.Context, accessToken string, realm string, idOfClient string) (*gocloak.Client, error) {
+func (mock *goCloakClientInterfaceMock) GetClient(ctx context.Context, accessToken string, realm string, idOfClient string) (*gocloak.Client, error) {
 	if mock.GetClientFunc == nil {
-		panic("GoCloakMock.GetClientFunc: method is nil but GoCloak.GetClient was just called")
+		panic("goCloakClientInterfaceMock.GetClientFunc: method is nil but goCloakClientInterface.GetClient was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -8775,8 +8775,8 @@ func (mock *GoCloakMock) GetClient(ctx context.Context, accessToken string, real
 // GetClientCalls gets all the calls that were made to GetClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientCalls())
-func (mock *GoCloakMock) GetClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientCalls())
+func (mock *goCloakClientInterfaceMock) GetClientCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -8795,9 +8795,9 @@ func (mock *GoCloakMock) GetClientCalls() []struct {
 }
 
 // GetClientOfflineSessions calls GetClientOfflineSessionsFunc.
-func (mock *GoCloakMock) GetClientOfflineSessions(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.UserSessionRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetClientOfflineSessions(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.UserSessionRepresentation, error) {
 	if mock.GetClientOfflineSessionsFunc == nil {
-		panic("GoCloakMock.GetClientOfflineSessionsFunc: method is nil but GoCloak.GetClientOfflineSessions was just called")
+		panic("goCloakClientInterfaceMock.GetClientOfflineSessionsFunc: method is nil but goCloakClientInterface.GetClientOfflineSessions was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -8819,8 +8819,8 @@ func (mock *GoCloakMock) GetClientOfflineSessions(ctx context.Context, token str
 // GetClientOfflineSessionsCalls gets all the calls that were made to GetClientOfflineSessions.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientOfflineSessionsCalls())
-func (mock *GoCloakMock) GetClientOfflineSessionsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientOfflineSessionsCalls())
+func (mock *goCloakClientInterfaceMock) GetClientOfflineSessionsCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -8839,9 +8839,9 @@ func (mock *GoCloakMock) GetClientOfflineSessionsCalls() []struct {
 }
 
 // GetClientRepresentation calls GetClientRepresentationFunc.
-func (mock *GoCloakMock) GetClientRepresentation(ctx context.Context, accessToken string, realm string, clientID string) (*gocloak.Client, error) {
+func (mock *goCloakClientInterfaceMock) GetClientRepresentation(ctx context.Context, accessToken string, realm string, clientID string) (*gocloak.Client, error) {
 	if mock.GetClientRepresentationFunc == nil {
-		panic("GoCloakMock.GetClientRepresentationFunc: method is nil but GoCloak.GetClientRepresentation was just called")
+		panic("goCloakClientInterfaceMock.GetClientRepresentationFunc: method is nil but goCloakClientInterface.GetClientRepresentation was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -8863,8 +8863,8 @@ func (mock *GoCloakMock) GetClientRepresentation(ctx context.Context, accessToke
 // GetClientRepresentationCalls gets all the calls that were made to GetClientRepresentation.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientRepresentationCalls())
-func (mock *GoCloakMock) GetClientRepresentationCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientRepresentationCalls())
+func (mock *goCloakClientInterfaceMock) GetClientRepresentationCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -8883,9 +8883,9 @@ func (mock *GoCloakMock) GetClientRepresentationCalls() []struct {
 }
 
 // GetClientRole calls GetClientRoleFunc.
-func (mock *GoCloakMock) GetClientRole(ctx context.Context, token string, realm string, idOfClient string, roleName string) (*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetClientRole(ctx context.Context, token string, realm string, idOfClient string, roleName string) (*gocloak.Role, error) {
 	if mock.GetClientRoleFunc == nil {
-		panic("GoCloakMock.GetClientRoleFunc: method is nil but GoCloak.GetClientRole was just called")
+		panic("goCloakClientInterfaceMock.GetClientRoleFunc: method is nil but goCloakClientInterface.GetClientRole was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -8909,8 +8909,8 @@ func (mock *GoCloakMock) GetClientRole(ctx context.Context, token string, realm 
 // GetClientRoleCalls gets all the calls that were made to GetClientRole.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientRoleCalls())
-func (mock *GoCloakMock) GetClientRoleCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientRoleCalls())
+func (mock *goCloakClientInterfaceMock) GetClientRoleCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -8931,9 +8931,9 @@ func (mock *GoCloakMock) GetClientRoleCalls() []struct {
 }
 
 // GetClientRoleByID calls GetClientRoleByIDFunc.
-func (mock *GoCloakMock) GetClientRoleByID(ctx context.Context, accessToken string, realm string, roleID string) (*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetClientRoleByID(ctx context.Context, accessToken string, realm string, roleID string) (*gocloak.Role, error) {
 	if mock.GetClientRoleByIDFunc == nil {
-		panic("GoCloakMock.GetClientRoleByIDFunc: method is nil but GoCloak.GetClientRoleByID was just called")
+		panic("goCloakClientInterfaceMock.GetClientRoleByIDFunc: method is nil but goCloakClientInterface.GetClientRoleByID was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -8955,8 +8955,8 @@ func (mock *GoCloakMock) GetClientRoleByID(ctx context.Context, accessToken stri
 // GetClientRoleByIDCalls gets all the calls that were made to GetClientRoleByID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientRoleByIDCalls())
-func (mock *GoCloakMock) GetClientRoleByIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientRoleByIDCalls())
+func (mock *goCloakClientInterfaceMock) GetClientRoleByIDCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -8975,9 +8975,9 @@ func (mock *GoCloakMock) GetClientRoleByIDCalls() []struct {
 }
 
 // GetClientRoles calls GetClientRolesFunc.
-func (mock *GoCloakMock) GetClientRoles(ctx context.Context, accessToken string, realm string, idOfClient string, params gocloak.GetRoleParams) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetClientRoles(ctx context.Context, accessToken string, realm string, idOfClient string, params gocloak.GetRoleParams) ([]*gocloak.Role, error) {
 	if mock.GetClientRolesFunc == nil {
-		panic("GoCloakMock.GetClientRolesFunc: method is nil but GoCloak.GetClientRoles was just called")
+		panic("goCloakClientInterfaceMock.GetClientRolesFunc: method is nil but goCloakClientInterface.GetClientRoles was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -9001,8 +9001,8 @@ func (mock *GoCloakMock) GetClientRoles(ctx context.Context, accessToken string,
 // GetClientRolesCalls gets all the calls that were made to GetClientRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientRolesCalls())
-func (mock *GoCloakMock) GetClientRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientRolesCalls())
+func (mock *goCloakClientInterfaceMock) GetClientRolesCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -9023,9 +9023,9 @@ func (mock *GoCloakMock) GetClientRolesCalls() []struct {
 }
 
 // GetClientRolesByGroupID calls GetClientRolesByGroupIDFunc.
-func (mock *GoCloakMock) GetClientRolesByGroupID(ctx context.Context, token string, realm string, idOfClient string, groupID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetClientRolesByGroupID(ctx context.Context, token string, realm string, idOfClient string, groupID string) ([]*gocloak.Role, error) {
 	if mock.GetClientRolesByGroupIDFunc == nil {
-		panic("GoCloakMock.GetClientRolesByGroupIDFunc: method is nil but GoCloak.GetClientRolesByGroupID was just called")
+		panic("goCloakClientInterfaceMock.GetClientRolesByGroupIDFunc: method is nil but goCloakClientInterface.GetClientRolesByGroupID was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -9049,8 +9049,8 @@ func (mock *GoCloakMock) GetClientRolesByGroupID(ctx context.Context, token stri
 // GetClientRolesByGroupIDCalls gets all the calls that were made to GetClientRolesByGroupID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientRolesByGroupIDCalls())
-func (mock *GoCloakMock) GetClientRolesByGroupIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientRolesByGroupIDCalls())
+func (mock *goCloakClientInterfaceMock) GetClientRolesByGroupIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -9071,9 +9071,9 @@ func (mock *GoCloakMock) GetClientRolesByGroupIDCalls() []struct {
 }
 
 // GetClientRolesByUserID calls GetClientRolesByUserIDFunc.
-func (mock *GoCloakMock) GetClientRolesByUserID(ctx context.Context, token string, realm string, idOfClient string, userID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetClientRolesByUserID(ctx context.Context, token string, realm string, idOfClient string, userID string) ([]*gocloak.Role, error) {
 	if mock.GetClientRolesByUserIDFunc == nil {
-		panic("GoCloakMock.GetClientRolesByUserIDFunc: method is nil but GoCloak.GetClientRolesByUserID was just called")
+		panic("goCloakClientInterfaceMock.GetClientRolesByUserIDFunc: method is nil but goCloakClientInterface.GetClientRolesByUserID was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -9097,8 +9097,8 @@ func (mock *GoCloakMock) GetClientRolesByUserID(ctx context.Context, token strin
 // GetClientRolesByUserIDCalls gets all the calls that were made to GetClientRolesByUserID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientRolesByUserIDCalls())
-func (mock *GoCloakMock) GetClientRolesByUserIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientRolesByUserIDCalls())
+func (mock *goCloakClientInterfaceMock) GetClientRolesByUserIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -9119,9 +9119,9 @@ func (mock *GoCloakMock) GetClientRolesByUserIDCalls() []struct {
 }
 
 // GetClientScope calls GetClientScopeFunc.
-func (mock *GoCloakMock) GetClientScope(ctx context.Context, token string, realm string, scopeID string) (*gocloak.ClientScope, error) {
+func (mock *goCloakClientInterfaceMock) GetClientScope(ctx context.Context, token string, realm string, scopeID string) (*gocloak.ClientScope, error) {
 	if mock.GetClientScopeFunc == nil {
-		panic("GoCloakMock.GetClientScopeFunc: method is nil but GoCloak.GetClientScope was just called")
+		panic("goCloakClientInterfaceMock.GetClientScopeFunc: method is nil but goCloakClientInterface.GetClientScope was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -9143,8 +9143,8 @@ func (mock *GoCloakMock) GetClientScope(ctx context.Context, token string, realm
 // GetClientScopeCalls gets all the calls that were made to GetClientScope.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientScopeCalls())
-func (mock *GoCloakMock) GetClientScopeCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientScopeCalls())
+func (mock *goCloakClientInterfaceMock) GetClientScopeCalls() []struct {
 	Ctx     context.Context
 	Token   string
 	Realm   string
@@ -9163,9 +9163,9 @@ func (mock *GoCloakMock) GetClientScopeCalls() []struct {
 }
 
 // GetClientScopeMappings calls GetClientScopeMappingsFunc.
-func (mock *GoCloakMock) GetClientScopeMappings(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.MappingsRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetClientScopeMappings(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.MappingsRepresentation, error) {
 	if mock.GetClientScopeMappingsFunc == nil {
-		panic("GoCloakMock.GetClientScopeMappingsFunc: method is nil but GoCloak.GetClientScopeMappings was just called")
+		panic("goCloakClientInterfaceMock.GetClientScopeMappingsFunc: method is nil but goCloakClientInterface.GetClientScopeMappings was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -9187,8 +9187,8 @@ func (mock *GoCloakMock) GetClientScopeMappings(ctx context.Context, token strin
 // GetClientScopeMappingsCalls gets all the calls that were made to GetClientScopeMappings.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientScopeMappingsCalls())
-func (mock *GoCloakMock) GetClientScopeMappingsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientScopeMappingsCalls())
+func (mock *goCloakClientInterfaceMock) GetClientScopeMappingsCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -9207,9 +9207,9 @@ func (mock *GoCloakMock) GetClientScopeMappingsCalls() []struct {
 }
 
 // GetClientScopeMappingsClientRoles calls GetClientScopeMappingsClientRolesFunc.
-func (mock *GoCloakMock) GetClientScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetClientScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string) ([]*gocloak.Role, error) {
 	if mock.GetClientScopeMappingsClientRolesFunc == nil {
-		panic("GoCloakMock.GetClientScopeMappingsClientRolesFunc: method is nil but GoCloak.GetClientScopeMappingsClientRoles was just called")
+		panic("goCloakClientInterfaceMock.GetClientScopeMappingsClientRolesFunc: method is nil but goCloakClientInterface.GetClientScopeMappingsClientRoles was just called")
 	}
 	callInfo := struct {
 		Ctx                context.Context
@@ -9233,8 +9233,8 @@ func (mock *GoCloakMock) GetClientScopeMappingsClientRoles(ctx context.Context, 
 // GetClientScopeMappingsClientRolesCalls gets all the calls that were made to GetClientScopeMappingsClientRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientScopeMappingsClientRolesCalls())
-func (mock *GoCloakMock) GetClientScopeMappingsClientRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientScopeMappingsClientRolesCalls())
+func (mock *goCloakClientInterfaceMock) GetClientScopeMappingsClientRolesCalls() []struct {
 	Ctx                context.Context
 	Token              string
 	Realm              string
@@ -9255,9 +9255,9 @@ func (mock *GoCloakMock) GetClientScopeMappingsClientRolesCalls() []struct {
 }
 
 // GetClientScopeMappingsClientRolesAvailable calls GetClientScopeMappingsClientRolesAvailableFunc.
-func (mock *GoCloakMock) GetClientScopeMappingsClientRolesAvailable(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetClientScopeMappingsClientRolesAvailable(ctx context.Context, token string, realm string, idOfClient string, idOfSelectedClient string) ([]*gocloak.Role, error) {
 	if mock.GetClientScopeMappingsClientRolesAvailableFunc == nil {
-		panic("GoCloakMock.GetClientScopeMappingsClientRolesAvailableFunc: method is nil but GoCloak.GetClientScopeMappingsClientRolesAvailable was just called")
+		panic("goCloakClientInterfaceMock.GetClientScopeMappingsClientRolesAvailableFunc: method is nil but goCloakClientInterface.GetClientScopeMappingsClientRolesAvailable was just called")
 	}
 	callInfo := struct {
 		Ctx                context.Context
@@ -9281,8 +9281,8 @@ func (mock *GoCloakMock) GetClientScopeMappingsClientRolesAvailable(ctx context.
 // GetClientScopeMappingsClientRolesAvailableCalls gets all the calls that were made to GetClientScopeMappingsClientRolesAvailable.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientScopeMappingsClientRolesAvailableCalls())
-func (mock *GoCloakMock) GetClientScopeMappingsClientRolesAvailableCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientScopeMappingsClientRolesAvailableCalls())
+func (mock *goCloakClientInterfaceMock) GetClientScopeMappingsClientRolesAvailableCalls() []struct {
 	Ctx                context.Context
 	Token              string
 	Realm              string
@@ -9303,9 +9303,9 @@ func (mock *GoCloakMock) GetClientScopeMappingsClientRolesAvailableCalls() []str
 }
 
 // GetClientScopeMappingsRealmRoles calls GetClientScopeMappingsRealmRolesFunc.
-func (mock *GoCloakMock) GetClientScopeMappingsRealmRoles(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetClientScopeMappingsRealmRoles(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.Role, error) {
 	if mock.GetClientScopeMappingsRealmRolesFunc == nil {
-		panic("GoCloakMock.GetClientScopeMappingsRealmRolesFunc: method is nil but GoCloak.GetClientScopeMappingsRealmRoles was just called")
+		panic("goCloakClientInterfaceMock.GetClientScopeMappingsRealmRolesFunc: method is nil but goCloakClientInterface.GetClientScopeMappingsRealmRoles was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -9327,8 +9327,8 @@ func (mock *GoCloakMock) GetClientScopeMappingsRealmRoles(ctx context.Context, t
 // GetClientScopeMappingsRealmRolesCalls gets all the calls that were made to GetClientScopeMappingsRealmRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientScopeMappingsRealmRolesCalls())
-func (mock *GoCloakMock) GetClientScopeMappingsRealmRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientScopeMappingsRealmRolesCalls())
+func (mock *goCloakClientInterfaceMock) GetClientScopeMappingsRealmRolesCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -9347,9 +9347,9 @@ func (mock *GoCloakMock) GetClientScopeMappingsRealmRolesCalls() []struct {
 }
 
 // GetClientScopeMappingsRealmRolesAvailable calls GetClientScopeMappingsRealmRolesAvailableFunc.
-func (mock *GoCloakMock) GetClientScopeMappingsRealmRolesAvailable(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetClientScopeMappingsRealmRolesAvailable(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.Role, error) {
 	if mock.GetClientScopeMappingsRealmRolesAvailableFunc == nil {
-		panic("GoCloakMock.GetClientScopeMappingsRealmRolesAvailableFunc: method is nil but GoCloak.GetClientScopeMappingsRealmRolesAvailable was just called")
+		panic("goCloakClientInterfaceMock.GetClientScopeMappingsRealmRolesAvailableFunc: method is nil but goCloakClientInterface.GetClientScopeMappingsRealmRolesAvailable was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -9371,8 +9371,8 @@ func (mock *GoCloakMock) GetClientScopeMappingsRealmRolesAvailable(ctx context.C
 // GetClientScopeMappingsRealmRolesAvailableCalls gets all the calls that were made to GetClientScopeMappingsRealmRolesAvailable.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientScopeMappingsRealmRolesAvailableCalls())
-func (mock *GoCloakMock) GetClientScopeMappingsRealmRolesAvailableCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientScopeMappingsRealmRolesAvailableCalls())
+func (mock *goCloakClientInterfaceMock) GetClientScopeMappingsRealmRolesAvailableCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -9391,9 +9391,9 @@ func (mock *GoCloakMock) GetClientScopeMappingsRealmRolesAvailableCalls() []stru
 }
 
 // GetClientScopeProtocolMapper calls GetClientScopeProtocolMapperFunc.
-func (mock *GoCloakMock) GetClientScopeProtocolMapper(ctx context.Context, token string, realm string, scopeID string, protocolMapperID string) (*gocloak.ProtocolMappers, error) {
+func (mock *goCloakClientInterfaceMock) GetClientScopeProtocolMapper(ctx context.Context, token string, realm string, scopeID string, protocolMapperID string) (*gocloak.ProtocolMappers, error) {
 	if mock.GetClientScopeProtocolMapperFunc == nil {
-		panic("GoCloakMock.GetClientScopeProtocolMapperFunc: method is nil but GoCloak.GetClientScopeProtocolMapper was just called")
+		panic("goCloakClientInterfaceMock.GetClientScopeProtocolMapperFunc: method is nil but goCloakClientInterface.GetClientScopeProtocolMapper was just called")
 	}
 	callInfo := struct {
 		Ctx              context.Context
@@ -9417,8 +9417,8 @@ func (mock *GoCloakMock) GetClientScopeProtocolMapper(ctx context.Context, token
 // GetClientScopeProtocolMapperCalls gets all the calls that were made to GetClientScopeProtocolMapper.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientScopeProtocolMapperCalls())
-func (mock *GoCloakMock) GetClientScopeProtocolMapperCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientScopeProtocolMapperCalls())
+func (mock *goCloakClientInterfaceMock) GetClientScopeProtocolMapperCalls() []struct {
 	Ctx              context.Context
 	Token            string
 	Realm            string
@@ -9439,9 +9439,9 @@ func (mock *GoCloakMock) GetClientScopeProtocolMapperCalls() []struct {
 }
 
 // GetClientScopeProtocolMappers calls GetClientScopeProtocolMappersFunc.
-func (mock *GoCloakMock) GetClientScopeProtocolMappers(ctx context.Context, token string, realm string, scopeID string) ([]*gocloak.ProtocolMappers, error) {
+func (mock *goCloakClientInterfaceMock) GetClientScopeProtocolMappers(ctx context.Context, token string, realm string, scopeID string) ([]*gocloak.ProtocolMappers, error) {
 	if mock.GetClientScopeProtocolMappersFunc == nil {
-		panic("GoCloakMock.GetClientScopeProtocolMappersFunc: method is nil but GoCloak.GetClientScopeProtocolMappers was just called")
+		panic("goCloakClientInterfaceMock.GetClientScopeProtocolMappersFunc: method is nil but goCloakClientInterface.GetClientScopeProtocolMappers was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -9463,8 +9463,8 @@ func (mock *GoCloakMock) GetClientScopeProtocolMappers(ctx context.Context, toke
 // GetClientScopeProtocolMappersCalls gets all the calls that were made to GetClientScopeProtocolMappers.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientScopeProtocolMappersCalls())
-func (mock *GoCloakMock) GetClientScopeProtocolMappersCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientScopeProtocolMappersCalls())
+func (mock *goCloakClientInterfaceMock) GetClientScopeProtocolMappersCalls() []struct {
 	Ctx     context.Context
 	Token   string
 	Realm   string
@@ -9483,9 +9483,9 @@ func (mock *GoCloakMock) GetClientScopeProtocolMappersCalls() []struct {
 }
 
 // GetClientScopes calls GetClientScopesFunc.
-func (mock *GoCloakMock) GetClientScopes(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
+func (mock *goCloakClientInterfaceMock) GetClientScopes(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
 	if mock.GetClientScopesFunc == nil {
-		panic("GoCloakMock.GetClientScopesFunc: method is nil but GoCloak.GetClientScopes was just called")
+		panic("goCloakClientInterfaceMock.GetClientScopesFunc: method is nil but goCloakClientInterface.GetClientScopes was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -9505,8 +9505,8 @@ func (mock *GoCloakMock) GetClientScopes(ctx context.Context, token string, real
 // GetClientScopesCalls gets all the calls that were made to GetClientScopes.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientScopesCalls())
-func (mock *GoCloakMock) GetClientScopesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientScopesCalls())
+func (mock *goCloakClientInterfaceMock) GetClientScopesCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -9523,9 +9523,9 @@ func (mock *GoCloakMock) GetClientScopesCalls() []struct {
 }
 
 // GetClientScopesScopeMappingsClientRoles calls GetClientScopesScopeMappingsClientRolesFunc.
-func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetClientScopesScopeMappingsClientRoles(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error) {
 	if mock.GetClientScopesScopeMappingsClientRolesFunc == nil {
-		panic("GoCloakMock.GetClientScopesScopeMappingsClientRolesFunc: method is nil but GoCloak.GetClientScopesScopeMappingsClientRoles was just called")
+		panic("goCloakClientInterfaceMock.GetClientScopesScopeMappingsClientRolesFunc: method is nil but goCloakClientInterface.GetClientScopesScopeMappingsClientRoles was just called")
 	}
 	callInfo := struct {
 		Ctx             context.Context
@@ -9549,8 +9549,8 @@ func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRoles(ctx context.Con
 // GetClientScopesScopeMappingsClientRolesCalls gets all the calls that were made to GetClientScopesScopeMappingsClientRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientScopesScopeMappingsClientRolesCalls())
-func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientScopesScopeMappingsClientRolesCalls())
+func (mock *goCloakClientInterfaceMock) GetClientScopesScopeMappingsClientRolesCalls() []struct {
 	Ctx             context.Context
 	Token           string
 	Realm           string
@@ -9571,9 +9571,9 @@ func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRolesCalls() []struct
 }
 
 // GetClientScopesScopeMappingsClientRolesAvailable calls GetClientScopesScopeMappingsClientRolesAvailableFunc.
-func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRolesAvailable(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetClientScopesScopeMappingsClientRolesAvailable(ctx context.Context, token string, realm string, idOfClientScope string, idOfClient string) ([]*gocloak.Role, error) {
 	if mock.GetClientScopesScopeMappingsClientRolesAvailableFunc == nil {
-		panic("GoCloakMock.GetClientScopesScopeMappingsClientRolesAvailableFunc: method is nil but GoCloak.GetClientScopesScopeMappingsClientRolesAvailable was just called")
+		panic("goCloakClientInterfaceMock.GetClientScopesScopeMappingsClientRolesAvailableFunc: method is nil but goCloakClientInterface.GetClientScopesScopeMappingsClientRolesAvailable was just called")
 	}
 	callInfo := struct {
 		Ctx             context.Context
@@ -9597,8 +9597,8 @@ func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRolesAvailable(ctx co
 // GetClientScopesScopeMappingsClientRolesAvailableCalls gets all the calls that were made to GetClientScopesScopeMappingsClientRolesAvailable.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientScopesScopeMappingsClientRolesAvailableCalls())
-func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRolesAvailableCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientScopesScopeMappingsClientRolesAvailableCalls())
+func (mock *goCloakClientInterfaceMock) GetClientScopesScopeMappingsClientRolesAvailableCalls() []struct {
 	Ctx             context.Context
 	Token           string
 	Realm           string
@@ -9619,9 +9619,9 @@ func (mock *GoCloakMock) GetClientScopesScopeMappingsClientRolesAvailableCalls()
 }
 
 // GetClientScopesScopeMappingsRealmRoles calls GetClientScopesScopeMappingsRealmRolesFunc.
-func (mock *GoCloakMock) GetClientScopesScopeMappingsRealmRoles(ctx context.Context, token string, realm string, idOfClientScope string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetClientScopesScopeMappingsRealmRoles(ctx context.Context, token string, realm string, idOfClientScope string) ([]*gocloak.Role, error) {
 	if mock.GetClientScopesScopeMappingsRealmRolesFunc == nil {
-		panic("GoCloakMock.GetClientScopesScopeMappingsRealmRolesFunc: method is nil but GoCloak.GetClientScopesScopeMappingsRealmRoles was just called")
+		panic("goCloakClientInterfaceMock.GetClientScopesScopeMappingsRealmRolesFunc: method is nil but goCloakClientInterface.GetClientScopesScopeMappingsRealmRoles was just called")
 	}
 	callInfo := struct {
 		Ctx             context.Context
@@ -9643,8 +9643,8 @@ func (mock *GoCloakMock) GetClientScopesScopeMappingsRealmRoles(ctx context.Cont
 // GetClientScopesScopeMappingsRealmRolesCalls gets all the calls that were made to GetClientScopesScopeMappingsRealmRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientScopesScopeMappingsRealmRolesCalls())
-func (mock *GoCloakMock) GetClientScopesScopeMappingsRealmRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientScopesScopeMappingsRealmRolesCalls())
+func (mock *goCloakClientInterfaceMock) GetClientScopesScopeMappingsRealmRolesCalls() []struct {
 	Ctx             context.Context
 	Token           string
 	Realm           string
@@ -9663,9 +9663,9 @@ func (mock *GoCloakMock) GetClientScopesScopeMappingsRealmRolesCalls() []struct 
 }
 
 // GetClientScopesScopeMappingsRealmRolesAvailable calls GetClientScopesScopeMappingsRealmRolesAvailableFunc.
-func (mock *GoCloakMock) GetClientScopesScopeMappingsRealmRolesAvailable(ctx context.Context, token string, realm string, idOfClientScope string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetClientScopesScopeMappingsRealmRolesAvailable(ctx context.Context, token string, realm string, idOfClientScope string) ([]*gocloak.Role, error) {
 	if mock.GetClientScopesScopeMappingsRealmRolesAvailableFunc == nil {
-		panic("GoCloakMock.GetClientScopesScopeMappingsRealmRolesAvailableFunc: method is nil but GoCloak.GetClientScopesScopeMappingsRealmRolesAvailable was just called")
+		panic("goCloakClientInterfaceMock.GetClientScopesScopeMappingsRealmRolesAvailableFunc: method is nil but goCloakClientInterface.GetClientScopesScopeMappingsRealmRolesAvailable was just called")
 	}
 	callInfo := struct {
 		Ctx             context.Context
@@ -9687,8 +9687,8 @@ func (mock *GoCloakMock) GetClientScopesScopeMappingsRealmRolesAvailable(ctx con
 // GetClientScopesScopeMappingsRealmRolesAvailableCalls gets all the calls that were made to GetClientScopesScopeMappingsRealmRolesAvailable.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientScopesScopeMappingsRealmRolesAvailableCalls())
-func (mock *GoCloakMock) GetClientScopesScopeMappingsRealmRolesAvailableCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientScopesScopeMappingsRealmRolesAvailableCalls())
+func (mock *goCloakClientInterfaceMock) GetClientScopesScopeMappingsRealmRolesAvailableCalls() []struct {
 	Ctx             context.Context
 	Token           string
 	Realm           string
@@ -9707,9 +9707,9 @@ func (mock *GoCloakMock) GetClientScopesScopeMappingsRealmRolesAvailableCalls() 
 }
 
 // GetClientSecret calls GetClientSecretFunc.
-func (mock *GoCloakMock) GetClientSecret(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.CredentialRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetClientSecret(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.CredentialRepresentation, error) {
 	if mock.GetClientSecretFunc == nil {
-		panic("GoCloakMock.GetClientSecretFunc: method is nil but GoCloak.GetClientSecret was just called")
+		panic("goCloakClientInterfaceMock.GetClientSecretFunc: method is nil but goCloakClientInterface.GetClientSecret was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -9731,8 +9731,8 @@ func (mock *GoCloakMock) GetClientSecret(ctx context.Context, token string, real
 // GetClientSecretCalls gets all the calls that were made to GetClientSecret.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientSecretCalls())
-func (mock *GoCloakMock) GetClientSecretCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientSecretCalls())
+func (mock *goCloakClientInterfaceMock) GetClientSecretCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -9751,9 +9751,9 @@ func (mock *GoCloakMock) GetClientSecretCalls() []struct {
 }
 
 // GetClientServiceAccount calls GetClientServiceAccountFunc.
-func (mock *GoCloakMock) GetClientServiceAccount(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.User, error) {
+func (mock *goCloakClientInterfaceMock) GetClientServiceAccount(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.User, error) {
 	if mock.GetClientServiceAccountFunc == nil {
-		panic("GoCloakMock.GetClientServiceAccountFunc: method is nil but GoCloak.GetClientServiceAccount was just called")
+		panic("goCloakClientInterfaceMock.GetClientServiceAccountFunc: method is nil but goCloakClientInterface.GetClientServiceAccount was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -9775,8 +9775,8 @@ func (mock *GoCloakMock) GetClientServiceAccount(ctx context.Context, token stri
 // GetClientServiceAccountCalls gets all the calls that were made to GetClientServiceAccount.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientServiceAccountCalls())
-func (mock *GoCloakMock) GetClientServiceAccountCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientServiceAccountCalls())
+func (mock *goCloakClientInterfaceMock) GetClientServiceAccountCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -9795,9 +9795,9 @@ func (mock *GoCloakMock) GetClientServiceAccountCalls() []struct {
 }
 
 // GetClientUserSessions calls GetClientUserSessionsFunc.
-func (mock *GoCloakMock) GetClientUserSessions(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.UserSessionRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetClientUserSessions(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.UserSessionRepresentation, error) {
 	if mock.GetClientUserSessionsFunc == nil {
-		panic("GoCloakMock.GetClientUserSessionsFunc: method is nil but GoCloak.GetClientUserSessions was just called")
+		panic("goCloakClientInterfaceMock.GetClientUserSessionsFunc: method is nil but goCloakClientInterface.GetClientUserSessions was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -9819,8 +9819,8 @@ func (mock *GoCloakMock) GetClientUserSessions(ctx context.Context, token string
 // GetClientUserSessionsCalls gets all the calls that were made to GetClientUserSessions.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientUserSessionsCalls())
-func (mock *GoCloakMock) GetClientUserSessionsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientUserSessionsCalls())
+func (mock *goCloakClientInterfaceMock) GetClientUserSessionsCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -9839,9 +9839,9 @@ func (mock *GoCloakMock) GetClientUserSessionsCalls() []struct {
 }
 
 // GetClients calls GetClientsFunc.
-func (mock *GoCloakMock) GetClients(ctx context.Context, accessToken string, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
+func (mock *goCloakClientInterfaceMock) GetClients(ctx context.Context, accessToken string, realm string, params gocloak.GetClientsParams) ([]*gocloak.Client, error) {
 	if mock.GetClientsFunc == nil {
-		panic("GoCloakMock.GetClientsFunc: method is nil but GoCloak.GetClients was just called")
+		panic("goCloakClientInterfaceMock.GetClientsFunc: method is nil but goCloakClientInterface.GetClients was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -9863,8 +9863,8 @@ func (mock *GoCloakMock) GetClients(ctx context.Context, accessToken string, rea
 // GetClientsCalls gets all the calls that were made to GetClients.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientsCalls())
-func (mock *GoCloakMock) GetClientsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientsCalls())
+func (mock *goCloakClientInterfaceMock) GetClientsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -9883,9 +9883,9 @@ func (mock *GoCloakMock) GetClientsCalls() []struct {
 }
 
 // GetClientsDefaultScopes calls GetClientsDefaultScopesFunc.
-func (mock *GoCloakMock) GetClientsDefaultScopes(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.ClientScope, error) {
+func (mock *goCloakClientInterfaceMock) GetClientsDefaultScopes(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.ClientScope, error) {
 	if mock.GetClientsDefaultScopesFunc == nil {
-		panic("GoCloakMock.GetClientsDefaultScopesFunc: method is nil but GoCloak.GetClientsDefaultScopes was just called")
+		panic("goCloakClientInterfaceMock.GetClientsDefaultScopesFunc: method is nil but goCloakClientInterface.GetClientsDefaultScopes was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -9907,8 +9907,8 @@ func (mock *GoCloakMock) GetClientsDefaultScopes(ctx context.Context, token stri
 // GetClientsDefaultScopesCalls gets all the calls that were made to GetClientsDefaultScopes.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientsDefaultScopesCalls())
-func (mock *GoCloakMock) GetClientsDefaultScopesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientsDefaultScopesCalls())
+func (mock *goCloakClientInterfaceMock) GetClientsDefaultScopesCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -9927,9 +9927,9 @@ func (mock *GoCloakMock) GetClientsDefaultScopesCalls() []struct {
 }
 
 // GetClientsOptionalScopes calls GetClientsOptionalScopesFunc.
-func (mock *GoCloakMock) GetClientsOptionalScopes(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.ClientScope, error) {
+func (mock *goCloakClientInterfaceMock) GetClientsOptionalScopes(ctx context.Context, token string, realm string, idOfClient string) ([]*gocloak.ClientScope, error) {
 	if mock.GetClientsOptionalScopesFunc == nil {
-		panic("GoCloakMock.GetClientsOptionalScopesFunc: method is nil but GoCloak.GetClientsOptionalScopes was just called")
+		panic("goCloakClientInterfaceMock.GetClientsOptionalScopesFunc: method is nil but goCloakClientInterface.GetClientsOptionalScopes was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -9951,8 +9951,8 @@ func (mock *GoCloakMock) GetClientsOptionalScopes(ctx context.Context, token str
 // GetClientsOptionalScopesCalls gets all the calls that were made to GetClientsOptionalScopes.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetClientsOptionalScopesCalls())
-func (mock *GoCloakMock) GetClientsOptionalScopesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetClientsOptionalScopesCalls())
+func (mock *goCloakClientInterfaceMock) GetClientsOptionalScopesCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -9971,9 +9971,9 @@ func (mock *GoCloakMock) GetClientsOptionalScopesCalls() []struct {
 }
 
 // GetComponents calls GetComponentsFunc.
-func (mock *GoCloakMock) GetComponents(ctx context.Context, accessToken string, realm string) ([]*gocloak.Component, error) {
+func (mock *goCloakClientInterfaceMock) GetComponents(ctx context.Context, accessToken string, realm string) ([]*gocloak.Component, error) {
 	if mock.GetComponentsFunc == nil {
-		panic("GoCloakMock.GetComponentsFunc: method is nil but GoCloak.GetComponents was just called")
+		panic("goCloakClientInterfaceMock.GetComponentsFunc: method is nil but goCloakClientInterface.GetComponents was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -9993,8 +9993,8 @@ func (mock *GoCloakMock) GetComponents(ctx context.Context, accessToken string, 
 // GetComponentsCalls gets all the calls that were made to GetComponents.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetComponentsCalls())
-func (mock *GoCloakMock) GetComponentsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetComponentsCalls())
+func (mock *goCloakClientInterfaceMock) GetComponentsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -10011,9 +10011,9 @@ func (mock *GoCloakMock) GetComponentsCalls() []struct {
 }
 
 // GetCompositeClientRolesByGroupID calls GetCompositeClientRolesByGroupIDFunc.
-func (mock *GoCloakMock) GetCompositeClientRolesByGroupID(ctx context.Context, token string, realm string, idOfClient string, groupID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetCompositeClientRolesByGroupID(ctx context.Context, token string, realm string, idOfClient string, groupID string) ([]*gocloak.Role, error) {
 	if mock.GetCompositeClientRolesByGroupIDFunc == nil {
-		panic("GoCloakMock.GetCompositeClientRolesByGroupIDFunc: method is nil but GoCloak.GetCompositeClientRolesByGroupID was just called")
+		panic("goCloakClientInterfaceMock.GetCompositeClientRolesByGroupIDFunc: method is nil but goCloakClientInterface.GetCompositeClientRolesByGroupID was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -10037,8 +10037,8 @@ func (mock *GoCloakMock) GetCompositeClientRolesByGroupID(ctx context.Context, t
 // GetCompositeClientRolesByGroupIDCalls gets all the calls that were made to GetCompositeClientRolesByGroupID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetCompositeClientRolesByGroupIDCalls())
-func (mock *GoCloakMock) GetCompositeClientRolesByGroupIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetCompositeClientRolesByGroupIDCalls())
+func (mock *goCloakClientInterfaceMock) GetCompositeClientRolesByGroupIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -10059,9 +10059,9 @@ func (mock *GoCloakMock) GetCompositeClientRolesByGroupIDCalls() []struct {
 }
 
 // GetCompositeClientRolesByRoleID calls GetCompositeClientRolesByRoleIDFunc.
-func (mock *GoCloakMock) GetCompositeClientRolesByRoleID(ctx context.Context, token string, realm string, idOfClient string, roleID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetCompositeClientRolesByRoleID(ctx context.Context, token string, realm string, idOfClient string, roleID string) ([]*gocloak.Role, error) {
 	if mock.GetCompositeClientRolesByRoleIDFunc == nil {
-		panic("GoCloakMock.GetCompositeClientRolesByRoleIDFunc: method is nil but GoCloak.GetCompositeClientRolesByRoleID was just called")
+		panic("goCloakClientInterfaceMock.GetCompositeClientRolesByRoleIDFunc: method is nil but goCloakClientInterface.GetCompositeClientRolesByRoleID was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -10085,8 +10085,8 @@ func (mock *GoCloakMock) GetCompositeClientRolesByRoleID(ctx context.Context, to
 // GetCompositeClientRolesByRoleIDCalls gets all the calls that were made to GetCompositeClientRolesByRoleID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetCompositeClientRolesByRoleIDCalls())
-func (mock *GoCloakMock) GetCompositeClientRolesByRoleIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetCompositeClientRolesByRoleIDCalls())
+func (mock *goCloakClientInterfaceMock) GetCompositeClientRolesByRoleIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -10107,9 +10107,9 @@ func (mock *GoCloakMock) GetCompositeClientRolesByRoleIDCalls() []struct {
 }
 
 // GetCompositeClientRolesByUserID calls GetCompositeClientRolesByUserIDFunc.
-func (mock *GoCloakMock) GetCompositeClientRolesByUserID(ctx context.Context, token string, realm string, idOfClient string, userID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetCompositeClientRolesByUserID(ctx context.Context, token string, realm string, idOfClient string, userID string) ([]*gocloak.Role, error) {
 	if mock.GetCompositeClientRolesByUserIDFunc == nil {
-		panic("GoCloakMock.GetCompositeClientRolesByUserIDFunc: method is nil but GoCloak.GetCompositeClientRolesByUserID was just called")
+		panic("goCloakClientInterfaceMock.GetCompositeClientRolesByUserIDFunc: method is nil but goCloakClientInterface.GetCompositeClientRolesByUserID was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -10133,8 +10133,8 @@ func (mock *GoCloakMock) GetCompositeClientRolesByUserID(ctx context.Context, to
 // GetCompositeClientRolesByUserIDCalls gets all the calls that were made to GetCompositeClientRolesByUserID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetCompositeClientRolesByUserIDCalls())
-func (mock *GoCloakMock) GetCompositeClientRolesByUserIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetCompositeClientRolesByUserIDCalls())
+func (mock *goCloakClientInterfaceMock) GetCompositeClientRolesByUserIDCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -10155,9 +10155,9 @@ func (mock *GoCloakMock) GetCompositeClientRolesByUserIDCalls() []struct {
 }
 
 // GetCompositeRealmRoles calls GetCompositeRealmRolesFunc.
-func (mock *GoCloakMock) GetCompositeRealmRoles(ctx context.Context, token string, realm string, roleName string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetCompositeRealmRoles(ctx context.Context, token string, realm string, roleName string) ([]*gocloak.Role, error) {
 	if mock.GetCompositeRealmRolesFunc == nil {
-		panic("GoCloakMock.GetCompositeRealmRolesFunc: method is nil but GoCloak.GetCompositeRealmRoles was just called")
+		panic("goCloakClientInterfaceMock.GetCompositeRealmRolesFunc: method is nil but goCloakClientInterface.GetCompositeRealmRoles was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -10179,8 +10179,8 @@ func (mock *GoCloakMock) GetCompositeRealmRoles(ctx context.Context, token strin
 // GetCompositeRealmRolesCalls gets all the calls that were made to GetCompositeRealmRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetCompositeRealmRolesCalls())
-func (mock *GoCloakMock) GetCompositeRealmRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetCompositeRealmRolesCalls())
+func (mock *goCloakClientInterfaceMock) GetCompositeRealmRolesCalls() []struct {
 	Ctx      context.Context
 	Token    string
 	Realm    string
@@ -10199,9 +10199,9 @@ func (mock *GoCloakMock) GetCompositeRealmRolesCalls() []struct {
 }
 
 // GetCompositeRealmRolesByGroupID calls GetCompositeRealmRolesByGroupIDFunc.
-func (mock *GoCloakMock) GetCompositeRealmRolesByGroupID(ctx context.Context, token string, realm string, groupID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetCompositeRealmRolesByGroupID(ctx context.Context, token string, realm string, groupID string) ([]*gocloak.Role, error) {
 	if mock.GetCompositeRealmRolesByGroupIDFunc == nil {
-		panic("GoCloakMock.GetCompositeRealmRolesByGroupIDFunc: method is nil but GoCloak.GetCompositeRealmRolesByGroupID was just called")
+		panic("goCloakClientInterfaceMock.GetCompositeRealmRolesByGroupIDFunc: method is nil but goCloakClientInterface.GetCompositeRealmRolesByGroupID was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -10223,8 +10223,8 @@ func (mock *GoCloakMock) GetCompositeRealmRolesByGroupID(ctx context.Context, to
 // GetCompositeRealmRolesByGroupIDCalls gets all the calls that were made to GetCompositeRealmRolesByGroupID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetCompositeRealmRolesByGroupIDCalls())
-func (mock *GoCloakMock) GetCompositeRealmRolesByGroupIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetCompositeRealmRolesByGroupIDCalls())
+func (mock *goCloakClientInterfaceMock) GetCompositeRealmRolesByGroupIDCalls() []struct {
 	Ctx     context.Context
 	Token   string
 	Realm   string
@@ -10243,9 +10243,9 @@ func (mock *GoCloakMock) GetCompositeRealmRolesByGroupIDCalls() []struct {
 }
 
 // GetCompositeRealmRolesByRoleID calls GetCompositeRealmRolesByRoleIDFunc.
-func (mock *GoCloakMock) GetCompositeRealmRolesByRoleID(ctx context.Context, token string, realm string, roleID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetCompositeRealmRolesByRoleID(ctx context.Context, token string, realm string, roleID string) ([]*gocloak.Role, error) {
 	if mock.GetCompositeRealmRolesByRoleIDFunc == nil {
-		panic("GoCloakMock.GetCompositeRealmRolesByRoleIDFunc: method is nil but GoCloak.GetCompositeRealmRolesByRoleID was just called")
+		panic("goCloakClientInterfaceMock.GetCompositeRealmRolesByRoleIDFunc: method is nil but goCloakClientInterface.GetCompositeRealmRolesByRoleID was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -10267,8 +10267,8 @@ func (mock *GoCloakMock) GetCompositeRealmRolesByRoleID(ctx context.Context, tok
 // GetCompositeRealmRolesByRoleIDCalls gets all the calls that were made to GetCompositeRealmRolesByRoleID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetCompositeRealmRolesByRoleIDCalls())
-func (mock *GoCloakMock) GetCompositeRealmRolesByRoleIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetCompositeRealmRolesByRoleIDCalls())
+func (mock *goCloakClientInterfaceMock) GetCompositeRealmRolesByRoleIDCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -10287,9 +10287,9 @@ func (mock *GoCloakMock) GetCompositeRealmRolesByRoleIDCalls() []struct {
 }
 
 // GetCompositeRealmRolesByUserID calls GetCompositeRealmRolesByUserIDFunc.
-func (mock *GoCloakMock) GetCompositeRealmRolesByUserID(ctx context.Context, token string, realm string, userID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetCompositeRealmRolesByUserID(ctx context.Context, token string, realm string, userID string) ([]*gocloak.Role, error) {
 	if mock.GetCompositeRealmRolesByUserIDFunc == nil {
-		panic("GoCloakMock.GetCompositeRealmRolesByUserIDFunc: method is nil but GoCloak.GetCompositeRealmRolesByUserID was just called")
+		panic("goCloakClientInterfaceMock.GetCompositeRealmRolesByUserIDFunc: method is nil but goCloakClientInterface.GetCompositeRealmRolesByUserID was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -10311,8 +10311,8 @@ func (mock *GoCloakMock) GetCompositeRealmRolesByUserID(ctx context.Context, tok
 // GetCompositeRealmRolesByUserIDCalls gets all the calls that were made to GetCompositeRealmRolesByUserID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetCompositeRealmRolesByUserIDCalls())
-func (mock *GoCloakMock) GetCompositeRealmRolesByUserIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetCompositeRealmRolesByUserIDCalls())
+func (mock *goCloakClientInterfaceMock) GetCompositeRealmRolesByUserIDCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -10331,9 +10331,9 @@ func (mock *GoCloakMock) GetCompositeRealmRolesByUserIDCalls() []struct {
 }
 
 // GetConfiguredUserStorageCredentialTypes calls GetConfiguredUserStorageCredentialTypesFunc.
-func (mock *GoCloakMock) GetConfiguredUserStorageCredentialTypes(ctx context.Context, token string, realm string, userID string) ([]string, error) {
+func (mock *goCloakClientInterfaceMock) GetConfiguredUserStorageCredentialTypes(ctx context.Context, token string, realm string, userID string) ([]string, error) {
 	if mock.GetConfiguredUserStorageCredentialTypesFunc == nil {
-		panic("GoCloakMock.GetConfiguredUserStorageCredentialTypesFunc: method is nil but GoCloak.GetConfiguredUserStorageCredentialTypes was just called")
+		panic("goCloakClientInterfaceMock.GetConfiguredUserStorageCredentialTypesFunc: method is nil but goCloakClientInterface.GetConfiguredUserStorageCredentialTypes was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -10355,8 +10355,8 @@ func (mock *GoCloakMock) GetConfiguredUserStorageCredentialTypes(ctx context.Con
 // GetConfiguredUserStorageCredentialTypesCalls gets all the calls that were made to GetConfiguredUserStorageCredentialTypes.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetConfiguredUserStorageCredentialTypesCalls())
-func (mock *GoCloakMock) GetConfiguredUserStorageCredentialTypesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetConfiguredUserStorageCredentialTypesCalls())
+func (mock *goCloakClientInterfaceMock) GetConfiguredUserStorageCredentialTypesCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -10375,9 +10375,9 @@ func (mock *GoCloakMock) GetConfiguredUserStorageCredentialTypesCalls() []struct
 }
 
 // GetCredentialRegistrators calls GetCredentialRegistratorsFunc.
-func (mock *GoCloakMock) GetCredentialRegistrators(ctx context.Context, token string, realm string) ([]string, error) {
+func (mock *goCloakClientInterfaceMock) GetCredentialRegistrators(ctx context.Context, token string, realm string) ([]string, error) {
 	if mock.GetCredentialRegistratorsFunc == nil {
-		panic("GoCloakMock.GetCredentialRegistratorsFunc: method is nil but GoCloak.GetCredentialRegistrators was just called")
+		panic("goCloakClientInterfaceMock.GetCredentialRegistratorsFunc: method is nil but goCloakClientInterface.GetCredentialRegistrators was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -10397,8 +10397,8 @@ func (mock *GoCloakMock) GetCredentialRegistrators(ctx context.Context, token st
 // GetCredentialRegistratorsCalls gets all the calls that were made to GetCredentialRegistrators.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetCredentialRegistratorsCalls())
-func (mock *GoCloakMock) GetCredentialRegistratorsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetCredentialRegistratorsCalls())
+func (mock *goCloakClientInterfaceMock) GetCredentialRegistratorsCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -10415,9 +10415,9 @@ func (mock *GoCloakMock) GetCredentialRegistratorsCalls() []struct {
 }
 
 // GetCredentials calls GetCredentialsFunc.
-func (mock *GoCloakMock) GetCredentials(ctx context.Context, token string, realm string, UserID string) ([]*gocloak.CredentialRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetCredentials(ctx context.Context, token string, realm string, UserID string) ([]*gocloak.CredentialRepresentation, error) {
 	if mock.GetCredentialsFunc == nil {
-		panic("GoCloakMock.GetCredentialsFunc: method is nil but GoCloak.GetCredentials was just called")
+		panic("goCloakClientInterfaceMock.GetCredentialsFunc: method is nil but goCloakClientInterface.GetCredentials was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -10439,8 +10439,8 @@ func (mock *GoCloakMock) GetCredentials(ctx context.Context, token string, realm
 // GetCredentialsCalls gets all the calls that were made to GetCredentials.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetCredentialsCalls())
-func (mock *GoCloakMock) GetCredentialsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetCredentialsCalls())
+func (mock *goCloakClientInterfaceMock) GetCredentialsCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -10459,9 +10459,9 @@ func (mock *GoCloakMock) GetCredentialsCalls() []struct {
 }
 
 // GetDefaultDefaultClientScopes calls GetDefaultDefaultClientScopesFunc.
-func (mock *GoCloakMock) GetDefaultDefaultClientScopes(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
+func (mock *goCloakClientInterfaceMock) GetDefaultDefaultClientScopes(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
 	if mock.GetDefaultDefaultClientScopesFunc == nil {
-		panic("GoCloakMock.GetDefaultDefaultClientScopesFunc: method is nil but GoCloak.GetDefaultDefaultClientScopes was just called")
+		panic("goCloakClientInterfaceMock.GetDefaultDefaultClientScopesFunc: method is nil but goCloakClientInterface.GetDefaultDefaultClientScopes was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -10481,8 +10481,8 @@ func (mock *GoCloakMock) GetDefaultDefaultClientScopes(ctx context.Context, toke
 // GetDefaultDefaultClientScopesCalls gets all the calls that were made to GetDefaultDefaultClientScopes.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetDefaultDefaultClientScopesCalls())
-func (mock *GoCloakMock) GetDefaultDefaultClientScopesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetDefaultDefaultClientScopesCalls())
+func (mock *goCloakClientInterfaceMock) GetDefaultDefaultClientScopesCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -10499,9 +10499,9 @@ func (mock *GoCloakMock) GetDefaultDefaultClientScopesCalls() []struct {
 }
 
 // GetDefaultGroups calls GetDefaultGroupsFunc.
-func (mock *GoCloakMock) GetDefaultGroups(ctx context.Context, accessToken string, realm string) ([]*gocloak.Group, error) {
+func (mock *goCloakClientInterfaceMock) GetDefaultGroups(ctx context.Context, accessToken string, realm string) ([]*gocloak.Group, error) {
 	if mock.GetDefaultGroupsFunc == nil {
-		panic("GoCloakMock.GetDefaultGroupsFunc: method is nil but GoCloak.GetDefaultGroups was just called")
+		panic("goCloakClientInterfaceMock.GetDefaultGroupsFunc: method is nil but goCloakClientInterface.GetDefaultGroups was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -10521,8 +10521,8 @@ func (mock *GoCloakMock) GetDefaultGroups(ctx context.Context, accessToken strin
 // GetDefaultGroupsCalls gets all the calls that were made to GetDefaultGroups.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetDefaultGroupsCalls())
-func (mock *GoCloakMock) GetDefaultGroupsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetDefaultGroupsCalls())
+func (mock *goCloakClientInterfaceMock) GetDefaultGroupsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -10539,9 +10539,9 @@ func (mock *GoCloakMock) GetDefaultGroupsCalls() []struct {
 }
 
 // GetDefaultOptionalClientScopes calls GetDefaultOptionalClientScopesFunc.
-func (mock *GoCloakMock) GetDefaultOptionalClientScopes(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
+func (mock *goCloakClientInterfaceMock) GetDefaultOptionalClientScopes(ctx context.Context, token string, realm string) ([]*gocloak.ClientScope, error) {
 	if mock.GetDefaultOptionalClientScopesFunc == nil {
-		panic("GoCloakMock.GetDefaultOptionalClientScopesFunc: method is nil but GoCloak.GetDefaultOptionalClientScopes was just called")
+		panic("goCloakClientInterfaceMock.GetDefaultOptionalClientScopesFunc: method is nil but goCloakClientInterface.GetDefaultOptionalClientScopes was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -10561,8 +10561,8 @@ func (mock *GoCloakMock) GetDefaultOptionalClientScopes(ctx context.Context, tok
 // GetDefaultOptionalClientScopesCalls gets all the calls that were made to GetDefaultOptionalClientScopes.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetDefaultOptionalClientScopesCalls())
-func (mock *GoCloakMock) GetDefaultOptionalClientScopesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetDefaultOptionalClientScopesCalls())
+func (mock *goCloakClientInterfaceMock) GetDefaultOptionalClientScopesCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -10579,9 +10579,9 @@ func (mock *GoCloakMock) GetDefaultOptionalClientScopesCalls() []struct {
 }
 
 // GetDependentPermissions calls GetDependentPermissionsFunc.
-func (mock *GoCloakMock) GetDependentPermissions(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PermissionRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetDependentPermissions(ctx context.Context, token string, realm string, idOfClient string, policyID string) ([]*gocloak.PermissionRepresentation, error) {
 	if mock.GetDependentPermissionsFunc == nil {
-		panic("GoCloakMock.GetDependentPermissionsFunc: method is nil but GoCloak.GetDependentPermissions was just called")
+		panic("goCloakClientInterfaceMock.GetDependentPermissionsFunc: method is nil but goCloakClientInterface.GetDependentPermissions was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -10605,8 +10605,8 @@ func (mock *GoCloakMock) GetDependentPermissions(ctx context.Context, token stri
 // GetDependentPermissionsCalls gets all the calls that were made to GetDependentPermissions.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetDependentPermissionsCalls())
-func (mock *GoCloakMock) GetDependentPermissionsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetDependentPermissionsCalls())
+func (mock *goCloakClientInterfaceMock) GetDependentPermissionsCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -10627,9 +10627,9 @@ func (mock *GoCloakMock) GetDependentPermissionsCalls() []struct {
 }
 
 // GetEvents calls GetEventsFunc.
-func (mock *GoCloakMock) GetEvents(ctx context.Context, token string, realm string, params gocloak.GetEventsParams) ([]*gocloak.EventRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetEvents(ctx context.Context, token string, realm string, params gocloak.GetEventsParams) ([]*gocloak.EventRepresentation, error) {
 	if mock.GetEventsFunc == nil {
-		panic("GoCloakMock.GetEventsFunc: method is nil but GoCloak.GetEvents was just called")
+		panic("goCloakClientInterfaceMock.GetEventsFunc: method is nil but goCloakClientInterface.GetEvents was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -10651,8 +10651,8 @@ func (mock *GoCloakMock) GetEvents(ctx context.Context, token string, realm stri
 // GetEventsCalls gets all the calls that were made to GetEvents.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetEventsCalls())
-func (mock *GoCloakMock) GetEventsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetEventsCalls())
+func (mock *goCloakClientInterfaceMock) GetEventsCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -10671,9 +10671,9 @@ func (mock *GoCloakMock) GetEventsCalls() []struct {
 }
 
 // GetGroup calls GetGroupFunc.
-func (mock *GoCloakMock) GetGroup(ctx context.Context, accessToken string, realm string, groupID string) (*gocloak.Group, error) {
+func (mock *goCloakClientInterfaceMock) GetGroup(ctx context.Context, accessToken string, realm string, groupID string) (*gocloak.Group, error) {
 	if mock.GetGroupFunc == nil {
-		panic("GoCloakMock.GetGroupFunc: method is nil but GoCloak.GetGroup was just called")
+		panic("goCloakClientInterfaceMock.GetGroupFunc: method is nil but goCloakClientInterface.GetGroup was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -10695,8 +10695,8 @@ func (mock *GoCloakMock) GetGroup(ctx context.Context, accessToken string, realm
 // GetGroupCalls gets all the calls that were made to GetGroup.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetGroupCalls())
-func (mock *GoCloakMock) GetGroupCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetGroupCalls())
+func (mock *goCloakClientInterfaceMock) GetGroupCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -10715,9 +10715,9 @@ func (mock *GoCloakMock) GetGroupCalls() []struct {
 }
 
 // GetGroupMembers calls GetGroupMembersFunc.
-func (mock *GoCloakMock) GetGroupMembers(ctx context.Context, accessToken string, realm string, groupID string, params gocloak.GetGroupsParams) ([]*gocloak.User, error) {
+func (mock *goCloakClientInterfaceMock) GetGroupMembers(ctx context.Context, accessToken string, realm string, groupID string, params gocloak.GetGroupsParams) ([]*gocloak.User, error) {
 	if mock.GetGroupMembersFunc == nil {
-		panic("GoCloakMock.GetGroupMembersFunc: method is nil but GoCloak.GetGroupMembers was just called")
+		panic("goCloakClientInterfaceMock.GetGroupMembersFunc: method is nil but goCloakClientInterface.GetGroupMembers was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -10741,8 +10741,8 @@ func (mock *GoCloakMock) GetGroupMembers(ctx context.Context, accessToken string
 // GetGroupMembersCalls gets all the calls that were made to GetGroupMembers.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetGroupMembersCalls())
-func (mock *GoCloakMock) GetGroupMembersCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetGroupMembersCalls())
+func (mock *goCloakClientInterfaceMock) GetGroupMembersCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -10763,9 +10763,9 @@ func (mock *GoCloakMock) GetGroupMembersCalls() []struct {
 }
 
 // GetGroups calls GetGroupsFunc.
-func (mock *GoCloakMock) GetGroups(ctx context.Context, accessToken string, realm string, params gocloak.GetGroupsParams) ([]*gocloak.Group, error) {
+func (mock *goCloakClientInterfaceMock) GetGroups(ctx context.Context, accessToken string, realm string, params gocloak.GetGroupsParams) ([]*gocloak.Group, error) {
 	if mock.GetGroupsFunc == nil {
-		panic("GoCloakMock.GetGroupsFunc: method is nil but GoCloak.GetGroups was just called")
+		panic("goCloakClientInterfaceMock.GetGroupsFunc: method is nil but goCloakClientInterface.GetGroups was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -10787,8 +10787,8 @@ func (mock *GoCloakMock) GetGroups(ctx context.Context, accessToken string, real
 // GetGroupsCalls gets all the calls that were made to GetGroups.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetGroupsCalls())
-func (mock *GoCloakMock) GetGroupsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetGroupsCalls())
+func (mock *goCloakClientInterfaceMock) GetGroupsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -10807,9 +10807,9 @@ func (mock *GoCloakMock) GetGroupsCalls() []struct {
 }
 
 // GetGroupsByRole calls GetGroupsByRoleFunc.
-func (mock *GoCloakMock) GetGroupsByRole(ctx context.Context, accessToken string, realm string, roleName string) ([]*gocloak.Group, error) {
+func (mock *goCloakClientInterfaceMock) GetGroupsByRole(ctx context.Context, accessToken string, realm string, roleName string) ([]*gocloak.Group, error) {
 	if mock.GetGroupsByRoleFunc == nil {
-		panic("GoCloakMock.GetGroupsByRoleFunc: method is nil but GoCloak.GetGroupsByRole was just called")
+		panic("goCloakClientInterfaceMock.GetGroupsByRoleFunc: method is nil but goCloakClientInterface.GetGroupsByRole was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -10831,8 +10831,8 @@ func (mock *GoCloakMock) GetGroupsByRole(ctx context.Context, accessToken string
 // GetGroupsByRoleCalls gets all the calls that were made to GetGroupsByRole.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetGroupsByRoleCalls())
-func (mock *GoCloakMock) GetGroupsByRoleCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetGroupsByRoleCalls())
+func (mock *goCloakClientInterfaceMock) GetGroupsByRoleCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -10851,9 +10851,9 @@ func (mock *GoCloakMock) GetGroupsByRoleCalls() []struct {
 }
 
 // GetGroupsCount calls GetGroupsCountFunc.
-func (mock *GoCloakMock) GetGroupsCount(ctx context.Context, token string, realm string, params gocloak.GetGroupsParams) (int, error) {
+func (mock *goCloakClientInterfaceMock) GetGroupsCount(ctx context.Context, token string, realm string, params gocloak.GetGroupsParams) (int, error) {
 	if mock.GetGroupsCountFunc == nil {
-		panic("GoCloakMock.GetGroupsCountFunc: method is nil but GoCloak.GetGroupsCount was just called")
+		panic("goCloakClientInterfaceMock.GetGroupsCountFunc: method is nil but goCloakClientInterface.GetGroupsCount was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -10875,8 +10875,8 @@ func (mock *GoCloakMock) GetGroupsCount(ctx context.Context, token string, realm
 // GetGroupsCountCalls gets all the calls that were made to GetGroupsCount.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetGroupsCountCalls())
-func (mock *GoCloakMock) GetGroupsCountCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetGroupsCountCalls())
+func (mock *goCloakClientInterfaceMock) GetGroupsCountCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -10895,9 +10895,9 @@ func (mock *GoCloakMock) GetGroupsCountCalls() []struct {
 }
 
 // GetIdentityProvider calls GetIdentityProviderFunc.
-func (mock *GoCloakMock) GetIdentityProvider(ctx context.Context, token string, realm string, alias string) (*gocloak.IdentityProviderRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetIdentityProvider(ctx context.Context, token string, realm string, alias string) (*gocloak.IdentityProviderRepresentation, error) {
 	if mock.GetIdentityProviderFunc == nil {
-		panic("GoCloakMock.GetIdentityProviderFunc: method is nil but GoCloak.GetIdentityProvider was just called")
+		panic("goCloakClientInterfaceMock.GetIdentityProviderFunc: method is nil but goCloakClientInterface.GetIdentityProvider was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -10919,8 +10919,8 @@ func (mock *GoCloakMock) GetIdentityProvider(ctx context.Context, token string, 
 // GetIdentityProviderCalls gets all the calls that were made to GetIdentityProvider.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetIdentityProviderCalls())
-func (mock *GoCloakMock) GetIdentityProviderCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetIdentityProviderCalls())
+func (mock *goCloakClientInterfaceMock) GetIdentityProviderCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -10939,9 +10939,9 @@ func (mock *GoCloakMock) GetIdentityProviderCalls() []struct {
 }
 
 // GetIdentityProviderMapperByID calls GetIdentityProviderMapperByIDFunc.
-func (mock *GoCloakMock) GetIdentityProviderMapperByID(ctx context.Context, token string, realm string, alias string, mapperID string) (*gocloak.IdentityProviderMapper, error) {
+func (mock *goCloakClientInterfaceMock) GetIdentityProviderMapperByID(ctx context.Context, token string, realm string, alias string, mapperID string) (*gocloak.IdentityProviderMapper, error) {
 	if mock.GetIdentityProviderMapperByIDFunc == nil {
-		panic("GoCloakMock.GetIdentityProviderMapperByIDFunc: method is nil but GoCloak.GetIdentityProviderMapperByID was just called")
+		panic("goCloakClientInterfaceMock.GetIdentityProviderMapperByIDFunc: method is nil but goCloakClientInterface.GetIdentityProviderMapperByID was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -10965,8 +10965,8 @@ func (mock *GoCloakMock) GetIdentityProviderMapperByID(ctx context.Context, toke
 // GetIdentityProviderMapperByIDCalls gets all the calls that were made to GetIdentityProviderMapperByID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetIdentityProviderMapperByIDCalls())
-func (mock *GoCloakMock) GetIdentityProviderMapperByIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetIdentityProviderMapperByIDCalls())
+func (mock *goCloakClientInterfaceMock) GetIdentityProviderMapperByIDCalls() []struct {
 	Ctx      context.Context
 	Token    string
 	Realm    string
@@ -10987,9 +10987,9 @@ func (mock *GoCloakMock) GetIdentityProviderMapperByIDCalls() []struct {
 }
 
 // GetIdentityProviderMappers calls GetIdentityProviderMappersFunc.
-func (mock *GoCloakMock) GetIdentityProviderMappers(ctx context.Context, token string, realm string, alias string) ([]*gocloak.IdentityProviderMapper, error) {
+func (mock *goCloakClientInterfaceMock) GetIdentityProviderMappers(ctx context.Context, token string, realm string, alias string) ([]*gocloak.IdentityProviderMapper, error) {
 	if mock.GetIdentityProviderMappersFunc == nil {
-		panic("GoCloakMock.GetIdentityProviderMappersFunc: method is nil but GoCloak.GetIdentityProviderMappers was just called")
+		panic("goCloakClientInterfaceMock.GetIdentityProviderMappersFunc: method is nil but goCloakClientInterface.GetIdentityProviderMappers was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -11011,8 +11011,8 @@ func (mock *GoCloakMock) GetIdentityProviderMappers(ctx context.Context, token s
 // GetIdentityProviderMappersCalls gets all the calls that were made to GetIdentityProviderMappers.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetIdentityProviderMappersCalls())
-func (mock *GoCloakMock) GetIdentityProviderMappersCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetIdentityProviderMappersCalls())
+func (mock *goCloakClientInterfaceMock) GetIdentityProviderMappersCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -11031,9 +11031,9 @@ func (mock *GoCloakMock) GetIdentityProviderMappersCalls() []struct {
 }
 
 // GetIdentityProviders calls GetIdentityProvidersFunc.
-func (mock *GoCloakMock) GetIdentityProviders(ctx context.Context, token string, realm string) ([]*gocloak.IdentityProviderRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetIdentityProviders(ctx context.Context, token string, realm string) ([]*gocloak.IdentityProviderRepresentation, error) {
 	if mock.GetIdentityProvidersFunc == nil {
-		panic("GoCloakMock.GetIdentityProvidersFunc: method is nil but GoCloak.GetIdentityProviders was just called")
+		panic("goCloakClientInterfaceMock.GetIdentityProvidersFunc: method is nil but goCloakClientInterface.GetIdentityProviders was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -11053,8 +11053,8 @@ func (mock *GoCloakMock) GetIdentityProviders(ctx context.Context, token string,
 // GetIdentityProvidersCalls gets all the calls that were made to GetIdentityProviders.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetIdentityProvidersCalls())
-func (mock *GoCloakMock) GetIdentityProvidersCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetIdentityProvidersCalls())
+func (mock *goCloakClientInterfaceMock) GetIdentityProvidersCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -11071,9 +11071,9 @@ func (mock *GoCloakMock) GetIdentityProvidersCalls() []struct {
 }
 
 // GetIssuer calls GetIssuerFunc.
-func (mock *GoCloakMock) GetIssuer(ctx context.Context, realm string) (*gocloak.IssuerResponse, error) {
+func (mock *goCloakClientInterfaceMock) GetIssuer(ctx context.Context, realm string) (*gocloak.IssuerResponse, error) {
 	if mock.GetIssuerFunc == nil {
-		panic("GoCloakMock.GetIssuerFunc: method is nil but GoCloak.GetIssuer was just called")
+		panic("goCloakClientInterfaceMock.GetIssuerFunc: method is nil but goCloakClientInterface.GetIssuer was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -11091,8 +11091,8 @@ func (mock *GoCloakMock) GetIssuer(ctx context.Context, realm string) (*gocloak.
 // GetIssuerCalls gets all the calls that were made to GetIssuer.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetIssuerCalls())
-func (mock *GoCloakMock) GetIssuerCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetIssuerCalls())
+func (mock *goCloakClientInterfaceMock) GetIssuerCalls() []struct {
 	Ctx   context.Context
 	Realm string
 } {
@@ -11107,9 +11107,9 @@ func (mock *GoCloakMock) GetIssuerCalls() []struct {
 }
 
 // GetKeyStoreConfig calls GetKeyStoreConfigFunc.
-func (mock *GoCloakMock) GetKeyStoreConfig(ctx context.Context, accessToken string, realm string) (*gocloak.KeyStoreConfig, error) {
+func (mock *goCloakClientInterfaceMock) GetKeyStoreConfig(ctx context.Context, accessToken string, realm string) (*gocloak.KeyStoreConfig, error) {
 	if mock.GetKeyStoreConfigFunc == nil {
-		panic("GoCloakMock.GetKeyStoreConfigFunc: method is nil but GoCloak.GetKeyStoreConfig was just called")
+		panic("goCloakClientInterfaceMock.GetKeyStoreConfigFunc: method is nil but goCloakClientInterface.GetKeyStoreConfig was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -11129,8 +11129,8 @@ func (mock *GoCloakMock) GetKeyStoreConfig(ctx context.Context, accessToken stri
 // GetKeyStoreConfigCalls gets all the calls that were made to GetKeyStoreConfig.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetKeyStoreConfigCalls())
-func (mock *GoCloakMock) GetKeyStoreConfigCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetKeyStoreConfigCalls())
+func (mock *goCloakClientInterfaceMock) GetKeyStoreConfigCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -11147,9 +11147,9 @@ func (mock *GoCloakMock) GetKeyStoreConfigCalls() []struct {
 }
 
 // GetPermission calls GetPermissionFunc.
-func (mock *GoCloakMock) GetPermission(ctx context.Context, token string, realm string, idOfClient string, permissionID string) (*gocloak.PermissionRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetPermission(ctx context.Context, token string, realm string, idOfClient string, permissionID string) (*gocloak.PermissionRepresentation, error) {
 	if mock.GetPermissionFunc == nil {
-		panic("GoCloakMock.GetPermissionFunc: method is nil but GoCloak.GetPermission was just called")
+		panic("goCloakClientInterfaceMock.GetPermissionFunc: method is nil but goCloakClientInterface.GetPermission was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -11173,8 +11173,8 @@ func (mock *GoCloakMock) GetPermission(ctx context.Context, token string, realm 
 // GetPermissionCalls gets all the calls that were made to GetPermission.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetPermissionCalls())
-func (mock *GoCloakMock) GetPermissionCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetPermissionCalls())
+func (mock *goCloakClientInterfaceMock) GetPermissionCalls() []struct {
 	Ctx          context.Context
 	Token        string
 	Realm        string
@@ -11195,9 +11195,9 @@ func (mock *GoCloakMock) GetPermissionCalls() []struct {
 }
 
 // GetPermissionResources calls GetPermissionResourcesFunc.
-func (mock *GoCloakMock) GetPermissionResources(ctx context.Context, token string, realm string, idOfClient string, permissionID string) ([]*gocloak.PermissionResource, error) {
+func (mock *goCloakClientInterfaceMock) GetPermissionResources(ctx context.Context, token string, realm string, idOfClient string, permissionID string) ([]*gocloak.PermissionResource, error) {
 	if mock.GetPermissionResourcesFunc == nil {
-		panic("GoCloakMock.GetPermissionResourcesFunc: method is nil but GoCloak.GetPermissionResources was just called")
+		panic("goCloakClientInterfaceMock.GetPermissionResourcesFunc: method is nil but goCloakClientInterface.GetPermissionResources was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -11221,8 +11221,8 @@ func (mock *GoCloakMock) GetPermissionResources(ctx context.Context, token strin
 // GetPermissionResourcesCalls gets all the calls that were made to GetPermissionResources.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetPermissionResourcesCalls())
-func (mock *GoCloakMock) GetPermissionResourcesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetPermissionResourcesCalls())
+func (mock *goCloakClientInterfaceMock) GetPermissionResourcesCalls() []struct {
 	Ctx          context.Context
 	Token        string
 	Realm        string
@@ -11243,9 +11243,9 @@ func (mock *GoCloakMock) GetPermissionResourcesCalls() []struct {
 }
 
 // GetPermissionScopes calls GetPermissionScopesFunc.
-func (mock *GoCloakMock) GetPermissionScopes(ctx context.Context, token string, realm string, idOfClient string, permissionID string) ([]*gocloak.PermissionScope, error) {
+func (mock *goCloakClientInterfaceMock) GetPermissionScopes(ctx context.Context, token string, realm string, idOfClient string, permissionID string) ([]*gocloak.PermissionScope, error) {
 	if mock.GetPermissionScopesFunc == nil {
-		panic("GoCloakMock.GetPermissionScopesFunc: method is nil but GoCloak.GetPermissionScopes was just called")
+		panic("goCloakClientInterfaceMock.GetPermissionScopesFunc: method is nil but goCloakClientInterface.GetPermissionScopes was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -11269,8 +11269,8 @@ func (mock *GoCloakMock) GetPermissionScopes(ctx context.Context, token string, 
 // GetPermissionScopesCalls gets all the calls that were made to GetPermissionScopes.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetPermissionScopesCalls())
-func (mock *GoCloakMock) GetPermissionScopesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetPermissionScopesCalls())
+func (mock *goCloakClientInterfaceMock) GetPermissionScopesCalls() []struct {
 	Ctx          context.Context
 	Token        string
 	Realm        string
@@ -11291,9 +11291,9 @@ func (mock *GoCloakMock) GetPermissionScopesCalls() []struct {
 }
 
 // GetPermissions calls GetPermissionsFunc.
-func (mock *GoCloakMock) GetPermissions(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetPermissionParams) ([]*gocloak.PermissionRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetPermissions(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetPermissionParams) ([]*gocloak.PermissionRepresentation, error) {
 	if mock.GetPermissionsFunc == nil {
-		panic("GoCloakMock.GetPermissionsFunc: method is nil but GoCloak.GetPermissions was just called")
+		panic("goCloakClientInterfaceMock.GetPermissionsFunc: method is nil but goCloakClientInterface.GetPermissions was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -11317,8 +11317,8 @@ func (mock *GoCloakMock) GetPermissions(ctx context.Context, token string, realm
 // GetPermissionsCalls gets all the calls that were made to GetPermissions.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetPermissionsCalls())
-func (mock *GoCloakMock) GetPermissionsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetPermissionsCalls())
+func (mock *goCloakClientInterfaceMock) GetPermissionsCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -11339,9 +11339,9 @@ func (mock *GoCloakMock) GetPermissionsCalls() []struct {
 }
 
 // GetPolicies calls GetPoliciesFunc.
-func (mock *GoCloakMock) GetPolicies(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetPolicyParams) ([]*gocloak.PolicyRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetPolicies(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetPolicyParams) ([]*gocloak.PolicyRepresentation, error) {
 	if mock.GetPoliciesFunc == nil {
-		panic("GoCloakMock.GetPoliciesFunc: method is nil but GoCloak.GetPolicies was just called")
+		panic("goCloakClientInterfaceMock.GetPoliciesFunc: method is nil but goCloakClientInterface.GetPolicies was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -11365,8 +11365,8 @@ func (mock *GoCloakMock) GetPolicies(ctx context.Context, token string, realm st
 // GetPoliciesCalls gets all the calls that were made to GetPolicies.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetPoliciesCalls())
-func (mock *GoCloakMock) GetPoliciesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetPoliciesCalls())
+func (mock *goCloakClientInterfaceMock) GetPoliciesCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -11387,9 +11387,9 @@ func (mock *GoCloakMock) GetPoliciesCalls() []struct {
 }
 
 // GetPolicy calls GetPolicyFunc.
-func (mock *GoCloakMock) GetPolicy(ctx context.Context, token string, realm string, idOfClient string, policyID string) (*gocloak.PolicyRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetPolicy(ctx context.Context, token string, realm string, idOfClient string, policyID string) (*gocloak.PolicyRepresentation, error) {
 	if mock.GetPolicyFunc == nil {
-		panic("GoCloakMock.GetPolicyFunc: method is nil but GoCloak.GetPolicy was just called")
+		panic("goCloakClientInterfaceMock.GetPolicyFunc: method is nil but goCloakClientInterface.GetPolicy was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -11413,8 +11413,8 @@ func (mock *GoCloakMock) GetPolicy(ctx context.Context, token string, realm stri
 // GetPolicyCalls gets all the calls that were made to GetPolicy.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetPolicyCalls())
-func (mock *GoCloakMock) GetPolicyCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetPolicyCalls())
+func (mock *goCloakClientInterfaceMock) GetPolicyCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -11435,9 +11435,9 @@ func (mock *GoCloakMock) GetPolicyCalls() []struct {
 }
 
 // GetRawUserInfo calls GetRawUserInfoFunc.
-func (mock *GoCloakMock) GetRawUserInfo(ctx context.Context, accessToken string, realm string) (map[string]interface{}, error) {
+func (mock *goCloakClientInterfaceMock) GetRawUserInfo(ctx context.Context, accessToken string, realm string) (map[string]interface{}, error) {
 	if mock.GetRawUserInfoFunc == nil {
-		panic("GoCloakMock.GetRawUserInfoFunc: method is nil but GoCloak.GetRawUserInfo was just called")
+		panic("goCloakClientInterfaceMock.GetRawUserInfoFunc: method is nil but goCloakClientInterface.GetRawUserInfo was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -11457,8 +11457,8 @@ func (mock *GoCloakMock) GetRawUserInfo(ctx context.Context, accessToken string,
 // GetRawUserInfoCalls gets all the calls that were made to GetRawUserInfo.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetRawUserInfoCalls())
-func (mock *GoCloakMock) GetRawUserInfoCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetRawUserInfoCalls())
+func (mock *goCloakClientInterfaceMock) GetRawUserInfoCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -11475,9 +11475,9 @@ func (mock *GoCloakMock) GetRawUserInfoCalls() []struct {
 }
 
 // GetRealm calls GetRealmFunc.
-func (mock *GoCloakMock) GetRealm(ctx context.Context, token string, realm string) (*gocloak.RealmRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetRealm(ctx context.Context, token string, realm string) (*gocloak.RealmRepresentation, error) {
 	if mock.GetRealmFunc == nil {
-		panic("GoCloakMock.GetRealmFunc: method is nil but GoCloak.GetRealm was just called")
+		panic("goCloakClientInterfaceMock.GetRealmFunc: method is nil but goCloakClientInterface.GetRealm was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -11497,8 +11497,8 @@ func (mock *GoCloakMock) GetRealm(ctx context.Context, token string, realm strin
 // GetRealmCalls gets all the calls that were made to GetRealm.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetRealmCalls())
-func (mock *GoCloakMock) GetRealmCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetRealmCalls())
+func (mock *goCloakClientInterfaceMock) GetRealmCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm string
@@ -11515,9 +11515,9 @@ func (mock *GoCloakMock) GetRealmCalls() []struct {
 }
 
 // GetRealmRole calls GetRealmRoleFunc.
-func (mock *GoCloakMock) GetRealmRole(ctx context.Context, token string, realm string, roleName string) (*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetRealmRole(ctx context.Context, token string, realm string, roleName string) (*gocloak.Role, error) {
 	if mock.GetRealmRoleFunc == nil {
-		panic("GoCloakMock.GetRealmRoleFunc: method is nil but GoCloak.GetRealmRole was just called")
+		panic("goCloakClientInterfaceMock.GetRealmRoleFunc: method is nil but goCloakClientInterface.GetRealmRole was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -11539,8 +11539,8 @@ func (mock *GoCloakMock) GetRealmRole(ctx context.Context, token string, realm s
 // GetRealmRoleCalls gets all the calls that were made to GetRealmRole.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetRealmRoleCalls())
-func (mock *GoCloakMock) GetRealmRoleCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetRealmRoleCalls())
+func (mock *goCloakClientInterfaceMock) GetRealmRoleCalls() []struct {
 	Ctx      context.Context
 	Token    string
 	Realm    string
@@ -11559,9 +11559,9 @@ func (mock *GoCloakMock) GetRealmRoleCalls() []struct {
 }
 
 // GetRealmRoleByID calls GetRealmRoleByIDFunc.
-func (mock *GoCloakMock) GetRealmRoleByID(ctx context.Context, token string, realm string, roleID string) (*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetRealmRoleByID(ctx context.Context, token string, realm string, roleID string) (*gocloak.Role, error) {
 	if mock.GetRealmRoleByIDFunc == nil {
-		panic("GoCloakMock.GetRealmRoleByIDFunc: method is nil but GoCloak.GetRealmRoleByID was just called")
+		panic("goCloakClientInterfaceMock.GetRealmRoleByIDFunc: method is nil but goCloakClientInterface.GetRealmRoleByID was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -11583,8 +11583,8 @@ func (mock *GoCloakMock) GetRealmRoleByID(ctx context.Context, token string, rea
 // GetRealmRoleByIDCalls gets all the calls that were made to GetRealmRoleByID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetRealmRoleByIDCalls())
-func (mock *GoCloakMock) GetRealmRoleByIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetRealmRoleByIDCalls())
+func (mock *goCloakClientInterfaceMock) GetRealmRoleByIDCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -11603,9 +11603,9 @@ func (mock *GoCloakMock) GetRealmRoleByIDCalls() []struct {
 }
 
 // GetRealmRoles calls GetRealmRolesFunc.
-func (mock *GoCloakMock) GetRealmRoles(ctx context.Context, accessToken string, realm string, params gocloak.GetRoleParams) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetRealmRoles(ctx context.Context, accessToken string, realm string, params gocloak.GetRoleParams) ([]*gocloak.Role, error) {
 	if mock.GetRealmRolesFunc == nil {
-		panic("GoCloakMock.GetRealmRolesFunc: method is nil but GoCloak.GetRealmRoles was just called")
+		panic("goCloakClientInterfaceMock.GetRealmRolesFunc: method is nil but goCloakClientInterface.GetRealmRoles was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -11627,8 +11627,8 @@ func (mock *GoCloakMock) GetRealmRoles(ctx context.Context, accessToken string, 
 // GetRealmRolesCalls gets all the calls that were made to GetRealmRoles.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetRealmRolesCalls())
-func (mock *GoCloakMock) GetRealmRolesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetRealmRolesCalls())
+func (mock *goCloakClientInterfaceMock) GetRealmRolesCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -11647,9 +11647,9 @@ func (mock *GoCloakMock) GetRealmRolesCalls() []struct {
 }
 
 // GetRealmRolesByGroupID calls GetRealmRolesByGroupIDFunc.
-func (mock *GoCloakMock) GetRealmRolesByGroupID(ctx context.Context, accessToken string, realm string, groupID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetRealmRolesByGroupID(ctx context.Context, accessToken string, realm string, groupID string) ([]*gocloak.Role, error) {
 	if mock.GetRealmRolesByGroupIDFunc == nil {
-		panic("GoCloakMock.GetRealmRolesByGroupIDFunc: method is nil but GoCloak.GetRealmRolesByGroupID was just called")
+		panic("goCloakClientInterfaceMock.GetRealmRolesByGroupIDFunc: method is nil but goCloakClientInterface.GetRealmRolesByGroupID was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -11671,8 +11671,8 @@ func (mock *GoCloakMock) GetRealmRolesByGroupID(ctx context.Context, accessToken
 // GetRealmRolesByGroupIDCalls gets all the calls that were made to GetRealmRolesByGroupID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetRealmRolesByGroupIDCalls())
-func (mock *GoCloakMock) GetRealmRolesByGroupIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetRealmRolesByGroupIDCalls())
+func (mock *goCloakClientInterfaceMock) GetRealmRolesByGroupIDCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -11691,9 +11691,9 @@ func (mock *GoCloakMock) GetRealmRolesByGroupIDCalls() []struct {
 }
 
 // GetRealmRolesByUserID calls GetRealmRolesByUserIDFunc.
-func (mock *GoCloakMock) GetRealmRolesByUserID(ctx context.Context, accessToken string, realm string, userID string) ([]*gocloak.Role, error) {
+func (mock *goCloakClientInterfaceMock) GetRealmRolesByUserID(ctx context.Context, accessToken string, realm string, userID string) ([]*gocloak.Role, error) {
 	if mock.GetRealmRolesByUserIDFunc == nil {
-		panic("GoCloakMock.GetRealmRolesByUserIDFunc: method is nil but GoCloak.GetRealmRolesByUserID was just called")
+		panic("goCloakClientInterfaceMock.GetRealmRolesByUserIDFunc: method is nil but goCloakClientInterface.GetRealmRolesByUserID was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -11715,8 +11715,8 @@ func (mock *GoCloakMock) GetRealmRolesByUserID(ctx context.Context, accessToken 
 // GetRealmRolesByUserIDCalls gets all the calls that were made to GetRealmRolesByUserID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetRealmRolesByUserIDCalls())
-func (mock *GoCloakMock) GetRealmRolesByUserIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetRealmRolesByUserIDCalls())
+func (mock *goCloakClientInterfaceMock) GetRealmRolesByUserIDCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -11735,9 +11735,9 @@ func (mock *GoCloakMock) GetRealmRolesByUserIDCalls() []struct {
 }
 
 // GetRealms calls GetRealmsFunc.
-func (mock *GoCloakMock) GetRealms(ctx context.Context, token string) ([]*gocloak.RealmRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetRealms(ctx context.Context, token string) ([]*gocloak.RealmRepresentation, error) {
 	if mock.GetRealmsFunc == nil {
-		panic("GoCloakMock.GetRealmsFunc: method is nil but GoCloak.GetRealms was just called")
+		panic("goCloakClientInterfaceMock.GetRealmsFunc: method is nil but goCloakClientInterface.GetRealms was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -11755,8 +11755,8 @@ func (mock *GoCloakMock) GetRealms(ctx context.Context, token string) ([]*gocloa
 // GetRealmsCalls gets all the calls that were made to GetRealms.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetRealmsCalls())
-func (mock *GoCloakMock) GetRealmsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetRealmsCalls())
+func (mock *goCloakClientInterfaceMock) GetRealmsCalls() []struct {
 	Ctx   context.Context
 	Token string
 } {
@@ -11771,9 +11771,9 @@ func (mock *GoCloakMock) GetRealmsCalls() []struct {
 }
 
 // GetRequestingPartyPermissionDecision calls GetRequestingPartyPermissionDecisionFunc.
-func (mock *GoCloakMock) GetRequestingPartyPermissionDecision(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*gocloak.RequestingPartyPermissionDecision, error) {
+func (mock *goCloakClientInterfaceMock) GetRequestingPartyPermissionDecision(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*gocloak.RequestingPartyPermissionDecision, error) {
 	if mock.GetRequestingPartyPermissionDecisionFunc == nil {
-		panic("GoCloakMock.GetRequestingPartyPermissionDecisionFunc: method is nil but GoCloak.GetRequestingPartyPermissionDecision was just called")
+		panic("goCloakClientInterfaceMock.GetRequestingPartyPermissionDecisionFunc: method is nil but goCloakClientInterface.GetRequestingPartyPermissionDecision was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -11795,8 +11795,8 @@ func (mock *GoCloakMock) GetRequestingPartyPermissionDecision(ctx context.Contex
 // GetRequestingPartyPermissionDecisionCalls gets all the calls that were made to GetRequestingPartyPermissionDecision.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetRequestingPartyPermissionDecisionCalls())
-func (mock *GoCloakMock) GetRequestingPartyPermissionDecisionCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetRequestingPartyPermissionDecisionCalls())
+func (mock *goCloakClientInterfaceMock) GetRequestingPartyPermissionDecisionCalls() []struct {
 	Ctx     context.Context
 	Token   string
 	Realm   string
@@ -11815,9 +11815,9 @@ func (mock *GoCloakMock) GetRequestingPartyPermissionDecisionCalls() []struct {
 }
 
 // GetRequestingPartyPermissions calls GetRequestingPartyPermissionsFunc.
-func (mock *GoCloakMock) GetRequestingPartyPermissions(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*[]gocloak.RequestingPartyPermission, error) {
+func (mock *goCloakClientInterfaceMock) GetRequestingPartyPermissions(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*[]gocloak.RequestingPartyPermission, error) {
 	if mock.GetRequestingPartyPermissionsFunc == nil {
-		panic("GoCloakMock.GetRequestingPartyPermissionsFunc: method is nil but GoCloak.GetRequestingPartyPermissions was just called")
+		panic("goCloakClientInterfaceMock.GetRequestingPartyPermissionsFunc: method is nil but goCloakClientInterface.GetRequestingPartyPermissions was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -11839,8 +11839,8 @@ func (mock *GoCloakMock) GetRequestingPartyPermissions(ctx context.Context, toke
 // GetRequestingPartyPermissionsCalls gets all the calls that were made to GetRequestingPartyPermissions.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetRequestingPartyPermissionsCalls())
-func (mock *GoCloakMock) GetRequestingPartyPermissionsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetRequestingPartyPermissionsCalls())
+func (mock *goCloakClientInterfaceMock) GetRequestingPartyPermissionsCalls() []struct {
 	Ctx     context.Context
 	Token   string
 	Realm   string
@@ -11859,9 +11859,9 @@ func (mock *GoCloakMock) GetRequestingPartyPermissionsCalls() []struct {
 }
 
 // GetRequestingPartyToken calls GetRequestingPartyTokenFunc.
-func (mock *GoCloakMock) GetRequestingPartyToken(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*gocloak.JWT, error) {
+func (mock *goCloakClientInterfaceMock) GetRequestingPartyToken(ctx context.Context, token string, realm string, options gocloak.RequestingPartyTokenOptions) (*gocloak.JWT, error) {
 	if mock.GetRequestingPartyTokenFunc == nil {
-		panic("GoCloakMock.GetRequestingPartyTokenFunc: method is nil but GoCloak.GetRequestingPartyToken was just called")
+		panic("goCloakClientInterfaceMock.GetRequestingPartyTokenFunc: method is nil but goCloakClientInterface.GetRequestingPartyToken was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -11883,8 +11883,8 @@ func (mock *GoCloakMock) GetRequestingPartyToken(ctx context.Context, token stri
 // GetRequestingPartyTokenCalls gets all the calls that were made to GetRequestingPartyToken.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetRequestingPartyTokenCalls())
-func (mock *GoCloakMock) GetRequestingPartyTokenCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetRequestingPartyTokenCalls())
+func (mock *goCloakClientInterfaceMock) GetRequestingPartyTokenCalls() []struct {
 	Ctx     context.Context
 	Token   string
 	Realm   string
@@ -11903,9 +11903,9 @@ func (mock *GoCloakMock) GetRequestingPartyTokenCalls() []struct {
 }
 
 // GetResource calls GetResourceFunc.
-func (mock *GoCloakMock) GetResource(ctx context.Context, token string, realm string, idOfClient string, resourceID string) (*gocloak.ResourceRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetResource(ctx context.Context, token string, realm string, idOfClient string, resourceID string) (*gocloak.ResourceRepresentation, error) {
 	if mock.GetResourceFunc == nil {
-		panic("GoCloakMock.GetResourceFunc: method is nil but GoCloak.GetResource was just called")
+		panic("goCloakClientInterfaceMock.GetResourceFunc: method is nil but goCloakClientInterface.GetResource was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -11929,8 +11929,8 @@ func (mock *GoCloakMock) GetResource(ctx context.Context, token string, realm st
 // GetResourceCalls gets all the calls that were made to GetResource.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetResourceCalls())
-func (mock *GoCloakMock) GetResourceCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetResourceCalls())
+func (mock *goCloakClientInterfaceMock) GetResourceCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -11951,9 +11951,9 @@ func (mock *GoCloakMock) GetResourceCalls() []struct {
 }
 
 // GetResourceClient calls GetResourceClientFunc.
-func (mock *GoCloakMock) GetResourceClient(ctx context.Context, token string, realm string, resourceID string) (*gocloak.ResourceRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetResourceClient(ctx context.Context, token string, realm string, resourceID string) (*gocloak.ResourceRepresentation, error) {
 	if mock.GetResourceClientFunc == nil {
-		panic("GoCloakMock.GetResourceClientFunc: method is nil but GoCloak.GetResourceClient was just called")
+		panic("goCloakClientInterfaceMock.GetResourceClientFunc: method is nil but goCloakClientInterface.GetResourceClient was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -11975,8 +11975,8 @@ func (mock *GoCloakMock) GetResourceClient(ctx context.Context, token string, re
 // GetResourceClientCalls gets all the calls that were made to GetResourceClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetResourceClientCalls())
-func (mock *GoCloakMock) GetResourceClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetResourceClientCalls())
+func (mock *goCloakClientInterfaceMock) GetResourceClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -11995,9 +11995,9 @@ func (mock *GoCloakMock) GetResourceClientCalls() []struct {
 }
 
 // GetResourcePolicies calls GetResourcePoliciesFunc.
-func (mock *GoCloakMock) GetResourcePolicies(ctx context.Context, token string, realm string, params gocloak.GetResourcePoliciesParams) ([]*gocloak.ResourcePolicyRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetResourcePolicies(ctx context.Context, token string, realm string, params gocloak.GetResourcePoliciesParams) ([]*gocloak.ResourcePolicyRepresentation, error) {
 	if mock.GetResourcePoliciesFunc == nil {
-		panic("GoCloakMock.GetResourcePoliciesFunc: method is nil but GoCloak.GetResourcePolicies was just called")
+		panic("goCloakClientInterfaceMock.GetResourcePoliciesFunc: method is nil but goCloakClientInterface.GetResourcePolicies was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -12019,8 +12019,8 @@ func (mock *GoCloakMock) GetResourcePolicies(ctx context.Context, token string, 
 // GetResourcePoliciesCalls gets all the calls that were made to GetResourcePolicies.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetResourcePoliciesCalls())
-func (mock *GoCloakMock) GetResourcePoliciesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetResourcePoliciesCalls())
+func (mock *goCloakClientInterfaceMock) GetResourcePoliciesCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -12039,9 +12039,9 @@ func (mock *GoCloakMock) GetResourcePoliciesCalls() []struct {
 }
 
 // GetResourcePolicy calls GetResourcePolicyFunc.
-func (mock *GoCloakMock) GetResourcePolicy(ctx context.Context, token string, realm string, permissionID string) (*gocloak.ResourcePolicyRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetResourcePolicy(ctx context.Context, token string, realm string, permissionID string) (*gocloak.ResourcePolicyRepresentation, error) {
 	if mock.GetResourcePolicyFunc == nil {
-		panic("GoCloakMock.GetResourcePolicyFunc: method is nil but GoCloak.GetResourcePolicy was just called")
+		panic("goCloakClientInterfaceMock.GetResourcePolicyFunc: method is nil but goCloakClientInterface.GetResourcePolicy was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -12063,8 +12063,8 @@ func (mock *GoCloakMock) GetResourcePolicy(ctx context.Context, token string, re
 // GetResourcePolicyCalls gets all the calls that were made to GetResourcePolicy.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetResourcePolicyCalls())
-func (mock *GoCloakMock) GetResourcePolicyCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetResourcePolicyCalls())
+func (mock *goCloakClientInterfaceMock) GetResourcePolicyCalls() []struct {
 	Ctx          context.Context
 	Token        string
 	Realm        string
@@ -12083,9 +12083,9 @@ func (mock *GoCloakMock) GetResourcePolicyCalls() []struct {
 }
 
 // GetResources calls GetResourcesFunc.
-func (mock *GoCloakMock) GetResources(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetResourceParams) ([]*gocloak.ResourceRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetResources(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetResourceParams) ([]*gocloak.ResourceRepresentation, error) {
 	if mock.GetResourcesFunc == nil {
-		panic("GoCloakMock.GetResourcesFunc: method is nil but GoCloak.GetResources was just called")
+		panic("goCloakClientInterfaceMock.GetResourcesFunc: method is nil but goCloakClientInterface.GetResources was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -12109,8 +12109,8 @@ func (mock *GoCloakMock) GetResources(ctx context.Context, token string, realm s
 // GetResourcesCalls gets all the calls that were made to GetResources.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetResourcesCalls())
-func (mock *GoCloakMock) GetResourcesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetResourcesCalls())
+func (mock *goCloakClientInterfaceMock) GetResourcesCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -12131,9 +12131,9 @@ func (mock *GoCloakMock) GetResourcesCalls() []struct {
 }
 
 // GetResourcesClient calls GetResourcesClientFunc.
-func (mock *GoCloakMock) GetResourcesClient(ctx context.Context, token string, realm string, params gocloak.GetResourceParams) ([]*gocloak.ResourceRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetResourcesClient(ctx context.Context, token string, realm string, params gocloak.GetResourceParams) ([]*gocloak.ResourceRepresentation, error) {
 	if mock.GetResourcesClientFunc == nil {
-		panic("GoCloakMock.GetResourcesClientFunc: method is nil but GoCloak.GetResourcesClient was just called")
+		panic("goCloakClientInterfaceMock.GetResourcesClientFunc: method is nil but goCloakClientInterface.GetResourcesClient was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -12155,8 +12155,8 @@ func (mock *GoCloakMock) GetResourcesClient(ctx context.Context, token string, r
 // GetResourcesClientCalls gets all the calls that were made to GetResourcesClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetResourcesClientCalls())
-func (mock *GoCloakMock) GetResourcesClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetResourcesClientCalls())
+func (mock *goCloakClientInterfaceMock) GetResourcesClientCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -12175,9 +12175,9 @@ func (mock *GoCloakMock) GetResourcesClientCalls() []struct {
 }
 
 // GetRoleMappingByGroupID calls GetRoleMappingByGroupIDFunc.
-func (mock *GoCloakMock) GetRoleMappingByGroupID(ctx context.Context, accessToken string, realm string, groupID string) (*gocloak.MappingsRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetRoleMappingByGroupID(ctx context.Context, accessToken string, realm string, groupID string) (*gocloak.MappingsRepresentation, error) {
 	if mock.GetRoleMappingByGroupIDFunc == nil {
-		panic("GoCloakMock.GetRoleMappingByGroupIDFunc: method is nil but GoCloak.GetRoleMappingByGroupID was just called")
+		panic("goCloakClientInterfaceMock.GetRoleMappingByGroupIDFunc: method is nil but goCloakClientInterface.GetRoleMappingByGroupID was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -12199,8 +12199,8 @@ func (mock *GoCloakMock) GetRoleMappingByGroupID(ctx context.Context, accessToke
 // GetRoleMappingByGroupIDCalls gets all the calls that were made to GetRoleMappingByGroupID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetRoleMappingByGroupIDCalls())
-func (mock *GoCloakMock) GetRoleMappingByGroupIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetRoleMappingByGroupIDCalls())
+func (mock *goCloakClientInterfaceMock) GetRoleMappingByGroupIDCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -12219,9 +12219,9 @@ func (mock *GoCloakMock) GetRoleMappingByGroupIDCalls() []struct {
 }
 
 // GetRoleMappingByUserID calls GetRoleMappingByUserIDFunc.
-func (mock *GoCloakMock) GetRoleMappingByUserID(ctx context.Context, accessToken string, realm string, userID string) (*gocloak.MappingsRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetRoleMappingByUserID(ctx context.Context, accessToken string, realm string, userID string) (*gocloak.MappingsRepresentation, error) {
 	if mock.GetRoleMappingByUserIDFunc == nil {
-		panic("GoCloakMock.GetRoleMappingByUserIDFunc: method is nil but GoCloak.GetRoleMappingByUserID was just called")
+		panic("goCloakClientInterfaceMock.GetRoleMappingByUserIDFunc: method is nil but goCloakClientInterface.GetRoleMappingByUserID was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -12243,8 +12243,8 @@ func (mock *GoCloakMock) GetRoleMappingByUserID(ctx context.Context, accessToken
 // GetRoleMappingByUserIDCalls gets all the calls that were made to GetRoleMappingByUserID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetRoleMappingByUserIDCalls())
-func (mock *GoCloakMock) GetRoleMappingByUserIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetRoleMappingByUserIDCalls())
+func (mock *goCloakClientInterfaceMock) GetRoleMappingByUserIDCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -12263,9 +12263,9 @@ func (mock *GoCloakMock) GetRoleMappingByUserIDCalls() []struct {
 }
 
 // GetScope calls GetScopeFunc.
-func (mock *GoCloakMock) GetScope(ctx context.Context, token string, realm string, idOfClient string, scopeID string) (*gocloak.ScopeRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetScope(ctx context.Context, token string, realm string, idOfClient string, scopeID string) (*gocloak.ScopeRepresentation, error) {
 	if mock.GetScopeFunc == nil {
-		panic("GoCloakMock.GetScopeFunc: method is nil but GoCloak.GetScope was just called")
+		panic("goCloakClientInterfaceMock.GetScopeFunc: method is nil but goCloakClientInterface.GetScope was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -12289,8 +12289,8 @@ func (mock *GoCloakMock) GetScope(ctx context.Context, token string, realm strin
 // GetScopeCalls gets all the calls that were made to GetScope.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetScopeCalls())
-func (mock *GoCloakMock) GetScopeCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetScopeCalls())
+func (mock *goCloakClientInterfaceMock) GetScopeCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -12311,9 +12311,9 @@ func (mock *GoCloakMock) GetScopeCalls() []struct {
 }
 
 // GetScopes calls GetScopesFunc.
-func (mock *GoCloakMock) GetScopes(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetScopeParams) ([]*gocloak.ScopeRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetScopes(ctx context.Context, token string, realm string, idOfClient string, params gocloak.GetScopeParams) ([]*gocloak.ScopeRepresentation, error) {
 	if mock.GetScopesFunc == nil {
-		panic("GoCloakMock.GetScopesFunc: method is nil but GoCloak.GetScopes was just called")
+		panic("goCloakClientInterfaceMock.GetScopesFunc: method is nil but goCloakClientInterface.GetScopes was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -12337,8 +12337,8 @@ func (mock *GoCloakMock) GetScopes(ctx context.Context, token string, realm stri
 // GetScopesCalls gets all the calls that were made to GetScopes.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetScopesCalls())
-func (mock *GoCloakMock) GetScopesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetScopesCalls())
+func (mock *goCloakClientInterfaceMock) GetScopesCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -12359,9 +12359,9 @@ func (mock *GoCloakMock) GetScopesCalls() []struct {
 }
 
 // GetServerInfo calls GetServerInfoFunc.
-func (mock *GoCloakMock) GetServerInfo(ctx context.Context, accessToken string) (*gocloak.ServerInfoRepesentation, error) {
+func (mock *goCloakClientInterfaceMock) GetServerInfo(ctx context.Context, accessToken string) (*gocloak.ServerInfoRepesentation, error) {
 	if mock.GetServerInfoFunc == nil {
-		panic("GoCloakMock.GetServerInfoFunc: method is nil but GoCloak.GetServerInfo was just called")
+		panic("goCloakClientInterfaceMock.GetServerInfoFunc: method is nil but goCloakClientInterface.GetServerInfo was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -12379,8 +12379,8 @@ func (mock *GoCloakMock) GetServerInfo(ctx context.Context, accessToken string) 
 // GetServerInfoCalls gets all the calls that were made to GetServerInfo.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetServerInfoCalls())
-func (mock *GoCloakMock) GetServerInfoCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetServerInfoCalls())
+func (mock *goCloakClientInterfaceMock) GetServerInfoCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 } {
@@ -12395,9 +12395,9 @@ func (mock *GoCloakMock) GetServerInfoCalls() []struct {
 }
 
 // GetToken calls GetTokenFunc.
-func (mock *GoCloakMock) GetToken(ctx context.Context, realm string, options gocloak.TokenOptions) (*gocloak.JWT, error) {
+func (mock *goCloakClientInterfaceMock) GetToken(ctx context.Context, realm string, options gocloak.TokenOptions) (*gocloak.JWT, error) {
 	if mock.GetTokenFunc == nil {
-		panic("GoCloakMock.GetTokenFunc: method is nil but GoCloak.GetToken was just called")
+		panic("goCloakClientInterfaceMock.GetTokenFunc: method is nil but goCloakClientInterface.GetToken was just called")
 	}
 	callInfo := struct {
 		Ctx     context.Context
@@ -12417,8 +12417,8 @@ func (mock *GoCloakMock) GetToken(ctx context.Context, realm string, options goc
 // GetTokenCalls gets all the calls that were made to GetToken.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetTokenCalls())
-func (mock *GoCloakMock) GetTokenCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetTokenCalls())
+func (mock *goCloakClientInterfaceMock) GetTokenCalls() []struct {
 	Ctx     context.Context
 	Realm   string
 	Options gocloak.TokenOptions
@@ -12435,9 +12435,9 @@ func (mock *GoCloakMock) GetTokenCalls() []struct {
 }
 
 // GetUserByID calls GetUserByIDFunc.
-func (mock *GoCloakMock) GetUserByID(ctx context.Context, accessToken string, realm string, userID string) (*gocloak.User, error) {
+func (mock *goCloakClientInterfaceMock) GetUserByID(ctx context.Context, accessToken string, realm string, userID string) (*gocloak.User, error) {
 	if mock.GetUserByIDFunc == nil {
-		panic("GoCloakMock.GetUserByIDFunc: method is nil but GoCloak.GetUserByID was just called")
+		panic("goCloakClientInterfaceMock.GetUserByIDFunc: method is nil but goCloakClientInterface.GetUserByID was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -12459,8 +12459,8 @@ func (mock *GoCloakMock) GetUserByID(ctx context.Context, accessToken string, re
 // GetUserByIDCalls gets all the calls that were made to GetUserByID.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetUserByIDCalls())
-func (mock *GoCloakMock) GetUserByIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetUserByIDCalls())
+func (mock *goCloakClientInterfaceMock) GetUserByIDCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -12479,9 +12479,9 @@ func (mock *GoCloakMock) GetUserByIDCalls() []struct {
 }
 
 // GetUserCount calls GetUserCountFunc.
-func (mock *GoCloakMock) GetUserCount(ctx context.Context, accessToken string, realm string, params gocloak.GetUsersParams) (int, error) {
+func (mock *goCloakClientInterfaceMock) GetUserCount(ctx context.Context, accessToken string, realm string, params gocloak.GetUsersParams) (int, error) {
 	if mock.GetUserCountFunc == nil {
-		panic("GoCloakMock.GetUserCountFunc: method is nil but GoCloak.GetUserCount was just called")
+		panic("goCloakClientInterfaceMock.GetUserCountFunc: method is nil but goCloakClientInterface.GetUserCount was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -12503,8 +12503,8 @@ func (mock *GoCloakMock) GetUserCount(ctx context.Context, accessToken string, r
 // GetUserCountCalls gets all the calls that were made to GetUserCount.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetUserCountCalls())
-func (mock *GoCloakMock) GetUserCountCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetUserCountCalls())
+func (mock *goCloakClientInterfaceMock) GetUserCountCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -12523,9 +12523,9 @@ func (mock *GoCloakMock) GetUserCountCalls() []struct {
 }
 
 // GetUserFederatedIdentities calls GetUserFederatedIdentitiesFunc.
-func (mock *GoCloakMock) GetUserFederatedIdentities(ctx context.Context, token string, realm string, userID string) ([]*gocloak.FederatedIdentityRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetUserFederatedIdentities(ctx context.Context, token string, realm string, userID string) ([]*gocloak.FederatedIdentityRepresentation, error) {
 	if mock.GetUserFederatedIdentitiesFunc == nil {
-		panic("GoCloakMock.GetUserFederatedIdentitiesFunc: method is nil but GoCloak.GetUserFederatedIdentities was just called")
+		panic("goCloakClientInterfaceMock.GetUserFederatedIdentitiesFunc: method is nil but goCloakClientInterface.GetUserFederatedIdentities was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -12547,8 +12547,8 @@ func (mock *GoCloakMock) GetUserFederatedIdentities(ctx context.Context, token s
 // GetUserFederatedIdentitiesCalls gets all the calls that were made to GetUserFederatedIdentities.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetUserFederatedIdentitiesCalls())
-func (mock *GoCloakMock) GetUserFederatedIdentitiesCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetUserFederatedIdentitiesCalls())
+func (mock *goCloakClientInterfaceMock) GetUserFederatedIdentitiesCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -12567,9 +12567,9 @@ func (mock *GoCloakMock) GetUserFederatedIdentitiesCalls() []struct {
 }
 
 // GetUserGroups calls GetUserGroupsFunc.
-func (mock *GoCloakMock) GetUserGroups(ctx context.Context, accessToken string, realm string, userID string, params gocloak.GetGroupsParams) ([]*gocloak.Group, error) {
+func (mock *goCloakClientInterfaceMock) GetUserGroups(ctx context.Context, accessToken string, realm string, userID string, params gocloak.GetGroupsParams) ([]*gocloak.Group, error) {
 	if mock.GetUserGroupsFunc == nil {
-		panic("GoCloakMock.GetUserGroupsFunc: method is nil but GoCloak.GetUserGroups was just called")
+		panic("goCloakClientInterfaceMock.GetUserGroupsFunc: method is nil but goCloakClientInterface.GetUserGroups was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -12593,8 +12593,8 @@ func (mock *GoCloakMock) GetUserGroups(ctx context.Context, accessToken string, 
 // GetUserGroupsCalls gets all the calls that were made to GetUserGroups.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetUserGroupsCalls())
-func (mock *GoCloakMock) GetUserGroupsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetUserGroupsCalls())
+func (mock *goCloakClientInterfaceMock) GetUserGroupsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -12615,9 +12615,9 @@ func (mock *GoCloakMock) GetUserGroupsCalls() []struct {
 }
 
 // GetUserInfo calls GetUserInfoFunc.
-func (mock *GoCloakMock) GetUserInfo(ctx context.Context, accessToken string, realm string) (*gocloak.UserInfo, error) {
+func (mock *goCloakClientInterfaceMock) GetUserInfo(ctx context.Context, accessToken string, realm string) (*gocloak.UserInfo, error) {
 	if mock.GetUserInfoFunc == nil {
-		panic("GoCloakMock.GetUserInfoFunc: method is nil but GoCloak.GetUserInfo was just called")
+		panic("goCloakClientInterfaceMock.GetUserInfoFunc: method is nil but goCloakClientInterface.GetUserInfo was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -12637,8 +12637,8 @@ func (mock *GoCloakMock) GetUserInfo(ctx context.Context, accessToken string, re
 // GetUserInfoCalls gets all the calls that were made to GetUserInfo.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetUserInfoCalls())
-func (mock *GoCloakMock) GetUserInfoCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetUserInfoCalls())
+func (mock *goCloakClientInterfaceMock) GetUserInfoCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -12655,9 +12655,9 @@ func (mock *GoCloakMock) GetUserInfoCalls() []struct {
 }
 
 // GetUserOfflineSessionsForClient calls GetUserOfflineSessionsForClientFunc.
-func (mock *GoCloakMock) GetUserOfflineSessionsForClient(ctx context.Context, token string, realm string, userID string, idOfClient string) ([]*gocloak.UserSessionRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetUserOfflineSessionsForClient(ctx context.Context, token string, realm string, userID string, idOfClient string) ([]*gocloak.UserSessionRepresentation, error) {
 	if mock.GetUserOfflineSessionsForClientFunc == nil {
-		panic("GoCloakMock.GetUserOfflineSessionsForClientFunc: method is nil but GoCloak.GetUserOfflineSessionsForClient was just called")
+		panic("goCloakClientInterfaceMock.GetUserOfflineSessionsForClientFunc: method is nil but goCloakClientInterface.GetUserOfflineSessionsForClient was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -12681,8 +12681,8 @@ func (mock *GoCloakMock) GetUserOfflineSessionsForClient(ctx context.Context, to
 // GetUserOfflineSessionsForClientCalls gets all the calls that were made to GetUserOfflineSessionsForClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetUserOfflineSessionsForClientCalls())
-func (mock *GoCloakMock) GetUserOfflineSessionsForClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetUserOfflineSessionsForClientCalls())
+func (mock *goCloakClientInterfaceMock) GetUserOfflineSessionsForClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -12703,9 +12703,9 @@ func (mock *GoCloakMock) GetUserOfflineSessionsForClientCalls() []struct {
 }
 
 // GetUserPermissions calls GetUserPermissionsFunc.
-func (mock *GoCloakMock) GetUserPermissions(ctx context.Context, token string, realm string, params gocloak.GetUserPermissionParams) ([]*gocloak.PermissionGrantResponseRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetUserPermissions(ctx context.Context, token string, realm string, params gocloak.GetUserPermissionParams) ([]*gocloak.PermissionGrantResponseRepresentation, error) {
 	if mock.GetUserPermissionsFunc == nil {
-		panic("GoCloakMock.GetUserPermissionsFunc: method is nil but GoCloak.GetUserPermissions was just called")
+		panic("goCloakClientInterfaceMock.GetUserPermissionsFunc: method is nil but goCloakClientInterface.GetUserPermissions was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -12727,8 +12727,8 @@ func (mock *GoCloakMock) GetUserPermissions(ctx context.Context, token string, r
 // GetUserPermissionsCalls gets all the calls that were made to GetUserPermissions.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetUserPermissionsCalls())
-func (mock *GoCloakMock) GetUserPermissionsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetUserPermissionsCalls())
+func (mock *goCloakClientInterfaceMock) GetUserPermissionsCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -12747,9 +12747,9 @@ func (mock *GoCloakMock) GetUserPermissionsCalls() []struct {
 }
 
 // GetUserSessions calls GetUserSessionsFunc.
-func (mock *GoCloakMock) GetUserSessions(ctx context.Context, token string, realm string, userID string) ([]*gocloak.UserSessionRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GetUserSessions(ctx context.Context, token string, realm string, userID string) ([]*gocloak.UserSessionRepresentation, error) {
 	if mock.GetUserSessionsFunc == nil {
-		panic("GoCloakMock.GetUserSessionsFunc: method is nil but GoCloak.GetUserSessions was just called")
+		panic("goCloakClientInterfaceMock.GetUserSessionsFunc: method is nil but goCloakClientInterface.GetUserSessions was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -12771,8 +12771,8 @@ func (mock *GoCloakMock) GetUserSessions(ctx context.Context, token string, real
 // GetUserSessionsCalls gets all the calls that were made to GetUserSessions.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetUserSessionsCalls())
-func (mock *GoCloakMock) GetUserSessionsCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetUserSessionsCalls())
+func (mock *goCloakClientInterfaceMock) GetUserSessionsCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -12791,9 +12791,9 @@ func (mock *GoCloakMock) GetUserSessionsCalls() []struct {
 }
 
 // GetUsers calls GetUsersFunc.
-func (mock *GoCloakMock) GetUsers(ctx context.Context, accessToken string, realm string, params gocloak.GetUsersParams) ([]*gocloak.User, error) {
+func (mock *goCloakClientInterfaceMock) GetUsers(ctx context.Context, accessToken string, realm string, params gocloak.GetUsersParams) ([]*gocloak.User, error) {
 	if mock.GetUsersFunc == nil {
-		panic("GoCloakMock.GetUsersFunc: method is nil but GoCloak.GetUsers was just called")
+		panic("goCloakClientInterfaceMock.GetUsersFunc: method is nil but goCloakClientInterface.GetUsers was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -12815,8 +12815,8 @@ func (mock *GoCloakMock) GetUsers(ctx context.Context, accessToken string, realm
 // GetUsersCalls gets all the calls that were made to GetUsers.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetUsersCalls())
-func (mock *GoCloakMock) GetUsersCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetUsersCalls())
+func (mock *goCloakClientInterfaceMock) GetUsersCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -12835,9 +12835,9 @@ func (mock *GoCloakMock) GetUsersCalls() []struct {
 }
 
 // GetUsersByClientRoleName calls GetUsersByClientRoleNameFunc.
-func (mock *GoCloakMock) GetUsersByClientRoleName(ctx context.Context, token string, realm string, idOfClient string, roleName string, params gocloak.GetUsersByRoleParams) ([]*gocloak.User, error) {
+func (mock *goCloakClientInterfaceMock) GetUsersByClientRoleName(ctx context.Context, token string, realm string, idOfClient string, roleName string, params gocloak.GetUsersByRoleParams) ([]*gocloak.User, error) {
 	if mock.GetUsersByClientRoleNameFunc == nil {
-		panic("GoCloakMock.GetUsersByClientRoleNameFunc: method is nil but GoCloak.GetUsersByClientRoleName was just called")
+		panic("goCloakClientInterfaceMock.GetUsersByClientRoleNameFunc: method is nil but goCloakClientInterface.GetUsersByClientRoleName was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -12863,8 +12863,8 @@ func (mock *GoCloakMock) GetUsersByClientRoleName(ctx context.Context, token str
 // GetUsersByClientRoleNameCalls gets all the calls that were made to GetUsersByClientRoleName.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetUsersByClientRoleNameCalls())
-func (mock *GoCloakMock) GetUsersByClientRoleNameCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetUsersByClientRoleNameCalls())
+func (mock *goCloakClientInterfaceMock) GetUsersByClientRoleNameCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -12887,9 +12887,9 @@ func (mock *GoCloakMock) GetUsersByClientRoleNameCalls() []struct {
 }
 
 // GetUsersByRoleName calls GetUsersByRoleNameFunc.
-func (mock *GoCloakMock) GetUsersByRoleName(ctx context.Context, token string, realm string, roleName string) ([]*gocloak.User, error) {
+func (mock *goCloakClientInterfaceMock) GetUsersByRoleName(ctx context.Context, token string, realm string, roleName string) ([]*gocloak.User, error) {
 	if mock.GetUsersByRoleNameFunc == nil {
-		panic("GoCloakMock.GetUsersByRoleNameFunc: method is nil but GoCloak.GetUsersByRoleName was just called")
+		panic("goCloakClientInterfaceMock.GetUsersByRoleNameFunc: method is nil but goCloakClientInterface.GetUsersByRoleName was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -12911,8 +12911,8 @@ func (mock *GoCloakMock) GetUsersByRoleName(ctx context.Context, token string, r
 // GetUsersByRoleNameCalls gets all the calls that were made to GetUsersByRoleName.
 // Check the length with:
 //
-//	len(mockedGoCloak.GetUsersByRoleNameCalls())
-func (mock *GoCloakMock) GetUsersByRoleNameCalls() []struct {
+//	len(mockedgoCloakClientInterface.GetUsersByRoleNameCalls())
+func (mock *goCloakClientInterfaceMock) GetUsersByRoleNameCalls() []struct {
 	Ctx      context.Context
 	Token    string
 	Realm    string
@@ -12931,9 +12931,9 @@ func (mock *GoCloakMock) GetUsersByRoleNameCalls() []struct {
 }
 
 // GrantUserPermission calls GrantUserPermissionFunc.
-func (mock *GoCloakMock) GrantUserPermission(ctx context.Context, token string, realm string, permission gocloak.PermissionGrantParams) (*gocloak.PermissionGrantResponseRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) GrantUserPermission(ctx context.Context, token string, realm string, permission gocloak.PermissionGrantParams) (*gocloak.PermissionGrantResponseRepresentation, error) {
 	if mock.GrantUserPermissionFunc == nil {
-		panic("GoCloakMock.GrantUserPermissionFunc: method is nil but GoCloak.GrantUserPermission was just called")
+		panic("goCloakClientInterfaceMock.GrantUserPermissionFunc: method is nil but goCloakClientInterface.GrantUserPermission was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -12955,8 +12955,8 @@ func (mock *GoCloakMock) GrantUserPermission(ctx context.Context, token string, 
 // GrantUserPermissionCalls gets all the calls that were made to GrantUserPermission.
 // Check the length with:
 //
-//	len(mockedGoCloak.GrantUserPermissionCalls())
-func (mock *GoCloakMock) GrantUserPermissionCalls() []struct {
+//	len(mockedgoCloakClientInterface.GrantUserPermissionCalls())
+func (mock *goCloakClientInterfaceMock) GrantUserPermissionCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -12975,9 +12975,9 @@ func (mock *GoCloakMock) GrantUserPermissionCalls() []struct {
 }
 
 // ImportIdentityProviderConfig calls ImportIdentityProviderConfigFunc.
-func (mock *GoCloakMock) ImportIdentityProviderConfig(ctx context.Context, token string, realm string, fromURL string, providerID string) (map[string]string, error) {
+func (mock *goCloakClientInterfaceMock) ImportIdentityProviderConfig(ctx context.Context, token string, realm string, fromURL string, providerID string) (map[string]string, error) {
 	if mock.ImportIdentityProviderConfigFunc == nil {
-		panic("GoCloakMock.ImportIdentityProviderConfigFunc: method is nil but GoCloak.ImportIdentityProviderConfig was just called")
+		panic("goCloakClientInterfaceMock.ImportIdentityProviderConfigFunc: method is nil but goCloakClientInterface.ImportIdentityProviderConfig was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -13001,8 +13001,8 @@ func (mock *GoCloakMock) ImportIdentityProviderConfig(ctx context.Context, token
 // ImportIdentityProviderConfigCalls gets all the calls that were made to ImportIdentityProviderConfig.
 // Check the length with:
 //
-//	len(mockedGoCloak.ImportIdentityProviderConfigCalls())
-func (mock *GoCloakMock) ImportIdentityProviderConfigCalls() []struct {
+//	len(mockedgoCloakClientInterface.ImportIdentityProviderConfigCalls())
+func (mock *goCloakClientInterfaceMock) ImportIdentityProviderConfigCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -13023,9 +13023,9 @@ func (mock *GoCloakMock) ImportIdentityProviderConfigCalls() []struct {
 }
 
 // ImportIdentityProviderConfigFromFile calls ImportIdentityProviderConfigFromFileFunc.
-func (mock *GoCloakMock) ImportIdentityProviderConfigFromFile(ctx context.Context, token string, realm string, providerID string, fileName string, fileBody io.Reader) (map[string]string, error) {
+func (mock *goCloakClientInterfaceMock) ImportIdentityProviderConfigFromFile(ctx context.Context, token string, realm string, providerID string, fileName string, fileBody io.Reader) (map[string]string, error) {
 	if mock.ImportIdentityProviderConfigFromFileFunc == nil {
-		panic("GoCloakMock.ImportIdentityProviderConfigFromFileFunc: method is nil but GoCloak.ImportIdentityProviderConfigFromFile was just called")
+		panic("goCloakClientInterfaceMock.ImportIdentityProviderConfigFromFileFunc: method is nil but goCloakClientInterface.ImportIdentityProviderConfigFromFile was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -13051,8 +13051,8 @@ func (mock *GoCloakMock) ImportIdentityProviderConfigFromFile(ctx context.Contex
 // ImportIdentityProviderConfigFromFileCalls gets all the calls that were made to ImportIdentityProviderConfigFromFile.
 // Check the length with:
 //
-//	len(mockedGoCloak.ImportIdentityProviderConfigFromFileCalls())
-func (mock *GoCloakMock) ImportIdentityProviderConfigFromFileCalls() []struct {
+//	len(mockedgoCloakClientInterface.ImportIdentityProviderConfigFromFileCalls())
+func (mock *goCloakClientInterfaceMock) ImportIdentityProviderConfigFromFileCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -13075,9 +13075,9 @@ func (mock *GoCloakMock) ImportIdentityProviderConfigFromFileCalls() []struct {
 }
 
 // Login calls LoginFunc.
-func (mock *GoCloakMock) Login(ctx context.Context, clientID string, clientSecret string, realm string, username string, password string) (*gocloak.JWT, error) {
+func (mock *goCloakClientInterfaceMock) Login(ctx context.Context, clientID string, clientSecret string, realm string, username string, password string) (*gocloak.JWT, error) {
 	if mock.LoginFunc == nil {
-		panic("GoCloakMock.LoginFunc: method is nil but GoCloak.Login was just called")
+		panic("goCloakClientInterfaceMock.LoginFunc: method is nil but goCloakClientInterface.Login was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -13103,8 +13103,8 @@ func (mock *GoCloakMock) Login(ctx context.Context, clientID string, clientSecre
 // LoginCalls gets all the calls that were made to Login.
 // Check the length with:
 //
-//	len(mockedGoCloak.LoginCalls())
-func (mock *GoCloakMock) LoginCalls() []struct {
+//	len(mockedgoCloakClientInterface.LoginCalls())
+func (mock *goCloakClientInterfaceMock) LoginCalls() []struct {
 	Ctx          context.Context
 	ClientID     string
 	ClientSecret string
@@ -13127,9 +13127,9 @@ func (mock *GoCloakMock) LoginCalls() []struct {
 }
 
 // LoginAdmin calls LoginAdminFunc.
-func (mock *GoCloakMock) LoginAdmin(ctx context.Context, username string, password string, realm string) (*gocloak.JWT, error) {
+func (mock *goCloakClientInterfaceMock) LoginAdmin(ctx context.Context, username string, password string, realm string) (*gocloak.JWT, error) {
 	if mock.LoginAdminFunc == nil {
-		panic("GoCloakMock.LoginAdminFunc: method is nil but GoCloak.LoginAdmin was just called")
+		panic("goCloakClientInterfaceMock.LoginAdminFunc: method is nil but goCloakClientInterface.LoginAdmin was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -13151,8 +13151,8 @@ func (mock *GoCloakMock) LoginAdmin(ctx context.Context, username string, passwo
 // LoginAdminCalls gets all the calls that were made to LoginAdmin.
 // Check the length with:
 //
-//	len(mockedGoCloak.LoginAdminCalls())
-func (mock *GoCloakMock) LoginAdminCalls() []struct {
+//	len(mockedgoCloakClientInterface.LoginAdminCalls())
+func (mock *goCloakClientInterfaceMock) LoginAdminCalls() []struct {
 	Ctx      context.Context
 	Username string
 	Password string
@@ -13171,9 +13171,9 @@ func (mock *GoCloakMock) LoginAdminCalls() []struct {
 }
 
 // LoginClient calls LoginClientFunc.
-func (mock *GoCloakMock) LoginClient(ctx context.Context, clientID string, clientSecret string, realm string) (*gocloak.JWT, error) {
+func (mock *goCloakClientInterfaceMock) LoginClient(ctx context.Context, clientID string, clientSecret string, realm string) (*gocloak.JWT, error) {
 	if mock.LoginClientFunc == nil {
-		panic("GoCloakMock.LoginClientFunc: method is nil but GoCloak.LoginClient was just called")
+		panic("goCloakClientInterfaceMock.LoginClientFunc: method is nil but goCloakClientInterface.LoginClient was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -13195,8 +13195,8 @@ func (mock *GoCloakMock) LoginClient(ctx context.Context, clientID string, clien
 // LoginClientCalls gets all the calls that were made to LoginClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.LoginClientCalls())
-func (mock *GoCloakMock) LoginClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.LoginClientCalls())
+func (mock *goCloakClientInterfaceMock) LoginClientCalls() []struct {
 	Ctx          context.Context
 	ClientID     string
 	ClientSecret string
@@ -13215,9 +13215,9 @@ func (mock *GoCloakMock) LoginClientCalls() []struct {
 }
 
 // LoginClientSignedJWT calls LoginClientSignedJWTFunc.
-func (mock *GoCloakMock) LoginClientSignedJWT(ctx context.Context, idOfClient string, realm string, key interface{}, signedMethod jwt.SigningMethod, expiresAt *jwt.NumericDate) (*gocloak.JWT, error) {
+func (mock *goCloakClientInterfaceMock) LoginClientSignedJWT(ctx context.Context, idOfClient string, realm string, key interface{}, signedMethod jwt.SigningMethod, expiresAt *jwt.NumericDate) (*gocloak.JWT, error) {
 	if mock.LoginClientSignedJWTFunc == nil {
-		panic("GoCloakMock.LoginClientSignedJWTFunc: method is nil but GoCloak.LoginClientSignedJWT was just called")
+		panic("goCloakClientInterfaceMock.LoginClientSignedJWTFunc: method is nil but goCloakClientInterface.LoginClientSignedJWT was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -13243,8 +13243,8 @@ func (mock *GoCloakMock) LoginClientSignedJWT(ctx context.Context, idOfClient st
 // LoginClientSignedJWTCalls gets all the calls that were made to LoginClientSignedJWT.
 // Check the length with:
 //
-//	len(mockedGoCloak.LoginClientSignedJWTCalls())
-func (mock *GoCloakMock) LoginClientSignedJWTCalls() []struct {
+//	len(mockedgoCloakClientInterface.LoginClientSignedJWTCalls())
+func (mock *goCloakClientInterfaceMock) LoginClientSignedJWTCalls() []struct {
 	Ctx          context.Context
 	IdOfClient   string
 	Realm        string
@@ -13267,9 +13267,9 @@ func (mock *GoCloakMock) LoginClientSignedJWTCalls() []struct {
 }
 
 // LoginClientTokenExchange calls LoginClientTokenExchangeFunc.
-func (mock *GoCloakMock) LoginClientTokenExchange(ctx context.Context, clientID string, token string, clientSecret string, realm string, targetClient string, userID string) (*gocloak.JWT, error) {
+func (mock *goCloakClientInterfaceMock) LoginClientTokenExchange(ctx context.Context, clientID string, token string, clientSecret string, realm string, targetClient string, userID string) (*gocloak.JWT, error) {
 	if mock.LoginClientTokenExchangeFunc == nil {
-		panic("GoCloakMock.LoginClientTokenExchangeFunc: method is nil but GoCloak.LoginClientTokenExchange was just called")
+		panic("goCloakClientInterfaceMock.LoginClientTokenExchangeFunc: method is nil but goCloakClientInterface.LoginClientTokenExchange was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -13297,8 +13297,8 @@ func (mock *GoCloakMock) LoginClientTokenExchange(ctx context.Context, clientID 
 // LoginClientTokenExchangeCalls gets all the calls that were made to LoginClientTokenExchange.
 // Check the length with:
 //
-//	len(mockedGoCloak.LoginClientTokenExchangeCalls())
-func (mock *GoCloakMock) LoginClientTokenExchangeCalls() []struct {
+//	len(mockedgoCloakClientInterface.LoginClientTokenExchangeCalls())
+func (mock *goCloakClientInterfaceMock) LoginClientTokenExchangeCalls() []struct {
 	Ctx          context.Context
 	ClientID     string
 	Token        string
@@ -13323,9 +13323,9 @@ func (mock *GoCloakMock) LoginClientTokenExchangeCalls() []struct {
 }
 
 // LoginOtp calls LoginOtpFunc.
-func (mock *GoCloakMock) LoginOtp(ctx context.Context, clientID string, clientSecret string, realm string, username string, password string, totp string) (*gocloak.JWT, error) {
+func (mock *goCloakClientInterfaceMock) LoginOtp(ctx context.Context, clientID string, clientSecret string, realm string, username string, password string, totp string) (*gocloak.JWT, error) {
 	if mock.LoginOtpFunc == nil {
-		panic("GoCloakMock.LoginOtpFunc: method is nil but GoCloak.LoginOtp was just called")
+		panic("goCloakClientInterfaceMock.LoginOtpFunc: method is nil but goCloakClientInterface.LoginOtp was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -13353,8 +13353,8 @@ func (mock *GoCloakMock) LoginOtp(ctx context.Context, clientID string, clientSe
 // LoginOtpCalls gets all the calls that were made to LoginOtp.
 // Check the length with:
 //
-//	len(mockedGoCloak.LoginOtpCalls())
-func (mock *GoCloakMock) LoginOtpCalls() []struct {
+//	len(mockedgoCloakClientInterface.LoginOtpCalls())
+func (mock *goCloakClientInterfaceMock) LoginOtpCalls() []struct {
 	Ctx          context.Context
 	ClientID     string
 	ClientSecret string
@@ -13379,9 +13379,9 @@ func (mock *GoCloakMock) LoginOtpCalls() []struct {
 }
 
 // Logout calls LogoutFunc.
-func (mock *GoCloakMock) Logout(ctx context.Context, clientID string, clientSecret string, realm string, refreshToken string) error {
+func (mock *goCloakClientInterfaceMock) Logout(ctx context.Context, clientID string, clientSecret string, realm string, refreshToken string) error {
 	if mock.LogoutFunc == nil {
-		panic("GoCloakMock.LogoutFunc: method is nil but GoCloak.Logout was just called")
+		panic("goCloakClientInterfaceMock.LogoutFunc: method is nil but goCloakClientInterface.Logout was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -13405,8 +13405,8 @@ func (mock *GoCloakMock) Logout(ctx context.Context, clientID string, clientSecr
 // LogoutCalls gets all the calls that were made to Logout.
 // Check the length with:
 //
-//	len(mockedGoCloak.LogoutCalls())
-func (mock *GoCloakMock) LogoutCalls() []struct {
+//	len(mockedgoCloakClientInterface.LogoutCalls())
+func (mock *goCloakClientInterfaceMock) LogoutCalls() []struct {
 	Ctx          context.Context
 	ClientID     string
 	ClientSecret string
@@ -13427,9 +13427,9 @@ func (mock *GoCloakMock) LogoutCalls() []struct {
 }
 
 // LogoutAllSessions calls LogoutAllSessionsFunc.
-func (mock *GoCloakMock) LogoutAllSessions(ctx context.Context, accessToken string, realm string, userID string) error {
+func (mock *goCloakClientInterfaceMock) LogoutAllSessions(ctx context.Context, accessToken string, realm string, userID string) error {
 	if mock.LogoutAllSessionsFunc == nil {
-		panic("GoCloakMock.LogoutAllSessionsFunc: method is nil but GoCloak.LogoutAllSessions was just called")
+		panic("goCloakClientInterfaceMock.LogoutAllSessionsFunc: method is nil but goCloakClientInterface.LogoutAllSessions was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -13451,8 +13451,8 @@ func (mock *GoCloakMock) LogoutAllSessions(ctx context.Context, accessToken stri
 // LogoutAllSessionsCalls gets all the calls that were made to LogoutAllSessions.
 // Check the length with:
 //
-//	len(mockedGoCloak.LogoutAllSessionsCalls())
-func (mock *GoCloakMock) LogoutAllSessionsCalls() []struct {
+//	len(mockedgoCloakClientInterface.LogoutAllSessionsCalls())
+func (mock *goCloakClientInterfaceMock) LogoutAllSessionsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -13471,9 +13471,9 @@ func (mock *GoCloakMock) LogoutAllSessionsCalls() []struct {
 }
 
 // LogoutPublicClient calls LogoutPublicClientFunc.
-func (mock *GoCloakMock) LogoutPublicClient(ctx context.Context, idOfClient string, realm string, accessToken string, refreshToken string) error {
+func (mock *goCloakClientInterfaceMock) LogoutPublicClient(ctx context.Context, idOfClient string, realm string, accessToken string, refreshToken string) error {
 	if mock.LogoutPublicClientFunc == nil {
-		panic("GoCloakMock.LogoutPublicClientFunc: method is nil but GoCloak.LogoutPublicClient was just called")
+		panic("goCloakClientInterfaceMock.LogoutPublicClientFunc: method is nil but goCloakClientInterface.LogoutPublicClient was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -13497,8 +13497,8 @@ func (mock *GoCloakMock) LogoutPublicClient(ctx context.Context, idOfClient stri
 // LogoutPublicClientCalls gets all the calls that were made to LogoutPublicClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.LogoutPublicClientCalls())
-func (mock *GoCloakMock) LogoutPublicClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.LogoutPublicClientCalls())
+func (mock *goCloakClientInterfaceMock) LogoutPublicClientCalls() []struct {
 	Ctx          context.Context
 	IdOfClient   string
 	Realm        string
@@ -13519,9 +13519,9 @@ func (mock *GoCloakMock) LogoutPublicClientCalls() []struct {
 }
 
 // LogoutUserSession calls LogoutUserSessionFunc.
-func (mock *GoCloakMock) LogoutUserSession(ctx context.Context, accessToken string, realm string, session string) error {
+func (mock *goCloakClientInterfaceMock) LogoutUserSession(ctx context.Context, accessToken string, realm string, session string) error {
 	if mock.LogoutUserSessionFunc == nil {
-		panic("GoCloakMock.LogoutUserSessionFunc: method is nil but GoCloak.LogoutUserSession was just called")
+		panic("goCloakClientInterfaceMock.LogoutUserSessionFunc: method is nil but goCloakClientInterface.LogoutUserSession was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -13543,8 +13543,8 @@ func (mock *GoCloakMock) LogoutUserSession(ctx context.Context, accessToken stri
 // LogoutUserSessionCalls gets all the calls that were made to LogoutUserSession.
 // Check the length with:
 //
-//	len(mockedGoCloak.LogoutUserSessionCalls())
-func (mock *GoCloakMock) LogoutUserSessionCalls() []struct {
+//	len(mockedgoCloakClientInterface.LogoutUserSessionCalls())
+func (mock *goCloakClientInterfaceMock) LogoutUserSessionCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -13563,9 +13563,9 @@ func (mock *GoCloakMock) LogoutUserSessionCalls() []struct {
 }
 
 // MoveCredentialBehind calls MoveCredentialBehindFunc.
-func (mock *GoCloakMock) MoveCredentialBehind(ctx context.Context, token string, realm string, userID string, credentialID string, newPreviousCredentialID string) error {
+func (mock *goCloakClientInterfaceMock) MoveCredentialBehind(ctx context.Context, token string, realm string, userID string, credentialID string, newPreviousCredentialID string) error {
 	if mock.MoveCredentialBehindFunc == nil {
-		panic("GoCloakMock.MoveCredentialBehindFunc: method is nil but GoCloak.MoveCredentialBehind was just called")
+		panic("goCloakClientInterfaceMock.MoveCredentialBehindFunc: method is nil but goCloakClientInterface.MoveCredentialBehind was just called")
 	}
 	callInfo := struct {
 		Ctx                     context.Context
@@ -13591,8 +13591,8 @@ func (mock *GoCloakMock) MoveCredentialBehind(ctx context.Context, token string,
 // MoveCredentialBehindCalls gets all the calls that were made to MoveCredentialBehind.
 // Check the length with:
 //
-//	len(mockedGoCloak.MoveCredentialBehindCalls())
-func (mock *GoCloakMock) MoveCredentialBehindCalls() []struct {
+//	len(mockedgoCloakClientInterface.MoveCredentialBehindCalls())
+func (mock *goCloakClientInterfaceMock) MoveCredentialBehindCalls() []struct {
 	Ctx                     context.Context
 	Token                   string
 	Realm                   string
@@ -13615,9 +13615,9 @@ func (mock *GoCloakMock) MoveCredentialBehindCalls() []struct {
 }
 
 // MoveCredentialToFirst calls MoveCredentialToFirstFunc.
-func (mock *GoCloakMock) MoveCredentialToFirst(ctx context.Context, token string, realm string, userID string, credentialID string) error {
+func (mock *goCloakClientInterfaceMock) MoveCredentialToFirst(ctx context.Context, token string, realm string, userID string, credentialID string) error {
 	if mock.MoveCredentialToFirstFunc == nil {
-		panic("GoCloakMock.MoveCredentialToFirstFunc: method is nil but GoCloak.MoveCredentialToFirst was just called")
+		panic("goCloakClientInterfaceMock.MoveCredentialToFirstFunc: method is nil but goCloakClientInterface.MoveCredentialToFirst was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -13641,8 +13641,8 @@ func (mock *GoCloakMock) MoveCredentialToFirst(ctx context.Context, token string
 // MoveCredentialToFirstCalls gets all the calls that were made to MoveCredentialToFirst.
 // Check the length with:
 //
-//	len(mockedGoCloak.MoveCredentialToFirstCalls())
-func (mock *GoCloakMock) MoveCredentialToFirstCalls() []struct {
+//	len(mockedgoCloakClientInterface.MoveCredentialToFirstCalls())
+func (mock *goCloakClientInterfaceMock) MoveCredentialToFirstCalls() []struct {
 	Ctx          context.Context
 	Token        string
 	Realm        string
@@ -13663,9 +13663,9 @@ func (mock *GoCloakMock) MoveCredentialToFirstCalls() []struct {
 }
 
 // RefreshToken calls RefreshTokenFunc.
-func (mock *GoCloakMock) RefreshToken(ctx context.Context, refreshToken string, clientID string, clientSecret string, realm string) (*gocloak.JWT, error) {
+func (mock *goCloakClientInterfaceMock) RefreshToken(ctx context.Context, refreshToken string, clientID string, clientSecret string, realm string) (*gocloak.JWT, error) {
 	if mock.RefreshTokenFunc == nil {
-		panic("GoCloakMock.RefreshTokenFunc: method is nil but GoCloak.RefreshToken was just called")
+		panic("goCloakClientInterfaceMock.RefreshTokenFunc: method is nil but goCloakClientInterface.RefreshToken was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -13689,8 +13689,8 @@ func (mock *GoCloakMock) RefreshToken(ctx context.Context, refreshToken string, 
 // RefreshTokenCalls gets all the calls that were made to RefreshToken.
 // Check the length with:
 //
-//	len(mockedGoCloak.RefreshTokenCalls())
-func (mock *GoCloakMock) RefreshTokenCalls() []struct {
+//	len(mockedgoCloakClientInterface.RefreshTokenCalls())
+func (mock *goCloakClientInterfaceMock) RefreshTokenCalls() []struct {
 	Ctx          context.Context
 	RefreshToken string
 	ClientID     string
@@ -13711,9 +13711,9 @@ func (mock *GoCloakMock) RefreshTokenCalls() []struct {
 }
 
 // RegenerateClientSecret calls RegenerateClientSecretFunc.
-func (mock *GoCloakMock) RegenerateClientSecret(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.CredentialRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) RegenerateClientSecret(ctx context.Context, token string, realm string, idOfClient string) (*gocloak.CredentialRepresentation, error) {
 	if mock.RegenerateClientSecretFunc == nil {
-		panic("GoCloakMock.RegenerateClientSecretFunc: method is nil but GoCloak.RegenerateClientSecret was just called")
+		panic("goCloakClientInterfaceMock.RegenerateClientSecretFunc: method is nil but goCloakClientInterface.RegenerateClientSecret was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -13735,8 +13735,8 @@ func (mock *GoCloakMock) RegenerateClientSecret(ctx context.Context, token strin
 // RegenerateClientSecretCalls gets all the calls that were made to RegenerateClientSecret.
 // Check the length with:
 //
-//	len(mockedGoCloak.RegenerateClientSecretCalls())
-func (mock *GoCloakMock) RegenerateClientSecretCalls() []struct {
+//	len(mockedgoCloakClientInterface.RegenerateClientSecretCalls())
+func (mock *goCloakClientInterfaceMock) RegenerateClientSecretCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -13755,9 +13755,9 @@ func (mock *GoCloakMock) RegenerateClientSecretCalls() []struct {
 }
 
 // RemoveDefaultGroup calls RemoveDefaultGroupFunc.
-func (mock *GoCloakMock) RemoveDefaultGroup(ctx context.Context, accessToken string, realm string, groupID string) error {
+func (mock *goCloakClientInterfaceMock) RemoveDefaultGroup(ctx context.Context, accessToken string, realm string, groupID string) error {
 	if mock.RemoveDefaultGroupFunc == nil {
-		panic("GoCloakMock.RemoveDefaultGroupFunc: method is nil but GoCloak.RemoveDefaultGroup was just called")
+		panic("goCloakClientInterfaceMock.RemoveDefaultGroupFunc: method is nil but goCloakClientInterface.RemoveDefaultGroup was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -13779,8 +13779,8 @@ func (mock *GoCloakMock) RemoveDefaultGroup(ctx context.Context, accessToken str
 // RemoveDefaultGroupCalls gets all the calls that were made to RemoveDefaultGroup.
 // Check the length with:
 //
-//	len(mockedGoCloak.RemoveDefaultGroupCalls())
-func (mock *GoCloakMock) RemoveDefaultGroupCalls() []struct {
+//	len(mockedgoCloakClientInterface.RemoveDefaultGroupCalls())
+func (mock *goCloakClientInterfaceMock) RemoveDefaultGroupCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -13799,9 +13799,9 @@ func (mock *GoCloakMock) RemoveDefaultGroupCalls() []struct {
 }
 
 // RemoveDefaultScopeFromClient calls RemoveDefaultScopeFromClientFunc.
-func (mock *GoCloakMock) RemoveDefaultScopeFromClient(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
+func (mock *goCloakClientInterfaceMock) RemoveDefaultScopeFromClient(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
 	if mock.RemoveDefaultScopeFromClientFunc == nil {
-		panic("GoCloakMock.RemoveDefaultScopeFromClientFunc: method is nil but GoCloak.RemoveDefaultScopeFromClient was just called")
+		panic("goCloakClientInterfaceMock.RemoveDefaultScopeFromClientFunc: method is nil but goCloakClientInterface.RemoveDefaultScopeFromClient was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -13825,8 +13825,8 @@ func (mock *GoCloakMock) RemoveDefaultScopeFromClient(ctx context.Context, token
 // RemoveDefaultScopeFromClientCalls gets all the calls that were made to RemoveDefaultScopeFromClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.RemoveDefaultScopeFromClientCalls())
-func (mock *GoCloakMock) RemoveDefaultScopeFromClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.RemoveDefaultScopeFromClientCalls())
+func (mock *goCloakClientInterfaceMock) RemoveDefaultScopeFromClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -13847,9 +13847,9 @@ func (mock *GoCloakMock) RemoveDefaultScopeFromClientCalls() []struct {
 }
 
 // RemoveOptionalScopeFromClient calls RemoveOptionalScopeFromClientFunc.
-func (mock *GoCloakMock) RemoveOptionalScopeFromClient(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
+func (mock *goCloakClientInterfaceMock) RemoveOptionalScopeFromClient(ctx context.Context, token string, realm string, idOfClient string, scopeID string) error {
 	if mock.RemoveOptionalScopeFromClientFunc == nil {
-		panic("GoCloakMock.RemoveOptionalScopeFromClientFunc: method is nil but GoCloak.RemoveOptionalScopeFromClient was just called")
+		panic("goCloakClientInterfaceMock.RemoveOptionalScopeFromClientFunc: method is nil but goCloakClientInterface.RemoveOptionalScopeFromClient was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -13873,8 +13873,8 @@ func (mock *GoCloakMock) RemoveOptionalScopeFromClient(ctx context.Context, toke
 // RemoveOptionalScopeFromClientCalls gets all the calls that were made to RemoveOptionalScopeFromClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.RemoveOptionalScopeFromClientCalls())
-func (mock *GoCloakMock) RemoveOptionalScopeFromClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.RemoveOptionalScopeFromClientCalls())
+func (mock *goCloakClientInterfaceMock) RemoveOptionalScopeFromClientCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -13895,9 +13895,9 @@ func (mock *GoCloakMock) RemoveOptionalScopeFromClientCalls() []struct {
 }
 
 // RestyClient calls RestyClientFunc.
-func (mock *GoCloakMock) RestyClient() *resty.Client {
+func (mock *goCloakClientInterfaceMock) RestyClient() *resty.Client {
 	if mock.RestyClientFunc == nil {
-		panic("GoCloakMock.RestyClientFunc: method is nil but GoCloak.RestyClient was just called")
+		panic("goCloakClientInterfaceMock.RestyClientFunc: method is nil but goCloakClientInterface.RestyClient was just called")
 	}
 	callInfo := struct {
 	}{}
@@ -13910,8 +13910,8 @@ func (mock *GoCloakMock) RestyClient() *resty.Client {
 // RestyClientCalls gets all the calls that were made to RestyClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.RestyClientCalls())
-func (mock *GoCloakMock) RestyClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.RestyClientCalls())
+func (mock *goCloakClientInterfaceMock) RestyClientCalls() []struct {
 } {
 	var calls []struct {
 	}
@@ -13922,9 +13922,9 @@ func (mock *GoCloakMock) RestyClientCalls() []struct {
 }
 
 // RetrospectToken calls RetrospectTokenFunc.
-func (mock *GoCloakMock) RetrospectToken(ctx context.Context, accessToken string, clientID string, clientSecret string, realm string) (*gocloak.RetrospecTokenResult, error) {
+func (mock *goCloakClientInterfaceMock) RetrospectToken(ctx context.Context, accessToken string, clientID string, clientSecret string, realm string) (*gocloak.RetrospecTokenResult, error) {
 	if mock.RetrospectTokenFunc == nil {
-		panic("GoCloakMock.RetrospectTokenFunc: method is nil but GoCloak.RetrospectToken was just called")
+		panic("goCloakClientInterfaceMock.RetrospectTokenFunc: method is nil but goCloakClientInterface.RetrospectToken was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -13948,8 +13948,8 @@ func (mock *GoCloakMock) RetrospectToken(ctx context.Context, accessToken string
 // RetrospectTokenCalls gets all the calls that were made to RetrospectToken.
 // Check the length with:
 //
-//	len(mockedGoCloak.RetrospectTokenCalls())
-func (mock *GoCloakMock) RetrospectTokenCalls() []struct {
+//	len(mockedgoCloakClientInterface.RetrospectTokenCalls())
+func (mock *goCloakClientInterfaceMock) RetrospectTokenCalls() []struct {
 	Ctx          context.Context
 	AccessToken  string
 	ClientID     string
@@ -13970,9 +13970,9 @@ func (mock *GoCloakMock) RetrospectTokenCalls() []struct {
 }
 
 // RevokeUserConsents calls RevokeUserConsentsFunc.
-func (mock *GoCloakMock) RevokeUserConsents(ctx context.Context, accessToken string, realm string, userID string, clientID string) error {
+func (mock *goCloakClientInterfaceMock) RevokeUserConsents(ctx context.Context, accessToken string, realm string, userID string, clientID string) error {
 	if mock.RevokeUserConsentsFunc == nil {
-		panic("GoCloakMock.RevokeUserConsentsFunc: method is nil but GoCloak.RevokeUserConsents was just called")
+		panic("goCloakClientInterfaceMock.RevokeUserConsentsFunc: method is nil but goCloakClientInterface.RevokeUserConsents was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -13996,8 +13996,8 @@ func (mock *GoCloakMock) RevokeUserConsents(ctx context.Context, accessToken str
 // RevokeUserConsentsCalls gets all the calls that were made to RevokeUserConsents.
 // Check the length with:
 //
-//	len(mockedGoCloak.RevokeUserConsentsCalls())
-func (mock *GoCloakMock) RevokeUserConsentsCalls() []struct {
+//	len(mockedgoCloakClientInterface.RevokeUserConsentsCalls())
+func (mock *goCloakClientInterfaceMock) RevokeUserConsentsCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -14018,9 +14018,9 @@ func (mock *GoCloakMock) RevokeUserConsentsCalls() []struct {
 }
 
 // SetPassword calls SetPasswordFunc.
-func (mock *GoCloakMock) SetPassword(ctx context.Context, token string, userID string, realm string, password string, temporary bool) error {
+func (mock *goCloakClientInterfaceMock) SetPassword(ctx context.Context, token string, userID string, realm string, password string, temporary bool) error {
 	if mock.SetPasswordFunc == nil {
-		panic("GoCloakMock.SetPasswordFunc: method is nil but GoCloak.SetPassword was just called")
+		panic("goCloakClientInterfaceMock.SetPasswordFunc: method is nil but goCloakClientInterface.SetPassword was just called")
 	}
 	callInfo := struct {
 		Ctx       context.Context
@@ -14046,8 +14046,8 @@ func (mock *GoCloakMock) SetPassword(ctx context.Context, token string, userID s
 // SetPasswordCalls gets all the calls that were made to SetPassword.
 // Check the length with:
 //
-//	len(mockedGoCloak.SetPasswordCalls())
-func (mock *GoCloakMock) SetPasswordCalls() []struct {
+//	len(mockedgoCloakClientInterface.SetPasswordCalls())
+func (mock *goCloakClientInterfaceMock) SetPasswordCalls() []struct {
 	Ctx       context.Context
 	Token     string
 	UserID    string
@@ -14070,9 +14070,9 @@ func (mock *GoCloakMock) SetPasswordCalls() []struct {
 }
 
 // SetRestyClient calls SetRestyClientFunc.
-func (mock *GoCloakMock) SetRestyClient(restyClient *resty.Client) {
+func (mock *goCloakClientInterfaceMock) SetRestyClient(restyClient *resty.Client) {
 	if mock.SetRestyClientFunc == nil {
-		panic("GoCloakMock.SetRestyClientFunc: method is nil but GoCloak.SetRestyClient was just called")
+		panic("goCloakClientInterfaceMock.SetRestyClientFunc: method is nil but goCloakClientInterface.SetRestyClient was just called")
 	}
 	callInfo := struct {
 		RestyClient *resty.Client
@@ -14088,8 +14088,8 @@ func (mock *GoCloakMock) SetRestyClient(restyClient *resty.Client) {
 // SetRestyClientCalls gets all the calls that were made to SetRestyClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.SetRestyClientCalls())
-func (mock *GoCloakMock) SetRestyClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.SetRestyClientCalls())
+func (mock *goCloakClientInterfaceMock) SetRestyClientCalls() []struct {
 	RestyClient *resty.Client
 } {
 	var calls []struct {
@@ -14102,9 +14102,9 @@ func (mock *GoCloakMock) SetRestyClientCalls() []struct {
 }
 
 // UpdateAuthenticationExecution calls UpdateAuthenticationExecutionFunc.
-func (mock *GoCloakMock) UpdateAuthenticationExecution(ctx context.Context, token string, realm string, flow string, execution gocloak.ModifyAuthenticationExecutionRepresentation) error {
+func (mock *goCloakClientInterfaceMock) UpdateAuthenticationExecution(ctx context.Context, token string, realm string, flow string, execution gocloak.ModifyAuthenticationExecutionRepresentation) error {
 	if mock.UpdateAuthenticationExecutionFunc == nil {
-		panic("GoCloakMock.UpdateAuthenticationExecutionFunc: method is nil but GoCloak.UpdateAuthenticationExecution was just called")
+		panic("goCloakClientInterfaceMock.UpdateAuthenticationExecutionFunc: method is nil but goCloakClientInterface.UpdateAuthenticationExecution was just called")
 	}
 	callInfo := struct {
 		Ctx       context.Context
@@ -14128,8 +14128,8 @@ func (mock *GoCloakMock) UpdateAuthenticationExecution(ctx context.Context, toke
 // UpdateAuthenticationExecutionCalls gets all the calls that were made to UpdateAuthenticationExecution.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateAuthenticationExecutionCalls())
-func (mock *GoCloakMock) UpdateAuthenticationExecutionCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateAuthenticationExecutionCalls())
+func (mock *goCloakClientInterfaceMock) UpdateAuthenticationExecutionCalls() []struct {
 	Ctx       context.Context
 	Token     string
 	Realm     string
@@ -14150,9 +14150,9 @@ func (mock *GoCloakMock) UpdateAuthenticationExecutionCalls() []struct {
 }
 
 // UpdateClient calls UpdateClientFunc.
-func (mock *GoCloakMock) UpdateClient(ctx context.Context, accessToken string, realm string, updatedClient gocloak.Client) error {
+func (mock *goCloakClientInterfaceMock) UpdateClient(ctx context.Context, accessToken string, realm string, updatedClient gocloak.Client) error {
 	if mock.UpdateClientFunc == nil {
-		panic("GoCloakMock.UpdateClientFunc: method is nil but GoCloak.UpdateClient was just called")
+		panic("goCloakClientInterfaceMock.UpdateClientFunc: method is nil but goCloakClientInterface.UpdateClient was just called")
 	}
 	callInfo := struct {
 		Ctx           context.Context
@@ -14174,8 +14174,8 @@ func (mock *GoCloakMock) UpdateClient(ctx context.Context, accessToken string, r
 // UpdateClientCalls gets all the calls that were made to UpdateClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateClientCalls())
-func (mock *GoCloakMock) UpdateClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateClientCalls())
+func (mock *goCloakClientInterfaceMock) UpdateClientCalls() []struct {
 	Ctx           context.Context
 	AccessToken   string
 	Realm         string
@@ -14194,9 +14194,9 @@ func (mock *GoCloakMock) UpdateClientCalls() []struct {
 }
 
 // UpdateClientProtocolMapper calls UpdateClientProtocolMapperFunc.
-func (mock *GoCloakMock) UpdateClientProtocolMapper(ctx context.Context, token string, realm string, idOfClient string, mapperID string, mapper gocloak.ProtocolMapperRepresentation) error {
+func (mock *goCloakClientInterfaceMock) UpdateClientProtocolMapper(ctx context.Context, token string, realm string, idOfClient string, mapperID string, mapper gocloak.ProtocolMapperRepresentation) error {
 	if mock.UpdateClientProtocolMapperFunc == nil {
-		panic("GoCloakMock.UpdateClientProtocolMapperFunc: method is nil but GoCloak.UpdateClientProtocolMapper was just called")
+		panic("goCloakClientInterfaceMock.UpdateClientProtocolMapperFunc: method is nil but goCloakClientInterface.UpdateClientProtocolMapper was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -14222,8 +14222,8 @@ func (mock *GoCloakMock) UpdateClientProtocolMapper(ctx context.Context, token s
 // UpdateClientProtocolMapperCalls gets all the calls that were made to UpdateClientProtocolMapper.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateClientProtocolMapperCalls())
-func (mock *GoCloakMock) UpdateClientProtocolMapperCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateClientProtocolMapperCalls())
+func (mock *goCloakClientInterfaceMock) UpdateClientProtocolMapperCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -14246,9 +14246,9 @@ func (mock *GoCloakMock) UpdateClientProtocolMapperCalls() []struct {
 }
 
 // UpdateClientRepresentation calls UpdateClientRepresentationFunc.
-func (mock *GoCloakMock) UpdateClientRepresentation(ctx context.Context, accessToken string, realm string, updatedClient gocloak.Client) (*gocloak.Client, error) {
+func (mock *goCloakClientInterfaceMock) UpdateClientRepresentation(ctx context.Context, accessToken string, realm string, updatedClient gocloak.Client) (*gocloak.Client, error) {
 	if mock.UpdateClientRepresentationFunc == nil {
-		panic("GoCloakMock.UpdateClientRepresentationFunc: method is nil but GoCloak.UpdateClientRepresentation was just called")
+		panic("goCloakClientInterfaceMock.UpdateClientRepresentationFunc: method is nil but goCloakClientInterface.UpdateClientRepresentation was just called")
 	}
 	callInfo := struct {
 		Ctx           context.Context
@@ -14270,8 +14270,8 @@ func (mock *GoCloakMock) UpdateClientRepresentation(ctx context.Context, accessT
 // UpdateClientRepresentationCalls gets all the calls that were made to UpdateClientRepresentation.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateClientRepresentationCalls())
-func (mock *GoCloakMock) UpdateClientRepresentationCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateClientRepresentationCalls())
+func (mock *goCloakClientInterfaceMock) UpdateClientRepresentationCalls() []struct {
 	Ctx           context.Context
 	AccessToken   string
 	Realm         string
@@ -14290,9 +14290,9 @@ func (mock *GoCloakMock) UpdateClientRepresentationCalls() []struct {
 }
 
 // UpdateClientScope calls UpdateClientScopeFunc.
-func (mock *GoCloakMock) UpdateClientScope(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) error {
+func (mock *goCloakClientInterfaceMock) UpdateClientScope(ctx context.Context, accessToken string, realm string, scope gocloak.ClientScope) error {
 	if mock.UpdateClientScopeFunc == nil {
-		panic("GoCloakMock.UpdateClientScopeFunc: method is nil but GoCloak.UpdateClientScope was just called")
+		panic("goCloakClientInterfaceMock.UpdateClientScopeFunc: method is nil but goCloakClientInterface.UpdateClientScope was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -14314,8 +14314,8 @@ func (mock *GoCloakMock) UpdateClientScope(ctx context.Context, accessToken stri
 // UpdateClientScopeCalls gets all the calls that were made to UpdateClientScope.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateClientScopeCalls())
-func (mock *GoCloakMock) UpdateClientScopeCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateClientScopeCalls())
+func (mock *goCloakClientInterfaceMock) UpdateClientScopeCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -14334,9 +14334,9 @@ func (mock *GoCloakMock) UpdateClientScopeCalls() []struct {
 }
 
 // UpdateClientScopeProtocolMapper calls UpdateClientScopeProtocolMapperFunc.
-func (mock *GoCloakMock) UpdateClientScopeProtocolMapper(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) error {
+func (mock *goCloakClientInterfaceMock) UpdateClientScopeProtocolMapper(ctx context.Context, accessToken string, realm string, scopeID string, protocolMapper gocloak.ProtocolMappers) error {
 	if mock.UpdateClientScopeProtocolMapperFunc == nil {
-		panic("GoCloakMock.UpdateClientScopeProtocolMapperFunc: method is nil but GoCloak.UpdateClientScopeProtocolMapper was just called")
+		panic("goCloakClientInterfaceMock.UpdateClientScopeProtocolMapperFunc: method is nil but goCloakClientInterface.UpdateClientScopeProtocolMapper was just called")
 	}
 	callInfo := struct {
 		Ctx            context.Context
@@ -14360,8 +14360,8 @@ func (mock *GoCloakMock) UpdateClientScopeProtocolMapper(ctx context.Context, ac
 // UpdateClientScopeProtocolMapperCalls gets all the calls that were made to UpdateClientScopeProtocolMapper.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateClientScopeProtocolMapperCalls())
-func (mock *GoCloakMock) UpdateClientScopeProtocolMapperCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateClientScopeProtocolMapperCalls())
+func (mock *goCloakClientInterfaceMock) UpdateClientScopeProtocolMapperCalls() []struct {
 	Ctx            context.Context
 	AccessToken    string
 	Realm          string
@@ -14382,9 +14382,9 @@ func (mock *GoCloakMock) UpdateClientScopeProtocolMapperCalls() []struct {
 }
 
 // UpdateCredentialUserLabel calls UpdateCredentialUserLabelFunc.
-func (mock *GoCloakMock) UpdateCredentialUserLabel(ctx context.Context, token string, realm string, userID string, credentialID string, userLabel string) error {
+func (mock *goCloakClientInterfaceMock) UpdateCredentialUserLabel(ctx context.Context, token string, realm string, userID string, credentialID string, userLabel string) error {
 	if mock.UpdateCredentialUserLabelFunc == nil {
-		panic("GoCloakMock.UpdateCredentialUserLabelFunc: method is nil but GoCloak.UpdateCredentialUserLabel was just called")
+		panic("goCloakClientInterfaceMock.UpdateCredentialUserLabelFunc: method is nil but goCloakClientInterface.UpdateCredentialUserLabel was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -14410,8 +14410,8 @@ func (mock *GoCloakMock) UpdateCredentialUserLabel(ctx context.Context, token st
 // UpdateCredentialUserLabelCalls gets all the calls that were made to UpdateCredentialUserLabel.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateCredentialUserLabelCalls())
-func (mock *GoCloakMock) UpdateCredentialUserLabelCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateCredentialUserLabelCalls())
+func (mock *goCloakClientInterfaceMock) UpdateCredentialUserLabelCalls() []struct {
 	Ctx          context.Context
 	Token        string
 	Realm        string
@@ -14434,9 +14434,9 @@ func (mock *GoCloakMock) UpdateCredentialUserLabelCalls() []struct {
 }
 
 // UpdateGroup calls UpdateGroupFunc.
-func (mock *GoCloakMock) UpdateGroup(ctx context.Context, accessToken string, realm string, updatedGroup gocloak.Group) error {
+func (mock *goCloakClientInterfaceMock) UpdateGroup(ctx context.Context, accessToken string, realm string, updatedGroup gocloak.Group) error {
 	if mock.UpdateGroupFunc == nil {
-		panic("GoCloakMock.UpdateGroupFunc: method is nil but GoCloak.UpdateGroup was just called")
+		panic("goCloakClientInterfaceMock.UpdateGroupFunc: method is nil but goCloakClientInterface.UpdateGroup was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -14458,8 +14458,8 @@ func (mock *GoCloakMock) UpdateGroup(ctx context.Context, accessToken string, re
 // UpdateGroupCalls gets all the calls that were made to UpdateGroup.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateGroupCalls())
-func (mock *GoCloakMock) UpdateGroupCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateGroupCalls())
+func (mock *goCloakClientInterfaceMock) UpdateGroupCalls() []struct {
 	Ctx          context.Context
 	AccessToken  string
 	Realm        string
@@ -14478,9 +14478,9 @@ func (mock *GoCloakMock) UpdateGroupCalls() []struct {
 }
 
 // UpdateIdentityProvider calls UpdateIdentityProviderFunc.
-func (mock *GoCloakMock) UpdateIdentityProvider(ctx context.Context, token string, realm string, alias string, providerRep gocloak.IdentityProviderRepresentation) error {
+func (mock *goCloakClientInterfaceMock) UpdateIdentityProvider(ctx context.Context, token string, realm string, alias string, providerRep gocloak.IdentityProviderRepresentation) error {
 	if mock.UpdateIdentityProviderFunc == nil {
-		panic("GoCloakMock.UpdateIdentityProviderFunc: method is nil but GoCloak.UpdateIdentityProvider was just called")
+		panic("goCloakClientInterfaceMock.UpdateIdentityProviderFunc: method is nil but goCloakClientInterface.UpdateIdentityProvider was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -14504,8 +14504,8 @@ func (mock *GoCloakMock) UpdateIdentityProvider(ctx context.Context, token strin
 // UpdateIdentityProviderCalls gets all the calls that were made to UpdateIdentityProvider.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateIdentityProviderCalls())
-func (mock *GoCloakMock) UpdateIdentityProviderCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateIdentityProviderCalls())
+func (mock *goCloakClientInterfaceMock) UpdateIdentityProviderCalls() []struct {
 	Ctx         context.Context
 	Token       string
 	Realm       string
@@ -14526,9 +14526,9 @@ func (mock *GoCloakMock) UpdateIdentityProviderCalls() []struct {
 }
 
 // UpdateIdentityProviderMapper calls UpdateIdentityProviderMapperFunc.
-func (mock *GoCloakMock) UpdateIdentityProviderMapper(ctx context.Context, token string, realm string, alias string, mapper gocloak.IdentityProviderMapper) error {
+func (mock *goCloakClientInterfaceMock) UpdateIdentityProviderMapper(ctx context.Context, token string, realm string, alias string, mapper gocloak.IdentityProviderMapper) error {
 	if mock.UpdateIdentityProviderMapperFunc == nil {
-		panic("GoCloakMock.UpdateIdentityProviderMapperFunc: method is nil but GoCloak.UpdateIdentityProviderMapper was just called")
+		panic("goCloakClientInterfaceMock.UpdateIdentityProviderMapperFunc: method is nil but goCloakClientInterface.UpdateIdentityProviderMapper was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -14552,8 +14552,8 @@ func (mock *GoCloakMock) UpdateIdentityProviderMapper(ctx context.Context, token
 // UpdateIdentityProviderMapperCalls gets all the calls that were made to UpdateIdentityProviderMapper.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateIdentityProviderMapperCalls())
-func (mock *GoCloakMock) UpdateIdentityProviderMapperCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateIdentityProviderMapperCalls())
+func (mock *goCloakClientInterfaceMock) UpdateIdentityProviderMapperCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -14574,9 +14574,9 @@ func (mock *GoCloakMock) UpdateIdentityProviderMapperCalls() []struct {
 }
 
 // UpdatePermission calls UpdatePermissionFunc.
-func (mock *GoCloakMock) UpdatePermission(ctx context.Context, token string, realm string, idOfClient string, permission gocloak.PermissionRepresentation) error {
+func (mock *goCloakClientInterfaceMock) UpdatePermission(ctx context.Context, token string, realm string, idOfClient string, permission gocloak.PermissionRepresentation) error {
 	if mock.UpdatePermissionFunc == nil {
-		panic("GoCloakMock.UpdatePermissionFunc: method is nil but GoCloak.UpdatePermission was just called")
+		panic("goCloakClientInterfaceMock.UpdatePermissionFunc: method is nil but goCloakClientInterface.UpdatePermission was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -14600,8 +14600,8 @@ func (mock *GoCloakMock) UpdatePermission(ctx context.Context, token string, rea
 // UpdatePermissionCalls gets all the calls that were made to UpdatePermission.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdatePermissionCalls())
-func (mock *GoCloakMock) UpdatePermissionCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdatePermissionCalls())
+func (mock *goCloakClientInterfaceMock) UpdatePermissionCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -14622,9 +14622,9 @@ func (mock *GoCloakMock) UpdatePermissionCalls() []struct {
 }
 
 // UpdatePolicy calls UpdatePolicyFunc.
-func (mock *GoCloakMock) UpdatePolicy(ctx context.Context, token string, realm string, idOfClient string, policy gocloak.PolicyRepresentation) error {
+func (mock *goCloakClientInterfaceMock) UpdatePolicy(ctx context.Context, token string, realm string, idOfClient string, policy gocloak.PolicyRepresentation) error {
 	if mock.UpdatePolicyFunc == nil {
-		panic("GoCloakMock.UpdatePolicyFunc: method is nil but GoCloak.UpdatePolicy was just called")
+		panic("goCloakClientInterfaceMock.UpdatePolicyFunc: method is nil but goCloakClientInterface.UpdatePolicy was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -14648,8 +14648,8 @@ func (mock *GoCloakMock) UpdatePolicy(ctx context.Context, token string, realm s
 // UpdatePolicyCalls gets all the calls that were made to UpdatePolicy.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdatePolicyCalls())
-func (mock *GoCloakMock) UpdatePolicyCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdatePolicyCalls())
+func (mock *goCloakClientInterfaceMock) UpdatePolicyCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -14670,9 +14670,9 @@ func (mock *GoCloakMock) UpdatePolicyCalls() []struct {
 }
 
 // UpdateRealm calls UpdateRealmFunc.
-func (mock *GoCloakMock) UpdateRealm(ctx context.Context, token string, realm gocloak.RealmRepresentation) error {
+func (mock *goCloakClientInterfaceMock) UpdateRealm(ctx context.Context, token string, realm gocloak.RealmRepresentation) error {
 	if mock.UpdateRealmFunc == nil {
-		panic("GoCloakMock.UpdateRealmFunc: method is nil but GoCloak.UpdateRealm was just called")
+		panic("goCloakClientInterfaceMock.UpdateRealmFunc: method is nil but goCloakClientInterface.UpdateRealm was just called")
 	}
 	callInfo := struct {
 		Ctx   context.Context
@@ -14692,8 +14692,8 @@ func (mock *GoCloakMock) UpdateRealm(ctx context.Context, token string, realm go
 // UpdateRealmCalls gets all the calls that were made to UpdateRealm.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateRealmCalls())
-func (mock *GoCloakMock) UpdateRealmCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateRealmCalls())
+func (mock *goCloakClientInterfaceMock) UpdateRealmCalls() []struct {
 	Ctx   context.Context
 	Token string
 	Realm gocloak.RealmRepresentation
@@ -14710,9 +14710,9 @@ func (mock *GoCloakMock) UpdateRealmCalls() []struct {
 }
 
 // UpdateRealmRole calls UpdateRealmRoleFunc.
-func (mock *GoCloakMock) UpdateRealmRole(ctx context.Context, token string, realm string, roleName string, role gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) UpdateRealmRole(ctx context.Context, token string, realm string, roleName string, role gocloak.Role) error {
 	if mock.UpdateRealmRoleFunc == nil {
-		panic("GoCloakMock.UpdateRealmRoleFunc: method is nil but GoCloak.UpdateRealmRole was just called")
+		panic("goCloakClientInterfaceMock.UpdateRealmRoleFunc: method is nil but goCloakClientInterface.UpdateRealmRole was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -14736,8 +14736,8 @@ func (mock *GoCloakMock) UpdateRealmRole(ctx context.Context, token string, real
 // UpdateRealmRoleCalls gets all the calls that were made to UpdateRealmRole.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateRealmRoleCalls())
-func (mock *GoCloakMock) UpdateRealmRoleCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateRealmRoleCalls())
+func (mock *goCloakClientInterfaceMock) UpdateRealmRoleCalls() []struct {
 	Ctx      context.Context
 	Token    string
 	Realm    string
@@ -14758,9 +14758,9 @@ func (mock *GoCloakMock) UpdateRealmRoleCalls() []struct {
 }
 
 // UpdateRealmRoleByID calls UpdateRealmRoleByIDFunc.
-func (mock *GoCloakMock) UpdateRealmRoleByID(ctx context.Context, token string, realm string, roleID string, role gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) UpdateRealmRoleByID(ctx context.Context, token string, realm string, roleID string, role gocloak.Role) error {
 	if mock.UpdateRealmRoleByIDFunc == nil {
-		panic("GoCloakMock.UpdateRealmRoleByIDFunc: method is nil but GoCloak.UpdateRealmRoleByID was just called")
+		panic("goCloakClientInterfaceMock.UpdateRealmRoleByIDFunc: method is nil but goCloakClientInterface.UpdateRealmRoleByID was just called")
 	}
 	callInfo := struct {
 		Ctx    context.Context
@@ -14784,8 +14784,8 @@ func (mock *GoCloakMock) UpdateRealmRoleByID(ctx context.Context, token string, 
 // UpdateRealmRoleByIDCalls gets all the calls that were made to UpdateRealmRoleByID.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateRealmRoleByIDCalls())
-func (mock *GoCloakMock) UpdateRealmRoleByIDCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateRealmRoleByIDCalls())
+func (mock *goCloakClientInterfaceMock) UpdateRealmRoleByIDCalls() []struct {
 	Ctx    context.Context
 	Token  string
 	Realm  string
@@ -14806,9 +14806,9 @@ func (mock *GoCloakMock) UpdateRealmRoleByIDCalls() []struct {
 }
 
 // UpdateRequiredAction calls UpdateRequiredActionFunc.
-func (mock *GoCloakMock) UpdateRequiredAction(ctx context.Context, token string, realm string, requiredAction gocloak.RequiredActionProviderRepresentation) error {
+func (mock *goCloakClientInterfaceMock) UpdateRequiredAction(ctx context.Context, token string, realm string, requiredAction gocloak.RequiredActionProviderRepresentation) error {
 	if mock.UpdateRequiredActionFunc == nil {
-		panic("GoCloakMock.UpdateRequiredActionFunc: method is nil but GoCloak.UpdateRequiredAction was just called")
+		panic("goCloakClientInterfaceMock.UpdateRequiredActionFunc: method is nil but goCloakClientInterface.UpdateRequiredAction was just called")
 	}
 	callInfo := struct {
 		Ctx            context.Context
@@ -14830,8 +14830,8 @@ func (mock *GoCloakMock) UpdateRequiredAction(ctx context.Context, token string,
 // UpdateRequiredActionCalls gets all the calls that were made to UpdateRequiredAction.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateRequiredActionCalls())
-func (mock *GoCloakMock) UpdateRequiredActionCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateRequiredActionCalls())
+func (mock *goCloakClientInterfaceMock) UpdateRequiredActionCalls() []struct {
 	Ctx            context.Context
 	Token          string
 	Realm          string
@@ -14850,9 +14850,9 @@ func (mock *GoCloakMock) UpdateRequiredActionCalls() []struct {
 }
 
 // UpdateResource calls UpdateResourceFunc.
-func (mock *GoCloakMock) UpdateResource(ctx context.Context, token string, realm string, idOfClient string, resource gocloak.ResourceRepresentation) error {
+func (mock *goCloakClientInterfaceMock) UpdateResource(ctx context.Context, token string, realm string, idOfClient string, resource gocloak.ResourceRepresentation) error {
 	if mock.UpdateResourceFunc == nil {
-		panic("GoCloakMock.UpdateResourceFunc: method is nil but GoCloak.UpdateResource was just called")
+		panic("goCloakClientInterfaceMock.UpdateResourceFunc: method is nil but goCloakClientInterface.UpdateResource was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -14876,8 +14876,8 @@ func (mock *GoCloakMock) UpdateResource(ctx context.Context, token string, realm
 // UpdateResourceCalls gets all the calls that were made to UpdateResource.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateResourceCalls())
-func (mock *GoCloakMock) UpdateResourceCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateResourceCalls())
+func (mock *goCloakClientInterfaceMock) UpdateResourceCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -14898,9 +14898,9 @@ func (mock *GoCloakMock) UpdateResourceCalls() []struct {
 }
 
 // UpdateResourceClient calls UpdateResourceClientFunc.
-func (mock *GoCloakMock) UpdateResourceClient(ctx context.Context, token string, realm string, resource gocloak.ResourceRepresentation) error {
+func (mock *goCloakClientInterfaceMock) UpdateResourceClient(ctx context.Context, token string, realm string, resource gocloak.ResourceRepresentation) error {
 	if mock.UpdateResourceClientFunc == nil {
-		panic("GoCloakMock.UpdateResourceClientFunc: method is nil but GoCloak.UpdateResourceClient was just called")
+		panic("goCloakClientInterfaceMock.UpdateResourceClientFunc: method is nil but goCloakClientInterface.UpdateResourceClient was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
@@ -14922,8 +14922,8 @@ func (mock *GoCloakMock) UpdateResourceClient(ctx context.Context, token string,
 // UpdateResourceClientCalls gets all the calls that were made to UpdateResourceClient.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateResourceClientCalls())
-func (mock *GoCloakMock) UpdateResourceClientCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateResourceClientCalls())
+func (mock *goCloakClientInterfaceMock) UpdateResourceClientCalls() []struct {
 	Ctx      context.Context
 	Token    string
 	Realm    string
@@ -14942,9 +14942,9 @@ func (mock *GoCloakMock) UpdateResourceClientCalls() []struct {
 }
 
 // UpdateResourcePolicy calls UpdateResourcePolicyFunc.
-func (mock *GoCloakMock) UpdateResourcePolicy(ctx context.Context, token string, realm string, permissionID string, policy gocloak.ResourcePolicyRepresentation) error {
+func (mock *goCloakClientInterfaceMock) UpdateResourcePolicy(ctx context.Context, token string, realm string, permissionID string, policy gocloak.ResourcePolicyRepresentation) error {
 	if mock.UpdateResourcePolicyFunc == nil {
-		panic("GoCloakMock.UpdateResourcePolicyFunc: method is nil but GoCloak.UpdateResourcePolicy was just called")
+		panic("goCloakClientInterfaceMock.UpdateResourcePolicyFunc: method is nil but goCloakClientInterface.UpdateResourcePolicy was just called")
 	}
 	callInfo := struct {
 		Ctx          context.Context
@@ -14968,8 +14968,8 @@ func (mock *GoCloakMock) UpdateResourcePolicy(ctx context.Context, token string,
 // UpdateResourcePolicyCalls gets all the calls that were made to UpdateResourcePolicy.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateResourcePolicyCalls())
-func (mock *GoCloakMock) UpdateResourcePolicyCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateResourcePolicyCalls())
+func (mock *goCloakClientInterfaceMock) UpdateResourcePolicyCalls() []struct {
 	Ctx          context.Context
 	Token        string
 	Realm        string
@@ -14990,9 +14990,9 @@ func (mock *GoCloakMock) UpdateResourcePolicyCalls() []struct {
 }
 
 // UpdateRole calls UpdateRoleFunc.
-func (mock *GoCloakMock) UpdateRole(ctx context.Context, accessToken string, realm string, idOfClient string, role gocloak.Role) error {
+func (mock *goCloakClientInterfaceMock) UpdateRole(ctx context.Context, accessToken string, realm string, idOfClient string, role gocloak.Role) error {
 	if mock.UpdateRoleFunc == nil {
-		panic("GoCloakMock.UpdateRoleFunc: method is nil but GoCloak.UpdateRole was just called")
+		panic("goCloakClientInterfaceMock.UpdateRoleFunc: method is nil but goCloakClientInterface.UpdateRole was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -15016,8 +15016,8 @@ func (mock *GoCloakMock) UpdateRole(ctx context.Context, accessToken string, rea
 // UpdateRoleCalls gets all the calls that were made to UpdateRole.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateRoleCalls())
-func (mock *GoCloakMock) UpdateRoleCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateRoleCalls())
+func (mock *goCloakClientInterfaceMock) UpdateRoleCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -15038,9 +15038,9 @@ func (mock *GoCloakMock) UpdateRoleCalls() []struct {
 }
 
 // UpdateScope calls UpdateScopeFunc.
-func (mock *GoCloakMock) UpdateScope(ctx context.Context, token string, realm string, idOfClient string, resource gocloak.ScopeRepresentation) error {
+func (mock *goCloakClientInterfaceMock) UpdateScope(ctx context.Context, token string, realm string, idOfClient string, resource gocloak.ScopeRepresentation) error {
 	if mock.UpdateScopeFunc == nil {
-		panic("GoCloakMock.UpdateScopeFunc: method is nil but GoCloak.UpdateScope was just called")
+		panic("goCloakClientInterfaceMock.UpdateScopeFunc: method is nil but goCloakClientInterface.UpdateScope was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -15064,8 +15064,8 @@ func (mock *GoCloakMock) UpdateScope(ctx context.Context, token string, realm st
 // UpdateScopeCalls gets all the calls that were made to UpdateScope.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateScopeCalls())
-func (mock *GoCloakMock) UpdateScopeCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateScopeCalls())
+func (mock *goCloakClientInterfaceMock) UpdateScopeCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
@@ -15086,9 +15086,9 @@ func (mock *GoCloakMock) UpdateScopeCalls() []struct {
 }
 
 // UpdateUser calls UpdateUserFunc.
-func (mock *GoCloakMock) UpdateUser(ctx context.Context, accessToken string, realm string, user gocloak.User) error {
+func (mock *goCloakClientInterfaceMock) UpdateUser(ctx context.Context, accessToken string, realm string, user gocloak.User) error {
 	if mock.UpdateUserFunc == nil {
-		panic("GoCloakMock.UpdateUserFunc: method is nil but GoCloak.UpdateUser was just called")
+		panic("goCloakClientInterfaceMock.UpdateUserFunc: method is nil but goCloakClientInterface.UpdateUser was just called")
 	}
 	callInfo := struct {
 		Ctx         context.Context
@@ -15110,8 +15110,8 @@ func (mock *GoCloakMock) UpdateUser(ctx context.Context, accessToken string, rea
 // UpdateUserCalls gets all the calls that were made to UpdateUser.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateUserCalls())
-func (mock *GoCloakMock) UpdateUserCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateUserCalls())
+func (mock *goCloakClientInterfaceMock) UpdateUserCalls() []struct {
 	Ctx         context.Context
 	AccessToken string
 	Realm       string
@@ -15130,9 +15130,9 @@ func (mock *GoCloakMock) UpdateUserCalls() []struct {
 }
 
 // UpdateUserPermission calls UpdateUserPermissionFunc.
-func (mock *GoCloakMock) UpdateUserPermission(ctx context.Context, token string, realm string, permission gocloak.PermissionGrantParams) (*gocloak.PermissionGrantResponseRepresentation, error) {
+func (mock *goCloakClientInterfaceMock) UpdateUserPermission(ctx context.Context, token string, realm string, permission gocloak.PermissionGrantParams) (*gocloak.PermissionGrantResponseRepresentation, error) {
 	if mock.UpdateUserPermissionFunc == nil {
-		panic("GoCloakMock.UpdateUserPermissionFunc: method is nil but GoCloak.UpdateUserPermission was just called")
+		panic("goCloakClientInterfaceMock.UpdateUserPermissionFunc: method is nil but goCloakClientInterface.UpdateUserPermission was just called")
 	}
 	callInfo := struct {
 		Ctx        context.Context
@@ -15154,8 +15154,8 @@ func (mock *GoCloakMock) UpdateUserPermission(ctx context.Context, token string,
 // UpdateUserPermissionCalls gets all the calls that were made to UpdateUserPermission.
 // Check the length with:
 //
-//	len(mockedGoCloak.UpdateUserPermissionCalls())
-func (mock *GoCloakMock) UpdateUserPermissionCalls() []struct {
+//	len(mockedgoCloakClientInterface.UpdateUserPermissionCalls())
+func (mock *goCloakClientInterfaceMock) UpdateUserPermissionCalls() []struct {
 	Ctx        context.Context
 	Token      string
 	Realm      string
