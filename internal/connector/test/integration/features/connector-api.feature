@@ -2445,28 +2445,34 @@ Feature: create a connector
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
+        "name": "wrong-postgresql_sink",
         "kind": "Connector",
-        "name": "connector with unsupported chanel",
-        "connector_type_id": "postgresql_sink_0.1",
         "channel": "alpha",
+        "connector_type_id": "postgresql_sink_0.1",
+        "desired_state": "ready",
         "kafka": {
-          "id":"mykafka",
-          "url": "kafka.hostname"
-        },
-        "schema_registry": {
-          "id":"myregistry",
-          "url": "registry.hostname"
+          "id": "cfbniubdqprbi2va0r6g",
+          "url": "wrong-cfbniubdqprbi-va-r-g.bf2.kafka.rhcloud.com"
         },
         "service_account": {
-          "client_secret": "test",
-          "client_id": "myclient"
+          "client_id": "client",
+          "client_secret": "secret"
         },
         "connector": {
-            "aws_queue_name_or_arn": "test",
-            "aws_access_key": "test",
-            "aws_secret_key": "test",
-            "aws_region": "east",
-            "kafka_topic": "test"
+          "data_shape": {
+            "consumes": {
+              "format": "application/json"
+            }
+          },
+          "kafka_topic": "test",
+          "db_server_name": "",
+          "db_database_name": "",
+          "db_username": "",
+          "db_password": "",
+          "db_query": "",
+          "error_handler": {
+            "stop": {}
+          }
         }
       }
       """

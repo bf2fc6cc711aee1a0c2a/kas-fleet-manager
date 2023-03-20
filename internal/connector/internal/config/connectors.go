@@ -63,7 +63,7 @@ func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringArrayVar(&c.ConnectorEvalOrganizations, "connector-eval-organizations", c.ConnectorEvalOrganizations, "Connector eval organization IDs")
 	fs.BoolVar(&c.ConnectorNamespaceLifecycleAPI, "connector-namespace-lifecycle-api", c.ConnectorNamespaceLifecycleAPI, "Enable APIs to create, update, delete non-eval Namespaces")
 	fs.BoolVar(&c.ConnectorEnableUnassignedConnectors, "connector-enable-unassigned-connectors", c.ConnectorEnableUnassignedConnectors, "Enable support for 'unassigned' state for Connectors")
-	fs.StringArrayVar(&c.ConnectorsSupportedChannels, "connectors-supported-channels", []string{"stable"}, "Channels which connectors are visible")
+	fs.StringArrayVar(&c.ConnectorsSupportedChannels, "connectors-supported-channels", c.ConnectorsSupportedChannels, "Connector channels that are visible")
 }
 
 func (c *ConnectorsConfig) ReadFiles() error {

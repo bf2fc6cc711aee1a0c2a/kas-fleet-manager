@@ -77,7 +77,6 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Validate: []handlers.Validate{
 			handlers.ValidateAsyncEnabled(r, "creating connector"),
 			handlers.Validation("channel", (*string)(&resource.Channel), handlers.WithDefault("stable"), handlers.MaxLen(40)),
-			handlers.Validation("channel", (*string)(&resource.Channel), handlers.WithDefault("stable"), handlers.IsOneOf(h.connectorsConfig.ConnectorsSupportedChannels...)),
 			handlers.Validation("name", &resource.Name, handlers.WithDefault("New Connector"), handlers.MinLen(1), handlers.MaxLen(100)),
 			handlers.Validation("kafka.id", &resource.Kafka.Id, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
 			handlers.Validation("kafka.url", &resource.Kafka.Url, handlers.MinLen(1)),
@@ -137,6 +136,10 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 			return presenters.PresentConnector(convResource)
 		},
+	}
+
+	if len(h.connectorsConfig.ConnectorsSupportedChannels) > 0 {
+		cfg.Validate = append(cfg.Validate, handlers.Validation("channel", (*string)(&resource.Channel), handlers.WithDefault("stable"), handlers.IsOneOf(h.connectorsConfig.ConnectorsSupportedChannels...)))
 	}
 
 	// return 202 status accepted
