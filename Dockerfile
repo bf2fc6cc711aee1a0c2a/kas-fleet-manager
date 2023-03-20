@@ -9,9 +9,16 @@ RUN ln -s /usr/local/go/bin/go /usr/local/bin/go
 
 WORKDIR /workspace
 
+# Copy Go module related files. Done as a separate
+# step to invalidate the next layers in case of a change
+# in the dependency specifications
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy rest of the files containing
+# the source code
 COPY . ./
 
-RUN go mod vendor 
 RUN make binary
 
 FROM registry.access.redhat.com/ubi9-minimal:9.1.0
