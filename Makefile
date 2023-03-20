@@ -413,7 +413,6 @@ test/cluster/cleanup:
 # generate files
 generate: moq openapi/generate
 	$(GO) generate ./...
-	$(GO) mod vendor
 .PHONY: generate
 
 # validate the openapi schema
