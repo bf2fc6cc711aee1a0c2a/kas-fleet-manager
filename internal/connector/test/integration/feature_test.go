@@ -31,6 +31,7 @@ func init() {
 }
 
 func TestMain(m *testing.M) {
+	exitCode := 0
 	for _, arg := range os.Args[1:] {
 		if arg == "-test.v=true" || arg == "-test.v" || arg == "-v" { // go test transforms -v option
 			opts.Format = "pretty"
@@ -49,8 +50,6 @@ func TestMain(m *testing.M) {
 	t := &testing.T{}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	defer ocmServer.Close()
-
 	helper, teardown = test.NewHelperWithHooksAndDBsetup(t, ocmServer,
 		[]string{"INSERT INTO connector_types (id, name, checksum) VALUES ('OldConnectorTypeId', 'Old Connector Type', 'fakeChecksum1')",
 			"INSERT INTO connector_type_labels (connector_type_id, label) VALUES ('OldConnectorTypeId', 'old_connector_type_label')",
@@ -85,9 +84,12 @@ func TestMain(m *testing.M) {
 		},
 		connector.ConfigProviders(false),
 	)
-	defer teardown()
 
-	os.Exit(m.Run())
+	exitCode = m.Run()
+
+	defer os.Exit(exitCode)
+	defer ocmServer.Close()
+	defer teardown()
 }
 
 func TestFeatures(t *testing.T) {

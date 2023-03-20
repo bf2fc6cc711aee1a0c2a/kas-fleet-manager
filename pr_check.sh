@@ -81,3 +81,9 @@ sed -i -e 's/mas_sso/redhat_sso/g' internal/connector/internal/environments/inte
 docker login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
 docker build -t "$IMAGE_NAME" -f Dockerfile_integration_tests .
 docker run -i "$IMAGE_NAME"
+
+# ensure that the kas-fleet-manager docker image can be built when PR check runs
+if [[ -z "${OCM_ENV}" ]] || [[ "${OCM_ENV}" == "${INTEGRATION_ENV}" ]];
+then
+  make image/build
+fi

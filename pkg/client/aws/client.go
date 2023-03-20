@@ -10,11 +10,10 @@ import (
 	awscredentials "github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
-	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 	errors "github.com/pkg/errors"
 )
 
-type Route53API route53iface.Route53API
+type Route53API route53Client
 
 const (
 	DefaultAWSRoute53Region = "us-east-1"
@@ -60,7 +59,7 @@ func NewMockClientFactory(client AWSClient) *MockClientFactory {
 var _ AWSClient = &awsCl{}
 
 type awsCl struct {
-	route53Client route53iface.Route53API
+	route53Client route53Client
 }
 
 // Config contains the AWS settings

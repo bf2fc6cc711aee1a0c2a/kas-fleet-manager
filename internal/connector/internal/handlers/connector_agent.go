@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -202,7 +201,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 									if waitForCancelOrTimeoutOrNotification(ctx, 30*time.Second, sub) {
 										// ctx was canceled... likely due to the http connection being closed by
 										// the client.  Signal the event stream is done.
-										return io.EOF, nil
+										return nil, nil
 									}
 
 									// get a new DB connection...

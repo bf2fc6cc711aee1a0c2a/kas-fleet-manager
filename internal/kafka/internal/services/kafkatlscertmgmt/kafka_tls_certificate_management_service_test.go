@@ -137,11 +137,19 @@ func Test_kafkaTLSCertificateManagementService_RevokeCertificate(t *testing.T) {
 	type fields struct {
 		config               *config.KafkaTLSCertificateManagementConfig
 		certManagementClient certMagicClientWrapper
+		storage              certmagic.Storage
 	}
 	type args struct {
 		domain string
 		reason CertificateRevocationReason
 	}
+
+	inMemoryStorage := newInMemoryStorage()
+	certKey := "cert-key"
+	privateKey := "private-key"
+	_ = inMemoryStorage.Store(context.Background(), certKey, []byte{})
+	_ = inMemoryStorage.Store(context.Background(), privateKey, []byte{})
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -149,25 +157,7 @@ func Test_kafkaTLSCertificateManagementService_RevokeCertificate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "should return an error when revoking the certificate returns an error",
-			fields: fields{
-				config: &config.KafkaTLSCertificateManagementConfig{
-					CertificateManagementStrategy: config.AutomaticCertificateManagement,
-				},
-				certManagementClient: &certMagicClientWrapperMock{
-					RevokeCertificateFunc: func(ctx context.Context, domain string, reason int) error {
-						return errors.New("some error")
-					},
-				},
-			},
-			args: args{
-				domain: "some-domain",
-				reason: AACompromise,
-			},
-			wantErr: true,
-		},
-		{
-			name: "should not revoke the certificae if running in manual mode",
+			name: "should not revoke the certificate if running in manual mode",
 			fields: fields{
 				config: &config.KafkaTLSCertificateManagementConfig{
 					CertificateManagementStrategy: config.ManualCertificateManagement,
@@ -175,6 +165,29 @@ func Test_kafkaTLSCertificateManagementService_RevokeCertificate(t *testing.T) {
 				certManagementClient: &certMagicClientWrapperMock{
 					RevokeCertificateFunc: nil, // it should never be called
 				},
+			},
+			args: args{
+				domain: "some-domain",
+				reason: AACompromise,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should not return an error when storage doesn't contain the certificate to delete",
+			fields: fields{
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.AutomaticCertificateManagement,
+				},
+				certManagementClient: &certMagicClientWrapperMock{
+					RevokeCertificateFunc: nil,
+					GetCerticateRefsFunc: func(domain string) CertificateManagementOutput {
+						return CertificateManagementOutput{
+							TLSCertRef: "some-certificate-cert-ref",
+							TLSKeyRef:  "some-certificate-key-ref",
+						}
+					},
+				},
+				storage: inMemoryStorage,
 			},
 			args: args{
 				domain: "some-domain",
@@ -192,13 +205,45 @@ func Test_kafkaTLSCertificateManagementService_RevokeCertificate(t *testing.T) {
 					RevokeCertificateFunc: func(ctx context.Context, domain string, reason int) error {
 						return nil
 					},
+					GetCerticateRefsFunc: func(domain string) CertificateManagementOutput {
+						return CertificateManagementOutput{
+							TLSCertRef: certKey,
+							TLSKeyRef:  privateKey,
+						}
+					},
 				},
+				storage: inMemoryStorage,
 			},
 			args: args{
 				domain: "some-domain",
 				reason: AACompromise,
 			},
 			wantErr: false,
+		},
+		{
+			name: "should return an error when revoking the certificate returns an error",
+			fields: fields{
+				config: &config.KafkaTLSCertificateManagementConfig{
+					CertificateManagementStrategy: config.AutomaticCertificateManagement,
+				},
+				certManagementClient: &certMagicClientWrapperMock{
+					RevokeCertificateFunc: func(ctx context.Context, domain string, reason int) error {
+						return errors.New("some error")
+					},
+					GetCerticateRefsFunc: func(domain string) CertificateManagementOutput {
+						return CertificateManagementOutput{
+							TLSCertRef: certKey,
+							TLSKeyRef:  privateKey,
+						}
+					},
+				},
+				storage: inMemoryStorage,
+			},
+			args: args{
+				domain: "some-domain",
+				reason: AACompromise,
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -208,6 +253,7 @@ func Test_kafkaTLSCertificateManagementService_RevokeCertificate(t *testing.T) {
 			certManagementService := &kafkaTLSCertificateManagementService{
 				certManagementClient: testcase.fields.certManagementClient,
 				config:               testcase.fields.config,
+				storage:              testcase.fields.storage,
 			}
 			err := certManagementService.RevokeCertificate(context.Background(), testcase.args.domain, testcase.args.reason)
 			g := gomega.NewWithT(t)
