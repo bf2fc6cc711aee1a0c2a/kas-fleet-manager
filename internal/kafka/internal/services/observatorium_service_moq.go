@@ -6,7 +6,7 @@ package services
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
-	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -23,7 +23,7 @@ var _ ObservatoriumService = &ObservatoriumServiceMock{}
 //			GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
 //				panic("mock out the GetKafkaState method")
 //			},
-//			GetMetricsByKafkaIdFunc: func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *apiErrors.ServiceError) {
+//			GetMetricsByKafkaIdFunc: func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError) {
 //				panic("mock out the GetMetricsByKafkaId method")
 //			},
 //		}
@@ -37,7 +37,7 @@ type ObservatoriumServiceMock struct {
 	GetKafkaStateFunc func(name string, namespaceName string) (observatorium.KafkaState, error)
 
 	// GetMetricsByKafkaIdFunc mocks the GetMetricsByKafkaId method.
-	GetMetricsByKafkaIdFunc func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *apiErrors.ServiceError)
+	GetMetricsByKafkaIdFunc func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -101,7 +101,7 @@ func (mock *ObservatoriumServiceMock) GetKafkaStateCalls() []struct {
 }
 
 // GetMetricsByKafkaId calls GetMetricsByKafkaIdFunc.
-func (mock *ObservatoriumServiceMock) GetMetricsByKafkaId(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *apiErrors.ServiceError) {
+func (mock *ObservatoriumServiceMock) GetMetricsByKafkaId(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *serviceError.ServiceError) {
 	if mock.GetMetricsByKafkaIdFunc == nil {
 		panic("ObservatoriumServiceMock.GetMetricsByKafkaIdFunc: method is nil but ObservatoriumService.GetMetricsByKafkaId was just called")
 	}

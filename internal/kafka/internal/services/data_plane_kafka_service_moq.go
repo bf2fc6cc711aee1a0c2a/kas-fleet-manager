@@ -6,7 +6,7 @@ package services
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -20,7 +20,7 @@ var _ DataPlaneKafkaService = &DataPlaneKafkaServiceMock{}
 //
 //		// make and configure a mocked DataPlaneKafkaService
 //		mockedDataPlaneKafkaService := &DataPlaneKafkaServiceMock{
-//			UpdateDataPlaneKafkaServiceFunc: func(ctx context.Context, clusterID string, status []*dbapi.DataPlaneKafkaStatus) *apiErrors.ServiceError {
+//			UpdateDataPlaneKafkaServiceFunc: func(ctx context.Context, clusterID string, status []*dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError {
 //				panic("mock out the UpdateDataPlaneKafkaService method")
 //			},
 //		}
@@ -31,7 +31,7 @@ var _ DataPlaneKafkaService = &DataPlaneKafkaServiceMock{}
 //	}
 type DataPlaneKafkaServiceMock struct {
 	// UpdateDataPlaneKafkaServiceFunc mocks the UpdateDataPlaneKafkaService method.
-	UpdateDataPlaneKafkaServiceFunc func(ctx context.Context, clusterID string, status []*dbapi.DataPlaneKafkaStatus) *apiErrors.ServiceError
+	UpdateDataPlaneKafkaServiceFunc func(ctx context.Context, clusterID string, status []*dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -49,7 +49,7 @@ type DataPlaneKafkaServiceMock struct {
 }
 
 // UpdateDataPlaneKafkaService calls UpdateDataPlaneKafkaServiceFunc.
-func (mock *DataPlaneKafkaServiceMock) UpdateDataPlaneKafkaService(ctx context.Context, clusterID string, status []*dbapi.DataPlaneKafkaStatus) *apiErrors.ServiceError {
+func (mock *DataPlaneKafkaServiceMock) UpdateDataPlaneKafkaService(ctx context.Context, clusterID string, status []*dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError {
 	if mock.UpdateDataPlaneKafkaServiceFunc == nil {
 		panic("DataPlaneKafkaServiceMock.UpdateDataPlaneKafkaServiceFunc: method is nil but DataPlaneKafkaService.UpdateDataPlaneKafkaService was just called")
 	}

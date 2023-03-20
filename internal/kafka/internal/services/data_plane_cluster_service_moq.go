@@ -6,7 +6,7 @@ package services
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -20,10 +20,10 @@ var _ DataPlaneClusterService = &DataPlaneClusterServiceMock{}
 //
 //		// make and configure a mocked DataPlaneClusterService
 //		mockedDataPlaneClusterService := &DataPlaneClusterServiceMock{
-//			GetDataPlaneClusterConfigFunc: func(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *apiErrors.ServiceError) {
+//			GetDataPlaneClusterConfigFunc: func(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *serviceError.ServiceError) {
 //				panic("mock out the GetDataPlaneClusterConfig method")
 //			},
-//			UpdateDataPlaneClusterStatusFunc: func(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *apiErrors.ServiceError {
+//			UpdateDataPlaneClusterStatusFunc: func(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *serviceError.ServiceError {
 //				panic("mock out the UpdateDataPlaneClusterStatus method")
 //			},
 //		}
@@ -34,10 +34,10 @@ var _ DataPlaneClusterService = &DataPlaneClusterServiceMock{}
 //	}
 type DataPlaneClusterServiceMock struct {
 	// GetDataPlaneClusterConfigFunc mocks the GetDataPlaneClusterConfig method.
-	GetDataPlaneClusterConfigFunc func(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *apiErrors.ServiceError)
+	GetDataPlaneClusterConfigFunc func(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *serviceError.ServiceError)
 
 	// UpdateDataPlaneClusterStatusFunc mocks the UpdateDataPlaneClusterStatus method.
-	UpdateDataPlaneClusterStatusFunc func(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *apiErrors.ServiceError
+	UpdateDataPlaneClusterStatusFunc func(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *serviceError.ServiceError
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -63,7 +63,7 @@ type DataPlaneClusterServiceMock struct {
 }
 
 // GetDataPlaneClusterConfig calls GetDataPlaneClusterConfigFunc.
-func (mock *DataPlaneClusterServiceMock) GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *apiErrors.ServiceError) {
+func (mock *DataPlaneClusterServiceMock) GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *serviceError.ServiceError) {
 	if mock.GetDataPlaneClusterConfigFunc == nil {
 		panic("DataPlaneClusterServiceMock.GetDataPlaneClusterConfigFunc: method is nil but DataPlaneClusterService.GetDataPlaneClusterConfig was just called")
 	}
@@ -99,7 +99,7 @@ func (mock *DataPlaneClusterServiceMock) GetDataPlaneClusterConfigCalls() []stru
 }
 
 // UpdateDataPlaneClusterStatus calls UpdateDataPlaneClusterStatusFunc.
-func (mock *DataPlaneClusterServiceMock) UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *apiErrors.ServiceError {
+func (mock *DataPlaneClusterServiceMock) UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *serviceError.ServiceError {
 	if mock.UpdateDataPlaneClusterStatusFunc == nil {
 		panic("DataPlaneClusterServiceMock.UpdateDataPlaneClusterStatusFunc: method is nil but DataPlaneClusterService.UpdateDataPlaneClusterStatus was just called")
 	}
