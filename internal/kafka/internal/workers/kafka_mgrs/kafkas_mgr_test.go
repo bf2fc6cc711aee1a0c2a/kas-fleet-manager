@@ -8,6 +8,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi/testutils"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -148,18 +149,7 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 						return nil
 					},
 					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
-						return dbapi.KafkaList{
-							{
-								Meta: api.Meta{
-									ID: "test",
-								},
-								Name:         "test",
-								ClusterID:    "test",
-								Status:       constants.KafkaRequestStatusAccepted.String(),
-								InstanceType: "unsupported-instance-type",
-								SizeId:       "unsupported-size-id",
-							},
-						}, nil
+						return dbapi.KafkaList{testutils.NewKafkaRequest(testutils.WithDefaultTestValues())}, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
