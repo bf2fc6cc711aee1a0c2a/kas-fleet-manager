@@ -779,8 +779,8 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 		c.buildObservabilitySubscriptionResource(),
 	)
 
-	// if no oidc configuration is provided, use the dataplane service account
-	if !c.ObservabilityConfiguration.DataPlaneObservabilityConfig.HasOIDCConfiguration() {
+	// if no oidc configuration is provided, or if it is disabled, use the data plane service account
+	if !(c.ObservabilityConfiguration.DataPlaneObservabilityConfig.Enabled && c.ObservabilityConfiguration.DataPlaneObservabilityConfig.HasOIDCConfiguration()) {
 		r = append(r,
 			c.buildObservabilityRemoteWriteServiceAccountCredential(&cluster),
 		)
@@ -940,7 +940,7 @@ func (c *ClusterManager) buildObservatoriumSSOSecretResource() *k8sCoreV1.Secret
 	observabilityConfig := c.ObservabilityConfiguration
 	stringDataMap := map[string]string{
 		"authType":               observatorium.AuthTypeSso,
-		"gateway":                observabilityConfig.DataPlaneObservabilityConfig.GetRemoteWriteUrl(),
+		"gateway":                observabilityConfig.DataPlaneObservabilityConfig.GetRemoteWriteURL(),
 		"tenant":                 observabilityConfig.RedHatSsoTenant,
 		"redHatSsoAuthServerUrl": observabilityConfig.DataPlaneObservabilityConfig.GetOIDCAuthorizationServer(),
 		"redHatSsoRealm":         observabilityConfig.DataPlaneObservabilityConfig.GetOIDCRealm(),

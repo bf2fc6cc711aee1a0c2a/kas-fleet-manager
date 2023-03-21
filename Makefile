@@ -765,18 +765,14 @@ deploy/secrets:
 		-p KAFKA_TLS_CERT="$(shell ([ -s './secrets/kafka-tls.crt' ] && [ -z '${KAFKA_TLS_CERT}' ]) && cat ./secrets/kafka-tls.crt || echo '${KAFKA_TLS_CERT}')" \
 		-p KAFKA_TLS_KEY="$(shell ([ -s './secrets/kafka-tls.key' ] && [ -z '${KAFKA_TLS_KEY}' ]) && cat ./secrets/kafka-tls.key || echo '${KAFKA_TLS_KEY}')" \
 		-p ACME_ISSUER_ACCOUNT_KEY="$(shell ([ -s './secrets/kafka-tls-certificate-management-acme-issuer-account-key.pem' ] && [ -z '${ACME_ISSUER_ACCOUNT_KEY}' ]) && cat ./secrets/kafka-tls-certificate-management-acme-issuer-account-key.pem || echo '${ACME_ISSUER_ACCOUNT_KEY}')" \
-		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
 		-p IMAGE_PULL_DOCKER_CONFIG="$(shell ([ -s './secrets/image-pull.dockerconfigjson' ] && [ -z '${IMAGE_PULL_DOCKER_CONFIG}' ]) && cat ./secrets/image-pull.dockerconfigjson | base64 -w 0 || echo '${IMAGE_PULL_DOCKER_CONFIG}')" \
 		-p KUBE_CONFIG="${KUBE_CONFIG}" \
-		-p OBSERVABILITY_RHSSO_LOGS_CLIENT_ID="$(shell ([ -s './secrets/rhsso-logs.clientId' ] && [ -z '${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}' ]) && cat ./secrets/rhsso-logs.clientId || echo '${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}')" \
-		-p OBSERVABILITY_RHSSO_LOGS_SECRET="$(shell ([ -s './secrets/rhsso-logs.clientSecret' ] && [ -z '${OBSERVABILITY_RHSSO_LOGS_SECRET}' ]) && cat ./secrets/rhsso-logs.clientSecret || echo '${OBSERVABILITY_RHSSO_LOGS_SECRET}')" \
-		-p OBSERVABILITY_RHSSO_METRICS_CLIENT_ID="$(shell ([ -s './secrets/rhsso-metrics.clientId' ] && [ -z '${OBSERVABILITY_RHSSO_METRICS_CLIENT_ID}' ]) && cat ./secrets/rhsso-metrics.clientId || echo '${OBSERVABILITY_RHSSO_METRICS_CLIENT_ID}')" \
-		-p OBSERVABILITY_RHSSO_METRICS_SECRET="$(shell ([ -s './secrets/rhsso-metrics.clientSecret' ] && [ -z '${OBSERVABILITY_RHSSO_METRICS_SECRET}' ]) && cat ./secrets/rhsso-metrics.clientSecret || echo '${OBSERVABILITY_RHSSO_METRICS_SECRET}')" \
 		-p OBSERVABILITY_RHSSO_GRAFANA_CLIENT_ID="${OBSERVABILITY_RHSSO_GRAFANA_CLIENT_ID}" \
 		-p OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET="${OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET}" \
 		-p OBSERVABILITY_CLOUDWATCHLOGS_CONFIG="$(shell ([ -s './secrets/observability-cloudwatchlogs-config.yaml' ] && [ -z '${OBSERVABILITY_CLOUDWATCHLOGS_CONFIG}' ]) && cat ./secrets/observability-cloudwatchlogs-config.yaml | base64 -w 0 || echo '${OBSERVABILITY_CLOUDWATCHLOGS_CONFIG}' | base64 -w 0)" \
 		-p REDHAT_SSO_CLIENT_ID="$(shell ([ -s './secrets/redhatsso-service.clientId' ] && [ -z '${REDHAT_SSO_CLIENT_ID}' ]) && cat ./secrets/redhatsso-service.clientId || echo '${REDHAT_SSO_CLIENT_ID}')" \
 		-p REDHAT_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/redhatsso-service.clientSecret' ] && [ -z '${REDHAT_SSO_CLIENT_SECRET}' ]) && cat ./secrets/redhatsso-service.clientSecret || echo '${REDHAT_SSO_CLIENT_SECRET}')" \
+		-p DATAPLANE_OBSERVABILITY_CONFIG="$(shell ([ -s './secrets/dataplane-observability-config.yaml' ] && [ -z '${DATAPLANE_OBSERVABILITY_CONFIG}' ]) && cat ./secrets/dataplane-observability-config.yaml | base64 -w 0 || echo '${DATAPLANE_OBSERVABILITY_CONFIG}')" \
 		| $(OC) apply -f - -n $(NAMESPACE)
 .PHONY: deploy/secrets
 
@@ -822,16 +818,16 @@ deploy/service: ALLOW_DEVELOPER_INSTANCE ?= "true"
 deploy/service: QUOTA_TYPE ?= "quota-management-list"
 deploy/service: STRIMZI_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-kafka:production-82b42db"
 deploy/service: KAS_FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
-deploy/service: OBSERVABILITY_OPERATOR_INDEX_IMAGE ?= "quay.io/rhoas/observability-operator-index:v4.1.2"
-deploy/service: OBSERVABILITY_OPERATOR_STARTING_CSV ?= "observability-operator.v4.1.2"
+deploy/service: OBSERVABILITY_OPERATOR_INDEX_IMAGE ?= "quay.io/rhoas/observability-operator-index:v4.2.0"
+deploy/service: OBSERVABILITY_OPERATOR_STARTING_CSV ?= "observability-operator.v4.2.0"
 deploy/service: DEX_USERNAME ?= "admin@example.com"
 deploy/service: DEX_URL ?= "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io"
 deploy/service: OBSERVATORIUM_GATEWAY ?= "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io"
 deploy/service: OBSERVATORIUM_TENANT ?= "test"
-deploy/service: OBSERVABILITY_CONFIG_REPO ?= "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents"
+deploy/service: OBSERVABILITY_CONFIG_REPO ?= "quay.io/rhoas/observability-resources-mk"
 deploy/service: OBSERVATORIUM_TENANT ?= "test"
 deploy/service: OBSERVABILITY_CONFIG_CHANNEL ?= "resources"
-deploy/service: OBSERVABILITY_CONFIG_TAG ?= "main"
+deploy/service: OBSERVABILITY_CONFIG_TAG ?= "latest"
 deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
 deploy/service: STRIMZI_OPERATOR_ADDON_ID ?= "managed-kafka-qe"
 deploy/service: KAS_FLEETSHARD_ADDON_ID ?= "kas-fleetshard-operator-qe"
@@ -904,7 +900,6 @@ deploy/service: deploy/envoy deploy/route
 		-p DEX_URL="${DEX_URL}" \
 		-p OBSERVATORIUM_GATEWAY="${OBSERVATORIUM_GATEWAY}" \
 		-p OBSERVATORIUM_TENANT="${OBSERVATORIUM_TENANT}" \
-		-p OBSERVATORIUM_RHSSO_GATEWAY="${OBSERVATORIUM_RHSSO_GATEWAY}" \
 		-p OBSERVATORIUM_RHSSO_REALM="${OBSERVATORIUM_RHSSO_REALM}" \
 		-p OBSERVATORIUM_RHSSO_TENANT="${OBSERVATORIUM_RHSSO_TENANT}" \
 		-p OBSERVATORIUM_RHSSO_AUTH_SERVER_URL="${OBSERVATORIUM_RHSSO_AUTH_SERVER_URL}" \

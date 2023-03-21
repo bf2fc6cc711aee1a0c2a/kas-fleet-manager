@@ -76,13 +76,13 @@ type DataPlaneObservabilityOIDCCredentials struct {
 }
 
 type DataPlaneObservabilityOIDCConfiguration struct {
-	AuthorizationServer string                                 `yaml:"authorization_server" validate:"required"`
-	Realm               string                                 `yaml:"realm" validate:"required"`
-	Credentials         *DataPlaneObservabilityOIDCCredentials `yaml:"credentials" validate:"required,dive"`
+	AuthorizationServer string                                `yaml:"authorization_server" validate:"required"`
+	Realm               string                                `yaml:"realm" validate:"required"`
+	Credentials         DataPlaneObservabilityOIDCCredentials `yaml:"credentials" validate:"dive"`
 }
 
 type DataPlaneObservabilityRemoteWriteConfiguration struct {
-	RemoteWriteUrl    string                                   `yaml:"remote_write_url" validate:"required"`
+	RemoteWriteURL    string                                   `yaml:"remote_write_url" validate:"required"`
 	OIDCConfiguration *DataPlaneObservabilityOIDCConfiguration `yaml:"oidc_configuration" validate:"omitempty,dive"`
 }
 
@@ -95,7 +95,7 @@ type DataPlaneObservabilityConfig struct {
 }
 
 func (c *DataPlaneObservabilityConfig) GetOIDCClientID() string {
-	if c.Enabled && c.RemoteWriteConfiguration.OIDCConfiguration != nil {
+	if c.RemoteWriteConfiguration.OIDCConfiguration != nil {
 		return c.RemoteWriteConfiguration.OIDCConfiguration.Credentials.ClientID
 	}
 
@@ -103,7 +103,7 @@ func (c *DataPlaneObservabilityConfig) GetOIDCClientID() string {
 }
 
 func (c *DataPlaneObservabilityConfig) GetOIDCClientSecret() string {
-	if c.Enabled && c.RemoteWriteConfiguration.OIDCConfiguration != nil {
+	if c.RemoteWriteConfiguration.OIDCConfiguration != nil {
 		return c.RemoteWriteConfiguration.OIDCConfiguration.Credentials.ClientSecret
 	}
 
@@ -111,7 +111,7 @@ func (c *DataPlaneObservabilityConfig) GetOIDCClientSecret() string {
 }
 
 func (c *DataPlaneObservabilityConfig) GetOIDCAuthorizationServer() string {
-	if c.Enabled && c.RemoteWriteConfiguration.OIDCConfiguration != nil {
+	if c.RemoteWriteConfiguration.OIDCConfiguration != nil {
 		return c.RemoteWriteConfiguration.OIDCConfiguration.AuthorizationServer
 	}
 
@@ -119,23 +119,23 @@ func (c *DataPlaneObservabilityConfig) GetOIDCAuthorizationServer() string {
 }
 
 func (c *DataPlaneObservabilityConfig) GetOIDCRealm() string {
-	if c.Enabled && c.RemoteWriteConfiguration.OIDCConfiguration != nil {
+	if c.RemoteWriteConfiguration.OIDCConfiguration != nil {
 		return c.RemoteWriteConfiguration.OIDCConfiguration.Realm
 	}
 
 	return ""
 }
 
-func (c *DataPlaneObservabilityConfig) GetRemoteWriteUrl() string {
-	if c.Enabled && c.RemoteWriteConfiguration != nil {
-		return c.RemoteWriteConfiguration.RemoteWriteUrl
+func (c *DataPlaneObservabilityConfig) GetRemoteWriteURL() string {
+	if c.RemoteWriteConfiguration != nil {
+		return c.RemoteWriteConfiguration.RemoteWriteURL
 	}
 
 	return ""
 }
 
 func (c *DataPlaneObservabilityConfig) HasOIDCConfiguration() bool {
-	return c.Enabled && c.RemoteWriteConfiguration.OIDCConfiguration != nil
+	return c.RemoteWriteConfiguration.OIDCConfiguration != nil
 }
 
 func (c *ObservabilityCloudWatchLoggingConfig) validate() error {
@@ -249,9 +249,9 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 		Debug:                      true, // TODO: false
 		EnableMock:                 false,
 		Insecure:                   true, // TODO: false
-		ObservabilityConfigRepo:    "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents",
+		ObservabilityConfigRepo:    "quay.io/rhoas/observability-resources-mk",
 		ObservabilityConfigChannel: "resources", // Pointing to resources as the individual directories for prod and staging are no longer needed
-		ObservabilityConfigTag:     "main",
+		ObservabilityConfigTag:     "latest",
 		RedHatSsoTenant:            "",
 		RedHatSsoAuthServerUrl:     "",
 		RedHatSsoRealm:             "",
@@ -287,8 +287,8 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ObservabilityCloudWatchLoggingConfig.configFilePath, "observability-cloudwatchlogging-config-file-path", "secrets/observability-cloudwatchlogs-config.yaml", "Path to a file containing the configuration for Observability related to AWS CloudWatch Logging in YAML format. Only takes effect when --observability-cloudwatchlogging-enable is set")
 	fs.BoolVar(&c.ObservabilityCloudWatchLoggingConfig.CloudwatchLoggingEnabled, "observability-cloudwatchlogging-enable", false, "Enable Observability to deliver data plane logs to AWS CloudWatch")
 
-	fs.StringVar(&c.DataPlaneObservabilityConfig.configFilePath, "dataplane-observability-config", "secrets/dataplane-observability-config.yaml", "Path to a file containing the observability configuration for the data plane")
-	fs.BoolVar(&c.DataPlaneObservabilityConfig.Enabled, "dataplane-observability-config-enabled", true, "Determines if the data plane observability config file must be provided")
+	fs.StringVar(&c.DataPlaneObservabilityConfig.configFilePath, "dataplane-observability-config-file-path", "secrets/dataplane-observability-config.yaml", "Path to a file configuring a remote write target. If provided, metrics from the data plane will be sent to the specified target.")
+	fs.BoolVar(&c.DataPlaneObservabilityConfig.Enabled, "dataplane-observability-config-enable", true, "Determines if the data plane observability config file must be provided")
 }
 
 func (c *ObservabilityConfiguration) ReadFiles() error {

@@ -80,11 +80,11 @@ var (
 		DataPlaneObservabilityConfig: observatorium.DataPlaneObservabilityConfig{
 			Enabled: true,
 			RemoteWriteConfiguration: &observatorium.DataPlaneObservabilityRemoteWriteConfiguration{
-				RemoteWriteUrl: "https://dummy",
+				RemoteWriteURL: "https://dummy",
 				OIDCConfiguration: &observatorium.DataPlaneObservabilityOIDCConfiguration{
 					AuthorizationServer: "https://dummy",
 					Realm:               "dummy",
-					Credentials: &observatorium.DataPlaneObservabilityOIDCCredentials{
+					Credentials: observatorium.DataPlaneObservabilityOIDCCredentials{
 						ClientID:     "dummy",
 						ClientSecret: "dummy",
 					},
@@ -775,7 +775,7 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 				observabilityConfiguration: &observatorium.ObservabilityConfiguration{
 					DataPlaneObservabilityConfig: observatorium.DataPlaneObservabilityConfig{
 						RemoteWriteConfiguration: &observatorium.DataPlaneObservabilityRemoteWriteConfiguration{
-							RemoteWriteUrl: "https://dummy",
+							RemoteWriteURL: "https://dummy",
 						},
 					},
 				},
@@ -790,7 +790,7 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 						return nil
 					},
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
-						// the resource set must contain 8 items: the observability resources plus two image pull secrets
+						// the resource set must contain 10 items: the observability resources plus two image pull secrets
 						if len(resources.Resources) != 10 {
 							return apiErrors.GeneralError(fmt.Sprintf("expected 8 items in the resource set but got %v", len(resources.Resources)))
 						}
@@ -940,7 +940,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 						return apiErrors.GeneralError("failed to update cluster")
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			args: args{
 				cluster: readyCluster,
@@ -966,7 +966,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 						return nil
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			args: args{
 				cluster: readyCluster,
@@ -997,7 +997,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 						return "", apiErrors.GeneralError("failed to register osd cluster client in sso")
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			args: args{
 				cluster: readyCluster,
@@ -1039,7 +1039,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 						return nil, apiErrors.GeneralError("failed to reconcile params")
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			args: args{
 				cluster: readyCluster,
@@ -1081,7 +1081,7 @@ func TestClusterManager_reconcileReadyCluster(t *testing.T) {
 						return services.ParameterList{}, nil
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			args: args{
 				cluster: readyCluster,
@@ -1147,7 +1147,7 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 						return nil
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			args: args{
 				cluster: readyCluster,
@@ -1179,7 +1179,7 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 						return "", apiErrors.GeneralError("failed to register osd cluster client in sso")
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			args: args{
 				cluster: readyCluster,
@@ -1221,7 +1221,7 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 						return nil, apiErrors.GeneralError("failed to reconcile params")
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			args: args{
 				cluster: readyCluster,
@@ -1263,7 +1263,7 @@ func TestClusterManager_reconcileWaitingForKasFleetshardOperatorCluster(t *testi
 						return services.ParameterList{}, nil
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			args: args{
 				cluster: readyCluster,
@@ -1355,7 +1355,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 						return &keycloakRealmConfig
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			args: args{
 				cluster: readyCluster,
@@ -1403,7 +1403,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 						return true, services.ParameterList{}, nil
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			args: args{
 				cluster: readyCluster,
@@ -1451,7 +1451,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 						return true, services.ParameterList{}, nil
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 				providerFactory: &clusters.ProviderFactoryMock{
 					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 						return &clusters.ProviderMock{}, fmt.Errorf("test error")
@@ -1504,7 +1504,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 						return true, services.ParameterList{}, nil
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			args: args{
 				cluster: readyCluster,
@@ -1552,7 +1552,7 @@ func TestClusterManager_reconcileProvisionedCluster(t *testing.T) {
 						return true, services.ParameterList{}, nil
 					},
 				},
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			args: args{
 				cluster: readyCluster,
@@ -1620,7 +1620,7 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 					},
 				},
 				dataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			wantErr: true,
 		},
@@ -1660,7 +1660,7 @@ func TestClusterManager_processWaitingForKasFleetshardOperatorClusters(t *testin
 					},
 				},
 				dataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
-				observabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+				observabilityConfiguration: observabilityConfig,
 			},
 			wantErr: false,
 		},
@@ -1891,7 +1891,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
 					SupportedProviders:         &config.ProviderConfig{},
-					ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+					ObservabilityConfiguration: observabilityConfig,
 					DataplaneClusterConfig:     &config.DataplaneClusterConfig{},
 					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
 				},
@@ -1945,7 +1945,7 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
 					SupportedProviders:         &config.ProviderConfig{},
-					ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+					ObservabilityConfiguration: observabilityConfig,
 					DataplaneClusterConfig:     &config.DataplaneClusterConfig{},
 					OCMConfig:                  &ocm.OCMConfig{ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
 				},
@@ -1999,7 +1999,7 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 			c := ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
-					ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{},
+					ObservabilityConfiguration: observabilityConfig,
 					DataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
 				},
 			}
@@ -2236,7 +2236,7 @@ func buildObservabilityConfig() observatorium.ObservabilityConfiguration {
 		DataPlaneObservabilityConfig: observatorium.DataPlaneObservabilityConfig{
 			Enabled: true,
 			RemoteWriteConfiguration: &observatorium.DataPlaneObservabilityRemoteWriteConfiguration{
-				RemoteWriteUrl: "https://dummy",
+				RemoteWriteURL: "https://dummy",
 			},
 			GithubResourcesAuthToken: "dummy",
 		},
@@ -2391,7 +2391,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 			Type: k8sCoreV1.SecretTypeOpaque,
 			StringData: map[string]string{
 				"authType":               observatorium.AuthTypeSso,
-				"gateway":                observabilityConfig.DataPlaneObservabilityConfig.GetRemoteWriteUrl(),
+				"gateway":                observabilityConfig.DataPlaneObservabilityConfig.GetRemoteWriteURL(),
 				"tenant":                 observabilityConfig.RedHatSsoTenant,
 				"redHatSsoAuthServerUrl": observabilityConfig.DataPlaneObservabilityConfig.GetOIDCAuthorizationServer(),
 				"redHatSsoRealm":         observabilityConfig.DataPlaneObservabilityConfig.GetOIDCRealm(),
@@ -2573,8 +2573,8 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 			Namespace: "kas-fleet-shard-namespace",
 		},
 		ObservabilityOperatorOLMConfig: config.OperatorInstallationConfig{
-			IndexImage:              "quay.io/rhoas/observability-operator-index:v4.1.2",
-			SubscriptionStartingCSV: "observability-operator.v4.1.2",
+			IndexImage:              "quay.io/rhoas/observability-operator-index:v4.2.0",
+			SubscriptionStartingCSV: "observability-operator.v4.2.0",
 		},
 	}
 	type fields struct {

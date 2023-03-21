@@ -107,7 +107,7 @@ func Test_DataPlaneObservabilityConfig_validate(t *testing.T) {
 				DataPlaneObservabilityConfig: DataPlaneObservabilityConfig{
 					Enabled: true,
 					RemoteWriteConfiguration: &DataPlaneObservabilityRemoteWriteConfiguration{
-						RemoteWriteUrl: "https://dummy",
+						RemoteWriteURL: "https://dummy",
 					},
 				},
 			},
@@ -119,11 +119,11 @@ func Test_DataPlaneObservabilityConfig_validate(t *testing.T) {
 				DataPlaneObservabilityConfig: DataPlaneObservabilityConfig{
 					Enabled: true,
 					RemoteWriteConfiguration: &DataPlaneObservabilityRemoteWriteConfiguration{
-						RemoteWriteUrl: "https://dummy",
+						RemoteWriteURL: "https://dummy",
 						OIDCConfiguration: &DataPlaneObservabilityOIDCConfiguration{
 							AuthorizationServer: "https://dummy",
 							Realm:               "dummy",
-							Credentials: &DataPlaneObservabilityOIDCCredentials{
+							Credentials: DataPlaneObservabilityOIDCCredentials{
 								ClientID:     "dummy",
 								ClientSecret: "dummy",
 							},
@@ -139,7 +139,7 @@ func Test_DataPlaneObservabilityConfig_validate(t *testing.T) {
 				DataPlaneObservabilityConfig: DataPlaneObservabilityConfig{
 					Enabled: true,
 					RemoteWriteConfiguration: &DataPlaneObservabilityRemoteWriteConfiguration{
-						RemoteWriteUrl: "https://dummy",
+						RemoteWriteURL: "https://dummy",
 						OIDCConfiguration: &DataPlaneObservabilityOIDCConfiguration{
 							AuthorizationServer: "https://dummy",
 							Realm:               "dummy",
@@ -155,10 +155,10 @@ func Test_DataPlaneObservabilityConfig_validate(t *testing.T) {
 				DataPlaneObservabilityConfig: DataPlaneObservabilityConfig{
 					Enabled: true,
 					RemoteWriteConfiguration: &DataPlaneObservabilityRemoteWriteConfiguration{
-						RemoteWriteUrl: "https://dummy",
+						RemoteWriteURL: "https://dummy",
 						OIDCConfiguration: &DataPlaneObservabilityOIDCConfiguration{
 							AuthorizationServer: "https://dummy",
-							Credentials: &DataPlaneObservabilityOIDCCredentials{
+							Credentials: DataPlaneObservabilityOIDCCredentials{
 								ClientID:     "dummy",
 								ClientSecret: "dummy",
 							},
@@ -184,7 +184,7 @@ func Test_DataPlaneObservabilityConfig_validate(t *testing.T) {
 				DataPlaneObservabilityConfig: DataPlaneObservabilityConfig{
 					Enabled: true,
 					RemoteWriteConfiguration: &DataPlaneObservabilityRemoteWriteConfiguration{
-						RemoteWriteUrl: "",
+						RemoteWriteURL: "",
 					},
 					GithubResourcesAuthToken: "dummy",
 				},
