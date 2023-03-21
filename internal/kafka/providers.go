@@ -88,6 +88,7 @@ func ServiceProviders() di.Option {
 		di.Provide(kafka_mgrs.NewReadyKafkaManager, di.As(new(workers.Worker))),
 		di.Provide(kafka_mgrs.NewKafkaCNAMEManager, di.As(new(workers.Worker))),
 		di.Provide(promotion.NewPromotionKafkaManager, di.As(new(workers.Worker))),
+		di.Provide(kafka_mgrs.NewKafkasRoutesTLSCertificateManager, di.As(new(workers.Worker))),
 		di.Provide(acl.NewEnterpriseClustersAccessControlMiddleware),
 		di.Provide(kafkatlscertmgmt.NewKafkaTLSCertificateManagementService),
 	)

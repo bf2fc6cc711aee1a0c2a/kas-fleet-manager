@@ -1,7 +1,6 @@
 package kafka_mgrs
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -81,9 +80,6 @@ func TestReadyKafkaManager_Reconcile(t *testing.T) {
 					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					ManagedKafkasRoutesTLSCertificateFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
-						return nil
-					},
 				},
 				keycloakService: &sso.KeycloakServiceMock{
 					GetKafkaClientSecretFunc: func(clientId string) (string, *errors.ServiceError) {
@@ -91,34 +87,6 @@ func TestReadyKafkaManager_Reconcile(t *testing.T) {
 					},
 					CreateServiceAccountInternalFunc: func(request sso.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
 						return nil, errors.GeneralError("failed to create service account")
-					},
-				},
-				keycloakConfig: enabledAuthKeycloakConfig,
-			},
-			wantErr: true,
-		},
-		{
-			name: "Should throw an error if managing kafka tls certificates fails",
-			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
-						return []*dbapi.KafkaRequest{
-							mockKafkas.BuildKafkaRequest(),
-						}, nil
-					},
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-					ManagedKafkasRoutesTLSCertificateFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
-						return fmt.Errorf("some errors")
-					},
-				},
-				keycloakService: &sso.KeycloakServiceMock{
-					GetKafkaClientSecretFunc: func(clientId string) (string, *errors.ServiceError) {
-						return "secret", nil
-					},
-					CreateServiceAccountInternalFunc: func(request sso.CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError) {
-						return &api.ServiceAccount{}, nil
 					},
 				},
 				keycloakConfig: enabledAuthKeycloakConfig,
@@ -135,9 +103,6 @@ func TestReadyKafkaManager_Reconcile(t *testing.T) {
 						}, nil
 					},
 					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-					ManagedKafkasRoutesTLSCertificateFunc: func(kafkaRequest *dbapi.KafkaRequest) error {
 						return nil
 					},
 				},

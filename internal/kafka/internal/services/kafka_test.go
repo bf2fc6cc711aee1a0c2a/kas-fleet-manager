@@ -496,14 +496,13 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					IsAutomaticCertificateManagementEnabledFunc: func() bool {
 						return false
 					},
-					ManageCertificateFunc: func(ctx context.Context, domain string) (kafkatlscertmgmt.CertificateManagementOutput, error) {
-						return kafkatlscertmgmt.CertificateManagementOutput{}, nil
-					},
 				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(nil),
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
+				}),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
@@ -533,14 +532,13 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					IsAutomaticCertificateManagementEnabledFunc: func() bool {
 						return false
 					},
-					ManageCertificateFunc: func(ctx context.Context, domain string) (kafkatlscertmgmt.CertificateManagementOutput, error) {
-						return kafkatlscertmgmt.CertificateManagementOutput{}, nil
-					},
 				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(nil),
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
+				}),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
@@ -570,15 +568,13 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					IsAutomaticCertificateManagementEnabledFunc: func() bool {
 						return false
 					},
-					ManageCertificateFunc: func(ctx context.Context, domain string) (kafkatlscertmgmt.CertificateManagementOutput, error) {
-						return kafkatlscertmgmt.CertificateManagementOutput{}, nil
-					},
 				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.Name = longKafkaName
+					kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
 				}),
 			},
 			setupFn: func() {
@@ -614,14 +610,13 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					IsAutomaticCertificateManagementEnabledFunc: func() bool {
 						return false
 					},
-					ManageCertificateFunc: func(ctx context.Context, domain string) (kafkatlscertmgmt.CertificateManagementOutput, error) {
-						return kafkatlscertmgmt.CertificateManagementOutput{}, nil
-					},
 				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(nil),
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
+				}),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
@@ -655,20 +650,49 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					IsAutomaticCertificateManagementEnabledFunc: func() bool {
 						return false
 					},
-					ManageCertificateFunc: func(ctx context.Context, domain string) (kafkatlscertmgmt.CertificateManagementOutput, error) {
-						return kafkatlscertmgmt.CertificateManagementOutput{}, nil
-					},
 				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(nil),
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
+				}),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			wantErr: true,
+		},
+		{
+			name: "should not return an error when automatic certificate management has not been started yet i.e the certificate refs are not present for the given kafka",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterService: &ClusterServiceMock{
+					GetClusterDNSFunc: nil, // should never be called
+				},
+				keycloakService: &sso.KeycloakServiceMock{
+					GetConfigFunc:                    nil,
+					CreateServiceAccountInternalFunc: nil,
+				},
+				kafkaTLSCertificateManagementService: &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef = ""
+					kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef = ""
+					kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			wantErr: false,
 		},
 		{
 			name: "should not return an error when automatic certificate management is enabled but the Kafka certificate doesn't exist",
@@ -688,17 +712,18 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					GetCertificateFunc: func(ctx context.Context, request kafkatlscertmgmt.GetCertificateRequest) (kafkatlscertmgmt.Certificate, error) {
 						return kafkatlscertmgmt.Certificate{}, fs.ErrNotExist
 					},
-					ManageCertificateFunc: func(ctx context.Context, domain string) (kafkatlscertmgmt.CertificateManagementOutput, error) {
-						return kafkatlscertmgmt.CertificateManagementOutput{}, nil
-					},
 				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(nil),
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
+					kafkaRequest.KafkasRoutesBaseDomainName = "some-base-domain"
+					kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef = "some-key-ref"
+					kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef = "some-crt-ref"
+				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			wantErr: false,
@@ -721,14 +746,16 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					GetCertificateFunc: func(ctx context.Context, request kafkatlscertmgmt.GetCertificateRequest) (kafkatlscertmgmt.Certificate, error) {
 						return kafkatlscertmgmt.Certificate{}, fmt.Errorf("some error")
 					},
-					ManageCertificateFunc: func(ctx context.Context, domain string) (kafkatlscertmgmt.CertificateManagementOutput, error) {
-						return kafkatlscertmgmt.CertificateManagementOutput{}, nil
-					},
 				},
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(nil),
+				buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
+					kafkaRequest.KafkasRoutesBaseDomainName = "some-base-domain"
+					kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef = "some-key-ref"
+					kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef = "some-crt-ref"
+				}),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
@@ -4754,6 +4781,75 @@ func Test_kafkaService_ManagedKafkasRoutesTLSCertificate(t *testing.T) {
 		wantErr bool
 		setupFn func()
 	}{
+		{
+			name: "do not reconcile the certificate if the Kafka is in a deleting state",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaDomainName: "some-kafka-domain.bf2.dev",
+				},
+				connectionFactory:                    db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: nil,
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					KafkasRoutesBaseDomainName: "",
+					Meta: api.Meta{
+						ID: "some-id",
+					},
+					Status: constants.KafkaRequestStatusDeleting.String(),
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			wantErr: false,
+		},
+		{
+			name: "do not reconcile the certificate if the Kafka is in a deprovision state",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaDomainName: "some-kafka-domain.bf2.dev",
+				},
+				connectionFactory:                    db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: nil,
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					KafkasRoutesBaseDomainName: "",
+					Meta: api.Meta{
+						ID: "some-id",
+					},
+					Status: constants.KafkaOperationDeprovision.String(),
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			wantErr: false,
+		},
+		{
+			name: "do not reconcile the certificate if the Kafka is in a suspended state",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaDomainName: "some-kafka-domain.bf2.dev",
+				},
+				connectionFactory:                    db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: nil,
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					KafkasRoutesBaseDomainName: "",
+					Meta: api.Meta{
+						ID: "some-id",
+					},
+					Status: constants.KafkaRequestStatusSuspended.String(),
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+			wantErr: false,
+		},
 		{
 			name: "use the kafka domain name from the configuration when generating the certificate if automatic certificate management not enabled",
 			fields: fields{

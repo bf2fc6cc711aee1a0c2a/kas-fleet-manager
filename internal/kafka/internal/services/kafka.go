@@ -54,6 +54,12 @@ var kafkaManagedCRStatuses = []string{
 	constants.KafkaRequestStatusResuming.String(),
 }
 
+var statusesOfKafkaThatAreNotActive = []string{
+	constants.KafkaRequestStatusDeleting.String(),
+	constants.KafkaRequestStatusDeprovision.String(),
+	constants.KafkaRequestStatusSuspended.String(),
+}
+
 type KafkaRoutesAction string
 
 func (a KafkaRoutesAction) String() string {
@@ -138,7 +144,8 @@ type KafkaService interface {
 	// It returns false and an error if it encounters any issues while trying to check the quota entitlement status.
 	IsQuotaEntitlementActive(kafkaRequest *dbapi.KafkaRequest) (bool, error)
 	// ManagedKafkasRoutesTLSCertificate manages tls certificate for the given kafka.
-	// The operation will generate a new certificate if none exists, or renews the existing one
+	// The operation will generate a new certificate if none exists, or renews the existing one.
+	// The operation is done only for Kafkas that are alive / active as indicated by the "statusesOfKafkaThatAreNotActive" slice
 	ManagedKafkasRoutesTLSCertificate(kafkaRequest *dbapi.KafkaRequest) error
 }
 
@@ -499,13 +506,17 @@ func (k *kafkaService) findADataPlaneClusterToPlaceTheKafka(kafkaRequest *dbapi.
 
 func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 	kafkaRequest.Namespace = fmt.Sprintf("kafka-%s", strings.ToLower(kafkaRequest.ID))
+	// first assign the kafka routes base domain name
+	kafkaRequest.KafkasRoutesBaseDomainName = k.getKafkaRoutesBaseDomainName(kafkaRequest)
 
-	err := k.ManagedKafkasRoutesTLSCertificate(kafkaRequest)
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "error managing certificate for kafka %q", kafkaRequest.ID)
-	}
-
+	var err error
 	if k.kafkaTLSCertificateManagementService.IsAutomaticCertificateManagementEnabled() {
+		if !kafkaRequest.HasCertificateInfo() {
+			logger.Logger.V(10).Infof("management of tls certificate for the kafka with id %q has not been started yet.", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
+			// do not continue the reconciliation of a preparing Kafka if the certificate reconciliation hasn't been started.
+			return nil
+		}
+
 		_, err = k.kafkaTLSCertificateManagementService.GetCertificate(context.Background(), kafkatlscertmgmt.GetCertificateRequest{
 			TLSCertRef: kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef,
 			TLSKeyRef:  kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef,
@@ -1421,24 +1432,15 @@ func (k *kafkaService) AssignBootstrapServerHost(kafkaRequest *dbapi.KafkaReques
 }
 
 func (k *kafkaService) ManagedKafkasRoutesTLSCertificate(kafkaRequest *dbapi.KafkaRequest) error {
+	// do not attempt to manage the certificate if the Kafka status is not active
+	if arrays.Contains(statusesOfKafkaThatAreNotActive, kafkaRequest.Status) {
+		logger.Logger.Infof("management of tls certificate for the kafka with id %q is not going to be performed because the kafka is in a %q status", kafkaRequest.ID, kafkaRequest.Status)
+		return nil
+	}
+
 	// Sets the KafkaRequest.KafkasRoutesBaseDomainName if the field is not set.
-	// When the certificate management strategy is manual, the kafka domain name given in the KafkaConfig is used.
-	// When the strategy is automatic, there are three cases:
-	// 1. We use the Kafka domain given in the Kafka config as the base domain for already prepared Kafkas
-	// 2. The base domain name is constructed by concatenating the kafka id and the kafka domain name given in the Kafka config for all standard Kafkas in preparing state i.e Kafkas that do not have the bootstrap server host already set
-	// 3. The base domain name is constructed by concatenating the "trial" and the kafka domain name given in the Kafka config for all developer Kafkas in preparing state i.e Kafkas that do not have the bootstrap server host already set
 	if !kafkaRequest.HasCertificateInfo() {
-		if !k.kafkaTLSCertificateManagementService.IsAutomaticCertificateManagementEnabled() {
-			kafkaRequest.KafkasRoutesBaseDomainName = k.kafkaConfig.KafkaDomainName
-		} else if kafkaRequest.Status == constants.KafkaRequestStatusAccepted.String() || kafkaRequest.Status == constants.KafkaRequestStatusPreparing.String() {
-			if kafkaRequest.IsADeveloperInstance() {
-				kafkaRequest.KafkasRoutesBaseDomainName = fmt.Sprintf("%s.%s", constants.TrialKafkasDomainShard, k.kafkaConfig.KafkaDomainName)
-			} else {
-				kafkaRequest.KafkasRoutesBaseDomainName = fmt.Sprintf("%s.%s", kafkaRequest.ID, k.kafkaConfig.KafkaDomainName)
-			}
-		} else {
-			kafkaRequest.KafkasRoutesBaseDomainName = k.kafkaConfig.KafkaDomainName
-		}
+		kafkaRequest.KafkasRoutesBaseDomainName = k.getKafkaRoutesBaseDomainName(kafkaRequest)
 	}
 
 	logger.Logger.Infof("starting asynchronous management of tls certificate for the domain %q of kafka with id %q", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
@@ -1462,6 +1464,28 @@ func (k *kafkaService) ManagedKafkasRoutesTLSCertificate(kafkaRequest *dbapi.Kaf
 
 	logger.Logger.Infof("asynchronous management of tls certificate for the domain %q of kafka with id %q has been started successful", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
 	return nil
+}
+
+// getKafkaRoutesBaseDomainName returns the kafka routes base domain name.
+// When the certificate management strategy is manual, the kafka domain name given in the KafkaConfig is used.
+// When the strategy is automatic, there are three cases:
+// 1. We use the Kafka domain given in the Kafka config as the base domain for already prepared Kafkas
+// 2. The base domain name is constructed by concatenating the kafka id and the kafka domain name given in the Kafka config for all standard Kafkas in preparing state i.e Kafkas that do not have the bootstrap server host already set
+// 3. The base domain name is constructed by concatenating the "trial" and the kafka domain name given in the Kafka config for all developer Kafkas in preparing state i.e Kafkas that do not have the bootstrap server host already set
+func (k *kafkaService) getKafkaRoutesBaseDomainName(kafkaRequest *dbapi.KafkaRequest) string {
+	if !k.kafkaTLSCertificateManagementService.IsAutomaticCertificateManagementEnabled() {
+		return k.kafkaConfig.KafkaDomainName
+	}
+
+	if kafkaRequest.Status == constants.KafkaRequestStatusAccepted.String() || kafkaRequest.Status == constants.KafkaRequestStatusPreparing.String() {
+		if kafkaRequest.IsADeveloperInstance() {
+			return fmt.Sprintf("%s.%s", constants.TrialKafkasDomainShard, k.kafkaConfig.KafkaDomainName)
+		}
+
+		return fmt.Sprintf("%s.%s", kafkaRequest.ID, k.kafkaConfig.KafkaDomainName)
+	}
+
+	return k.kafkaConfig.KafkaDomainName
 }
 
 // getRoute53RegionFromKafkaRequest calculates the AWS region to be used for

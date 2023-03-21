@@ -62,10 +62,6 @@ func (k *ProvisioningKafkaManager) Reconcile() []error {
 
 	for _, kafka := range provisioningKafkas {
 		glog.V(10).Infof("provisioning kafka id = %s", kafka.ID)
-		if err := k.kafkaService.ManagedKafkasRoutesTLSCertificate(kafka); err != nil {
-			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile provisioning kafka %q tls certificates", kafka.ID))
-		}
-
 		if kafka.ClusterID == "" {
 			if err := k.reassignProvisioningKafka(kafka); err != nil {
 				encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reassign provisioning kafka %q", kafka.ID))
