@@ -5,7 +5,7 @@ package services
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -19,7 +19,7 @@ var _ QuotaServiceFactory = &QuotaServiceFactoryMock{}
 //
 //		// make and configure a mocked QuotaServiceFactory
 //		mockedQuotaServiceFactory := &QuotaServiceFactoryMock{
-//			GetQuotaServiceFunc: func(quotaType api.QuotaType) (QuotaService, *apiErrors.ServiceError) {
+//			GetQuotaServiceFunc: func(quotaType api.QuotaType) (QuotaService, *serviceError.ServiceError) {
 //				panic("mock out the GetQuotaService method")
 //			},
 //		}
@@ -30,7 +30,7 @@ var _ QuotaServiceFactory = &QuotaServiceFactoryMock{}
 //	}
 type QuotaServiceFactoryMock struct {
 	// GetQuotaServiceFunc mocks the GetQuotaService method.
-	GetQuotaServiceFunc func(quotaType api.QuotaType) (QuotaService, *apiErrors.ServiceError)
+	GetQuotaServiceFunc func(quotaType api.QuotaType) (QuotaService, *serviceError.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -44,7 +44,7 @@ type QuotaServiceFactoryMock struct {
 }
 
 // GetQuotaService calls GetQuotaServiceFunc.
-func (mock *QuotaServiceFactoryMock) GetQuotaService(quotaType api.QuotaType) (QuotaService, *apiErrors.ServiceError) {
+func (mock *QuotaServiceFactoryMock) GetQuotaService(quotaType api.QuotaType) (QuotaService, *serviceError.ServiceError) {
 	if mock.GetQuotaServiceFunc == nil {
 		panic("QuotaServiceFactoryMock.GetQuotaServiceFunc: method is nil but QuotaServiceFactory.GetQuotaService was just called")
 	}

@@ -5,7 +5,7 @@ package services
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -19,19 +19,19 @@ var _ CloudProvidersService = &CloudProvidersServiceMock{}
 //
 //		// make and configure a mocked CloudProvidersService
 //		mockedCloudProvidersService := &CloudProvidersServiceMock{
-//			GetCachedCloudProvidersWithRegionsFunc: func() ([]CloudProviderWithRegions, *apiErrors.ServiceError) {
+//			GetCachedCloudProvidersWithRegionsFunc: func() ([]CloudProviderWithRegions, *serviceError.ServiceError) {
 //				panic("mock out the GetCachedCloudProvidersWithRegions method")
 //			},
-//			GetCloudProvidersWithRegionsFunc: func() ([]CloudProviderWithRegions, *apiErrors.ServiceError) {
+//			GetCloudProvidersWithRegionsFunc: func() ([]CloudProviderWithRegions, *serviceError.ServiceError) {
 //				panic("mock out the GetCloudProvidersWithRegions method")
 //			},
-//			ListCachedCloudProviderRegionsFunc: func(id string) ([]api.CloudRegion, *apiErrors.ServiceError) {
+//			ListCachedCloudProviderRegionsFunc: func(id string) ([]api.CloudRegion, *serviceError.ServiceError) {
 //				panic("mock out the ListCachedCloudProviderRegions method")
 //			},
-//			ListCloudProviderRegionsFunc: func(id string) ([]api.CloudRegion, *apiErrors.ServiceError) {
+//			ListCloudProviderRegionsFunc: func(id string) ([]api.CloudRegion, *serviceError.ServiceError) {
 //				panic("mock out the ListCloudProviderRegions method")
 //			},
-//			ListCloudProvidersFunc: func() ([]api.CloudProvider, *apiErrors.ServiceError) {
+//			ListCloudProvidersFunc: func() ([]api.CloudProvider, *serviceError.ServiceError) {
 //				panic("mock out the ListCloudProviders method")
 //			},
 //		}
@@ -42,19 +42,19 @@ var _ CloudProvidersService = &CloudProvidersServiceMock{}
 //	}
 type CloudProvidersServiceMock struct {
 	// GetCachedCloudProvidersWithRegionsFunc mocks the GetCachedCloudProvidersWithRegions method.
-	GetCachedCloudProvidersWithRegionsFunc func() ([]CloudProviderWithRegions, *apiErrors.ServiceError)
+	GetCachedCloudProvidersWithRegionsFunc func() ([]CloudProviderWithRegions, *serviceError.ServiceError)
 
 	// GetCloudProvidersWithRegionsFunc mocks the GetCloudProvidersWithRegions method.
-	GetCloudProvidersWithRegionsFunc func() ([]CloudProviderWithRegions, *apiErrors.ServiceError)
+	GetCloudProvidersWithRegionsFunc func() ([]CloudProviderWithRegions, *serviceError.ServiceError)
 
 	// ListCachedCloudProviderRegionsFunc mocks the ListCachedCloudProviderRegions method.
-	ListCachedCloudProviderRegionsFunc func(id string) ([]api.CloudRegion, *apiErrors.ServiceError)
+	ListCachedCloudProviderRegionsFunc func(id string) ([]api.CloudRegion, *serviceError.ServiceError)
 
 	// ListCloudProviderRegionsFunc mocks the ListCloudProviderRegions method.
-	ListCloudProviderRegionsFunc func(id string) ([]api.CloudRegion, *apiErrors.ServiceError)
+	ListCloudProviderRegionsFunc func(id string) ([]api.CloudRegion, *serviceError.ServiceError)
 
 	// ListCloudProvidersFunc mocks the ListCloudProviders method.
-	ListCloudProvidersFunc func() ([]api.CloudProvider, *apiErrors.ServiceError)
+	ListCloudProvidersFunc func() ([]api.CloudProvider, *serviceError.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -86,7 +86,7 @@ type CloudProvidersServiceMock struct {
 }
 
 // GetCachedCloudProvidersWithRegions calls GetCachedCloudProvidersWithRegionsFunc.
-func (mock *CloudProvidersServiceMock) GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, *apiErrors.ServiceError) {
+func (mock *CloudProvidersServiceMock) GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, *serviceError.ServiceError) {
 	if mock.GetCachedCloudProvidersWithRegionsFunc == nil {
 		panic("CloudProvidersServiceMock.GetCachedCloudProvidersWithRegionsFunc: method is nil but CloudProvidersService.GetCachedCloudProvidersWithRegions was just called")
 	}
@@ -113,7 +113,7 @@ func (mock *CloudProvidersServiceMock) GetCachedCloudProvidersWithRegionsCalls()
 }
 
 // GetCloudProvidersWithRegions calls GetCloudProvidersWithRegionsFunc.
-func (mock *CloudProvidersServiceMock) GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, *apiErrors.ServiceError) {
+func (mock *CloudProvidersServiceMock) GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, *serviceError.ServiceError) {
 	if mock.GetCloudProvidersWithRegionsFunc == nil {
 		panic("CloudProvidersServiceMock.GetCloudProvidersWithRegionsFunc: method is nil but CloudProvidersService.GetCloudProvidersWithRegions was just called")
 	}
@@ -140,7 +140,7 @@ func (mock *CloudProvidersServiceMock) GetCloudProvidersWithRegionsCalls() []str
 }
 
 // ListCachedCloudProviderRegions calls ListCachedCloudProviderRegionsFunc.
-func (mock *CloudProvidersServiceMock) ListCachedCloudProviderRegions(id string) ([]api.CloudRegion, *apiErrors.ServiceError) {
+func (mock *CloudProvidersServiceMock) ListCachedCloudProviderRegions(id string) ([]api.CloudRegion, *serviceError.ServiceError) {
 	if mock.ListCachedCloudProviderRegionsFunc == nil {
 		panic("CloudProvidersServiceMock.ListCachedCloudProviderRegionsFunc: method is nil but CloudProvidersService.ListCachedCloudProviderRegions was just called")
 	}
@@ -172,7 +172,7 @@ func (mock *CloudProvidersServiceMock) ListCachedCloudProviderRegionsCalls() []s
 }
 
 // ListCloudProviderRegions calls ListCloudProviderRegionsFunc.
-func (mock *CloudProvidersServiceMock) ListCloudProviderRegions(id string) ([]api.CloudRegion, *apiErrors.ServiceError) {
+func (mock *CloudProvidersServiceMock) ListCloudProviderRegions(id string) ([]api.CloudRegion, *serviceError.ServiceError) {
 	if mock.ListCloudProviderRegionsFunc == nil {
 		panic("CloudProvidersServiceMock.ListCloudProviderRegionsFunc: method is nil but CloudProvidersService.ListCloudProviderRegions was just called")
 	}
@@ -204,7 +204,7 @@ func (mock *CloudProvidersServiceMock) ListCloudProviderRegionsCalls() []struct 
 }
 
 // ListCloudProviders calls ListCloudProvidersFunc.
-func (mock *CloudProvidersServiceMock) ListCloudProviders() ([]api.CloudProvider, *apiErrors.ServiceError) {
+func (mock *CloudProvidersServiceMock) ListCloudProviders() ([]api.CloudProvider, *serviceError.ServiceError) {
 	if mock.ListCloudProvidersFunc == nil {
 		panic("CloudProvidersServiceMock.ListCloudProvidersFunc: method is nil but CloudProvidersService.ListCloudProviders was just called")
 	}
