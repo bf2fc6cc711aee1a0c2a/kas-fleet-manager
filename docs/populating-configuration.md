@@ -262,33 +262,13 @@ related to the Data Planes and its Kafka instances Fleet Manager needs to:
 * To send the credentials/information needed to setup the Observability Stack
   when it is installed in the Data Plane clusters
 
-In order for the Fleet Manager to be able to start, create the following files:
-```
-	touch secrets/rhsso-logs.clientId
-	touch secrets/rhsso-logs.clientSecret
-	touch secrets/rhsso-metrics.clientId
-	touch secrets/rhsso-metrics.clientSecret
-	touch secrets/observability-config-access.token
-```
-
 If you are not interested in making use of this functionality you can skip
 this section. Otherwise, keep reading below.
 
-The following command is used to setup the various secrets needed by
-the Observability stack:
-```
-OBSERVATORIUM_CONFIG_ACCESS_TOKEN="<observatorium-config-access-token> \
-RHSSO_LOGS_CLIENT_ID=<rhsso-logs-client-id> \
-RHSSO_LOGS_CLIENT_SECRET=<rhsso-logs-client-secret> \
-RHSSO_METRICS_CLIENT_ID=<rhsso-metrics-client-id> \
-RHSSO_METRICS_CLIENT_SECRET=<rhsso-metrics-client-secret> \
-make observatorium/setup
-```
+Data plane observability and remote write can be configured through `secrets/dataplane-observability-config.yaml`.
+Please take a look at the sample file for more details.
 
-The description of the previously shown parameters are:
-* OBSERVATORIUM_CONFIG_ACCESS_TOKEN: A GitHub token required to fetch the configuration from a private git repository. More details can be found [here](https://github.com/redhat-developer/observability-operator#adding-requisite-resources) in the `External config repo secret` bullet point.
-* RHSSO_LOGS_CLIENT_ID, RHSSO_LOGS_CLIENT_SECRET: An OAuth's client-id/client-secret credentials pair to push logs to Observatorium. Used to authenticate via `sso.redhat.com` when logging via `config.promtail.enabled` is set in the observability configuration. Provided by the Observatorium team.
-* RHSSO_METRICS_CLIENT_ID, RHSSO_METRICS_CLIENT_SECRET: An OAuth's client-id/client-secret credentials pair to push metrics to Observatorium. Used to authenticate via `sso.redhat.com` when `config.prometheus.observatorium` is set in the observability configuration. Provided by the Observatorium team.
+To enable data plane observability remote write, you first need to enable it via `--dataplane-observability-config-enable`.
 
 An Observatorium token refresher is needed to refresh tokens when
 authenticating against Red Hat SSO. To configure the token Refresher

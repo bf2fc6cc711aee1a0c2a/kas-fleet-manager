@@ -203,7 +203,6 @@ help:
 	@echo "make keycloak/setup                                     setup mas sso clientId, clientSecret & crt"
 	@echo "make gcp/setup/credentials                              setup GCP credentials"
 	@echo "make kafkacert/setup                                    setup the kafka certificate used for Kafka Brokers"
-	@echo "make observatorium/setup                                setup observatorium secrets used by CI"
 	@echo "make observatorium/token-refresher/setup                setup a local observatorium token refresher"
 	@echo "make docker/login/internal                              login to an openshift cluster image registry"
 	@echo "make docker/login                                       login to the quay.io container registry"
@@ -540,14 +539,10 @@ secrets/setup/empty:
 	touch $(SECRETS_DIR)/osd-idp-keycloak-service.clientId
 	touch $(SECRETS_DIR)/osd-idp-keycloak-service.clientSecret
 	touch $(SECRETS_DIR)/sentry.key
-	touch $(SECRETS_DIR)/rhsso-logs.clientId
-	touch $(SECRETS_DIR)/rhsso-logs.clientSecret
-	touch $(SECRETS_DIR)/rhsso-metrics.clientId
-	touch $(SECRETS_DIR)/rhsso-metrics.clientSecret
-	touch $(SECRETS_DIR)/observability-config-access.token
 	touch $(SECRETS_DIR)/kafka-tls.crt
 	touch $(SECRETS_DIR)/kafka-tls.key
 	touch $(SECRETS_DIR)/image-pull.dockerconfigjson
+	touch $(SECRETS_DIR)/dataplane-observability-config.yaml
 .PHONY: secrets/setup/empty
 
 db/setup:
@@ -682,14 +677,6 @@ kafkacert/setup:
 
 observability/cloudwatchlogs/setup:
 	@echo -n "$${OBSERVABILITY_CLOUDWATCHLOGS_CONFIG}" > secrets/observability-cloudwatchlogs-config.yaml
-
-observatorium/setup:
-	@echo -n "$(OBSERVATORIUM_CONFIG_ACCESS_TOKEN)" > secrets/observability-config-access.token;
-	@echo -n "$(RHSSO_LOGS_CLIENT_ID)" > secrets/rhsso-logs.clientId;
-	@echo -n "$(RHSSO_LOGS_CLIENT_SECRET)" > secrets/rhsso-logs.clientSecret;
-	@echo -n "$(RHSSO_METRICS_CLIENT_ID)" > secrets/rhsso-metrics.clientId;
-	@echo -n "$(RHSSO_METRICS_CLIENT_SECRET)" > secrets/rhsso-metrics.clientSecret;
-.PHONY:observatorium/setup
 
 observatorium/token-refresher/setup: PORT ?= 8085
 observatorium/token-refresher/setup: IMAGE_TAG ?= latest
@@ -856,6 +843,7 @@ deploy/service: ADMIN_API_SSO_BASE_URL ?= "https://auth.redhat.com"
 deploy/service: ADMIN_API_SSO_ENDPOINT_URI ?= "/auth/realms/EmployeeIDP"
 deploy/service: ADMIN_API_SSO_REALM ?= "EmployeeIDP"
 deploy/service: OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING ?= "false"
+deploy/service: DATAPLANE_OBSERVABILITY_CONFIG_ENABLE ?= "false"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until $(OC) get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
@@ -907,6 +895,7 @@ deploy/service: deploy/envoy deploy/route
 		-p OBSERVABILITY_CONFIG_REPO="${OBSERVABILITY_CONFIG_REPO}" \
 		-p OBSERVABILITY_CONFIG_TAG="${OBSERVABILITY_CONFIG_TAG}" \
 		-p OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING="${OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING}" \
+		-p DATAPLANE_OBSERVABILITY_CONFIG_ENABLE="${DATAPLANE_OBSERVABILITY_CONFIG_ENABLE}" \
 		-p ENABLE_TERMS_ACCEPTANCE="${ENABLE_TERMS_ACCEPTANCE}" \
 		-p ALLOW_DEVELOPER_INSTANCE="${ALLOW_DEVELOPER_INSTANCE}" \
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \

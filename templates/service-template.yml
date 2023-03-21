@@ -276,6 +276,11 @@ parameters:
   description: Observatorium auth type for observability stack, this value on start decides which auth type to use.
   value: "dex"
 
+- name: DATAPLANE_OBSERVABILITY_CONFIG_ENABLE
+  displayName: Enable dataplane observability
+  description: Enable sending metrics to the remote write receiver which is configured in the file referenced from --dataplane-observability-config-file-path.
+  value: "false"
+
 - name: ENABLE_OBSERVATORIUM_DEBUG
   displayName: Enable Observatorium Debug Logging
   value: "false"
@@ -474,7 +479,7 @@ parameters:
 
 - name: OBSERVABILITY_CONFIG_REPO
   displayName: Observability configuration repo URL
-  description: URL of the observability configuration repo
+  description: URL of the observability configuration repo, either a Github or a Quay repository
   value: "quay.io/rhoas/observability-resources-mk"
 
 - name: OBSERVABILITY_CONFIG_CHANNEL
@@ -484,7 +489,7 @@ parameters:
 
 - name: OBSERVABILITY_CONFIG_TAG
   displayName: Observability configuration tag
-  description: Tag or branch in a git repository, or image tag in a container registry
+  description: Tag or branch in a Github repository, or image tag in a Quay repository
   value: "latest"
 
 - name: SERVICE_PUBLIC_HOST_URL
@@ -1084,6 +1089,7 @@ objects:
             - --observability-red-hat-sso-realm=${OBSERVATORIUM_RHSSO_REALM}
             - --observability-red-hat-sso-token-refresher-url=${OBSERVATORIUM_TOKEN_REFRESHER_URL}
             - --observability-red-hat-sso-tenant=${OBSERVATORIUM_RHSSO_TENANT}
+            - --dataplane-observability-config-enable=${DATAPLANE_OBSERVABILITY_CONFIG_ENABLE}
             - --dataplane-observability-config-file-path=/secrets/service/dataplane-observability-config.yaml
             - --observability-cloudwatchlogging-config-file-path=/secrets/observability/observability-cloudwatchlogs-config.yaml
             - --observability-cloudwatchlogging-enable=${OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING}
