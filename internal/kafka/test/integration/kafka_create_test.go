@@ -153,7 +153,7 @@ func TestKafkaCreate_ManualScaling(t *testing.T) {
 				g.Expect(kafka.InstanceType).To(gomega.Equal(types.STANDARD.String()))
 				g.Expect(kafka.DeprecatedInstanceTypeName).To(gomega.Equal("Standard"))
 				g.Expect(kafka.ReauthenticationEnabled).To(gomega.BeTrue())
-				g.Expect(kafka.BrowserUrl).To(gomega.Equal(fmt.Sprintf("%s%s/dashboard", kafkatest.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
+				g.Expect(kafka.BrowserUrl).To(gomega.Equal(fmt.Sprintf("%s%s/details/dashboard", kafkatest.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
 				g.Expect(kafka.ExpiresAt).To(gomega.BeNil())
 				g.Expect(kafka.AdminApiServerUrl).To(gomega.BeEmpty())
 				common.IsMetricExposedWithValue(t, metrics.KafkaRequestsCurrentStatusInfo, constants.KafkaRequestStatusAccepted.String())
@@ -436,7 +436,7 @@ func TestKafkaCreate_DynamicScaling(t *testing.T) {
 				g.Expect(kafka.InstanceType).To(gomega.Equal(types.STANDARD.String()))
 				g.Expect(kafka.DeprecatedInstanceTypeName).To(gomega.Equal("Standard"))
 				g.Expect(kafka.ReauthenticationEnabled).To(gomega.BeTrue())
-				g.Expect(kafka.BrowserUrl).To(gomega.Equal(fmt.Sprintf("%s%s/dashboard", kafkatest.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
+				g.Expect(kafka.BrowserUrl).To(gomega.Equal(fmt.Sprintf("%s%s/details/dashboard", kafkatest.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
 				g.Expect(kafka.ExpiresAt).To(gomega.BeNil())
 				g.Expect(kafka.AdminApiServerUrl).To(gomega.BeEmpty())
 

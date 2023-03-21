@@ -2346,7 +2346,7 @@ components:
         updated_at: "2020-10-05T12:56:36.362208Z"
         version: "2.6.0"
         instance_type: standard
-        browser_url: "https://console.redhat.com/application-services/streams/kafkas/1isy6rq3jki8q0otmjqfd3ocfrg/dashboard"
+        browser_url: "https://console.redhat.com/application-services/streams/kafkas/1isy6rq3jki8q0otmjqfd3ocfrg/details/dashboard"
         reauthentication_enabled: true
         max_data_retention_size: {
           bytes: 1073741824000
