@@ -3,14 +3,12 @@ package kafka_mgrs
 import (
 	"database/sql"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi/testutils"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/quota"
-	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"testing"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi/testutils"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -151,9 +149,7 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 						return nil
 					},
 					ListAllFunc: func() (dbapi.KafkaList, *errors.ServiceError) {
-						return dbapi.KafkaList{
-							testutils.NewKafkaRequest(testutils.WithDefaultTestValues()),
-						}, nil
+						return dbapi.KafkaList{testutils.NewKafkaRequest(testutils.WithDefaultTestValues())}, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -182,80 +178,9 @@ func TestKafkaManager_Reconcile(t *testing.T) {
 				accessControlListConfig: tt.fields.accessControlListConfig,
 				cloudProviders:          &tt.fields.cloudProviders,
 				kafkaConfig:             &tt.fields.kafkaConfig,
-				quotaServiceFactory: &services.QuotaServiceFactoryMock{
-					GetQuotaServiceFunc: func(quotaType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
-						return &quota.AMSQuotaServiceMock{}, nil
-					},
-				},
 			}
 
 			g.Expect(len(k.Reconcile()) > 0).To(gomega.Equal(tt.wantErr))
-		})
-	}
-}
-
-func TestKafkaManager_tempMigrateEmptyBillingModels(t *testing.T) {
-	type fields struct {
-		kafkaService *services.KafkaServiceMock
-		kafkaConfig  config.KafkaConfig
-		billingModel amsv1.BillingModel
-		kafkas       dbapi.KafkaList
-	}
-	tests := []struct {
-		name   string
-		fields fields
-	}{
-		{
-			name: "should value actual and desired kafka billing model",
-			fields: fields{
-				billingModel: "standard",
-				kafkas: dbapi.KafkaList{
-					testutils.NewKafkaRequest(testutils.WithDefaultTestValues()),
-					testutils.NewKafkaRequest(testutils.WithDefaultTestValues(), testutils.WithActualBillingModel(""), testutils.WithDesiredBillingModel("")),
-					testutils.NewKafkaRequest(testutils.WithDefaultTestValues(), testutils.WithActualBillingModel(""), testutils.WithDesiredBillingModel("")),
-					testutils.NewKafkaRequest(testutils.WithDefaultTestValues(), testutils.WithActualBillingModel("marketplace"), testutils.WithDesiredBillingModel("marketplace")),
-					testutils.NewKafkaRequest(testutils.WithDefaultTestValues(), testutils.WithActualBillingModel(""), testutils.WithDesiredBillingModel("")),
-				},
-				kafkaService: &services.KafkaServiceMock{
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-				},
-				kafkaConfig: func() config.KafkaConfig {
-					cfg := config.NewKafkaConfig()
-					_ = cfg.ReadFiles()
-					return *cfg
-				}(),
-			},
-		},
-	}
-
-	for _, testcase := range tests {
-		tt := testcase
-
-		t.Run(tt.name, func(t *testing.T) {
-			g := gomega.NewWithT(t)
-			k := &KafkaManager{
-				kafkaService: tt.fields.kafkaService,
-				kafkaConfig:  &tt.fields.kafkaConfig,
-				quotaServiceFactory: &services.QuotaServiceFactoryMock{
-					GetQuotaServiceFunc: func(quotaType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
-						return &quota.AMSQuotaServiceMock{
-							GetSubscriptionByIDFunc: func(subscriptionID string) (*amsv1.Subscription, bool, *errors.ServiceError) {
-								subscription, _ := amsv1.NewSubscription().ClusterBillingModel(tt.fields.billingModel).Build()
-								return subscription, true, nil
-							},
-						}, nil
-					},
-				},
-			}
-
-			_ = k.tempMigrateEmptyBillingModels(tt.fields.kafkas)
-			g.Expect(tt.fields.kafkaService.UpdateCalls()).To(gomega.HaveLen(3))
-			for _, call := range tt.fields.kafkaService.UpdateCalls() {
-				g.Expect(call.KafkaRequest.ActualKafkaBillingModel).To(gomega.BeEquivalentTo(tt.fields.billingModel))
-				g.Expect(call.KafkaRequest.DesiredKafkaBillingModel).To(gomega.BeEquivalentTo(tt.fields.billingModel))
-			}
 		})
 	}
 }
@@ -545,11 +470,6 @@ func TestKafkaManager_ReconcileExpiredKafkas(t *testing.T) {
 				accessControlListConfig: tt.fields.accessControlListConfig,
 				cloudProviders:          &tt.fields.cloudProviders,
 				kafkaConfig:             &tt.fields.kafkaConfig,
-				quotaServiceFactory: &services.QuotaServiceFactoryMock{
-					GetQuotaServiceFunc: func(quotaType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
-						return &quota.AMSQuotaServiceMock{}, nil
-					},
-				},
 			}
 
 			//k.Reconcile()
@@ -689,7 +609,7 @@ func TestKafkaManager_setKafkaStatusCountMetric(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			k := NewKafkaManager(tt.fields.kafkaService, nil, nil, nil, nil, workers.Reconciler{}, nil, nil)
+			k := NewKafkaManager(tt.fields.kafkaService, nil, nil, nil, nil, workers.Reconciler{}, nil)
 
 			g.Expect(k.setKafkaStatusCountMetric() != nil).To(gomega.Equal(tt.wantErr))
 		})
