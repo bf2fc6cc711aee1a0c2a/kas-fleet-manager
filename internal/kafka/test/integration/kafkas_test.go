@@ -1413,7 +1413,7 @@ func TestKafkaGet(t *testing.T) {
 	// yet any status, so the version attribute (actual version) at this point
 	// should still be empty
 	g.Expect(kafka.Version).To(gomega.Equal(""))
-	g.Expect(kafka.BrowserUrl).To(gomega.Equal(fmt.Sprintf("%s%s/dashboard", test.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
+	g.Expect(kafka.BrowserUrl).To(gomega.Equal(fmt.Sprintf("%s%s/details/dashboard", test.TestServices.KafkaConfig.BrowserUrl, kafka.Id)))
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
 	if resp != nil {
@@ -2006,7 +2006,7 @@ func TestKafkaList_Success(t *testing.T) {
 	g.Expect(listItem.Name).To(gomega.Equal(mockKafkaName))
 	g.Expect(listItem.Status).To(gomega.Equal(constants.KafkaRequestStatusAccepted.String()))
 	g.Expect(listItem.ReauthenticationEnabled).To(gomega.BeTrue())
-	g.Expect(listItem.BrowserUrl).To(gomega.Equal(fmt.Sprintf("%s%s/dashboard", test.TestServices.KafkaConfig.BrowserUrl, listItem.Id)))
+	g.Expect(listItem.BrowserUrl).To(gomega.Equal(fmt.Sprintf("%s%s/details/dashboard", test.TestServices.KafkaConfig.BrowserUrl, listItem.Id)))
 	g.Expect(listItem.ClusterId).To(gomega.BeNil())
 
 	// new account setup to prove that users can list kafkas instances created by a member of their org

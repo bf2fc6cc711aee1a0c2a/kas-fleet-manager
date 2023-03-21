@@ -109,7 +109,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		MaxDataRetentionSize: public.SupportedKafkaSizeBytesValueItem{
 			Bytes: maxDataRetentionSizeBytes,
 		},
-		BrowserUrl:                            fmt.Sprintf("%s/%s/dashboard", strings.TrimSuffix(kafkaConfig.BrowserUrl, "/"), reference.Id),
+		BrowserUrl:                            fmt.Sprintf("%s/%s/details/dashboard", strings.TrimSuffix(kafkaConfig.BrowserUrl, "/"), reference.Id),
 		SizeId:                                kafkaRequest.SizeId,
 		DeprecatedInstanceTypeName:            displayName,
 		DeprecatedIngressThroughputPerSec:     ingressThroughputPerSec,

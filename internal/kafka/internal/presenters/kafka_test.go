@@ -173,7 +173,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.BootstrapServerHost = setBootstrapServerHost(bootstrapServer)
 				kafkaRequest.FailedReason = failedReason
 				kafkaRequest.InstanceType = mocks.DefaultInstanceType
-				kafkaRequest.BrowserUrl = "//dashboard"
+				kafkaRequest.BrowserUrl = "//details/dashboard"
 				kafkaRequest.SizeId = defaultInstanceSize.Id
 				kafkaRequest.DeprecatedIngressThroughputPerSec = defaultInstanceSize.IngressThroughputPerSec.String()
 				kafkaRequest.DeprecatedEgressThroughputPerSec = defaultInstanceSize.EgressThroughputPerSec.String()
@@ -231,7 +231,7 @@ func TestPresentKafkaRequest(t *testing.T) {
 				kafkaRequest.BootstrapServerHost = setBootstrapServerHost(bootstrapServer)
 				kafkaRequest.FailedReason = failedReason
 				kafkaRequest.InstanceType = mocks.DefaultInstanceType
-				kafkaRequest.BrowserUrl = "//dashboard"
+				kafkaRequest.BrowserUrl = "//details/dashboard"
 				kafkaRequest.SizeId = defaultInstanceSize.Id
 				kafkaRequest.DeprecatedIngressThroughputPerSec = defaultInstanceSize.IngressThroughputPerSec.String()
 				kafkaRequest.DeprecatedEgressThroughputPerSec = defaultInstanceSize.EgressThroughputPerSec.String()
