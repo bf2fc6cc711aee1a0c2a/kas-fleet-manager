@@ -520,6 +520,7 @@ components:
             $ref: '#/components/schemas/MetaV1Condition'
 
     ConnectorDeploymentList:
+      required: [ items ]
       allOf:
         - $ref: 'connector_mgmt.yaml#/components/schemas/List'
         - type: object
@@ -603,6 +604,7 @@ components:
     #
 
     ConnectorNamespaceDeploymentList:
+      required: [ items ]
       allOf:
         - $ref: "#/components/schemas/List"
         - type: object
