@@ -1284,8 +1284,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					return nowTime
 				}
 				mocket.Catcher.Reset().NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs("us-east-1", "aws", "standard").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard", constants.BillingModelEnterprise.String()).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 						kafkaRequest.InstanceType = types.STANDARD.String()
 					})))
@@ -1340,8 +1340,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					return nowTime
 				}
 				mocket.Catcher.Reset().NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs("us-east-1", "aws", "developer").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "developer", constants.BillingModelEnterprise.String()).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 						kafkaRequest.ID = ""
 						kafkaRequest.InstanceType = types.DEVELOPER.String()
@@ -1398,8 +1398,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset().NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs("us-east-1", "aws", "standard").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard", constants.BillingModelEnterprise.String()).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 						kafkaRequest.InstanceType = types.STANDARD.String()
 					})))
@@ -1441,8 +1441,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset().NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs("us-east-1", "aws", "standard").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard", constants.BillingModelEnterprise.String()).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 						kafkaRequest.InstanceType = types.STANDARD.String()
 					})))
@@ -1539,8 +1539,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 					WithArgs(types.DEVELOPER.String(), testUser, "org-id").
 					WithReply(totalCountResponse)
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs("us-east-1", "aws", "developer").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "developer", constants.BillingModelEnterprise.String()).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 						kafkaRequest.ID = ""
 						kafkaRequest.InstanceType = types.DEVELOPER.String()
@@ -1598,8 +1598,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs("us-east-1", "aws", "developer").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "developer", constants.BillingModelEnterprise.String()).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 						kafkaRequest.ID = ""
 						kafkaRequest.ClusterID = ""
@@ -1700,8 +1700,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset().NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs("us-east-1", "aws", "standard").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard", constants.BillingModelEnterprise.String()).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 						kafkaRequest.InstanceType = types.STANDARD.String()
 					})))
@@ -1746,8 +1746,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset().NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs("us-east-1", "aws", "standard").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard", constants.BillingModelEnterprise.String()).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 						kafkaRequest.InstanceType = types.STANDARD.String()
 					})))
@@ -1789,8 +1789,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset().NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs("us-east-1", "aws", "standard").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard", constants.BillingModelEnterprise.String()).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 						kafkaRequest.InstanceType = types.STANDARD.String()
 					})))
@@ -1866,6 +1866,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				}),
 			},
 			setupFn: func(connectionFactory *db.ConnectionFactory) {
+				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().WithQuery(`INSERT INTO "kafka_requests"`).WithReply([]map[string]interface{}{})
 				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
@@ -1909,8 +1910,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			setupFn: func(connectionFactory *db.ConnectionFactory) {
 				mocket.Catcher.Reset().NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND "kafka_requests"."deleted_at" IS NULL`).
-					WithArgs("us-east-1", "aws", "standard").
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4 AND "kafka_requests"."deleted_at" IS NULL`).
+					WithArgs("us-east-1", "aws", "standard", constants.BillingModelEnterprise.String()).
 					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 						kafkaRequest.InstanceType = types.STANDARD.String()
 					})))
@@ -3368,8 +3369,8 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
-					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4`).
+					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType, constants.BillingModelEnterprise.String()).
 					WithReply(nil)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -3415,8 +3416,8 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
-					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4`).
+					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType, constants.BillingModelEnterprise.String()).
 					WithReply(nil)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -3442,8 +3443,8 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
-					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4`).
+					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType, constants.BillingModelEnterprise.String()).
 					WithReply([]map[string]interface{}{
 						{
 							"region":         testCriteria.Region,
@@ -3476,8 +3477,8 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
-					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4`).
+					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType, constants.BillingModelEnterprise.String()).
 					WithReply(nil)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
@@ -3503,8 +3504,8 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
-					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4`).
+					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType, constants.BillingModelEnterprise.String()).
 					WithReply([]map[string]interface{}{
 						{
 							"region":         testCriteria.Region,
@@ -3568,8 +3569,8 @@ func Test_kafkaService_GetAvailableSizesInRegion(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().
 					NewMock().
-					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3`).
-					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType).
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE region = $1 AND cloud_provider = $2 AND instance_type = $3 AND actual_kafka_billing_model != $4`).
+					WithArgs(testCriteria.Region, testCriteria.Provider, testCriteria.SupportedInstanceType, constants.BillingModelEnterprise.String()).
 					WithQueryException()
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
