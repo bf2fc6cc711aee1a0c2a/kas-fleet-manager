@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -262,7 +263,6 @@ func TestCloudProviderRegions(t *testing.T) {
 			id := r.ID
 			name := r.DisplayName
 			multiAz := r.SupportsMultiAZ
-
 			g.Expect(regions.ID).NotTo(gomega.Equal(nil))
 			g.Expect(id).NotTo(gomega.Equal(nil))
 			g.Expect(name).NotTo(gomega.Equal(nil))
@@ -302,7 +302,6 @@ func TestCachedCloudProviderRegions(t *testing.T) {
 			id := r.ID
 			name := r.DisplayName
 			multiAz := r.SupportsMultiAZ
-
 			g.Expect(regions.ID).NotTo(gomega.Equal(nil))
 			g.Expect(id).NotTo(gomega.Equal(nil))
 			g.Expect(name).NotTo(gomega.Equal(nil))
@@ -436,6 +435,20 @@ func TestListCloudProviderRegions(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
+	db := test.TestServices.DBFactory.New()
+
+	// Create an enterprise kafka in us-east-1 which shouldn't consume capacity
+	err = db.Create(&dbapi.KafkaRequest{
+		Name:                     "dummy-enterprise-kafka",
+		Region:                   usEast1Region,
+		CloudProvider:            aws,
+		InstanceType:             "standard",
+		SizeId:                   "x1",
+		DesiredKafkaBillingModel: constants.BillingModelEnterprise.String(),
+		ActualKafkaBillingModel:  constants.BillingModelEnterprise.String(),
+	}).Error
+	g.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create dummy kafka")
+
 	// all regions available for the 'aws' cloud provider should be returned
 	cloudProviderRegionsList, resp1, err := client.DefaultApi.GetCloudProviderRegions(ctx, mocks.MockCluster.CloudProvider().ID(), nil)
 	if resp1 != nil {
@@ -465,8 +478,8 @@ func TestListCloudProviderRegions(t *testing.T) {
 		}
 	}
 
-	// Create a kafka in us-east-1 to use up capacity
-	err = test.TestServices.DBFactory.New().Create(&dbapi.KafkaRequest{
+	// Create a non enterprise kafka in us-east-1 to use up capacity
+	err = db.Create(&dbapi.KafkaRequest{
 		Name:          "dummyKafka",
 		Region:        usEast1Region,
 		CloudProvider: aws,

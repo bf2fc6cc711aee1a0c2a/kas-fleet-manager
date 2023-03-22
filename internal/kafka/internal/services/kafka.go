@@ -230,6 +230,7 @@ func (k *kafkaService) capacityAvailableForRegionAndInstanceType(instTypeRegCapa
 		Where("region = ?", kafkaRequest.Region).
 		Where("cloud_provider = ?", kafkaRequest.CloudProvider).
 		Where("instance_type = ?", kafkaRequest.InstanceType).
+		Where("actual_kafka_billing_model != ?", constants.BillingModelEnterprise.String()). // do not consider enterprise kafka when performing region check.
 		Scan(&kafkas).Error; err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, errMessage)
 	}
