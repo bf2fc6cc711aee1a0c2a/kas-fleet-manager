@@ -2861,8 +2861,7 @@ components:
           type: string
         collections:
           items:
-            allOf:
-            - $ref: '#/components/schemas/ObjectReference'
+            $ref: '#/components/schemas/ObjectReference'
           type: array
     SupportedKafkaInstanceTypesList_allOf:
       example: '{"instance_types":{"$ref":"#/components/examples/SupportedKafkaInstanceTypeListExample"}}'
