@@ -163,16 +163,14 @@ func (m *DynamicScaleDownManager) createAMapOfProcessedClusters(kafkaStreamingUn
 	var processedClusters map[string]processed = map[string]processed{}
 
 	for i, kafkaStreamingUnitCountPerCluster := range kafkaStreamingUnitCountPerClusterList {
-		if kafkaStreamingUnitCountPerCluster.ClusterType != api.ManagedDataPlaneClusterType.String() {
-			continue
-		}
 		clusterID := kafkaStreamingUnitCountPerCluster.ClusterId
 		existing, ok := processedClusters[clusterID]
 
 		if !ok {
+			// consider a non ready clusters as already processed for scale down evaluation and thus they'll be skipped from scale down consideration
+			skipFromScaleDownConsideration := kafkaStreamingUnitCountPerCluster.Status != api.ClusterReady.String()
 			processedClusters[clusterID] = processed{
-				// consider non ready cluster as already processed for scale down evaluation and thus they'll be skipped from scale down consideration
-				processed:                              kafkaStreamingUnitCountPerCluster.Status != api.ClusterReady.String(),
+				processed:                              skipFromScaleDownConsideration,
 				indexesOfStreamingUnitForSameClusterID: []int{i},
 			}
 		} else {
@@ -242,8 +240,8 @@ var _ dynamicScaleDownProcessor = &standardDynamicScaleDownProcessor{}
 
 // ShouldScaleDown indicates whether a data plane cluster can de deprovisioned.
 // It returns true if all the following conditions happen:
-// 1. If specified the cluster is empty i.e it does not contain any streaming unit
-// 2. If the cluster can be removed without triggering a scale up action
+// 1. If specified the cluster is empty and is a "managed" cluster i.e it does not contain any streaming unit and it is not an "enterprise" cluster
+// 2. If the "managed" cluster can be removed without triggering a scale up action
 // Otherwise false is returned.
 // Note:
 // 1. This method assumes kafkaStreamingUnitCountPerClusterList does not
@@ -254,6 +252,12 @@ var _ dynamicScaleDownProcessor = &standardDynamicScaleDownProcessor{}
 // 2. Clusters in deprovisioning and cleanup state are excluded, as clusters into those states don't accept kafka instances anymore.
 // 3. Clusters that are still not ready to accept kafka instance are also excluded from the capacity calculation
 func (p *standardDynamicScaleDownProcessor) ShouldScaleDown() (bool, error) {
+	// check if the cluster is an enterprise cluster
+	if p.isEnterpriseCluster() {
+		glog.Infof("cluster with cluster id %q is an enterprise cluster. It is not going to be removed", p.clusterID)
+		return false, nil
+	}
+
 	// First let's check if the cluster is empty
 	if p.isClusterNotEmpty() {
 		return false, nil
@@ -273,6 +277,17 @@ func (p *standardDynamicScaleDownProcessor) ShouldScaleDown() (bool, error) {
 
 	// to safely perform scale down, there shouldn't a need of scale up immediately afterwards
 	return !scaleUpNeededAfterRemoval, nil
+}
+
+// isEnterpriseCluster checks if the cluster being processed in an enterprise cluster
+// All the elements in p.indexesOfStreamingUnitForSameClusterID represents the same cluster that's why we only use the first item to determine if the cluster is an enteprise one or not
+func (p *standardDynamicScaleDownProcessor) isEnterpriseCluster() bool {
+	if arrays.IsEmpty(p.indexesOfStreamingUnitForSameClusterID) { // should never happen
+		return false
+	}
+
+	index := p.indexesOfStreamingUnitForSameClusterID[0]
+	return p.kafkaStreamingUnitCountPerClusterList[index].ClusterType == api.EnterpriseDataPlaneClusterType.String()
 }
 
 // isClusterNotEmpty checks whether the cluster is not empty.
