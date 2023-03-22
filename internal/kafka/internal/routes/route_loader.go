@@ -141,7 +141,9 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	apiV1KafkasRouter.Use(authorizeMiddleware)
 
 	apiV1KafkasCreateRouter := apiV1KafkasRouter.NewRoute().Subrouter()
-	apiV1KafkasCreateRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
+	apiV1KafkasCreateRouter.HandleFunc("", kafkaHandler.Create).
+		Name(logger.NewLogEvent("create-kafka", "create a kafka instance").ToString()).
+		Methods(http.MethodPost)
 	apiV1KafkasCreateRouter.Use(requireTermsAcceptance)
 
 	// /kafkas/{id}/promote
