@@ -75,6 +75,35 @@ func Test_standardDynamicScaleDownProcessor_ShouldScaleDown(t *testing.T) {
 			want:    true,
 		},
 		{
+			name: "should not scale down if it an enterprise cluster",
+			fields: fields{
+				standardDynamicScaleDownProcessor: &standardDynamicScaleDownProcessor{
+					regionsSupportedInstanceType: config.InstanceTypeMap{}, // an empty supported instance type
+					kafkaStreamingUnitCountPerClusterList: services.KafkaStreamingUnitCountPerClusterList{
+						services.KafkaStreamingUnitCountPerCluster{
+							Status: api.ClusterReady.String(),
+						},
+						services.KafkaStreamingUnitCountPerCluster{
+							Status:      api.ClusterReady.String(),
+							Count:       0,
+							ClusterType: api.EnterpriseDataPlaneClusterType.String(),
+						},
+						services.KafkaStreamingUnitCountPerCluster{
+							Status: api.ClusterReady.String(),
+						},
+						services.KafkaStreamingUnitCountPerCluster{
+							Status:      api.ClusterReady.String(),
+							Count:       0,
+							ClusterType: api.EnterpriseDataPlaneClusterType.String(),
+						},
+					},
+					indexesOfStreamingUnitForSameClusterID: []int{1, 3},
+				},
+			},
+			wantErr: false,
+			want:    false,
+		},
+		{
 			name: "should scale down if all streaming unit count are zero for the given cluster indexes and the instance type is not part of supported instance types in the region",
 			fields: fields{
 				standardDynamicScaleDownProcessor: &standardDynamicScaleDownProcessor{
@@ -1155,6 +1184,51 @@ func Test_DynamicScaleDownManager_Reconcile(t *testing.T) {
 			},
 			wantErr:                   false,
 			wantUpdateStatusCallCount: 0,
+		},
+		{
+			name: "Should never scale down an enterprise cluster",
+			fields: fields{
+				dataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: config.AutoScaling,
+					DynamicScalingConfig: config.DynamicScalingConfig{
+						EnableDynamicScaleDownManagerScaleDownTrigger: true,
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					FindStreamingUnitCountByClusterAndInstanceTypeFunc: func() (services.KafkaStreamingUnitCountPerClusterList, error) {
+						return services.KafkaStreamingUnitCountPerClusterList{
+							services.KafkaStreamingUnitCountPerCluster{
+								Count:         0,
+								ClusterId:     "1",
+								Status:        api.ClusterReady.String(),
+								ClusterType:   api.EnterpriseDataPlaneClusterType.String(),
+								CloudProvider: "cp",
+								Region:        "r",
+							},
+						}, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{},
+					},
+				},
+				clusterProvidersConfig: &config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name:    "cp",
+								Regions: config.RegionList{},
+							},
+						},
+					},
+				},
+			},
+			wantErr:                   false,
+			wantUpdateStatusCallCount: 0, // update cluster status should never be called
 		},
 	}
 
