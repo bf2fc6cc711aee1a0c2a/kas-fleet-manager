@@ -14,6 +14,7 @@ import (
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 )
@@ -194,6 +195,11 @@ func (d *dataPlaneKafkaService) processRealKafkaDeployment(ks *dbapi.DataPlaneKa
 			log.Errorf("kafka %q with status %q received errors from data plane: %q", kafka.ID, kafka.Status, readyCondition.Message)
 		}
 	case statusDeleted:
+		if !arrays.Contains(constants.GetDeletingStatuses(), kafka.Status) {
+			log.Errorf("kafka %q with status %q is not in deleting state and thus it cannot be deleted from %q data plane", kafka.ID, kafka.Status, kafka.ClusterID)
+			return
+		}
+
 		e = d.setKafkaClusterDeleting(kafka)
 	case statusRejected:
 		e = d.reassignKafkaCluster(kafka)
