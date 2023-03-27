@@ -2,8 +2,9 @@ package queryparser
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/state_machine"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/stringscanner"
@@ -11,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var validColumns = []string{"region", "name", "cloud_provider", "status", "owner", "cluster_id"}
+var validColumns = []string{"region", "name", "cloud_provider", "status", "owner", "cluster_id", "instance_type"}
 
 const (
 	braceTokenFamily     = "BRACE"
