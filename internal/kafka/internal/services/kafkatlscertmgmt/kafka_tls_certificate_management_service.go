@@ -230,6 +230,7 @@ func createCertMagicClient(awsConfig *config.AWSConfig,
 		DisableTLSALPNChallenge: true,
 		DNS01Solver:             &certmagic.DNS01Solver{DNSProvider: provider},
 		CA:                      kafkaTLSCertificateManagementConfig.CertificateAuthorityEndpoint,
+		TestCA:                  kafkaTLSCertificateManagementConfig.CertificateAuthorityEndpoint,
 		AccountKeyPEM:           kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.AcmeIssuerAccountKey,
 		Email:                   kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.EmailToSendNotificationTo,
 	})
