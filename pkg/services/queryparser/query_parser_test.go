@@ -89,10 +89,10 @@ func Test_QueryParser(t *testing.T) {
 		},
 		{
 			name:      "Testing IN in complex query",
-			qry:       "((cloud_provider = Value and name = value1) and (owner <> value2 or region=b ) or owner in ('owner1', 'owner2', 'owner3')) or owner=c or name=e and region LIKE '%test%'",
+			qry:       "((cloud_provider = Value and name = value1) and (owner <> value2 or region=b ) or owner in ('owner1', 'owner2', 'owner3')) or owner=c or name=e and region LIKE '%test%' and instance_type=standard",
 			qryParser: NewQueryParser(),
-			outQry:    "((cloud_provider = ? and name = ?) and (owner <> ? or region = ?) or owner in( ? , ? , ?)) or owner = ? or name = ? and region LIKE ?",
-			outValues: []interface{}{"Value", "value1", "value2", "b", "owner1", "owner2", "owner3", "c", "e", "%test%"},
+			outQry:    "((cloud_provider = ? and name = ?) and (owner <> ? or region = ?) or owner in( ? , ? , ?)) or owner = ? or name = ? and region LIKE ? and instance_type = ?",
+			outValues: []interface{}{"Value", "value1", "value2", "b", "owner1", "owner2", "owner3", "c", "e", "%test%", "standard"},
 			wantErr:   false,
 		},
 		{

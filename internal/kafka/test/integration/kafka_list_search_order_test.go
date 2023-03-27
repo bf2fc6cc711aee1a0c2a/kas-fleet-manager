@@ -145,6 +145,14 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 			expectedOrder: []string{mockKafkaName1},
 		},
 		{
+			name:          "Filter by instance type",
+			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name = %s and (instance_type = developer or instance_type=standard)", mockKafkaName1))},
+			wantErr:       false,
+			expectedSize:  1,
+			expectedTotal: 1,
+			expectedOrder: []string{mockKafkaName1},
+		},
+		{
 			name:          "Filter By Name Equal Non Existent Name",
 			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name = %s", nonExistentKafkaName))},
 			wantErr:       false,
