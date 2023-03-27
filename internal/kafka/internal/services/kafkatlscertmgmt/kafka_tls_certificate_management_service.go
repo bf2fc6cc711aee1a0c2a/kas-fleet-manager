@@ -223,11 +223,13 @@ func createCertMagicClient(awsConfig *config.AWSConfig,
 
 	magic := certmagic.NewDefault()
 	magic.Storage = storage
+	magic.Logger = zap.NewNop()
 
 	acmeIssuer := certmagic.NewACMEIssuer(magic, certmagic.ACMEIssuer{
 		Agreed:                  true,
 		DisableHTTPChallenge:    true,
 		DisableTLSALPNChallenge: true,
+		Logger:                  magic.Logger,
 		DNS01Solver:             &certmagic.DNS01Solver{DNSProvider: provider},
 		CA:                      kafkaTLSCertificateManagementConfig.CertificateAuthorityEndpoint,
 		AccountKeyPEM:           kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig.AcmeIssuerAccountKey,
@@ -236,7 +238,6 @@ func createCertMagicClient(awsConfig *config.AWSConfig,
 
 	magic.Issuers = []certmagic.Issuer{acmeIssuer}
 	magic.KeySource = certmagic.StandardKeyGenerator{KeyType: certmagic.RSA4096}
-	magic.Logger = zap.NewNop()
 	magic.OnEvent = func(ctx context.Context, event string, data map[string]any) error {
 		if event == certmagicCertFailedEvent {
 			logger.NewUHCLogger(ctx).Errorf("certificate management failed with the following event details: %v", data)
