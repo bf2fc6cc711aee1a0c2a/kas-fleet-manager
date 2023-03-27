@@ -117,22 +117,22 @@ func TestEnterpriseClusterGet(t *testing.T) {
 	g.Expect(err).To(gomega.HaveOccurred())
 	checkEmptyClusterRespValues(cluster, g)
 
-	clusterWithAddonParameters, resp2, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterWithAddonParameters(noReqClaimsCtx, entCluster.ClusterID)
+	clusterAddonParameters, resp2, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterAddonParameters(noReqClaimsCtx, entCluster.ClusterID)
 	if resp2 != nil {
 		g.Expect(resp2.StatusCode).To(gomega.Equal(http.StatusForbidden))
 		defer resp2.Body.Close()
 	}
 	g.Expect(err).To(gomega.HaveOccurred())
-	checkEmptyClusterWithAddonParametersRespValues(clusterWithAddonParameters, g)
+	checkEmptyClusterAddonParametersRespValues(clusterAddonParameters, g)
 
 	// non-admin user of the same org trying to access addon params
-	clusterWithAddonParameters, resp3, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterWithAddonParameters(nonAdminCtx, entCluster.ClusterID)
+	clusterAddonParameters, resp3, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterAddonParameters(nonAdminCtx, entCluster.ClusterID)
 	if resp3 != nil {
 		g.Expect(resp3.StatusCode).To(gomega.Equal(http.StatusForbidden))
 		defer resp3.Body.Close()
 	}
 	g.Expect(err).To(gomega.HaveOccurred())
-	checkEmptyClusterWithAddonParametersRespValues(clusterWithAddonParameters, g)
+	checkEmptyClusterAddonParametersRespValues(clusterAddonParameters, g)
 
 	// non-existent cluster
 	cluster, resp4, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterById(nonAdminCtx, validNonExistentClusterID)
@@ -143,13 +143,13 @@ func TestEnterpriseClusterGet(t *testing.T) {
 	g.Expect(err).To(gomega.HaveOccurred())
 	checkEmptyClusterRespValues(cluster, g)
 
-	clusterWithAddonParameters, resp5, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterWithAddonParameters(adminCtx, validNonExistentClusterID)
+	clusterAddonParameters, resp5, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterAddonParameters(adminCtx, validNonExistentClusterID)
 	if resp5 != nil {
 		g.Expect(resp5.StatusCode).To(gomega.Equal(http.StatusNotFound))
 		defer resp5.Body.Close()
 	}
 	g.Expect(err).To(gomega.HaveOccurred())
-	checkEmptyClusterWithAddonParametersRespValues(clusterWithAddonParameters, g)
+	checkEmptyClusterAddonParametersRespValues(clusterAddonParameters, g)
 
 	// enterprise cluster from different org
 	cluster, resp6, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterById(nonAdminCtx, otherOrgCluster.ClusterID)
@@ -160,9 +160,9 @@ func TestEnterpriseClusterGet(t *testing.T) {
 	g.Expect(err).To(gomega.HaveOccurred())
 	checkEmptyClusterRespValues(cluster, g)
 
-	clusterWithAddonParameters, resp7, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterWithAddonParameters(adminCtx, otherOrgCluster.ClusterID)
+	clusterAddonParameters, resp7, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterAddonParameters(adminCtx, otherOrgCluster.ClusterID)
 	g.Expect(err).To(gomega.HaveOccurred())
-	checkEmptyClusterWithAddonParametersRespValues(clusterWithAddonParameters, g)
+	checkEmptyClusterAddonParametersRespValues(clusterAddonParameters, g)
 	if resp7 != nil {
 		g.Expect(resp7.StatusCode).To(gomega.Equal(http.StatusNotFound))
 		defer resp7.Body.Close()
@@ -177,13 +177,13 @@ func TestEnterpriseClusterGet(t *testing.T) {
 	g.Expect(err).To(gomega.HaveOccurred())
 	checkEmptyClusterRespValues(cluster, g)
 
-	clusterWithAddonParameters, resp9, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterWithAddonParameters(adminCtx, nonEntCluster.ClusterID)
+	clusterAddonParameters, resp9, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterAddonParameters(adminCtx, nonEntCluster.ClusterID)
 	if resp9 != nil {
 		g.Expect(resp9.StatusCode).To(gomega.Equal(http.StatusNotFound))
 		defer resp9.Body.Close()
 	}
 	g.Expect(err).To(gomega.HaveOccurred())
-	checkEmptyClusterWithAddonParametersRespValues(clusterWithAddonParameters, g)
+	checkEmptyClusterAddonParametersRespValues(clusterAddonParameters, g)
 
 	// success
 	cluster, resp10, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterById(nonAdminCtx, entCluster.ClusterID)
@@ -255,20 +255,15 @@ func TestEnterpriseClusterGet(t *testing.T) {
 	g.Expect(standardInstanceType.Sizes[1].Id).To(gomega.Equal("x2"))
 
 	// get cluster addons parameters
-	clusterWithAddonParameters, resp11, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterWithAddonParameters(adminCtx, entCluster.ClusterID)
+	clusterAddonParameters, resp11, err := client.EnterpriseDataplaneClustersApi.GetEnterpriseClusterAddonParameters(adminCtx, entCluster.ClusterID)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
-	g.Expect(clusterWithAddonParameters.ClusterId).To(gomega.Equal(entCluster.ClusterID))
-	g.Expect(strings.Contains(clusterWithAddonParameters.Href, entCluster.ClusterID)).To(gomega.BeTrue())
-	g.Expect(clusterWithAddonParameters.Id).To(gomega.Equal(entCluster.ClusterID))
-	g.Expect(clusterWithAddonParameters.Kind).To(gomega.Equal(objRefMocks.KindCluster))
-	g.Expect(clusterWithAddonParameters.Status).To(gomega.Equal(entCluster.Status.String()))
-	g.Expect(clusterWithAddonParameters.AccessKafkasViaPrivateNetwork).To((gomega.Equal(entCluster.AccessKafkasViaPrivateNetwork)))
-	g.Expect(clusterWithAddonParameters.Region).To(gomega.Equal(entCluster.Region))
-	g.Expect(clusterWithAddonParameters.CloudProvider).To(gomega.Equal(entCluster.CloudProvider))
-	g.Expect(clusterWithAddonParameters.MultiAz).To(gomega.BeTrue())
+	g.Expect(strings.Contains(clusterAddonParameters.Href, entCluster.ClusterID)).To(gomega.BeTrue())
+	g.Expect(strings.Contains(clusterAddonParameters.Href, "addon_parameters")).To(gomega.BeTrue())
+	g.Expect(clusterAddonParameters.Id).To(gomega.Equal(entCluster.ClusterID))
+	g.Expect(clusterAddonParameters.Kind).To(gomega.Equal(objRefMocks.KindClusterAddonParameters))
 
-	g.Expect(len(clusterWithAddonParameters.FleetshardParameters)).To(gomega.Equal(7))
-	for _, param := range clusterWithAddonParameters.FleetshardParameters {
+	g.Expect(len(clusterAddonParameters.FleetshardParameters)).To(gomega.Equal(7))
+	for _, param := range clusterAddonParameters.FleetshardParameters {
 		g.Expect(param.Id).ToNot(gomega.BeEmpty())
 		g.Expect(param.Value).ToNot(gomega.BeEmpty())
 	}
@@ -286,10 +281,8 @@ func checkEmptyClusterRespValues(cluster public.EnterpriseCluster, g gomega.Gome
 	g.Expect(cluster.Status).To(gomega.BeEmpty())
 }
 
-func checkEmptyClusterWithAddonParametersRespValues(cluster public.EnterpriseClusterWithAddonParameters, g gomega.Gomega) {
-	g.Expect(cluster.ClusterId).To(gomega.BeEmpty())
+func checkEmptyClusterAddonParametersRespValues(cluster public.EnterpriseClusterAddonParameters, g gomega.Gomega) {
 	g.Expect(cluster.Href).To(gomega.BeEmpty())
 	g.Expect(cluster.Id).To(gomega.BeEmpty())
 	g.Expect(cluster.Kind).To(gomega.BeEmpty())
-	g.Expect(cluster.Status).To(gomega.BeEmpty())
 }

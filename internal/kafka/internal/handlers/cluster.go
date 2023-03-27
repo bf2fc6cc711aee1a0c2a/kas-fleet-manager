@@ -132,7 +132,12 @@ func (h clusterHandler) RegisterEnterpriseCluster(w http.ResponseWriter, r *http
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			return presenters.PresentEnterpriseClusterWithAddonParams(*clusterRequest, fsoParams)
+
+			consumedCapacity, consumedErr := h.getEnterpriseClusterConsumedStreamingUnitCountFor(clusterRequest.ClusterID)
+			if consumedErr != nil {
+				return nil, errors.ToServiceError(consumedErr)
+			}
+			return presenters.PresentEnterpriseClusterRegistrationResponse(*clusterRequest, int32(consumedCapacity), h.kafkaConfig, fsoParams)
 		},
 	}
 
@@ -164,11 +169,19 @@ func (h clusterHandler) List(w http.ResponseWriter, r *http.Request) {
 				Page:  1,
 				Size:  int32(len(clusters)),
 				Total: int32(len(clusters)),
-				Items: []public.EnterpriseClusterListItem{},
+				Items: []public.EnterpriseCluster{},
 			}
 
 			for _, cluster := range clusters {
-				converted := presenters.PresentEnterpriseClusterListItem(*cluster)
+				consumedCapacity, consumedErr := h.getEnterpriseClusterConsumedStreamingUnitCountFor(cluster.ClusterID)
+				if consumedErr != nil {
+					return nil, errors.ToServiceError(consumedErr)
+				}
+				converted, presenterError := presenters.PresentEnterpriseCluster(*cluster, int32(consumedCapacity), h.kafkaConfig)
+				if presenterError != nil {
+					return nil, errors.GeneralError("failed to present enterprise cluster due to %q", presenterError.Error())
+
+				}
 				clusterList.Items = append(clusterList.Items, converted)
 			}
 
@@ -219,13 +232,11 @@ func (h clusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 				return nil, errors.NotFound("enterprise data plane cluster with id='%v' not found within organization: %s", clusterID, orgID)
 			}
 
-			consumedCapacity, consumedCapacityError := h.clusterService.ComputeConsumedStreamingUnitCountPerInstanceType(clusterID)
-			if consumedCapacityError != nil {
-				return nil, errors.GeneralError("failed to retrieve cluster %q consumed capacity info", clusterID)
+			consumedCapacity, consumedErr := h.getEnterpriseClusterConsumedStreamingUnitCountFor(clusterID)
+			if consumedErr != nil {
+				return nil, errors.ToServiceError(consumedErr)
 			}
-
-			standardConsumedCapacity := consumedCapacity[types.STANDARD]
-			presentedCluster, presentationErr := presenters.PresentEnterpriseCluster(*cluster, int32(standardConsumedCapacity), h.kafkaConfig)
+			presentedCluster, presentationErr := presenters.PresentEnterpriseCluster(*cluster, int32(consumedCapacity), h.kafkaConfig)
 			if presentationErr != nil {
 				return nil, errors.GeneralError("failed to present enterprise cluster due to %q", presentationErr.Error())
 			}
@@ -236,7 +247,18 @@ func (h clusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleGet(w, r, cfg)
 }
 
-func (h clusterHandler) GetEnterpriseClusterWithAddonParams(w http.ResponseWriter, r *http.Request) {
+func (h clusterHandler) getEnterpriseClusterConsumedStreamingUnitCountFor(clusterID string) (int64, error) {
+	consumedCapacity, consumedCapacityError := h.clusterService.ComputeConsumedStreamingUnitCountPerInstanceType(clusterID)
+	if consumedCapacityError != nil {
+		return 0, errors.GeneralError("failed to retrieve cluster %q consumed capacity info", clusterID)
+	}
+
+	// enterprise clusters only supports standard instance type for now. It is safe to hardcode this.
+	standardConsumedCapacity := consumedCapacity[types.STANDARD]
+	return standardConsumedCapacity, nil
+}
+
+func (h clusterHandler) GetEnterpriseClusterAddonParameters(w http.ResponseWriter, r *http.Request) {
 	clusterID := mux.Vars(r)["id"]
 	ctx := r.Context()
 	cfg := &handlers.HandlerConfig{
@@ -268,7 +290,7 @@ func (h clusterHandler) GetEnterpriseClusterWithAddonParams(w http.ResponseWrite
 				return nil, svcErr
 			}
 
-			return presenters.PresentEnterpriseClusterWithAddonParams(*cluster, fsoParams)
+			return presenters.PresentEnterpriseClusterAddonParameters(*cluster, fsoParams)
 		},
 	}
 	handlers.HandleGet(w, r, cfg)

@@ -13,22 +13,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 )
 
-func PresentEnterpriseClusterListItem(cluster api.Cluster) public.EnterpriseClusterListItem {
-	reference := PresentReference(cluster.ClusterID, cluster)
-	return public.EnterpriseClusterListItem{
-		Id:                            cluster.ClusterID,
-		Status:                        cluster.Status.String(),
-		ClusterId:                     cluster.ClusterID,
-		Kind:                          reference.Kind,
-		Href:                          reference.Href,
-		CloudProvider:                 cluster.CloudProvider,
-		Region:                        cluster.Region,
-		MultiAz:                       cluster.MultiAZ,
-		AccessKafkasViaPrivateNetwork: cluster.AccessKafkasViaPrivateNetwork,
-	}
-}
-
-func PresentEnterpriseClusterWithAddonParams(cluster api.Cluster, fleetShardParams services.ParameterList) (public.EnterpriseClusterWithAddonParameters, *errors.ServiceError) {
+func PresentEnterpriseClusterAddonParameters(cluster api.Cluster, fleetShardParams services.ParameterList) (public.EnterpriseClusterAddonParameters, *errors.ServiceError) {
 	fsoParams := []public.FleetshardParameter{}
 
 	for _, param := range fleetShardParams {
@@ -38,18 +23,46 @@ func PresentEnterpriseClusterWithAddonParams(cluster api.Cluster, fleetShardPara
 		})
 	}
 
+	reference := PresentReference(cluster.ClusterID, public.EnterpriseClusterAddonParameters{})
+	c := public.EnterpriseClusterAddonParameters{
+		Kind:                 reference.Kind,
+		Id:                   reference.Id,
+		Href:                 reference.Href,
+		FleetshardParameters: fsoParams,
+	}
+
+	return c, nil
+}
+
+func PresentEnterpriseClusterRegistrationResponse(cluster api.Cluster, consumedStreamingUnitsInTheCluster int32, kafkaConfig *config.KafkaConfig, fleetShardParams services.ParameterList) (public.EnterpriseClusterRegistrationResponse, *errors.ServiceError) {
+	fsoParams := []public.FleetshardParameter{}
+
+	for _, param := range fleetShardParams {
+		fsoParams = append(fsoParams, public.FleetshardParameter{
+			Id:    param.Id,
+			Value: param.Value,
+		})
+	}
+
+	enterpriseClusterRepresentation, err := PresentEnterpriseCluster(cluster, consumedStreamingUnitsInTheCluster, kafkaConfig)
+	if err != nil {
+		return public.EnterpriseClusterRegistrationResponse{}, nil
+	}
+
 	reference := PresentReference(cluster.ClusterID, cluster)
-	c := public.EnterpriseClusterWithAddonParameters{
-		Id:                            cluster.ClusterID,
-		ClusterId:                     cluster.ClusterID,
-		Status:                        cluster.Status.String(),
-		CloudProvider:                 cluster.CloudProvider,
-		Region:                        cluster.Region,
-		MultiAz:                       cluster.MultiAZ,
+	c := public.EnterpriseClusterRegistrationResponse{
 		Kind:                          reference.Kind,
+		Id:                            reference.Id,
 		Href:                          reference.Href,
-		AccessKafkasViaPrivateNetwork: cluster.AccessKafkasViaPrivateNetwork,
+		ClusterId:                     enterpriseClusterRepresentation.ClusterId,
+		Status:                        enterpriseClusterRepresentation.Status,
+		CloudProvider:                 enterpriseClusterRepresentation.CloudProvider,
+		Region:                        enterpriseClusterRepresentation.Region,
+		MultiAz:                       enterpriseClusterRepresentation.MultiAz,
+		AccessKafkasViaPrivateNetwork: enterpriseClusterRepresentation.AccessKafkasViaPrivateNetwork,
+		SupportedInstanceTypes:        enterpriseClusterRepresentation.SupportedInstanceTypes,
 		FleetshardParameters:          fsoParams,
+		CapacityInformation:           enterpriseClusterRepresentation.CapacityInformation,
 	}
 
 	return c, nil
@@ -81,7 +94,7 @@ func PresentEnterpriseCluster(cluster api.Cluster, consumedStreamingUnitsInTheCl
 
 		presentedCluster.SupportedInstanceTypes = supportedInstanceTypes
 	} else { // this should never happen, let's log an error in case it happens
-		err := fmt.Errorf("cluster %q is missing capacity information", cluster.ID)
+		err := fmt.Errorf("cluster with cluster_id %q is missing capacity information", cluster.ClusterID)
 		logger.Logger.Error(err)
 		return public.EnterpriseCluster{}, err
 	}

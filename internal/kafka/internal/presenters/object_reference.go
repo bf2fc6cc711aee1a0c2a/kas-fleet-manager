@@ -5,6 +5,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -23,6 +24,10 @@ const (
 	KindServiceAccount = "ServiceAccount"
 
 	KindCluster = "Cluster"
+
+	// KindClusterAddonParameters is a string identifier for the
+	// type public.EnterpriseClusterAddonParameters
+	KindClusterAddonParameters = "ClusterAddonParameters"
 
 	BasePath = "/api/kafkas_mgmt/v1"
 )
@@ -45,6 +50,8 @@ func objectKind(i interface{}) string {
 		return KindServiceAccount
 	case api.Cluster, *api.Cluster:
 		return KindCluster
+	case public.EnterpriseClusterAddonParameters, *public.EnterpriseClusterAddonParameters:
+		return KindClusterAddonParameters
 	default:
 		return ""
 	}
@@ -60,6 +67,8 @@ func objectPath(id string, obj interface{}) string {
 		return fmt.Sprintf("%s/clusters/%s", BasePath, id)
 	case api.ServiceAccount, *api.ServiceAccount:
 		return fmt.Sprintf("%s/service_accounts/%s", BasePath, id)
+	case public.EnterpriseClusterAddonParameters, *public.EnterpriseClusterAddonParameters:
+		return fmt.Sprintf("%s/clusters/%s/addon_parameters", BasePath, id)
 	default:
 		return ""
 	}

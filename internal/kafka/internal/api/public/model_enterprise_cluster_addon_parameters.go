@@ -10,16 +10,11 @@
 
 package public
 
-// SsoProvider SSO Provider
-type SsoProvider struct {
+// EnterpriseClusterAddonParameters Enterprise Cluster get addon parameters response
+type EnterpriseClusterAddonParameters struct {
 	Id   string `json:"id"`
 	Kind string `json:"kind"`
 	Href string `json:"href"`
-	// name of the sso provider
-	Name string `json:"name,omitempty"`
-	// base url
-	BaseUrl     string `json:"base_url,omitempty"`
-	TokenUrl    string `json:"token_url,omitempty"`
-	Jwks        string `json:"jwks,omitempty"`
-	ValidIssuer string `json:"valid_issuer,omitempty"`
+	// Enterprise Cluster fleetshard parameters array
+	FleetshardParameters []FleetshardParameter `json:"fleetshard_parameters,omitempty"`
 }

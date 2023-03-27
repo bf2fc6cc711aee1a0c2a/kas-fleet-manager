@@ -7,12 +7,13 @@ import (
 )
 
 const (
-	TestId             = "test-id"
-	KindKafka          = "Kafka"
-	KindCluster        = "Cluster"
-	KindError          = "Error"
-	KindServiceAccount = "ServiceAccount"
-	BasePath           = "/api/kafkas_mgmt/v1"
+	TestId                     = "test-id"
+	KindKafka                  = "Kafka"
+	KindCluster                = "Cluster"
+	KindClusterAddonParameters = "ClusterAddonParameters"
+	KindError                  = "Error"
+	KindServiceAccount         = "ServiceAccount"
+	BasePath                   = "/api/kafkas_mgmt/v1"
 )
 
 func GetObjectReferenceMockId(id string) string {
