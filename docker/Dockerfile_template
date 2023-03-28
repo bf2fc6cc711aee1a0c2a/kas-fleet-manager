@@ -73,7 +73,6 @@ RUN make aws/setup
 RUN make ocm/setup
 RUN make keycloak/setup redhatsso/setup
 RUN make kafkacert/setup
-RUN make observatorium/setup
 
 # Docker built / owned  as 'root' but the 'postgres' user runs the image
 RUN chown -R postgres:postgres /kas-fleet-manager /usr/local/go

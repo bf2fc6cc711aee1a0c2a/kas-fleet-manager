@@ -125,7 +125,7 @@ jobs:
         run: make db/migrate
       - name: Setup tests secrets
         run: |
-          make ocm/setup aws/setup keycloak/setup redhatsso/setup kafkacert/setup observatorium/setup
+          make ocm/setup aws/setup keycloak/setup redhatsso/setup kafkacert/setup
       - name: Lint & Test
         run: |
           export GOPATH=$(go env GOPATH)

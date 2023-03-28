@@ -246,11 +246,6 @@ parameters:
   description: A URL to an Observatorium instance where observability metrics will sent to.
   value: ""
 
-- name: OBSERVATORIUM_RHSSO_GATEWAY
-  displayName: Observatorium Red Hat SSO gateway
-  description: A URL to an Observatorium instance where observability metrics will sent to.
-  value: ""
-
 - name: OBSERVATORIUM_TENANT
   displayName: Observatorium tenant
   description: Observatorium tenant where observability metrics will sent to.
@@ -280,6 +275,11 @@ parameters:
   displayName: Observatorium auth type
   description: Observatorium auth type for observability stack, this value on start decides which auth type to use.
   value: "dex"
+
+- name: DATAPLANE_OBSERVABILITY_CONFIG_ENABLE
+  displayName: Enable dataplane observability
+  description: Enable sending metrics to the remote write receiver which is configured in the file referenced from --dataplane-observability-config-file-path.
+  value: "false"
 
 - name: ENABLE_OBSERVATORIUM_DEBUG
   displayName: Enable Observatorium Debug Logging
@@ -479,8 +479,8 @@ parameters:
 
 - name: OBSERVABILITY_CONFIG_REPO
   displayName: Observability configuration repo URL
-  description: URL of the observability configuration repo
-  value: "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents"
+  description: URL of the observability configuration repo, either a Github or a Quay repository
+  value: "quay.io/rhoas/observability-resources-mk"
 
 - name: OBSERVABILITY_CONFIG_CHANNEL
   displayName: Observability configuration channel
@@ -489,8 +489,8 @@ parameters:
 
 - name: OBSERVABILITY_CONFIG_TAG
   displayName: Observability configuration tag
-  description: Tag or branch to use inside the configuration repo
-  value: "main"
+  description: Tag or branch in a Github repository, or image tag in a Quay repository
+  value: "latest"
 
 - name: SERVICE_PUBLIC_HOST_URL
   displayName: The public HTTP host URL of the service
@@ -574,12 +574,12 @@ parameters:
 - name: OBSERVABILITY_OPERATOR_INDEX_IMAGE
   displayName: Observability operator index image
   description: Observability operator index image
-  value: "quay.io/rhoas/observability-operator-index:v4.1.2"
+  value: "quay.io/rhoas/observability-operator-index:v4.2.0"
 
 - name: OBSERVABILITY_OPERATOR_STARTING_CSV
   displayName: Observability operator subscription starting csv
   description: Observability operator subscription starting csv
-  value: "observability-operator.v4.1.2"
+  value: "observability-operator.v4.2.0"
 
 - name: IMAGE_PULL_POLICY
   displayName: image pull policy
@@ -1085,15 +1085,12 @@ objects:
             - --observatorium-timeout=${OBSERVATORIUM_TIMEOUT}
             - --observatorium-auth-type=${OBSERVATORIUM_AUTH_TYPE}
             - --observatorium-token-file=/secrets/service/observatorium.token
-            - --observability-red-hat-sso-logs-client-id-file=/secrets/observatorium/logs.clientId
-            - --observability-red-hat-sso-logs-secret-file=/secrets/observatorium/logs.clientSecret
-            - --observability-red-hat-sso-metrics-client-id-file=/secrets/observatorium/metrics.clientId
-            - --observability-red-hat-sso-metrics-secret-file=/secrets/observatorium/metrics.clientSecret
             - --observability-red-hat-sso-auth-server-url=${OBSERVATORIUM_RHSSO_AUTH_SERVER_URL}
             - --observability-red-hat-sso-realm=${OBSERVATORIUM_RHSSO_REALM}
             - --observability-red-hat-sso-token-refresher-url=${OBSERVATORIUM_TOKEN_REFRESHER_URL}
-            - --observability-red-hat-sso-observatorium-gateway=${OBSERVATORIUM_RHSSO_GATEWAY}
             - --observability-red-hat-sso-tenant=${OBSERVATORIUM_RHSSO_TENANT}
+            - --dataplane-observability-config-enable=${DATAPLANE_OBSERVABILITY_CONFIG_ENABLE}
+            - --dataplane-observability-config-file-path=/secrets/service/dataplane-observability-config.yaml
             - --observability-cloudwatchlogging-config-file-path=/secrets/observability/observability-cloudwatchlogs-config.yaml
             - --observability-cloudwatchlogging-enable=${OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING}
             - --db-host-file=/secrets/rds/db.host
@@ -1168,7 +1165,6 @@ objects:
             - --quota-type=${QUOTA_TYPE}
             - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
             - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}
-            - --observability-config-access-token-file=/secrets/service/observability-config-access.token
             - --observability-config-tag=${OBSERVABILITY_CONFIG_TAG}
             - --image-pull-docker-config-file=/secrets/service/image-pull.dockerconfigjson
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}

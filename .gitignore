@@ -63,6 +63,7 @@ cmd/kas-fleet-manager/kas-fleet-manager
 /secrets/gcp.api-credentials
 /secrets/observability-cloudwatchlogs-config.yaml
 /secrets/tls/
+/secrets/dataplane-observability-config.yaml
 
 # cluster details (used for testing)
 /internal/kafka/test/integration/test_cluster.json

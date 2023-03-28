@@ -777,8 +777,14 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 		c.buildObservabilityCatalogSourceResource(),
 		c.buildObservabilityOperatorGroupResource(),
 		c.buildObservabilitySubscriptionResource(),
-		c.buildObservabilityRemoteWriteServiceAccountCredential(&cluster),
 	)
+
+	// if no static oidc configuration is provided, or if it is disabled, use the data plane service account
+	if !c.ObservabilityConfiguration.DataPlaneObservabilityConfig.Enabled || !c.ObservabilityConfiguration.DataPlaneObservabilityConfig.HasStaticOIDCConfiguration() {
+		r = append(r,
+			c.buildObservabilityRemoteWriteServiceAccountCredential(&cluster),
+		)
+	}
 
 	strimziNamespace := strimziAddonNamespace
 	if c.OCMConfig.StrimziOperatorAddonID == "managed-kafka-qe" {
@@ -934,15 +940,24 @@ func (c *ClusterManager) buildObservatoriumSSOSecretResource() *k8sCoreV1.Secret
 	observabilityConfig := c.ObservabilityConfiguration
 	stringDataMap := map[string]string{
 		"authType":               observatorium.AuthTypeSso,
-		"gateway":                observabilityConfig.RedHatSsoGatewayUrl,
 		"tenant":                 observabilityConfig.RedHatSsoTenant,
-		"redHatSsoAuthServerUrl": observabilityConfig.RedHatSsoAuthServerUrl,
-		"redHatSsoRealm":         observabilityConfig.RedHatSsoRealm,
-		"metricsClientId":        observabilityConfig.MetricsClientId,
-		"metricsSecret":          observabilityConfig.MetricsSecret,
-		"logsClientId":           observabilityConfig.LogsClientId,
-		"logsSecret":             observabilityConfig.LogsSecret,
+		"gateway":                "",
+		"redHatSsoAuthServerUrl": "",
+		"redHatSsoRealm":         "",
+		"metricsClientId":        "",
+		"metricsSecret":          "",
 	}
+
+	if observabilityConfig.DataPlaneObservabilityConfig.Enabled {
+		stringDataMap["gateway"] = observabilityConfig.DataPlaneObservabilityConfig.RemoteWriteConfiguration.RemoteWriteURL
+		if observabilityConfig.DataPlaneObservabilityConfig.HasStaticOIDCConfiguration() {
+			stringDataMap["redHatSsoRealm"] = observabilityConfig.DataPlaneObservabilityConfig.RemoteWriteConfiguration.Authentication.OIDC.Static.Realm
+			stringDataMap["redHatSsoAuthServerUrl"] = observabilityConfig.DataPlaneObservabilityConfig.RemoteWriteConfiguration.Authentication.OIDC.Static.AuthorizationServer
+			stringDataMap["metricsClientId"] = observabilityConfig.DataPlaneObservabilityConfig.RemoteWriteConfiguration.Authentication.OIDC.Static.Credentials.ClientID
+			stringDataMap["metricsSecret"] = observabilityConfig.DataPlaneObservabilityConfig.RemoteWriteConfiguration.Authentication.OIDC.Static.Credentials.ClientSecret
+		}
+	}
+
 	return &k8sCoreV1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: k8sCoreV1.SchemeGroupVersion.String(),

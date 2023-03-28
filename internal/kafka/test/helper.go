@@ -74,6 +74,9 @@ func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 			dataplaneClusterConfig.DynamicScalingConfig.EnableDynamicScaleDownManagerScaleDownTrigger = false
 			dataplaneClusterConfig.EnableKafkaSreIdentityProviderConfiguration = keycloakConfig.SelectSSOProvider == keycloak.MAS_SSO // only enable IDP configuration if provider type is mas_sso
 
+			// disable the requirement to have a dataplane observability config file defined
+			observabilityConfiguration.DataPlaneObservabilityConfig.Enabled = false
+
 			// enable only aws for integration tests
 			providerConfig.ProvidersConfig = config.ProviderConfiguration{
 				SupportedProviders: config.ProviderList{

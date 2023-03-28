@@ -203,7 +203,6 @@ help:
 	@echo "make keycloak/setup                                     setup mas sso clientId, clientSecret & crt"
 	@echo "make gcp/setup/credentials                              setup GCP credentials"
 	@echo "make kafkacert/setup                                    setup the kafka certificate used for Kafka Brokers"
-	@echo "make observatorium/setup                                setup observatorium secrets used by CI"
 	@echo "make observatorium/token-refresher/setup                setup a local observatorium token refresher"
 	@echo "make docker/login/internal                              login to an openshift cluster image registry"
 	@echo "make docker/login                                       login to the quay.io container registry"
@@ -540,14 +539,10 @@ secrets/setup/empty:
 	touch $(SECRETS_DIR)/osd-idp-keycloak-service.clientId
 	touch $(SECRETS_DIR)/osd-idp-keycloak-service.clientSecret
 	touch $(SECRETS_DIR)/sentry.key
-	touch $(SECRETS_DIR)/rhsso-logs.clientId
-	touch $(SECRETS_DIR)/rhsso-logs.clientSecret
-	touch $(SECRETS_DIR)/rhsso-metrics.clientId
-	touch $(SECRETS_DIR)/rhsso-metrics.clientSecret
-	touch $(SECRETS_DIR)/observability-config-access.token
 	touch $(SECRETS_DIR)/kafka-tls.crt
 	touch $(SECRETS_DIR)/kafka-tls.key
 	touch $(SECRETS_DIR)/image-pull.dockerconfigjson
+	touch $(SECRETS_DIR)/dataplane-observability-config.yaml
 .PHONY: secrets/setup/empty
 
 db/setup:
@@ -683,14 +678,6 @@ kafkacert/setup:
 observability/cloudwatchlogs/setup:
 	@echo -n "$${OBSERVABILITY_CLOUDWATCHLOGS_CONFIG}" > secrets/observability-cloudwatchlogs-config.yaml
 
-observatorium/setup:
-	@echo -n "$(OBSERVATORIUM_CONFIG_ACCESS_TOKEN)" > secrets/observability-config-access.token;
-	@echo -n "$(RHSSO_LOGS_CLIENT_ID)" > secrets/rhsso-logs.clientId;
-	@echo -n "$(RHSSO_LOGS_CLIENT_SECRET)" > secrets/rhsso-logs.clientSecret;
-	@echo -n "$(RHSSO_METRICS_CLIENT_ID)" > secrets/rhsso-metrics.clientId;
-	@echo -n "$(RHSSO_METRICS_CLIENT_SECRET)" > secrets/rhsso-metrics.clientSecret;
-.PHONY:observatorium/setup
-
 observatorium/token-refresher/setup: PORT ?= 8085
 observatorium/token-refresher/setup: IMAGE_TAG ?= latest
 observatorium/token-refresher/setup: ISSUER_URL ?= https://sso.redhat.com/auth/realms/redhat-external
@@ -765,18 +752,14 @@ deploy/secrets:
 		-p KAFKA_TLS_CERT="$(shell ([ -s './secrets/kafka-tls.crt' ] && [ -z '${KAFKA_TLS_CERT}' ]) && cat ./secrets/kafka-tls.crt || echo '${KAFKA_TLS_CERT}')" \
 		-p KAFKA_TLS_KEY="$(shell ([ -s './secrets/kafka-tls.key' ] && [ -z '${KAFKA_TLS_KEY}' ]) && cat ./secrets/kafka-tls.key || echo '${KAFKA_TLS_KEY}')" \
 		-p ACME_ISSUER_ACCOUNT_KEY="$(shell ([ -s './secrets/kafka-tls-certificate-management-acme-issuer-account-key.pem' ] && [ -z '${ACME_ISSUER_ACCOUNT_KEY}' ]) && cat ./secrets/kafka-tls-certificate-management-acme-issuer-account-key.pem || echo '${ACME_ISSUER_ACCOUNT_KEY}')" \
-		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
 		-p IMAGE_PULL_DOCKER_CONFIG="$(shell ([ -s './secrets/image-pull.dockerconfigjson' ] && [ -z '${IMAGE_PULL_DOCKER_CONFIG}' ]) && cat ./secrets/image-pull.dockerconfigjson | base64 -w 0 || echo '${IMAGE_PULL_DOCKER_CONFIG}')" \
 		-p KUBE_CONFIG="${KUBE_CONFIG}" \
-		-p OBSERVABILITY_RHSSO_LOGS_CLIENT_ID="$(shell ([ -s './secrets/rhsso-logs.clientId' ] && [ -z '${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}' ]) && cat ./secrets/rhsso-logs.clientId || echo '${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}')" \
-		-p OBSERVABILITY_RHSSO_LOGS_SECRET="$(shell ([ -s './secrets/rhsso-logs.clientSecret' ] && [ -z '${OBSERVABILITY_RHSSO_LOGS_SECRET}' ]) && cat ./secrets/rhsso-logs.clientSecret || echo '${OBSERVABILITY_RHSSO_LOGS_SECRET}')" \
-		-p OBSERVABILITY_RHSSO_METRICS_CLIENT_ID="$(shell ([ -s './secrets/rhsso-metrics.clientId' ] && [ -z '${OBSERVABILITY_RHSSO_METRICS_CLIENT_ID}' ]) && cat ./secrets/rhsso-metrics.clientId || echo '${OBSERVABILITY_RHSSO_METRICS_CLIENT_ID}')" \
-		-p OBSERVABILITY_RHSSO_METRICS_SECRET="$(shell ([ -s './secrets/rhsso-metrics.clientSecret' ] && [ -z '${OBSERVABILITY_RHSSO_METRICS_SECRET}' ]) && cat ./secrets/rhsso-metrics.clientSecret || echo '${OBSERVABILITY_RHSSO_METRICS_SECRET}')" \
 		-p OBSERVABILITY_RHSSO_GRAFANA_CLIENT_ID="${OBSERVABILITY_RHSSO_GRAFANA_CLIENT_ID}" \
 		-p OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET="${OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET}" \
 		-p OBSERVABILITY_CLOUDWATCHLOGS_CONFIG="$(shell ([ -s './secrets/observability-cloudwatchlogs-config.yaml' ] && [ -z '${OBSERVABILITY_CLOUDWATCHLOGS_CONFIG}' ]) && cat ./secrets/observability-cloudwatchlogs-config.yaml | base64 -w 0 || echo '${OBSERVABILITY_CLOUDWATCHLOGS_CONFIG}' | base64 -w 0)" \
 		-p REDHAT_SSO_CLIENT_ID="$(shell ([ -s './secrets/redhatsso-service.clientId' ] && [ -z '${REDHAT_SSO_CLIENT_ID}' ]) && cat ./secrets/redhatsso-service.clientId || echo '${REDHAT_SSO_CLIENT_ID}')" \
 		-p REDHAT_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/redhatsso-service.clientSecret' ] && [ -z '${REDHAT_SSO_CLIENT_SECRET}' ]) && cat ./secrets/redhatsso-service.clientSecret || echo '${REDHAT_SSO_CLIENT_SECRET}')" \
+		-p DATAPLANE_OBSERVABILITY_CONFIG="$(shell ([ -s './secrets/dataplane-observability-config.yaml' ] && [ -z '${DATAPLANE_OBSERVABILITY_CONFIG}' ]) && cat ./secrets/dataplane-observability-config.yaml | base64 -w 0 || echo '${DATAPLANE_OBSERVABILITY_CONFIG}')" \
 		| $(OC) apply -f - -n $(NAMESPACE)
 .PHONY: deploy/secrets
 
@@ -822,16 +805,16 @@ deploy/service: ALLOW_DEVELOPER_INSTANCE ?= "true"
 deploy/service: QUOTA_TYPE ?= "quota-management-list"
 deploy/service: STRIMZI_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-kafka:production-82b42db"
 deploy/service: KAS_FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
-deploy/service: OBSERVABILITY_OPERATOR_INDEX_IMAGE ?= "quay.io/rhoas/observability-operator-index:v4.1.2"
-deploy/service: OBSERVABILITY_OPERATOR_STARTING_CSV ?= "observability-operator.v4.1.2"
+deploy/service: OBSERVABILITY_OPERATOR_INDEX_IMAGE ?= "quay.io/rhoas/observability-operator-index:v4.2.0"
+deploy/service: OBSERVABILITY_OPERATOR_STARTING_CSV ?= "observability-operator.v4.2.0"
 deploy/service: DEX_USERNAME ?= "admin@example.com"
 deploy/service: DEX_URL ?= "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io"
 deploy/service: OBSERVATORIUM_GATEWAY ?= "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io"
 deploy/service: OBSERVATORIUM_TENANT ?= "test"
-deploy/service: OBSERVABILITY_CONFIG_REPO ?= "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents"
+deploy/service: OBSERVABILITY_CONFIG_REPO ?= "quay.io/rhoas/observability-resources-mk"
 deploy/service: OBSERVATORIUM_TENANT ?= "test"
 deploy/service: OBSERVABILITY_CONFIG_CHANNEL ?= "resources"
-deploy/service: OBSERVABILITY_CONFIG_TAG ?= "main"
+deploy/service: OBSERVABILITY_CONFIG_TAG ?= "latest"
 deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
 deploy/service: STRIMZI_OPERATOR_ADDON_ID ?= "managed-kafka-qe"
 deploy/service: KAS_FLEETSHARD_ADDON_ID ?= "kas-fleetshard-operator-qe"
@@ -860,6 +843,7 @@ deploy/service: ADMIN_API_SSO_BASE_URL ?= "https://auth.redhat.com"
 deploy/service: ADMIN_API_SSO_ENDPOINT_URI ?= "/auth/realms/EmployeeIDP"
 deploy/service: ADMIN_API_SSO_REALM ?= "EmployeeIDP"
 deploy/service: OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING ?= "false"
+deploy/service: DATAPLANE_OBSERVABILITY_CONFIG_ENABLE ?= "false"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
 	@time timeout --foreground 3m bash -c "until $(OC) get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
@@ -904,7 +888,6 @@ deploy/service: deploy/envoy deploy/route
 		-p DEX_URL="${DEX_URL}" \
 		-p OBSERVATORIUM_GATEWAY="${OBSERVATORIUM_GATEWAY}" \
 		-p OBSERVATORIUM_TENANT="${OBSERVATORIUM_TENANT}" \
-		-p OBSERVATORIUM_RHSSO_GATEWAY="${OBSERVATORIUM_RHSSO_GATEWAY}" \
 		-p OBSERVATORIUM_RHSSO_REALM="${OBSERVATORIUM_RHSSO_REALM}" \
 		-p OBSERVATORIUM_RHSSO_TENANT="${OBSERVATORIUM_RHSSO_TENANT}" \
 		-p OBSERVATORIUM_RHSSO_AUTH_SERVER_URL="${OBSERVATORIUM_RHSSO_AUTH_SERVER_URL}" \
@@ -912,6 +895,7 @@ deploy/service: deploy/envoy deploy/route
 		-p OBSERVABILITY_CONFIG_REPO="${OBSERVABILITY_CONFIG_REPO}" \
 		-p OBSERVABILITY_CONFIG_TAG="${OBSERVABILITY_CONFIG_TAG}" \
 		-p OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING="${OBSERVABILITY_ENABLE_CLOUDWATCHLOGGING}" \
+		-p DATAPLANE_OBSERVABILITY_CONFIG_ENABLE="${DATAPLANE_OBSERVABILITY_CONFIG_ENABLE}" \
 		-p ENABLE_TERMS_ACCEPTANCE="${ENABLE_TERMS_ACCEPTANCE}" \
 		-p ALLOW_DEVELOPER_INSTANCE="${ALLOW_DEVELOPER_INSTANCE}" \
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
