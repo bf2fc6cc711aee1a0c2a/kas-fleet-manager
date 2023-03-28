@@ -138,6 +138,10 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
+	if len(h.connectorsConfig.ConnectorsSupportedChannels) > 0 {
+		cfg.Validate = append(cfg.Validate, handlers.Validation("channel", (*string)(&resource.Channel), handlers.WithDefault("stable"), handlers.IsOneOf(h.connectorsConfig.ConnectorsSupportedChannels...)))
+	}
+
 	// return 202 status accepted
 	handlers.Handle(w, r, cfg, http.StatusAccepted)
 }

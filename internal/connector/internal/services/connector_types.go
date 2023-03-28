@@ -189,6 +189,12 @@ func (cts *connectorTypesService) List(listArgs *services.ListArguments) (dbapi.
 		Size: listArgs.Size,
 	}
 
+	if len(cts.connectorsConfig.ConnectorsSupportedChannels) > 0 {
+		dbConn = dbConn.Joins("LEFT JOIN connector_type_channels channels on channels.connector_type_id = connector_types.id")
+		dbConn = dbConn.Where("channels.connector_channel_channel IN ?", cts.connectorsConfig.ConnectorsSupportedChannels)
+		dbConn.Group("connector_types.id")
+	}
+
 	// Apply search query
 	if len(listArgs.Search) > 0 {
 		queryParser := queryparser.NewQueryParser(GetValidConnectorTypeColumns()...)
@@ -197,7 +203,9 @@ func (cts *connectorTypesService) List(listArgs *services.ListArguments) (dbapi.
 			return resourceList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list connector type requests: %s", err.Error())
 		}
 		if strings.Contains(searchDbQuery.Query, "channel") {
-			dbConn = dbConn.Joins("LEFT JOIN connector_type_channels channels on channels.connector_type_id = connector_types.id")
+			if len(cts.connectorsConfig.ConnectorsSupportedChannels) == 0 {
+				dbConn = dbConn.Joins("LEFT JOIN connector_type_channels channels on channels.connector_type_id = connector_types.id")
+			}
 			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "channel", "channels.connector_channel_channel")
 		}
 		if strings.Contains(searchDbQuery.Query, "label") {
@@ -231,7 +239,7 @@ func (cts *connectorTypesService) List(listArgs *services.ListArguments) (dbapi.
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
 	total := int64(pagingMeta.Total)
-	dbConn.Model(&resourceList).Count(&total)
+	cts.connectionFactory.New().Table("(?) as types", dbConn.Model(&resourceList)).Count(&total)
 	pagingMeta.Total = int(total)
 	if pagingMeta.Size > pagingMeta.Total {
 		pagingMeta.Size = pagingMeta.Total
@@ -259,6 +267,12 @@ func (cts *connectorTypesService) ListLabels(listArgs *services.ListArguments) (
 	// two connections for labels and featured connectors count queries
 	dbConn := cts.connectionFactory.New()
 
+	if len(cts.connectorsConfig.ConnectorsSupportedChannels) > 0 {
+		dbConn = dbConn.Joins("LEFT JOIN connector_type_channels channels on channels.connector_type_id = connector_types.id")
+		dbConn = dbConn.Where("channels.connector_channel_channel IN ?", cts.connectorsConfig.ConnectorsSupportedChannels)
+		dbConn.Group("connector_types.id")
+	}
+
 	// Apply search query
 	if len(listArgs.Search) > 0 {
 		queryParser := queryparser.NewQueryParser(GetValidConnectorTypeColumns()...)
@@ -267,7 +281,9 @@ func (cts *connectorTypesService) ListLabels(listArgs *services.ListArguments) (
 			return resourceList, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "unable to list connector type labels requests: %s", err.Error())
 		}
 		if strings.Contains(searchDbQuery.Query, "channel") {
-			dbConn = dbConn.Joins("LEFT JOIN connector_type_channels channels on channels.connector_type_id = connector_types.id")
+			if len(cts.connectorsConfig.ConnectorsSupportedChannels) == 0 {
+				dbConn = dbConn.Joins("LEFT JOIN connector_type_channels channels on channels.connector_type_id = connector_types.id")
+			}
 			searchDbQuery.Query = strings.ReplaceAll(searchDbQuery.Query, "channel", "channels.connector_channel_channel")
 		}
 		if strings.Contains(searchDbQuery.Query, "label") {

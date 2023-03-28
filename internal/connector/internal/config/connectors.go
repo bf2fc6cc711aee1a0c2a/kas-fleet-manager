@@ -29,6 +29,7 @@ type ConnectorsConfig struct {
 	ConnectorMetadataDirs               []string                `json:"connector_metadata"`
 	CatalogEntries                      []ConnectorCatalogEntry `json:"connector_type_urls"`
 	CatalogChecksums                    map[string]string       `json:"connector_catalog_checksums"`
+	ConnectorsSupportedChannels         []string                `json:"connectors_supported_channels"`
 }
 
 var _ environments.ConfigModule = &ConnectorsConfig{}
@@ -62,6 +63,7 @@ func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringArrayVar(&c.ConnectorEvalOrganizations, "connector-eval-organizations", c.ConnectorEvalOrganizations, "Connector eval organization IDs")
 	fs.BoolVar(&c.ConnectorNamespaceLifecycleAPI, "connector-namespace-lifecycle-api", c.ConnectorNamespaceLifecycleAPI, "Enable APIs to create, update, delete non-eval Namespaces")
 	fs.BoolVar(&c.ConnectorEnableUnassignedConnectors, "connector-enable-unassigned-connectors", c.ConnectorEnableUnassignedConnectors, "Enable support for 'unassigned' state for Connectors")
+	fs.StringArrayVar(&c.ConnectorsSupportedChannels, "connectors-supported-channels", c.ConnectorsSupportedChannels, "Connector channels that are visible")
 }
 
 func (c *ConnectorsConfig) ReadFiles() error {

@@ -55,7 +55,7 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 				ConnectorMetadataDirs: connectorMetadataGoodDirs,
 				ConnectorCatalogDirs:  connectorCatalogGoodDirs},
 			wantErr:       false,
-			connectorsIDs: []string{"log_sink_0.1", "aws-sqs-source-v1alpha1"},
+			connectorsIDs: []string{"log_sink_0.1", "aws-sqs-source-v1alpha1", "postgresql_sink_0.1"},
 		},
 		{
 			name: "valid catalog walk with symlink",
@@ -64,7 +64,7 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 				ConnectorMetadataDirs: connectorMetadataGoodDirs,
 				ConnectorCatalogDirs:  []string{tmpCatalog}},
 			wantErr:       false,
-			connectorsIDs: []string{"log_sink_0.1", "aws-sqs-source-v1alpha1"},
+			connectorsIDs: []string{"log_sink_0.1", "aws-sqs-source-v1alpha1", "postgresql_sink_0.1"},
 		},
 		{
 			name: "valid catalog walk",
@@ -73,7 +73,7 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 				ConnectorMetadataDirs: connectorMetadataGoodDirs,
 				ConnectorCatalogDirs:  connectorCatalogRootDirs},
 			wantErr:       false,
-			connectorsIDs: []string{"log_sink_0.1", "aws-sqs-source-v1alpha1"},
+			connectorsIDs: []string{"log_sink_0.1", "aws-sqs-source-v1alpha1", "postgresql_sink_0.1"},
 		},
 		{
 			name: "bad catalog directory",
@@ -128,7 +128,7 @@ func TestConnectorsConfig_ReadFiles(t *testing.T) {
 				ConnectorCatalogDirs:  connectorCatalogGoodDirs},
 			wantErr:       true,
 			err:           "^found 1 unrecognized connector metadata with ids: \\[unknown\\]$",
-			connectorsIDs: []string{"log_sink_0.1", "aws-sqs-source-v1alpha1"},
+			connectorsIDs: []string{"log_sink_0.1", "aws-sqs-source-v1alpha1", "postgresql_sink_0.1"},
 		},
 	}
 	for _, testcase := range tests {

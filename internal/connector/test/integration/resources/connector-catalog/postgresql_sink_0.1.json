@@ -1,0 +1,185 @@
+{
+  "channels" : {
+    "alpha" : {
+      "shard_metadata" : {
+        "annotations" : {
+          "trait.camel.apache.org/container.request-cpu" : "0.20",
+          "trait.camel.apache.org/container.request-memory" : "128M",
+          "trait.camel.apache.org/deployment.progress-deadline-seconds" : "30"
+        },
+        "connector_image" : "quay.io/rhoas/cos-connector-postgresql:main-22711444d8f7e8de02b41e0cdf0d8c77dd79a286",
+        "connector_revision" : 83,
+        "connector_type" : "sink",
+        "consumes" : "application/json",
+        "error_handler_strategy" : "stop",
+        "kamelets" : {
+          "adapter" : {
+            "name" : "postgresql-sink",
+            "prefix" : "db"
+          },
+          "kafka" : {
+            "name" : "cos-kafka-source",
+            "prefix" : "kafka"
+          }
+        },
+        "operators" : [ {
+          "type" : "camel-connector-operator",
+          "version" : "[1.0.0,2.0.0)"
+        } ],
+        "produces" : "application/json"
+      }
+    }
+  },
+  "connector_type" : {
+    "capabilities" : [ "data_shape", "error_handler", "processors" ],
+    "channels" : [ "alpha" ],
+    "description" : "Send data to a PostgreSQL Database.",
+    "icon_href" : "TODO",
+    "id" : "postgresql_sink_0.1",
+    "kind" : "ConnectorType",
+    "labels" : [ "sink" ],
+    "name" : "PostgreSQL sink",
+    "schema" : {
+      "type" : "object",
+      "additionalProperties" : false,
+      "required" : [ "db_server_name", "db_username", "db_password", "db_query", "db_database_name", "kafka_topic" ],
+      "properties" : {
+        "db_server_name" : {
+          "title" : "Server Name",
+          "description" : "The server name for the data source.",
+          "type" : "string",
+          "example" : "localhost"
+        },
+        "db_server_port" : {
+          "title" : "Server Port",
+          "description" : "The server port for the data source.",
+          "type" : "string",
+          "default" : 5432
+        },
+        "db_username" : {
+          "title" : "Username",
+          "description" : "The username to access a secured PostgreSQL Database.",
+          "type" : "string",
+          "x-group" : "credentials"
+        },
+        "db_password" : {
+          "title" : "Password",
+          "x-group" : "credentials",
+          "oneOf" : [ {
+            "title" : "Password",
+            "description" : "The password to access a secured PostgreSQL Database.",
+            "type" : "string",
+            "format" : "password"
+          }, {
+            "description" : "An opaque reference to the db_password",
+            "type" : "object",
+            "properties" : { }
+          } ]
+        },
+        "db_query" : {
+          "title" : "Query",
+          "description" : "The query to execute against the PostgreSQL Database.",
+          "type" : "string",
+          "example" : "INSERT INTO accounts (username,city) VALUES (:#username,:#city)"
+        },
+        "db_database_name" : {
+          "title" : "Database Name",
+          "description" : "The name of the PostgreSQL Database.",
+          "type" : "string"
+        },
+        "kafka_topic" : {
+          "title" : "Topic Names",
+          "description" : "A comma-separated list of Kafka topic names.",
+          "type" : "string"
+        },
+        "data_shape" : {
+          "type" : "object",
+          "additionalProperties" : false,
+          "properties" : {
+            "consumes" : {
+              "$ref" : "#/$defs/data_shape/consumes"
+            }
+          }
+        },
+        "error_handler" : {
+          "type" : "object",
+          "oneOf" : [ {
+            "type" : "object",
+            "additionalProperties" : false,
+            "required" : [ "log" ],
+            "properties" : {
+              "log" : {
+                "$ref" : "#/$defs/error_handler/log"
+              }
+            }
+          }, {
+            "type" : "object",
+            "additionalProperties" : false,
+            "required" : [ "stop" ],
+            "properties" : {
+              "stop" : {
+                "$ref" : "#/$defs/error_handler/stop"
+              }
+            }
+          }, {
+            "type" : "object",
+            "additionalProperties" : false,
+            "required" : [ "dead_letter_queue" ],
+            "properties" : {
+              "dead_letter_queue" : {
+                "$ref" : "#/$defs/error_handler/dead_letter_queue"
+              }
+            }
+          } ],
+          "default" : {
+            "stop" : { }
+          }
+        },
+        "processors" : {
+          "type" : "object",
+          "additionalProperties" : false
+        }
+      },
+      "$defs" : {
+        "data_shape" : {
+          "consumes" : {
+            "type" : "object",
+            "additionalProperties" : false,
+            "required" : [ "format" ],
+            "properties" : {
+              "format" : {
+                "type" : "string",
+                "description" : "The format of the data that Kafka sends to the sink connector.",
+                "default" : "application/json",
+                "enum" : [ "application/json" ]
+              }
+            }
+          }
+        },
+        "error_handler" : {
+          "log" : {
+            "type" : "object",
+            "additionalProperties" : false
+          },
+          "stop" : {
+            "type" : "object",
+            "additionalProperties" : false
+          },
+          "dead_letter_queue" : {
+            "type" : "object",
+            "additionalProperties" : false,
+            "required" : [ "topic" ],
+            "properties" : {
+              "topic" : {
+                "type" : "string",
+                "title" : "Dead Letter Topic Name",
+                "description" : "The name of the Kafka topic that serves as a destination for messages which were not processed correctly due to an error."
+              }
+            }
+          }
+        }
+      }
+    },
+    "version" : "0.1"
+  }
+}

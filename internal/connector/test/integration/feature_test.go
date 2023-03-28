@@ -63,8 +63,11 @@ func TestMain(m *testing.M) {
 
 			"INSERT INTO connector_channels (channel) VALUES ('stable')",
 			"INSERT INTO connector_shard_metadata (connector_type_id, channel) VALUES ('log_sink_0.1', 'stable')",
+			"INSERT INTO connector_shard_metadata (connector_type_id, channel) VALUES ('OldConnectorTypeStillInUseId', 'stable')",
+			"INSERT INTO connector_type_channels (connector_type_id, connector_channel_channel) VALUES ('OldConnectorTypeStillInUseId', 'stable')",
 		},
 		func(c *config.ConnectorsConfig, kc *keycloak.KeycloakConfig, reconcilerConfig *workers.ReconcilerConfig) {
+			c.ConnectorsSupportedChannels = []string{"stable", "beta"}
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/resources/connector-catalog"}
 			c.ConnectorMetadataDirs = []string{"./internal/connector/test/integration/resources/connector-metadata"}
 			c.ConnectorEvalDuration, _ = time.ParseDuration("2s")
