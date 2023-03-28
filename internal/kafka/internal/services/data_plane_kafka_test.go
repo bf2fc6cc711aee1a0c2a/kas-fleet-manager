@@ -114,9 +114,6 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 							}
 							return true, nil
 						},
-						DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
-							return nil
-						},
 					}
 				},
 			},
@@ -174,8 +171,58 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			expectCounters: map[string]int{
 				"ready":     1,
 				"failed":    1,
-				"deleting":  1,
+				"deleting":  0,
 				"rejected":  1,
+				"suspended": 0,
+			},
+		},
+		{
+			name: "should delete the kafka if it is in deprovision state",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{ClusterID: "test-cluster-id"}, nil
+					},
+				},
+				kafkaService: func(c map[string]int) KafkaService {
+					return &KafkaServiceMock{
+						GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+							return &dbapi.KafkaRequest{
+								ClusterID:     "test-cluster-id",
+								Status:        constants.KafkaRequestStatusDeprovision.String(),
+								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+								RoutesCreated: true,
+							}, nil
+						},
+						UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+							if status == constants.KafkaRequestStatusDeleting {
+								c["deleting"]++
+							}
+							return true, nil
+						},
+					}
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+				status: []*dbapi.DataPlaneKafkaStatus{
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Status: "False",
+								Reason: "Deleted",
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+			expectCounters: map[string]int{
+				"ready":     0,
+				"failed":    0,
+				"deleting":  1,
+				"rejected":  0,
 				"suspended": 0,
 			},
 		},
@@ -248,9 +295,6 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 								c["failed"]++
 							}
 							return true, nil
-						},
-						DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
-							return nil
 						},
 					}
 				},
@@ -709,6 +753,49 @@ func Test_dataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				"suspended": 0,
 			},
 		},
+		{
+			name: "should never attempt to delete a kafka that's not in a state where it can be deleted",
+			fields: fields{
+				clusterService: &ClusterServiceMock{
+					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+						return &api.Cluster{ClusterID: "test-cluster-id"}, nil
+					},
+				},
+				kafkaService: func(c map[string]int) KafkaService {
+					return &KafkaServiceMock{
+						GetByIDFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+							return &dbapi.KafkaRequest{
+								ClusterID:     "test-cluster-id",
+								Status:        constants.KafkaRequestStatusReady.String(),
+								Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+								RoutesCreated: true,
+							}, nil
+						},
+					}
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+				status: []*dbapi.DataPlaneKafkaStatus{
+					{
+						Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+							{
+								Type:   "Ready",
+								Reason: "Deleted",
+							},
+						},
+					},
+				},
+			},
+			want: nil,
+			expectCounters: map[string]int{
+				"ready":     0,
+				"deleting":  0,
+				"failed":    0,
+				"rejected":  0,
+				"suspended": 0,
+			},
+		},
 	}
 
 	for _, testcase := range tests {
@@ -782,9 +869,6 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return true, nil
 					},
-					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
 				}
 			},
 			clusterId: "test-cluster-id",
@@ -847,9 +931,6 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return true, nil
 					},
-					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
 				}
 			},
 			clusterId: "test-cluster-id",
@@ -904,9 +985,6 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 					},
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return true, nil
-					},
-					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
 					},
 				}
 			},
@@ -963,9 +1041,6 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 					},
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return true, nil
-					},
-					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
 					},
 				}
 			},
