@@ -240,8 +240,8 @@ func (cts *connectorTypesService) List(listArgs *services.ListArguments) (dbapi.
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
 	total := int64(pagingMeta.Total)
 	dbConn.Model(&resourceList).Count(&total)
-	if len(cts.connectorsConfig.ConnectorsSupportedChannels) > 0 {
-		pagingMeta.Total = int(dbConn.RowsAffected)
+	cts.connectionFactory.New().Table("(?) as types", dbConn.Model(&resourceList)).Count(&total)
+	pagingMeta.Total = int(total)
 	} else {
 		pagingMeta.Total = int(total)
 	}
