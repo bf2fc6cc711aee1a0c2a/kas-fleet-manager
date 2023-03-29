@@ -22,7 +22,13 @@ const (
 
 type ObservabilityConfiguration struct {
 	// Red Hat SSO configuration
-	RedHatSsoTenant            string `json:"redhat_sso_tenant" yaml:"redhat_sso_tenant"`
+	//// RedHatSsoTenant is used to specify the Observatorium tenant for
+	//// the Data Plane Remote Write configuration. It is not used for
+	//// the control plane connection against Observatorium
+	RedHatSsoTenant string `json:"redhat_sso_tenant" yaml:"redhat_sso_tenant"`
+	//// RedHatSsoTokenRefresherUrl is the Token Refresher URL that will be used
+	//// to connect indirectly to Observatorium from the Control Plane. It is not
+	//// used for the  data plane connection against observatorium
 	RedHatSsoTokenRefresherUrl string `json:"redhat_sso_token_refresher_url" yaml:"redhat_sso_token_refresher_url"`
 
 	// Observatorium configuration
