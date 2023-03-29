@@ -85,8 +85,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 
 ### Red Hat SSO Authentication
 - The '[Required]' in the following denotes that these flags are required to use Red Hat SSO Authentication with the service.
-    - `observability-red-hat-sso-auth-server-url`[Required]: Red Hat SSO authentication server URL (default: `https://sso.redhat.com/auth`).
-    - `observability-red-hat-sso-realm`[Required]: Red Hat SSO realm (default: `redhat-external`).
     - `observability-red-hat-sso-token-refresher-url`[Required]: Red Hat SSO token refresher URL (default: `www.test.com`).
     - `observability-red-hat-sso-observatorium-gateway`[Required]: Red Hat SSO observatorium gateway (default: `https://observatorium-mst.api.stage.openshift.com`).
     - `observability-red-hat-sso-tenant`[Required]: Red Hat SSO tenant (default: `managedKafka`).

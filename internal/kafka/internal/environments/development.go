@@ -31,8 +31,6 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"dataplane-cluster-scaling-type":                   "manual",
 		"strimzi-operator-addon-id":                        "managed-kafka-qe",
 		"kas-fleetshard-addon-id":                          "kas-fleetshard-operator-qe",
-		"observability-red-hat-sso-auth-server-url":        "https://sso.redhat.com/auth",
-		"observability-red-hat-sso-realm":                  "redhat-external",
 		"observability-red-hat-sso-token-refresher-url":    "http://localhost:8085",
 		"observability-red-hat-sso-tenant":                 "managedkafka",
 		"observatorium-auth-type":                          "redhat",
