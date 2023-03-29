@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	kafkatest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
@@ -296,6 +298,24 @@ func TestClusterRegistration_Successful(t *testing.T) {
 	g.Expect(enterpriseCluster.Region).ToNot(gomega.BeEmpty())
 	g.Expect(enterpriseCluster.CloudProvider).ToNot(gomega.BeEmpty())
 	g.Expect(enterpriseCluster.MultiAz).To(gomega.BeTrue())
+	g.Expect(enterpriseCluster.CapacityInformation).To(
+		gomega.Equal(
+			public.EnterpriseClusterAllOfCapacityInformation{
+				KafkaMachinePoolNodeCount:    12,
+				MaximumKafkaStreamingUnits:   0,
+				RemainingKafkaStreamingUnits: 0,
+				ConsumedKafkaStreamingUnits:  0,
+			},
+		),
+	)
+	g.Expect(enterpriseCluster.SupportedInstanceTypes.InstanceTypes).To(gomega.HaveLen(1))
+	standardInstanceType := enterpriseCluster.SupportedInstanceTypes.InstanceTypes[0]
+	g.Expect(standardInstanceType.Id).To(gomega.Equal(types.STANDARD.String()))
+	g.Expect(standardInstanceType.SupportedBillingModels).To(gomega.HaveLen(1))
+	g.Expect(standardInstanceType.SupportedBillingModels[0].Id).To(gomega.Equal(constants.BillingModelEnterprise.String()))
+	g.Expect(standardInstanceType.Sizes).To(gomega.HaveLen(2))
+	g.Expect(standardInstanceType.Sizes[0].Id).To(gomega.Equal("x1"))
+	g.Expect(standardInstanceType.Sizes[1].Id).To(gomega.Equal("x2"))
 
 	for _, parameter := range enterpriseCluster.FleetshardParameters {
 		g.Expect(parameter.Id).ToNot(gomega.BeEmpty())

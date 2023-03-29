@@ -14,6 +14,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	kafkaTypes "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	mocks "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kafkas"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -54,6 +55,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 	type fields struct {
 		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 		clusterService             services.ClusterService
+		kafkaConfig                *config.KafkaConfig
 		providerFactory            clusters.ProviderFactory
 	}
 
@@ -67,7 +69,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		fields         fields
 		args           args
 		wantStatusCode int
-		want           *public.EnterpriseClusterWithAddonParameters
+		want           *public.EnterpriseClusterRegistrationResponse
 	}{
 		{
 			name: "should return an error if body is empty",
@@ -521,6 +523,33 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 					RegisterClusterJobFunc: func(clusterRequest *api.Cluster) *errors.ServiceError {
 						return nil
 					},
+					ComputeConsumedStreamingUnitCountPerInstanceTypeFunc: func(clusterID string) (services.StreamingUnitCountPerInstanceType, error) {
+						return services.StreamingUnitCountPerInstanceType{
+							kafkaTypes.STANDARD: 0,
+						}, nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								config.KafkaInstanceType{
+									Id: kafkaTypes.STANDARD.String(),
+									SupportedBillingModels: []config.KafkaBillingModel{
+										config.KafkaBillingModel{
+											ID: constants.BillingModelEnterprise.String(),
+										},
+									},
+									Sizes: []config.KafkaInstanceSize{
+										config.KafkaInstanceSize{
+											Id:               "x1",
+											CapacityConsumed: 1,
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
 					GetAddonParamsFunc: func(cluster *api.Cluster) (services.ParameterList, *errors.ServiceError) {
@@ -552,7 +581,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				},
 			},
 			wantStatusCode: http.StatusOK,
-			want: &public.EnterpriseClusterWithAddonParameters{
+			want: &public.EnterpriseClusterRegistrationResponse{
 				Status:                        api.ClusterAccepted.String(),
 				ClusterId:                     validLengthClusterId,
 				Id:                            validLengthClusterId,
@@ -562,6 +591,28 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				MultiAz:                       true,
 				Kind:                          "Cluster",
 				Href:                          fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", validLengthClusterId),
+				SupportedInstanceTypes: public.SupportedKafkaInstanceTypesList{
+					InstanceTypes: []public.SupportedKafkaInstanceType{
+						public.SupportedKafkaInstanceType{
+							Id: kafkaTypes.STANDARD.String(),
+							SupportedBillingModels: []public.SupportedKafkaBillingModel{
+								public.SupportedKafkaBillingModel{
+									Id: constants.BillingModelEnterprise.String(),
+								},
+							},
+							Sizes: []public.SupportedKafkaSize{
+								public.SupportedKafkaSize{
+									Id:               "x1",
+									CapacityConsumed: 1,
+								},
+							},
+						},
+					},
+				},
+				CapacityInformation: public.EnterpriseClusterAllOfCapacityInformation{
+					KafkaMachinePoolNodeCount:   3,
+					ConsumedKafkaStreamingUnits: 0,
+				},
 				FleetshardParameters: []public.FleetshardParameter{
 					{
 						Id:    "some-id",
@@ -588,6 +639,33 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 						g.Expect(clusterRequest.CloudProvider).To(gomega.Equal(mocks.DefaultKafkaRequestProvider))
 						g.Expect(clusterRequest.Region).To(gomega.Equal(mocks.DefaultKafkaRequestRegion))
 						return nil
+					},
+					ComputeConsumedStreamingUnitCountPerInstanceTypeFunc: func(clusterID string) (services.StreamingUnitCountPerInstanceType, error) {
+						return services.StreamingUnitCountPerInstanceType{
+							kafkaTypes.STANDARD: 0,
+						}, nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								config.KafkaInstanceType{
+									Id: kafkaTypes.STANDARD.String(),
+									SupportedBillingModels: []config.KafkaBillingModel{
+										config.KafkaBillingModel{
+											ID: constants.BillingModelEnterprise.String(),
+										},
+									},
+									Sizes: []config.KafkaInstanceSize{
+										config.KafkaInstanceSize{
+											Id:               "x1",
+											CapacityConsumed: 1,
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
@@ -621,7 +699,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 				},
 			},
 			wantStatusCode: http.StatusOK,
-			want: &public.EnterpriseClusterWithAddonParameters{
+			want: &public.EnterpriseClusterRegistrationResponse{
 				Status:                        api.ClusterAccepted.String(),
 				ClusterId:                     validLengthClusterId,
 				Id:                            validLengthClusterId,
@@ -637,6 +715,28 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 						Value: "value",
 					},
 				},
+				SupportedInstanceTypes: public.SupportedKafkaInstanceTypesList{
+					InstanceTypes: []public.SupportedKafkaInstanceType{
+						public.SupportedKafkaInstanceType{
+							Id: kafkaTypes.STANDARD.String(),
+							SupportedBillingModels: []public.SupportedKafkaBillingModel{
+								public.SupportedKafkaBillingModel{
+									Id: constants.BillingModelEnterprise.String(),
+								},
+							},
+							Sizes: []public.SupportedKafkaSize{
+								public.SupportedKafkaSize{
+									Id:               "x1",
+									CapacityConsumed: 1,
+								},
+							},
+						},
+					},
+				},
+				CapacityInformation: public.EnterpriseClusterAllOfCapacityInformation{
+					KafkaMachinePoolNodeCount:   3,
+					ConsumedKafkaStreamingUnits: 0,
+				},
 			},
 		},
 	}
@@ -645,7 +745,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			h := NewClusterHandler(tt.fields.kasFleetshardOperatorAddon, tt.fields.clusterService, tt.fields.providerFactory, &config.KafkaConfig{})
+			h := NewClusterHandler(tt.fields.kasFleetshardOperatorAddon, tt.fields.clusterService, tt.fields.providerFactory, tt.fields.kafkaConfig)
 			req, rw := GetHandlerParams("POST", "", bytes.NewBuffer(tt.args.body), t)
 			req = req.WithContext(tt.args.ctx)
 			h.RegisterEnterpriseCluster(rw, req)
@@ -653,7 +753,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 			defer resp.Body.Close()
 			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
 			if tt.wantStatusCode == http.StatusOK {
-				cluster := &public.EnterpriseClusterWithAddonParameters{}
+				cluster := &public.EnterpriseClusterRegistrationResponse{}
 				err := json.NewDecoder(resp.Body).Decode(&cluster)
 				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(cluster).To(gomega.Equal(tt.want))
@@ -665,6 +765,7 @@ func Test_RegisterEnterpriseCluster(t *testing.T) {
 func Test_ListEnterpriseClusters(t *testing.T) {
 	type fields struct {
 		clusterService services.ClusterService
+		kafkaConfig    *config.KafkaConfig
 	}
 
 	type args struct {
@@ -703,13 +804,73 @@ func Test_ListEnterpriseClusters(t *testing.T) {
 					ListEnterpriseClustersOfAnOrganizationFunc: func(ctx context.Context) ([]*api.Cluster, *errors.ServiceError) {
 						return []*api.Cluster{
 							{
-								ClusterID:     validLengthClusterId,
-								Status:        api.ClusterReady,
-								CloudProvider: "aws",
-								Region:        "us-east-1",
-								MultiAZ:       true,
+								ClusterID:           validLengthClusterId,
+								Status:              api.ClusterReady,
+								CloudProvider:       "aws",
+								Region:              "us-east-1",
+								MultiAZ:             true,
+								DynamicCapacityInfo: api.JSON([]byte(`{"standard":{"max_nodes":12,"max_units":4,"remaining_units":3}}`)),
 							},
 						}, nil
+					},
+					ComputeConsumedStreamingUnitCountPerInstanceTypeFunc: func(clusterID string) (services.StreamingUnitCountPerInstanceType, error) {
+						return services.StreamingUnitCountPerInstanceType{
+							kafkaTypes.STANDARD: 3,
+						}, nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					SupportedInstanceTypes: &config.KafkaSupportedInstanceTypesConfig{
+						Configuration: config.SupportedKafkaInstanceTypesConfig{
+							SupportedKafkaInstanceTypes: []config.KafkaInstanceType{
+								{
+									Id: kafkaTypes.STANDARD.String(),
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:               "x1",
+											CapacityConsumed: 1,
+										},
+										{
+											Id:               "x2",
+											CapacityConsumed: 2,
+										},
+										{
+											Id:               "x3",
+											CapacityConsumed: 3,
+										},
+										{
+											Id:               "x4",
+											CapacityConsumed: 4,
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										{
+											ID: "some-other-billing-model",
+										},
+										{
+											ID: constants.BillingModelEnterprise.String(),
+										},
+										{
+											ID: "some-other-billing-model-2",
+										},
+									},
+								},
+								{
+									Id: kafkaTypes.DEVELOPER.String(),
+									Sizes: []config.KafkaInstanceSize{
+										{
+											Id:               "x1",
+											CapacityConsumed: 1,
+										},
+									},
+									SupportedBillingModels: []config.KafkaBillingModel{
+										{
+											ID: "some-other-billing-model-2",
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -719,7 +880,7 @@ func Test_ListEnterpriseClusters(t *testing.T) {
 				Page:  1,
 				Size:  int32(1),
 				Total: int32(1),
-				Items: []public.EnterpriseClusterListItem{
+				Items: []public.EnterpriseCluster{
 					{
 						Status:        api.ClusterReady.String(),
 						ClusterId:     validLengthClusterId,
@@ -729,6 +890,42 @@ func Test_ListEnterpriseClusters(t *testing.T) {
 						MultiAz:       true,
 						Kind:          "Cluster",
 						Href:          fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", validLengthClusterId),
+						CapacityInformation: public.EnterpriseClusterAllOfCapacityInformation{
+							KafkaMachinePoolNodeCount:    12,
+							MaximumKafkaStreamingUnits:   4,
+							RemainingKafkaStreamingUnits: 1,
+							ConsumedKafkaStreamingUnits:  3,
+						},
+						SupportedInstanceTypes: public.SupportedKafkaInstanceTypesList{
+							InstanceTypes: []public.SupportedKafkaInstanceType{
+								{
+									Id: kafkaTypes.STANDARD.String(),
+									Sizes: []public.SupportedKafkaSize{
+										{
+											Id:               "x1",
+											CapacityConsumed: 1,
+										},
+										{
+											Id:               "x2",
+											CapacityConsumed: 2,
+										},
+										{
+											Id:               "x3",
+											CapacityConsumed: 3,
+										},
+										{
+											Id:               "x4",
+											CapacityConsumed: 4,
+										},
+									},
+									SupportedBillingModels: []public.SupportedKafkaBillingModel{
+										{
+											Id: constants.BillingModelEnterprise.String(),
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -739,7 +936,7 @@ func Test_ListEnterpriseClusters(t *testing.T) {
 		tt := testcase
 		t.Run(tt.name, func(t *testing.T) {
 			g := gomega.NewWithT(t)
-			h := NewClusterHandler(nil, tt.fields.clusterService, nil, &config.KafkaConfig{})
+			h := NewClusterHandler(nil, tt.fields.clusterService, nil, tt.fields.kafkaConfig)
 			req, rw := GetHandlerParams("GET", "", nil, t)
 			req = req.WithContext(tt.args.ctx)
 			h.List(rw, req)
@@ -1294,7 +1491,7 @@ func Test_GetEnterpriseCluster(t *testing.T) {
 	}
 }
 
-func Test_GetEnterpriseClusterWithAddonParams(t *testing.T) {
+func Test_GetEnterpriseClusterAddonParameters(t *testing.T) {
 	type fields struct {
 		clusterService             services.ClusterService
 		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
@@ -1309,7 +1506,7 @@ func Test_GetEnterpriseClusterWithAddonParams(t *testing.T) {
 		fields         fields
 		args           args
 		wantStatusCode int
-		want           public.EnterpriseClusterWithAddonParameters
+		want           public.EnterpriseClusterAddonParameters
 	}{
 		{
 			name:   "should fail if organization ID is not available within context",
@@ -1441,14 +1638,10 @@ func Test_GetEnterpriseClusterWithAddonParams(t *testing.T) {
 				ctx: ctxWithClaims,
 			},
 			wantStatusCode: http.StatusOK,
-			want: public.EnterpriseClusterWithAddonParameters{
-				ClusterId:     entClusterID,
-				Id:            entClusterID,
-				CloudProvider: "aws",
-				Region:        "us-east-1",
-				MultiAz:       true,
-				Kind:          "Cluster",
-				Href:          fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s", entClusterID),
+			want: public.EnterpriseClusterAddonParameters{
+				Id:   entClusterID,
+				Kind: presenters.KindClusterAddonParameters,
+				Href: fmt.Sprintf("/api/kafkas_mgmt/v1/clusters/%s/addon_parameters", entClusterID),
 				FleetshardParameters: []public.FleetshardParameter{
 					{
 						Id:    "some-id",
@@ -1468,10 +1661,10 @@ func Test_GetEnterpriseClusterWithAddonParams(t *testing.T) {
 			req, rw := GetHandlerParams("GET", "/{id}/addon_parameters", nil, t)
 			req = mux.SetURLVars(req, map[string]string{"id": entClusterID})
 			req = req.WithContext(tt.args.ctx)
-			h.GetEnterpriseClusterWithAddonParams(rw, req)
+			h.GetEnterpriseClusterAddonParameters(rw, req)
 			resp := rw.Result()
 			if tt.wantStatusCode == http.StatusOK {
-				cluster := public.EnterpriseClusterWithAddonParameters{}
+				cluster := public.EnterpriseClusterAddonParameters{}
 				err := json.NewDecoder(resp.Body).Decode(&cluster)
 				g.Expect(err).NotTo(gomega.HaveOccurred())
 				g.Expect(cluster).To(gomega.Equal(tt.want))

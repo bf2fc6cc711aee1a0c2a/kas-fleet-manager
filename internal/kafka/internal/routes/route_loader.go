@@ -247,7 +247,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string) er
 	clusterRouter.HandleFunc("/{id}", clusterHandler.Get).
 		Name(logger.NewLogEvent("get-enterprise-cluster", "get an enterprise data plane cluster by ID").ToString()).
 		Methods(http.MethodGet)
-	clusterRouter.HandleFunc("/{id}/addon_parameters", clusterHandler.GetEnterpriseClusterWithAddonParams).
+	clusterRouter.HandleFunc("/{id}/addon_parameters", clusterHandler.GetEnterpriseClusterAddonParameters).
 		Name(logger.NewLogEvent("get-enterprise-cluster-addon-parameters", "get addon parameters of an enterprise data plane cluster by ID").ToString()).
 		Methods(http.MethodGet)
 

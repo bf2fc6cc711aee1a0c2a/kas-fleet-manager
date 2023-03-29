@@ -905,7 +905,7 @@ func Test_ListEnterpriseClustersOfAnOrganization(t *testing.T) {
 					},
 				}
 
-				query := `SELECT cluster_id, status, access_kafkas_via_private_network, cloud_provider, region, multi_az FROM "clusters" WHERE (organization_id = $1 AND cluster_type = $2) AND "clusters"."deleted_at" IS NULL`
+				query := `SELECT id, cluster_id, status, dynamic_capacity_info, access_kafkas_via_private_network, cloud_provider, region, multi_az FROM "clusters" WHERE (organization_id = $1 AND cluster_type = $2) AND "clusters"."deleted_at" IS NULL`
 
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
@@ -926,7 +926,7 @@ func Test_ListEnterpriseClustersOfAnOrganization(t *testing.T) {
 
 				response := []map[string]interface{}{}
 
-				query := `SELECT cluster_id, status, access_kafkas_via_private_network, cloud_provider, region, multi_az FROM "clusters" WHERE (organization_id = $1 AND cluster_type = $2) AND "clusters"."deleted_at" IS NULL`
+				query := `SELECT id, cluster_id, status, dynamic_capacity_info, access_kafkas_via_private_network, cloud_provider, region, multi_az FROM "clusters" WHERE (organization_id = $1 AND cluster_type = $2) AND "clusters"."deleted_at" IS NULL`
 
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()

@@ -145,7 +145,7 @@ func (c clusterService) ListEnterpriseClustersOfAnOrganization(ctx context.Conte
 	orgId, _ := claims.GetOrgId()
 
 	dbConn := c.connectionFactory.New().
-		Model(&api.Cluster{}).Select("cluster_id, status, access_kafkas_via_private_network, cloud_provider, region, multi_az")
+		Model(&api.Cluster{}).Select("id, cluster_id, status, dynamic_capacity_info, access_kafkas_via_private_network, cloud_provider, region, multi_az")
 
 	var clusters []*api.Cluster
 
