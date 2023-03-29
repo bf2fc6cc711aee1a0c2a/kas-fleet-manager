@@ -26,17 +26,6 @@ func Test_ReadFiles_ObservabilityConfiguration(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should return an error with misconfigured AuthTokenFile",
-			fields: fields{
-				config: NewObservabilityConfigurationConfig(),
-			},
-			modifyFn: func(config *ObservabilityConfiguration) {
-				config.AuthToken = ""
-				config.AuthTokenFile = "invalid"
-			},
-			wantErr: true,
-		},
-		{
 			name: "should return an error when observability cloudwatchlogs enabled but no file path for their configuration is provided",
 			fields: fields{
 				config: NewObservabilityConfigurationConfig(),

@@ -1058,7 +1058,6 @@ objects:
             - --observatorium-ignore-ssl=${OBSERVATORIUM_INSECURE}
             - --observatorium-timeout=${OBSERVATORIUM_TIMEOUT}
             - --observatorium-auth-type=${OBSERVATORIUM_AUTH_TYPE}
-            - --observatorium-token-file=/secrets/service/observatorium.token
             - --observability-red-hat-sso-auth-server-url=${OBSERVATORIUM_RHSSO_AUTH_SERVER_URL}
             - --observability-red-hat-sso-realm=${OBSERVATORIUM_RHSSO_REALM}
             - --observability-red-hat-sso-token-refresher-url=${OBSERVATORIUM_TOKEN_REFRESHER_URL}

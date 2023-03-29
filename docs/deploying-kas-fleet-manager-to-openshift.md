@@ -93,7 +93,6 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `AWS_SECRET_ACCESS_KEY`: The secret access key of an AWS account used to provision OpenShift clusters. Defaults to value read from _./secrets/aws.secretaccesskey_
 - `ROUTE53_ACCESS_KEY`: The access key of an AWS account that has Route53 permissions. Defaults to value read from _./secrets/aws.route53accesskey_
 - `ROUTE53_SECRET_ACCESS_KEY`: The secret access key of an AWS account that has Route53 permissions. Defaults to value read from _./secrets/aws.route53secretaccesskey_
-- `OBSERVATORIUM_SERVICE_TOKEN`: Offline token used to interact with Observatorium. Defaults to value read from _./secrets/observatorium.token_
 - `MAS_SSO_CLIENT_ID`: The client id for a MAS SSO service account. Defaults to value read from _./secrets/keycloak-service.clientId_
 - `MAS_SSO_CLIENT_SECRET`: The client secret for a MAS SSO service account. Defaults to value read from _./secrets/keycloak-service.clientSecret_
 - `MAS_SSO_CRT`: The TLS certificate of the MAS SSO instance. Defaults to value read from _./secrets/keycloak-service.crt_

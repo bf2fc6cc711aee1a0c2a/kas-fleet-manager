@@ -28,14 +28,12 @@ type ObservabilityConfiguration struct {
 	RedHatSsoTokenRefresherUrl string `json:"redhat_sso_token_refresher_url" yaml:"redhat_sso_token_refresher_url"`
 
 	// Observatorium configuration
-	AuthType      string        `json:"auth_type" yaml:"auth_type"`
-	AuthToken     string        `json:"auth_token"`
-	AuthTokenFile string        `json:"auth_token_file"`
-	Cookie        string        `json:"cookie"`
-	Timeout       time.Duration `json:"timeout"`
-	Insecure      bool          `json:"insecure"`
-	Debug         bool          `json:"debug"`
-	EnableMock    bool          `json:"enable_mock"`
+	AuthType   string        `json:"auth_type" yaml:"auth_type"`
+	Cookie     string        `json:"cookie"`
+	Timeout    time.Duration `json:"timeout"`
+	Insecure   bool          `json:"insecure"`
+	Debug      bool          `json:"debug"`
+	EnableMock bool          `json:"enable_mock"`
 
 	// Configuration repo for the Observability operator
 	ObservabilityConfigTag     string `json:"observability_config_tag"`
@@ -232,8 +230,6 @@ type ObservabilityEnterpriseCloudwatchLoggingConfigCredentials struct {
 func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 	return &ObservabilityConfiguration{
 		AuthType:                   "redhat",
-		AuthToken:                  "",
-		AuthTokenFile:              "secrets/observatorium.token",
 		Timeout:                    240 * time.Second,
 		Debug:                      true, // TODO: false
 		EnableMock:                 false,
@@ -255,7 +251,6 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.RedHatSsoRealm, "observability-red-hat-sso-realm", c.RedHatSsoRealm, "Red Hat SSO realm")
 
 	fs.StringVar(&c.AuthType, "observatorium-auth-type", c.AuthType, "Observatorium Authentication Type. Accepted values: ['redhat']. Default: 'redhat'")
-	fs.StringVar(&c.AuthTokenFile, "observatorium-token-file", c.AuthTokenFile, "Token File for Observatorium client")
 	fs.DurationVar(&c.Timeout, "observatorium-timeout", c.Timeout, "Timeout for Observatorium client")
 	fs.BoolVar(&c.Insecure, "observatorium-ignore-ssl", c.Insecure, "ignore SSL Observatorium certificate")
 	fs.BoolVar(&c.EnableMock, "enable-observatorium-mock", c.EnableMock, "Enable mock Observatorium client")
@@ -273,13 +268,6 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *ObservabilityConfiguration) ReadFiles() error {
-	if c.AuthToken == "" && c.AuthTokenFile != "" {
-		err := shared.ReadFileValueString(c.AuthTokenFile, &c.AuthToken)
-		if err != nil {
-			return err
-		}
-	}
-
 	err := c.ObservabilityCloudWatchLoggingConfig.readConfigFile()
 	if err != nil {
 		return err

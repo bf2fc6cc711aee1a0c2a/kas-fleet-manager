@@ -64,8 +64,6 @@ var (
 		RedHatSsoTenant:            "dummy",
 		RedHatSsoTokenRefresherUrl: "http://dummy",
 		AuthType:                   "redhat",
-		AuthToken:                  "dummy",
-		AuthTokenFile:              "dummy",
 		ObservabilityConfigTag:     "main",
 		ObservabilityConfigRepo:    "dummy",
 		ObservabilityConfigChannel: "resources",
