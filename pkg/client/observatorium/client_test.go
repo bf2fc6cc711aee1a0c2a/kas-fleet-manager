@@ -13,7 +13,6 @@ import (
 var (
 	observabilityConfiguration = NewObservabilityConfigurationConfig()
 	configuration              = Configuration{
-		Cookie:   observabilityConfiguration.Cookie,
 		Timeout:  observabilityConfiguration.Timeout,
 		Debug:    observabilityConfiguration.Debug,
 		Insecure: observabilityConfiguration.Insecure,
@@ -136,7 +135,6 @@ func Test_RoundTrip(t *testing.T) {
 	config := ClientConfiguration{
 		Timeout:    configuration.Timeout,
 		AuthToken:  configuration.AuthToken,
-		Cookie:     configuration.Cookie,
 		Debug:      configuration.Debug,
 		EnableMock: false,
 		Insecure:   configuration.Insecure,

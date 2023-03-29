@@ -22,7 +22,6 @@ type ClientConfiguration struct {
 	BaseURL    string
 	Timeout    time.Duration
 	AuthToken  string
-	Cookie     string
 	Debug      bool
 	EnableMock bool
 	Insecure   bool
@@ -39,7 +38,6 @@ type Client struct {
 func NewObservatoriumClient(c *ObservabilityConfiguration) (client *Client, err error) {
 	// Create Observatorium client
 	observatoriumConfig := &Configuration{
-		Cookie:   c.Cookie,
 		Timeout:  c.Timeout,
 		Debug:    c.Debug,
 		Insecure: c.Insecure,
@@ -67,7 +65,6 @@ func NewClient(config *Configuration) (*Client, error) {
 		Config: &ClientConfiguration{
 			Timeout:    config.Timeout,
 			AuthToken:  config.AuthToken,
-			Cookie:     config.Cookie,
 			Debug:      config.Debug,
 			EnableMock: false,
 			Insecure:   config.Insecure,

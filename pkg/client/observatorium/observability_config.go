@@ -29,7 +29,6 @@ type ObservabilityConfiguration struct {
 
 	// Observatorium configuration
 	AuthType   string        `json:"auth_type" yaml:"auth_type"`
-	Cookie     string        `json:"cookie"`
 	Timeout    time.Duration `json:"timeout"`
 	Insecure   bool          `json:"insecure"`
 	Debug      bool          `json:"debug"`
