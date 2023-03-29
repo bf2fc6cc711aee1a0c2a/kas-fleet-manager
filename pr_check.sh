@@ -44,7 +44,7 @@ then
   cp docker/Dockerfile_template_mocked Dockerfile_integration_tests
 else
   if [[ -z "${OCM_ENV}" ]] || [[ -z "${AWS_ACCESS_KEY}" ]] || [[ -z "${AWS_ACCOUNT_ID}" ]] ||
-    [[ -z "${AWS_SECRET_ACCESS_KEY}" ]] || [[ -z "${OCM_OFFLINE_TOKEN}" ]] || [[ -z "${OBSERVATORIUM_CONFIG_ACCESS_TOKEN}" ]] ||
+    [[ -z "${AWS_SECRET_ACCESS_KEY}" ]] || [[ -z "${OCM_OFFLINE_TOKEN}" ]] ||
     [[ -z "${DATA_PLANE_PULL_SECRET}" ]];  then
     echo "Required env var not provided. Exiting...".
     exit 1
@@ -52,16 +52,15 @@ else
   make dataplane/imagepull/secret/setup
   cp docker/Dockerfile_template Dockerfile_integration_tests
   sed -i -e "s#<ocm_env>#${OCM_ENV}#g" -e "s#<aws_access_key>#${AWS_ACCESS_KEY}#g" \
-  -e "s#<aws_account_id>#${AWS_ACCOUNT_ID}#g" -e  "s#<aws_secret_access_key>#${AWS_SECRET_ACCESS_KEY}#g" \
-  -e "s#<ocm_offline_token>#${OCM_OFFLINE_TOKEN}#g" \
-  -e "s#<observatorium_config_access_token>#${OBSERVATORIUM_CONFIG_ACCESS_TOKEN}#g" Dockerfile_integration_tests
+         -e "s#<aws_account_id>#${AWS_ACCOUNT_ID}#g" -e  "s#<aws_secret_access_key>#${AWS_SECRET_ACCESS_KEY}#g" \
+         -e "s#<ocm_offline_token>#${OCM_OFFLINE_TOKEN}#g" Dockerfile_integration_tests
   if [[ -z "${REPORTPORTAL_ENDPOINT}" ]] || [[ -z "${REPORTPORTAL_ACCESS_TOKEN}" ]] || [[ -z "${REPORTPORTAL_PROJECT}" ]];  then
     echo "Required report portal env vars not provided. Exiting...".
     exit 1
   fi
   sed -i -e "s#<report_portal_endpoint>#${REPORTPORTAL_ENDPOINT}#g" \
-  -e "s/<report_portal_access_token>/${REPORTPORTAL_ACCESS_TOKEN}/g" \
-  -e "s/<report_portal_project>/${REPORTPORTAL_PROJECT}/g" Dockerfile_integration_tests
+         -e "s/<report_portal_access_token>/${REPORTPORTAL_ACCESS_TOKEN}/g" \
+         -e "s/<report_portal_project>/${REPORTPORTAL_PROJECT}/g" Dockerfile_integration_tests
 fi
 
 if [[ -z "${REDHAT_SSO_CLIENT_ID}" ]] || [[ -z "${REDHAT_SSO_CLIENT_SECRET}" ]];
