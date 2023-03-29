@@ -250,10 +250,13 @@ the previously mentioned Data Plane elements can pull container images from it:
 * Base-64 encode your [Docker configuration file](https://docs.docker.com/engine/reference/commandline/cli/#docker-cli-configuration-file-configjson-properties).
 * Copy the contents generated from the previous point into the `secrets/image-pull.dockerconfigjson` file
 
-## Setup the Observability stack secrets
+## Setup the Observability stack
 Fleet Manager provides the ability to provide and configure monitoring metrics
 related to the Data Planes and its Kafka instances. To do so it makes
 use of what's called the [Observability Stack](./observability/README.md#observability-stack)
+
+See [Observability](./observability/README.md) to learn more about
+the Observability Stack and Observatorium.
 
 To configure and make use of the Observability stack to offer monitoring metrics
 related to the Data Planes and its Kafka instances Fleet Manager needs to:
@@ -264,11 +267,6 @@ related to the Data Planes and its Kafka instances Fleet Manager needs to:
 
 If you are not interested in making use of this functionality you can skip
 this section. Otherwise, keep reading below.
-
-Data plane observability and remote write can be configured through `secrets/dataplane-observability-config.yaml`.
-Please take a look at the sample file for more details.
-
-To enable data plane observability remote write, you first need to enable it via `--dataplane-observability-config-enable`.
 
 An Observatorium token refresher is needed to refresh tokens when
 authenticating against Red Hat SSO. To configure the token Refresher
@@ -293,18 +291,55 @@ Additionally, the following parameters are also supported on the previous comman
 * OBSERVATORIUM_URL: URL of your Observatorium instance.
   Defaults to `https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/managedkafka`
 
-Finally, if log delivery from Observability in the Data Plane to AWS CloudWatch
+### Configure Data Plane log delivery
+If log delivery from Observability in the Data Plane to AWS CloudWatch
 logs is desired setting the Observability CloudWatch Logs configuration is needed.
 This can be done by running the following command:
 ```
 OBSERVABILITY_CLOUDWATCHLOGS_CONFIG="<config>" make observability/cloudwatchlogs/setup
 ```
-Information about the Observability Cloudwatch Logging configuration file can be found in the `secrets/observability-cloudwatchlogs-config.yaml.sample` file.
-To enable Observability AWS CloudWatch logs delivery run KAS FLeet Manager
+Information about the Observability Cloudwatch Logging configuration file can
+be found in the `secrets/observability-cloudwatchlogs-config.yaml.sample` file.
+To enable Observability AWS CloudWatch logs delivery run KAS Fleet Manager
 with the `--observability-enable-cloudwatchlogging` flag.
 
-See [Observability](./observability/README.md) to learn more about
-Observatorium and the Observability Stack.
+### Configure Data Plane metrics delivery
+To send Data Plane metrics from the Data Plane side to Observatorium it is
+required that the Data Planes send the metrics to an
+[Observability Remote Write Proxy](https://github.com/bf2fc6cc711aee1a0c2a/observability-remote-write-proxy).
+
+By using Observability Remote Write Proxy we avoid needing to store Observatorium
+credentials in the Data Planes managed by KAS Fleet Manager.
+
+If you desire being able to send Data Plane metrics to Observatorium please
+keep reading. Otherwise, the next content can be skipped.
+
+To be able to send metrics to Observatorium from the Data Plane side, deploying
+Observability Remote Write Proxy is required.
+
+First, [Observability Remote Write Proxy](https://github.com/bf2fc6cc711aee1a0c2a/observability-remote-write-proxy)
+needs to be configured and deployed. The requirement is that the proxy needs
+to be reachable at network level by the Data Planes being managed.
+
+If you want to deploy and configure an Observability Remote Write Proxy
+locally please go to the
+[Observability Remote Write Proxy](https://github.com/bf2fc6cc711aee1a0c2a/observability-remote-write-proxy)
+for information on how to do it.
+
+If you want to deploy and configure an Observability Remote Write Proxy
+on an OpenShift cluster read the
+[Deploying Observability Remote Write Proxy In OpenShift guide](./deploying-observability-remote-write-proxy-in-openshift.md).
+
+To enable Data Plane observability Remote Write from the KAS Fleet Manager:
+* You need to specify the Remote Write Proxy URL and other related configuration
+  in the Data Plane observability configuration file specified in the
+  `--dataplane-observability-config-file-path` CLI flag, which by default is
+  set to `secrets/service/dataplane-observability-config.yaml`. For details
+  of the configuration see the
+  [Data Plane observability configuration sample file](../secrets/observability-cloudwatchlogs-config.yaml.sample)
+* When running KAS Fleet Manager, provide the `--dataplane-observability-config-enable`
+  flag to enable the Data Plane Observability configuration to enable Data Plane
+  metrics sending
 
 ## Setup a custom TLS certificate for Kafka Host URLs
 
