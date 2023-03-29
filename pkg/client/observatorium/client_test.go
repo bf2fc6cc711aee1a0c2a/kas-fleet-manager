@@ -171,65 +171,6 @@ func Test_RoundTrip(t *testing.T) {
 			},
 			wantErr: false,
 		},
-		{
-			name: "should return no error with roundTripper's AuthType set to AuthTypeDex and sample valid request and non-empty AuthToken",
-			fields: fields{
-				p: observatoriumRoundTripper{
-					config: config,
-					wrapped: observatoriumRoundTripper{
-						config:  config,
-						wrapped: pAPI.DefaultRoundTripper,
-					},
-				},
-			},
-			args: args{
-				request: req,
-			},
-			modifyFn: func(config *observatoriumRoundTripper) {
-				config.config.AuthType = AuthTypeDex
-				config.config.AuthToken = testValue
-			},
-			wantErr: false,
-		},
-		{
-			name: "should return no error with roundTripper's AuthType set to AuthTypeDex and sample valid request and non-empty Cookie",
-			fields: fields{
-				p: observatoriumRoundTripper{
-					config: config,
-					wrapped: observatoriumRoundTripper{
-						config:  config,
-						wrapped: pAPI.DefaultRoundTripper,
-					},
-				},
-			},
-			args: args{
-				request: req,
-			},
-			modifyFn: func(config *observatoriumRoundTripper) {
-				config.config.AuthType = AuthTypeDex
-				config.config.Cookie = testValue
-			},
-			wantErr: false,
-		},
-		{
-			name: "should return an error with roundTripper's AuthType set to AuthTypeDex empty auth fields",
-			fields: fields{
-				p: observatoriumRoundTripper{
-					config: config,
-					wrapped: observatoriumRoundTripper{
-						config:  config,
-						wrapped: pAPI.DefaultRoundTripper,
-					},
-				},
-			},
-			args: args{
-				request: req,
-			},
-			modifyFn: func(config *observatoriumRoundTripper) {
-				config.config.AuthType = AuthTypeDex
-			},
-			wantErr: true,
-		},
 	}
 
 	for _, testcase := range tests {

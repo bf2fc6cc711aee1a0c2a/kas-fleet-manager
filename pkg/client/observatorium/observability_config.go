@@ -12,7 +12,6 @@ import (
 )
 
 const (
-	AuthTypeDex = "dex"
 	AuthTypeSso = "redhat"
 )
 
@@ -22,14 +21,6 @@ const (
 )
 
 type ObservabilityConfiguration struct {
-	// Dex configuration
-	DexUrl          string `json:"dex_url" yaml:"dex_url"`
-	DexUsername     string `json:"username" yaml:"username"`
-	DexPassword     string `json:"password" yaml:"password"`
-	DexSecret       string `json:"secret" yaml:"secret"`
-	DexSecretFile   string `json:"secret_file" yaml:"secret_file"`
-	DexPasswordFile string `json:"password_file" yaml:"password_file"`
-
 	// Red Hat SSO configuration
 	RedHatSsoAuthServerUrl     string `json:"redhat_sso_auth_server_url" yaml:"redhat_sso_auth_server_url"`
 	RedHatSsoRealm             string `json:"redhat_sso_realm" yaml:"redhat_sso_realm"`
@@ -37,16 +28,14 @@ type ObservabilityConfiguration struct {
 	RedHatSsoTokenRefresherUrl string `json:"redhat_sso_token_refresher_url" yaml:"redhat_sso_token_refresher_url"`
 
 	// Observatorium configuration
-	ObservatoriumGateway string        `json:"gateway" yaml:"gateway"`
-	ObservatoriumTenant  string        `json:"observatorium_tenant" yaml:"observatorium_tenant"`
-	AuthType             string        `json:"auth_type" yaml:"auth_type"`
-	AuthToken            string        `json:"auth_token"`
-	AuthTokenFile        string        `json:"auth_token_file"`
-	Cookie               string        `json:"cookie"`
-	Timeout              time.Duration `json:"timeout"`
-	Insecure             bool          `json:"insecure"`
-	Debug                bool          `json:"debug"`
-	EnableMock           bool          `json:"enable_mock"`
+	AuthType      string        `json:"auth_type" yaml:"auth_type"`
+	AuthToken     string        `json:"auth_token"`
+	AuthTokenFile string        `json:"auth_token_file"`
+	Cookie        string        `json:"cookie"`
+	Timeout       time.Duration `json:"timeout"`
+	Insecure      bool          `json:"insecure"`
+	Debug         bool          `json:"debug"`
+	EnableMock    bool          `json:"enable_mock"`
 
 	// Configuration repo for the Observability operator
 	ObservabilityConfigTag     string `json:"observability_config_tag"`
@@ -242,13 +231,7 @@ type ObservabilityEnterpriseCloudwatchLoggingConfigCredentials struct {
 
 func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 	return &ObservabilityConfiguration{
-		DexUrl:                     "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io",
-		DexSecretFile:              "secrets/dex.secret",
-		DexPasswordFile:            "secrets/dex.password",
-		DexUsername:                "admin@example.com",
-		ObservatoriumGateway:       "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io",
-		ObservatoriumTenant:        "test",
-		AuthType:                   "dex",
+		AuthType:                   "redhat",
 		AuthToken:                  "",
 		AuthTokenFile:              "secrets/observatorium.token",
 		Timeout:                    240 * time.Second,
@@ -266,20 +249,12 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 }
 
 func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
-
-	fs.StringVar(&c.DexUrl, "dex-url", c.DexUrl, "Dex url")
-	fs.StringVar(&c.DexUsername, "dex-username", c.DexUsername, "Dex username")
-	fs.StringVar(&c.DexSecretFile, "dex-secret-file", c.DexSecretFile, "Dex secret file")
-	fs.StringVar(&c.DexPasswordFile, "dex-password-file", c.DexPasswordFile, "Dex password file")
-
 	fs.StringVar(&c.RedHatSsoTenant, "observability-red-hat-sso-tenant", c.RedHatSsoTenant, "Red Hat SSO tenant")
 	fs.StringVar(&c.RedHatSsoAuthServerUrl, "observability-red-hat-sso-auth-server-url", c.RedHatSsoAuthServerUrl, "Red Hat SSO auth server URL")
 	fs.StringVar(&c.RedHatSsoTokenRefresherUrl, "observability-red-hat-sso-token-refresher-url", c.RedHatSsoTokenRefresherUrl, "Red Hat SSO token refresher URL")
 	fs.StringVar(&c.RedHatSsoRealm, "observability-red-hat-sso-realm", c.RedHatSsoRealm, "Red Hat SSO realm")
 
-	fs.StringVar(&c.ObservatoriumGateway, "observatorium-gateway", c.ObservatoriumGateway, "Observatorium gateway")
-	fs.StringVar(&c.ObservatoriumTenant, "observatorium-tenant", c.ObservatoriumTenant, "Observatorium tenant")
-	fs.StringVar(&c.AuthType, "observatorium-auth-type", c.AuthType, "Observatorium Authentication Type")
+	fs.StringVar(&c.AuthType, "observatorium-auth-type", c.AuthType, "Observatorium Authentication Type. Accepted values: ['redhat']. Default: 'redhat'")
 	fs.StringVar(&c.AuthTokenFile, "observatorium-token-file", c.AuthTokenFile, "Token File for Observatorium client")
 	fs.DurationVar(&c.Timeout, "observatorium-timeout", c.Timeout, "Timeout for Observatorium client")
 	fs.BoolVar(&c.Insecure, "observatorium-ignore-ssl", c.Insecure, "ignore SSL Observatorium certificate")
@@ -298,17 +273,6 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *ObservabilityConfiguration) ReadFiles() error {
-	dexPassword, err := shared.ReadFile(c.DexPasswordFile)
-	if err != nil {
-		return err
-	}
-	dexSecret, err := shared.ReadFile(c.DexSecretFile)
-	if err != nil {
-		return err
-	}
-	c.DexPassword = dexPassword
-	c.DexSecret = dexSecret
-
 	if c.AuthToken == "" && c.AuthTokenFile != "" {
 		err := shared.ReadFileValueString(c.AuthTokenFile, &c.AuthToken)
 		if err != nil {
@@ -316,7 +280,7 @@ func (c *ObservabilityConfiguration) ReadFiles() error {
 		}
 	}
 
-	err = c.ObservabilityCloudWatchLoggingConfig.readConfigFile()
+	err := c.ObservabilityCloudWatchLoggingConfig.readConfigFile()
 	if err != nil {
 		return err
 	}

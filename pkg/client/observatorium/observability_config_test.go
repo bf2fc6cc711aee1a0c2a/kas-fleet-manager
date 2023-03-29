@@ -26,26 +26,6 @@ func Test_ReadFiles_ObservabilityConfiguration(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should return an error with misconfigured DexPasswordFile",
-			fields: fields{
-				config: NewObservabilityConfigurationConfig(),
-			},
-			modifyFn: func(config *ObservabilityConfiguration) {
-				config.DexPasswordFile = "invalid"
-			},
-			wantErr: true,
-		},
-		{
-			name: "should return an error with misconfigured DexSecretFile",
-			fields: fields{
-				config: NewObservabilityConfigurationConfig(),
-			},
-			modifyFn: func(config *ObservabilityConfiguration) {
-				config.DexSecretFile = "invalid"
-			},
-			wantErr: true,
-		},
-		{
 			name: "should return an error with misconfigured AuthTokenFile",
 			fields: fields{
 				config: NewObservabilityConfigurationConfig(),
