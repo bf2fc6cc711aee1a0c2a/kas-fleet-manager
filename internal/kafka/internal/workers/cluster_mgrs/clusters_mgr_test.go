@@ -59,8 +59,6 @@ var (
 		ClusterType: api.EnterpriseDataPlaneClusterType.String(),
 	}
 	observabilityConfig = &observatorium.ObservabilityConfiguration{
-		RedHatSsoAuthServerUrl:     "http://dummy",
-		RedHatSsoRealm:             "dummy",
 		RedHatSsoTenant:            "dummy",
 		RedHatSsoTokenRefresherUrl: "http://dummy",
 		AuthType:                   "redhat",
@@ -2211,8 +2209,6 @@ func buildObservabilityConfig() observatorium.ObservabilityConfiguration {
 		ObservabilityConfigRepo:    "obs-config-repo",
 		ObservabilityConfigChannel: "obs-config-channel",
 		ObservabilityConfigTag:     "obs-config-tag",
-		RedHatSsoAuthServerUrl:     "red-hat-sso-auth-server-url",
-		RedHatSsoRealm:             "red-hat-sso-realm",
 		AuthType:                   "redhat",
 		DataPlaneObservabilityConfig: observatorium.DataPlaneObservabilityConfig{
 			Enabled: true,

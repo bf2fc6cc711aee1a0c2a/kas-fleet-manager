@@ -165,8 +165,6 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `DENIED_USERS`: A list of denied users that are not allowed to access the service. A user is identified by its username. Defaults to `[]`.
 - `ACCEPTED_ORGANISATIONS`: A list of accepted organisations that are allowed to access the service. An organisation is identified by its orgId. Defaults to `[]`.
 - `OBSERVATORIUM_RHSSO_TENANT`: Tenant of an Observatorium using RHSSO as authentication. Defaults to `''`.
-- `OBSERVATORIUM_RHSSO_AUTH_SERVER_URL`: RHSSO auth server URL used for Observatorium authentication. Defaults to `''`.
-- `OBSERVATORIUM_RHSSO_REALM`: Realm of RHSSO used for Observatorium authentication. Defaults to `''`.
 - `OBSERVABILITY_CONFIG_REPO`: URL of the configuration repository used by the Observability stack. Defaults to `quay.io/rhoas/observability-resources-mk`.
 - `DATAPLANE_OBSERVABILITY_CONFIG_ENABLE`: Enable sending metrics to the remote write receiver which is configured in the file referenced from `--dataplane-observability-config-file-path`.
 - `ENABLE_TERMS_ACCEPTANCE`: Enables terms acceptance through AMS. Defaults to `false`.

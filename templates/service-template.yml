@@ -231,19 +231,9 @@ parameters:
   description: This is the amount of time before a leader lease expires.
   value: "1m"
 
-- name: OBSERVATORIUM_RHSSO_REALM
-  displayName: Observatorium Red Hat SSO realm
-  description: Observatorium Red Hat SSO realm for observability stack.
-  value: ""
-
 - name: OBSERVATORIUM_RHSSO_TENANT
   displayName: Observatorium Red Hat SSO tenant
   description: Observatorium Red Hat SSO tenant for observability stack.
-  value: ""
-
-- name: OBSERVATORIUM_RHSSO_AUTH_SERVER_URL
-  displayName: Observatorium Red Hat SSO auth server URL
-  description: Observatorium Red Hat SSO auth server URL for observability stack.
   value: ""
 
 - name: OBSERVATORIUM_TOKEN_REFRESHER_URL
@@ -1058,8 +1048,6 @@ objects:
             - --observatorium-ignore-ssl=${OBSERVATORIUM_INSECURE}
             - --observatorium-timeout=${OBSERVATORIUM_TIMEOUT}
             - --observatorium-auth-type=${OBSERVATORIUM_AUTH_TYPE}
-            - --observability-red-hat-sso-auth-server-url=${OBSERVATORIUM_RHSSO_AUTH_SERVER_URL}
-            - --observability-red-hat-sso-realm=${OBSERVATORIUM_RHSSO_REALM}
             - --observability-red-hat-sso-token-refresher-url=${OBSERVATORIUM_TOKEN_REFRESHER_URL}
             - --observability-red-hat-sso-tenant=${OBSERVATORIUM_RHSSO_TENANT}
             - --dataplane-observability-config-enable=${DATAPLANE_OBSERVABILITY_CONFIG_ENABLE}

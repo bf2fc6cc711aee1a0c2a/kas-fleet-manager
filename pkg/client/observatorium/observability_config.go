@@ -22,9 +22,13 @@ const (
 
 type ObservabilityConfiguration struct {
 	// Red Hat SSO configuration
-	RedHatSsoAuthServerUrl     string `json:"redhat_sso_auth_server_url" yaml:"redhat_sso_auth_server_url"`
-	RedHatSsoRealm             string `json:"redhat_sso_realm" yaml:"redhat_sso_realm"`
-	RedHatSsoTenant            string `json:"redhat_sso_tenant" yaml:"redhat_sso_tenant"`
+	//// RedHatSsoTenant is used to specify the Observatorium tenant for
+	//// the Data Plane Remote Write configuration. It is not used for
+	//// the control plane connection against Observatorium
+	RedHatSsoTenant string `json:"redhat_sso_tenant" yaml:"redhat_sso_tenant"`
+	//// RedHatSsoTokenRefresherUrl is the Token Refresher URL that will be used
+	//// to connect indirectly to Observatorium from the Control Plane. It is not
+	//// used for the  data plane connection against observatorium
 	RedHatSsoTokenRefresherUrl string `json:"redhat_sso_token_refresher_url" yaml:"redhat_sso_token_refresher_url"`
 
 	// Observatorium configuration
@@ -237,17 +241,13 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 		ObservabilityConfigChannel: "resources", // Pointing to resources as the individual directories for prod and staging are no longer needed
 		ObservabilityConfigTag:     "latest",
 		RedHatSsoTenant:            "",
-		RedHatSsoAuthServerUrl:     "",
-		RedHatSsoRealm:             "",
 		RedHatSsoTokenRefresherUrl: "",
 	}
 }
 
 func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.RedHatSsoTenant, "observability-red-hat-sso-tenant", c.RedHatSsoTenant, "Red Hat SSO tenant")
-	fs.StringVar(&c.RedHatSsoAuthServerUrl, "observability-red-hat-sso-auth-server-url", c.RedHatSsoAuthServerUrl, "Red Hat SSO auth server URL")
 	fs.StringVar(&c.RedHatSsoTokenRefresherUrl, "observability-red-hat-sso-token-refresher-url", c.RedHatSsoTokenRefresherUrl, "Red Hat SSO token refresher URL")
-	fs.StringVar(&c.RedHatSsoRealm, "observability-red-hat-sso-realm", c.RedHatSsoRealm, "Red Hat SSO realm")
 
 	fs.StringVar(&c.AuthType, "observatorium-auth-type", c.AuthType, "Observatorium Authentication Type. Accepted values: ['redhat']. Default: 'redhat'")
 	fs.DurationVar(&c.Timeout, "observatorium-timeout", c.Timeout, "Timeout for Observatorium client")
