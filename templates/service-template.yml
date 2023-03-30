@@ -241,11 +241,6 @@ parameters:
   description: Observatorium Red Hat SSO token refresher URL for observability stack.
   value: ""
 
-- name: OBSERVATORIUM_AUTH_TYPE
-  displayName: Observatorium auth type
-  description: Observatorium auth type for observability stack, this value on start decides which auth type to use.
-  value: "redhat"
-
 - name: DATAPLANE_OBSERVABILITY_CONFIG_ENABLE
   displayName: Enable dataplane observability
   description: Enable sending metrics to the remote write receiver which is configured in the file referenced from --dataplane-observability-config-file-path.
@@ -1042,7 +1037,6 @@ objects:
             - --gcp-api-credentials-file=/secrets/service/gcp.api-credentials
             - --observatorium-ignore-ssl=${OBSERVATORIUM_INSECURE}
             - --observatorium-timeout=${OBSERVATORIUM_TIMEOUT}
-            - --observatorium-auth-type=${OBSERVATORIUM_AUTH_TYPE}
             - --observability-red-hat-sso-token-refresher-url=${OBSERVATORIUM_TOKEN_REFRESHER_URL}
             - --observability-red-hat-sso-tenant=${OBSERVATORIUM_RHSSO_TENANT}
             - --dataplane-observability-config-enable=${DATAPLANE_OBSERVABILITY_CONFIG_ENABLE}

@@ -9,5 +9,4 @@ type Configuration struct {
 	AuthToken string
 	Timeout   time.Duration
 	Insecure  bool
-	AuthType  string
 }

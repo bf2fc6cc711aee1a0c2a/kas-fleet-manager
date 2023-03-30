@@ -43,6 +43,7 @@ const (
 	observabilityCatalogSourceName  = "observability-operator-manifests"
 	observabilitySubscriptionName   = "observability-operator"
 	observatoriumSSOSecretName      = "observatorium-configuration-red-hat-sso"
+	observatoriumSSOSecretAuthType  = "redhat"
 	syncsetName                     = "ext-managedservice-cluster-mgr"
 	strimziAddonNamespace           = constants.StrimziOperatorNamespace
 	strimziQEAddonNamespace         = "redhat-managed-kafka-operator-qe"
@@ -912,7 +913,7 @@ func (c *ClusterManager) buildObservabilityRemoteWriteServiceAccountCredential(c
 func (c *ClusterManager) buildObservatoriumSSOSecretResource() *k8sCoreV1.Secret {
 	observabilityConfig := c.ObservabilityConfiguration
 	stringDataMap := map[string]string{
-		"authType":               observatorium.AuthTypeSso,
+		"authType":               observatoriumSSOSecretAuthType,
 		"tenant":                 observabilityConfig.RedHatSsoTenant,
 		"gateway":                "",
 		"redHatSsoAuthServerUrl": "",

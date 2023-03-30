@@ -24,7 +24,6 @@ type ClientConfiguration struct {
 	AuthToken  string
 	EnableMock bool
 	Insecure   bool
-	AuthType   string
 }
 
 type Client struct {
@@ -39,11 +38,7 @@ func NewObservatoriumClient(c *ObservabilityConfiguration) (client *Client, err 
 	observatoriumConfig := &Configuration{
 		Timeout:  c.Timeout,
 		Insecure: c.Insecure,
-		AuthType: c.AuthType,
-	}
-
-	if c.AuthType == AuthTypeSso {
-		observatoriumConfig.BaseURL = c.RedHatSsoTokenRefresherUrl
+		BaseURL:  c.RedHatSsoTokenRefresherUrl,
 	}
 
 	if c.EnableMock {
@@ -65,7 +60,6 @@ func NewClient(config *Configuration) (*Client, error) {
 			AuthToken:  config.AuthToken,
 			EnableMock: false,
 			Insecure:   config.Insecure,
-			AuthType:   config.AuthType,
 		},
 	}
 

@@ -15,7 +15,6 @@ var (
 	configuration              = Configuration{
 		Timeout:  observabilityConfiguration.Timeout,
 		Insecure: observabilityConfiguration.Insecure,
-		AuthType: "test",
 		BaseURL:  "",
 	}
 	invalidUrl = ":::"
@@ -40,12 +39,9 @@ func Test_NewObservatoriumClient(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should not return an error when providing default ObservabilityConfiguration with AuthType = AuthTypeSso",
+			name: "should not return an error when providing default ObservabilityConfiguration",
 			args: args{
 				c: NewObservabilityConfigurationConfig(),
-			},
-			modifyFn: func(config *ObservabilityConfiguration) {
-				config.AuthType = AuthTypeSso
 			},
 			wantErr: false,
 		},
@@ -60,12 +56,11 @@ func Test_NewObservatoriumClient(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should return an error when providing default ObservabilityConfiguration with AuthType = AuthTypeSso and invalid url format",
+			name: "should return an error when providing default ObservabilityConfiguration with and an invalid token refresher url format",
 			args: args{
 				c: NewObservabilityConfigurationConfig(),
 			},
 			modifyFn: func(config *ObservabilityConfiguration) {
-				config.AuthType = AuthTypeSso
 				config.RedHatSsoTokenRefresherUrl = invalidUrl
 			},
 			wantErr: true,
@@ -135,7 +130,6 @@ func Test_RoundTrip(t *testing.T) {
 		AuthToken:  configuration.AuthToken,
 		EnableMock: false,
 		Insecure:   configuration.Insecure,
-		AuthType:   configuration.AuthType,
 	}
 	type fields struct {
 		p observatoriumRoundTripper

@@ -61,7 +61,6 @@ var (
 	observabilityConfig = &observatorium.ObservabilityConfiguration{
 		RedHatSsoTenant:            "dummy",
 		RedHatSsoTokenRefresherUrl: "http://dummy",
-		AuthType:                   "redhat",
 		ObservabilityConfigTag:     "main",
 		ObservabilityConfigRepo:    "dummy",
 		ObservabilityConfigChannel: "resources",
@@ -2209,7 +2208,6 @@ func buildObservabilityConfig() observatorium.ObservabilityConfiguration {
 		ObservabilityConfigRepo:    "obs-config-repo",
 		ObservabilityConfigChannel: "obs-config-channel",
 		ObservabilityConfigTag:     "obs-config-tag",
-		AuthType:                   "redhat",
 		DataPlaneObservabilityConfig: observatorium.DataPlaneObservabilityConfig{
 			Enabled: true,
 			RemoteWriteConfiguration: observatorium.DataPlaneObservabilityRemoteWriteConfiguration{
@@ -2347,7 +2345,7 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 			},
 			Type: k8sCoreV1.SecretTypeOpaque,
 			StringData: map[string]string{
-				"authType":               observatorium.AuthTypeSso,
+				"authType":               observatoriumSSOSecretAuthType,
 				"gateway":                observabilityConfig.DataPlaneObservabilityConfig.RemoteWriteConfiguration.RemoteWriteURL,
 				"tenant":                 observabilityConfig.RedHatSsoTenant,
 				"redHatSsoAuthServerUrl": "",
