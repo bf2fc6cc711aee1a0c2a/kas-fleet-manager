@@ -1440,7 +1440,9 @@ func (k *kafkaService) ManagedKafkasRoutesTLSCertificate(kafkaRequest *dbapi.Kaf
 	}
 
 	// Sets the KafkaRequest.KafkasRoutesBaseDomainName if the field is not set.
+	shouldUpdateCertInfoInTheDatabase := false
 	if !kafkaRequest.HasCertificateInfo() {
+		shouldUpdateCertInfoInTheDatabase = true
 		kafkaRequest.KafkasRoutesBaseDomainName = k.getKafkaRoutesBaseDomainName(kafkaRequest)
 	}
 
@@ -1448,6 +1450,16 @@ func (k *kafkaService) ManagedKafkasRoutesTLSCertificate(kafkaRequest *dbapi.Kaf
 	certManagementOutput, err := k.kafkaTLSCertificateManagementService.ManageCertificate(context.Background(), kafkaRequest.KafkasRoutesBaseDomainName)
 	if err != nil {
 		return err
+	}
+
+	// check whether database update is needed
+	shouldUpdateCertInfoInTheDatabase = shouldUpdateCertInfoInTheDatabase ||
+		kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef != certManagementOutput.TLSKeyRef ||
+		kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef != certManagementOutput.TLSCertRef
+
+	if !shouldUpdateCertInfoInTheDatabase {
+		logger.Logger.Infof("asynchronous management of tls certificate for the domain %q of kafka with id %q has been started successful. No database update was performed since certificate references have not changed", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
+		return nil
 	}
 
 	kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef = certManagementOutput.TLSKeyRef

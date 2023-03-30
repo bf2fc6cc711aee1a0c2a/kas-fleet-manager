@@ -4801,7 +4801,7 @@ func Test_kafkaService_ManagedKafkasRoutesTLSCertificate(t *testing.T) {
 				},
 			},
 			setupFn: func() {
-				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+				mocket.Catcher.NewMock().WithExecException() // an update shouldn't be performed in the database.
 			},
 			wantErr: false,
 		},
@@ -4824,7 +4824,7 @@ func Test_kafkaService_ManagedKafkasRoutesTLSCertificate(t *testing.T) {
 				},
 			},
 			setupFn: func() {
-				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+				mocket.Catcher.NewMock().WithExecException() // an update shouldn't be performed in the database.
 			},
 			wantErr: false,
 		},
@@ -4847,7 +4847,7 @@ func Test_kafkaService_ManagedKafkasRoutesTLSCertificate(t *testing.T) {
 				},
 			},
 			setupFn: func() {
-				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+				mocket.Catcher.NewMock().WithExecException() // an update shouldn't be performed in the database.
 			},
 			wantErr: false,
 		},
@@ -4905,7 +4905,7 @@ func Test_kafkaService_ManagedKafkasRoutesTLSCertificate(t *testing.T) {
 					Meta: api.Meta{
 						ID: "some-id",
 					},
-					Status: "ready", // a Kafka with ready status is already prepated
+					Status: "ready", // a Kafka with ready status is already prepared
 				},
 			},
 			setupFn: func() {
@@ -4938,7 +4938,7 @@ func Test_kafkaService_ManagedKafkasRoutesTLSCertificate(t *testing.T) {
 					},
 					KafkasRoutesBaseDomainName: "",
 					InstanceType:               types.STANDARD.String(),
-					Status:                     "preparing", // a Kafka with preparing status is not already prepated
+					Status:                     "preparing", // a Kafka with preparing status is not already prepared i.e it may not have certificate information populated in the database so it is safe to treat it as a new kafka
 				},
 			},
 			setupFn: func() {
@@ -4971,7 +4971,7 @@ func Test_kafkaService_ManagedKafkasRoutesTLSCertificate(t *testing.T) {
 					},
 					KafkasRoutesBaseDomainName: "",
 					InstanceType:               types.DEVELOPER.String(),
-					Status:                     "preparing", // a Kafka with preparing status is not already prepated
+					Status:                     "preparing", // a Kafka with preparing status is not already prepared i.e it may not have certificate information populated in the database so it is safe to treat it as a new kafka
 				},
 			},
 			setupFn: func() {
@@ -5002,14 +5002,81 @@ func Test_kafkaService_ManagedKafkasRoutesTLSCertificate(t *testing.T) {
 						ID: "456",
 					},
 					KafkasRoutesBaseDomainName: "",
-					Status:                     "preparing", // a Kafka with preparing status is not already prepated
+					Status:                     "preparing", // a Kafka with preparing status is not already prepared i.e it may not have certificate information populated in the database so it is safe to treat it as a new kafka
 				},
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`).WithExecException() // should never be called
-				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+				mocket.Catcher.NewMock().WithExecException() // an update shouldn't be performed in the database.
 			},
 			wantErr: true,
+		},
+		{
+			name: "return an error when database update fails",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaDomainName: "some-kafka-domain.bf2.dev",
+				},
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafkatlscertmgmt.CertificateManagementOutput, error) {
+						return kafkatlscertmgmt.CertificateManagementOutput{
+							TLSCertRef: "some-cert-ref",
+							TLSKeyRef:  "some-key-ref",
+						}, nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						ID: "456",
+					},
+					KafkasRoutesBaseDomainName: "",
+					Status:                     "preparing", // a Kafka with preparing status is not already prepared i.e it may not have certificate information populated in the database so it is safe to treat it as a new kafka
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`).WithExecException()
+			},
+			wantErr: true,
+		},
+		{
+			name: "do not perform a database update if certificate references have not changed",
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaDomainName: "some-kafka-domain.bf2.dev",
+				},
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaTLSCertificateManagementService: &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{
+					IsAutomaticCertificateManagementEnabledFunc: func() bool {
+						return true
+					},
+					ManageCertificateFunc: func(ctx context.Context, domain string) (kafkatlscertmgmt.CertificateManagementOutput, error) {
+						return kafkatlscertmgmt.CertificateManagementOutput{
+							TLSCertRef: "some-cert-ref",
+							TLSKeyRef:  "some-key-ref",
+						}, nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						ID: "456",
+					},
+					KafkasRoutesBaseDomainName:      "some-kafka-domain.bf2.dev",
+					KafkasRoutesBaseDomainTLSKeyRef: "some-key-ref",
+					KafkasRoutesBaseDomainTLSCrtRef: "some-cert-ref",
+					Status:                          "ready",
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.NewMock().WithExecException() // an update shouldn't be performed in the database.
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
