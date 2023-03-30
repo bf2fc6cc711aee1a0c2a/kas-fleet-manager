@@ -12,7 +12,7 @@ import (
 
 var (
 	observabilityConfiguration = NewObservabilityConfigurationConfig()
-	configuration              = Configuration{
+	configuration              = ClientConfiguration{
 		Timeout:  observabilityConfiguration.Timeout,
 		Insecure: observabilityConfiguration.Insecure,
 		BaseURL:  "",
@@ -83,13 +83,13 @@ func Test_NewObservatoriumClient(t *testing.T) {
 
 func Test_NewClient(t *testing.T) {
 	type args struct {
-		c *Configuration
+		c *ClientConfiguration
 	}
 
 	tests := []struct {
 		name     string
 		args     args
-		modifyFn func(config *Configuration)
+		modifyFn func(config *ClientConfiguration)
 		wantErr  bool
 	}{
 		// only one test case required. the rest is covered in the Test_NewObservatoriumClient
@@ -98,7 +98,7 @@ func Test_NewClient(t *testing.T) {
 			args: args{
 				c: &configuration,
 			},
-			modifyFn: func(config *Configuration) {
+			modifyFn: func(config *ClientConfiguration) {
 				config.BaseURL = invalidUrl
 			},
 			wantErr: true,

@@ -17,7 +17,7 @@ func Test_GetKafkaState(t *testing.T) {
 		resourceNamespace string
 	}
 
-	obsClientMock, err := NewClientMock(&Configuration{})
+	obsClientMock, err := NewClientMock(&ClientConfiguration{})
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	tests := []struct {
@@ -67,7 +67,7 @@ func TestServiceObservatorium_GetMetrics(t *testing.T) {
 		rq        *MetricsReqParams
 	}
 
-	obsClientMock, err := NewClientMock(&Configuration{})
+	obsClientMock, err := NewClientMock(&ClientConfiguration{})
 	g.Expect(err).ToNot(gomega.HaveOccurred(), "failed to create a mock observatorium client")
 
 	tests := []struct {

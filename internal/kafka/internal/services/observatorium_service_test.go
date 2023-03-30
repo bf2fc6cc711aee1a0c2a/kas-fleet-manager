@@ -122,7 +122,7 @@ func Test_observatoriumService_GetMetricsByKafkaId(t *testing.T) {
 		query         observatorium.MetricsReqParams
 	}
 
-	client, _ := observatorium.NewClientMock(&observatorium.Configuration{})
+	client, _ := observatorium.NewClientMock(&observatorium.ClientConfiguration{})
 	q := observatorium.MetricsReqParams{}
 	q.ResultType = observatorium.RangeQuery
 	q.FillDefaults()

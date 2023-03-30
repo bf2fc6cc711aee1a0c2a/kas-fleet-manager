@@ -35,7 +35,7 @@ type Client struct {
 
 func NewObservatoriumClient(c *ObservabilityConfiguration) (client *Client, err error) {
 	// Create Observatorium client
-	observatoriumConfig := &Configuration{
+	observatoriumConfig := &ClientConfiguration{
 		Timeout:  c.Timeout,
 		Insecure: c.Insecure,
 		BaseURL:  c.RedHatSsoTokenRefresherUrl,
@@ -53,7 +53,7 @@ func NewObservatoriumClient(c *ObservabilityConfiguration) (client *Client, err 
 	return
 }
 
-func NewClient(config *Configuration) (*Client, error) {
+func NewClient(config *ClientConfiguration) (*Client, error) {
 	client := &Client{
 		Config: &ClientConfiguration{
 			Timeout:    config.Timeout,
@@ -86,7 +86,7 @@ func NewClient(config *Configuration) (*Client, error) {
 	return client, nil
 }
 
-func NewClientMock(config *Configuration) (*Client, error) {
+func NewClientMock(config *ClientConfiguration) (*Client, error) {
 	client := &Client{
 		Config: &ClientConfiguration{
 			Timeout:    config.Timeout,
