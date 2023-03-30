@@ -159,7 +159,6 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `MAX_LIMIT_FOR_SSO_GET_CLIENTS`: The default value of maximum number of clients fetch from mas-sso. Defaults to `100`.
 - `OSD_IDP_MAS_SSO_REALM`: MAS SSO realm for configuring OpenShift Cluster Identity Provider Clients. Defaults to `rhoas-kafka-sre`.
 - `TOKEN_ISSUER_URL`: A token issuer url used to validate if JWT token used are coming from the given issuer. Defaults to `https://sso.redhat.com/auth/realms/redhat-external`.
-- `OBSERVATORIUM_AUTH_TYPE`: Authentication type for the Observability stack. Options: `redhat`, Default: `redhat`.
 - `ENABLE_DENY_LIST`: Enable the deny list access control feature. Defaults to `false`.
 - `ENABLE_ACCESS_LIST`: Enable the Access list access control feature. Defaults to `false`.
 - `DENIED_USERS`: A list of denied users that are not allowed to access the service. A user is identified by its username. Defaults to `[]`.

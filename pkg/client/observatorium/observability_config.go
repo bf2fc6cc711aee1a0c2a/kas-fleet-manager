@@ -12,10 +12,6 @@ import (
 )
 
 const (
-	AuthTypeSso = "redhat"
-)
-
-const (
 	defaultObservabilityCloudwatchCredentialsSecretName      = "clo-cloudwatchlogs-creds"
 	defaultObservabilityCloudwatchCredentialsSecretNamespace = "openshift-logging"
 )
@@ -32,7 +28,6 @@ type ObservabilityConfiguration struct {
 	RedHatSsoTokenRefresherUrl string `json:"redhat_sso_token_refresher_url" yaml:"redhat_sso_token_refresher_url"`
 
 	// Observatorium configuration
-	AuthType   string        `json:"auth_type" yaml:"auth_type"`
 	Timeout    time.Duration `json:"timeout"`
 	Insecure   bool          `json:"insecure"`
 	EnableMock bool          `json:"enable_mock"`
@@ -231,7 +226,6 @@ type ObservabilityEnterpriseCloudwatchLoggingConfigCredentials struct {
 
 func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 	return &ObservabilityConfiguration{
-		AuthType:                   "redhat",
 		Timeout:                    240 * time.Second,
 		EnableMock:                 false,
 		Insecure:                   true, // TODO: false
@@ -247,7 +241,6 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.RedHatSsoTenant, "observability-red-hat-sso-tenant", c.RedHatSsoTenant, "Red Hat SSO tenant")
 	fs.StringVar(&c.RedHatSsoTokenRefresherUrl, "observability-red-hat-sso-token-refresher-url", c.RedHatSsoTokenRefresherUrl, "Red Hat SSO token refresher URL")
 
-	fs.StringVar(&c.AuthType, "observatorium-auth-type", c.AuthType, "Observatorium Authentication Type. Accepted values: ['redhat']. Default: 'redhat'")
 	fs.DurationVar(&c.Timeout, "observatorium-timeout", c.Timeout, "Timeout for Observatorium client")
 	fs.BoolVar(&c.Insecure, "observatorium-ignore-ssl", c.Insecure, "ignore SSL Observatorium certificate")
 	fs.BoolVar(&c.EnableMock, "enable-observatorium-mock", c.EnableMock, "Enable mock Observatorium client")
