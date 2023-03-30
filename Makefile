@@ -732,7 +732,6 @@ deploy/secrets:
 		-p OCM_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-service.clientId' ] && [ -z '${OCM_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-service.clientId || echo '${OCM_SERVICE_CLIENT_ID}')" \
 		-p OCM_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-service.clientSecret' ] && [ -z '${OCM_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-service.clientSecret || echo '${OCM_SERVICE_CLIENT_SECRET}')" \
 		-p OCM_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-service.token' ] && [ -z '${OCM_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-service.token || echo '${OCM_SERVICE_TOKEN}')" \
-		-p OBSERVATORIUM_SERVICE_TOKEN="$(shell ([ -s './secrets/observatorium.token' ] && [ -z '${OBSERVATORIUM_SERVICE_TOKEN}' ]) && cat ./secrets/observatorium.token || echo '${OBSERVATORIUM_SERVICE_TOKEN}')" \
 		-p SENTRY_KEY="$(shell ([ -s './secrets/sentry.key' ] && [ -z '${SENTRY_KEY}' ]) && cat ./secrets/sentry.key || echo '${SENTRY_KEY}')" \
 		-p AWS_ACCESS_KEY="$(shell ([ -s './secrets/aws.accesskey' ] && [ -z '${AWS_ACCESS_KEY}' ]) && cat ./secrets/aws.accesskey || echo '${AWS_ACCESS_KEY}')" \
 		-p AWS_ACCOUNT_ID="$(shell ([ -s './secrets/aws.accountid' ] && [ -z '${AWS_ACCOUNT_ID}' ]) && cat ./secrets/aws.accountid || echo '${AWS_ACCOUNT_ID}')" \
@@ -742,8 +741,6 @@ deploy/secrets:
 		-p AWS_SECRET_MANAGER_ACCESS_KEY="$(shell ([ -s './secrets/aws-secret-manager/aws_access_key_id' ] && [ -z '${AWS_SECRET_MANAGER_ACCESS_KEY}' ]) && cat ./secrets/aws-secret-manager/aws_access_key_id || echo '${AWS_SECRET_MANAGER_ACCESS_KEY}')" \
 		-p AWS_SECRET_MANAGER_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws-secret-manager/aws_secret_access_key' ] && [ -z '${AWS_SECRET_MANAGER_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws-secret-manager/aws_secret_access_key || echo '${AWS_SECRET_MANAGER_SECRET_ACCESS_KEY}')" \
 		-p GCP_API_CREDENTIALS="$(shell ([ -s './secrets/gcp.api-credentials' ] && [ -z '${GCP_API_CREDENTIALS}' ]) && cat ./secrets/gcp.api-credentials | base64 -w 0 ||  echo '${GCP_API_CREDENTIALS}')" \
-		-p DEX_SECRET="$(shell ([ -s './secrets/dex.secret' ] && [ -z '${DEX_SECRET}' ]) && cat ./secrets/dex.secret || echo '${DEX_SECRET}')" \
-		-p DEX_PASSWORD="$(shell ([ -s './secrets/dex.password' ] && [ -z '${DEX_PASSWORD}' ]) && cat ./secrets/dex.password || echo '${DEX_PASSWORD}')" \
 		-p MAS_SSO_CLIENT_ID="$(shell ([ -s './secrets/keycloak-service.clientId' ] && [ -z '${MAS_SSO_CLIENT_ID}' ]) && cat ./secrets/keycloak-service.clientId || echo '${MAS_SSO_CLIENT_ID}')" \
 		-p MAS_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/keycloak-service.clientSecret' ] && [ -z '${MAS_SSO_CLIENT_SECRET}' ]) && cat ./secrets/keycloak-service.clientSecret || echo '${MAS_SSO_CLIENT_SECRET}')" \
 		-p OSD_IDP_MAS_SSO_CLIENT_ID="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientId' ] && [ -z '${OSD_IDP_MAS_SSO_CLIENT_ID}' ]) && cat ./secrets/osd-idp-keycloak-service.clientId || echo '${OSD_IDP_MAS_SSO_CLIENT_ID}')" \
@@ -807,12 +804,7 @@ deploy/service: STRIMZI_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-kafka:pro
 deploy/service: KAS_FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
 deploy/service: OBSERVABILITY_OPERATOR_INDEX_IMAGE ?= "quay.io/rhoas/observability-operator-index:v4.2.0"
 deploy/service: OBSERVABILITY_OPERATOR_STARTING_CSV ?= "observability-operator.v4.2.0"
-deploy/service: DEX_USERNAME ?= "admin@example.com"
-deploy/service: DEX_URL ?= "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io"
-deploy/service: OBSERVATORIUM_GATEWAY ?= "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io"
-deploy/service: OBSERVATORIUM_TENANT ?= "test"
 deploy/service: OBSERVABILITY_CONFIG_REPO ?= "quay.io/rhoas/observability-resources-mk"
-deploy/service: OBSERVATORIUM_TENANT ?= "test"
 deploy/service: OBSERVABILITY_CONFIG_CHANNEL ?= "resources"
 deploy/service: OBSERVABILITY_CONFIG_TAG ?= "latest"
 deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
@@ -884,10 +876,6 @@ deploy/service: deploy/envoy deploy/route
 		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \
 		-p SERVICE_PUBLIC_HOST_URL="https://$(shell $(OC) get routes/kas-fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
 		-p OBSERVATORIUM_AUTH_TYPE="${OBSERVATORIUM_AUTH_TYPE}" \
-		-p DEX_USERNAME="${DEX_USERNAME}" \
-		-p DEX_URL="${DEX_URL}" \
-		-p OBSERVATORIUM_GATEWAY="${OBSERVATORIUM_GATEWAY}" \
-		-p OBSERVATORIUM_TENANT="${OBSERVATORIUM_TENANT}" \
 		-p OBSERVATORIUM_RHSSO_REALM="${OBSERVATORIUM_RHSSO_REALM}" \
 		-p OBSERVATORIUM_RHSSO_TENANT="${OBSERVATORIUM_RHSSO_TENANT}" \
 		-p OBSERVATORIUM_RHSSO_AUTH_SERVER_URL="${OBSERVATORIUM_RHSSO_AUTH_SERVER_URL}" \

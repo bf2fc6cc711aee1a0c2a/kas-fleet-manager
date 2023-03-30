@@ -93,9 +93,6 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `AWS_SECRET_ACCESS_KEY`: The secret access key of an AWS account used to provision OpenShift clusters. Defaults to value read from _./secrets/aws.secretaccesskey_
 - `ROUTE53_ACCESS_KEY`: The access key of an AWS account that has Route53 permissions. Defaults to value read from _./secrets/aws.route53accesskey_
 - `ROUTE53_SECRET_ACCESS_KEY`: The secret access key of an AWS account that has Route53 permissions. Defaults to value read from _./secrets/aws.route53secretaccesskey_
-- `OBSERVATORIUM_SERVICE_TOKEN`: Offline token used to interact with Observatorium. Defaults to value read from _./secrets/observatorium.token_
-- `DEX_SECRET`: Dex secret used to authenticate to an Observatorium instance using Dex as authentication. Defaults to value read from _./secrets/dex.secret_
-- `DEX_PASSWORD`: Dex password used to authenticate to an Observatorium instance using Dex as authentication. Defaults to value read from _./secrets/dex.secret_
 - `MAS_SSO_CLIENT_ID`: The client id for a MAS SSO service account. Defaults to value read from _./secrets/keycloak-service.clientId_
 - `MAS_SSO_CLIENT_SECRET`: The client secret for a MAS SSO service account. Defaults to value read from _./secrets/keycloak-service.clientSecret_
 - `MAS_SSO_CRT`: The TLS certificate of the MAS SSO instance. Defaults to value read from _./secrets/keycloak-service.crt_
@@ -116,6 +113,7 @@ make deploy/secrets <OPTIONAL_PARAMETERS>
 - `ACME_ISSUER_ACCOUNT_KEY`: The ACME Issuer account key used for the automatic management of certificate. This is required when certificate management mode is `automatic`. Defaults to `''`
 - `AWS_SECRET_MANAGER_SECRET_ACCESS_KEY`: AWS secret manager secret access key: Defaults to `''`. This is required when certificate management mode is `automatic`.
 - `AWS_SECRET_MANAGER_ACCESS_KEY`: AWS secret manager access key: Defaults to `''`. This is required when certificate management mode is `automatic`.
+
 ## (Optional) Deploy the Observatorium Token Refresher
 >**NOTE**: This is only needed if your Observatorium instance is using RHSSO as authentication.
 
@@ -161,15 +159,11 @@ make deploy/service IMAGE_TAG=<your-image-tag-here> <OPTIONAL_PARAMETERS>
 - `MAX_LIMIT_FOR_SSO_GET_CLIENTS`: The default value of maximum number of clients fetch from mas-sso. Defaults to `100`.
 - `OSD_IDP_MAS_SSO_REALM`: MAS SSO realm for configuring OpenShift Cluster Identity Provider Clients. Defaults to `rhoas-kafka-sre`.
 - `TOKEN_ISSUER_URL`: A token issuer url used to validate if JWT token used are coming from the given issuer. Defaults to `https://sso.redhat.com/auth/realms/redhat-external`.
-- `OBSERVATORIUM_AUTH_TYPE`: Authentication type for the Observability stack. Options: `dex` and `redhat`, Default: `dex`.
-- `DEX_USERNAME`: Username that will be used to authenticate with an Observatorium using Dex as authentication. Defaults to `admin@example.com`.
+- `OBSERVATORIUM_AUTH_TYPE`: Authentication type for the Observability stack. Options: `redhat`, Default: `redhat`.
 - `ENABLE_DENY_LIST`: Enable the deny list access control feature. Defaults to `false`.
 - `ENABLE_ACCESS_LIST`: Enable the Access list access control feature. Defaults to `false`.
 - `DENIED_USERS`: A list of denied users that are not allowed to access the service. A user is identified by its username. Defaults to `[]`.
 - `ACCEPTED_ORGANISATIONS`: A list of accepted organisations that are allowed to access the service. An organisation is identified by its orgId. Defaults to `[]`.
-- `DEX_URL`: Dex URL. Defaults to `http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io`.
-- `OBSERVATORIUM_GATEWAY`: URL of an Observatorium using Dex as authentication. Defaults to `https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io`.
-- `OBSERVATORIUM_TENANT`: Tenant of an Observatorium using Dex as authentication. Defaults to `test`.
 - `OBSERVATORIUM_RHSSO_TENANT`: Tenant of an Observatorium using RHSSO as authentication. Defaults to `''`.
 - `OBSERVATORIUM_RHSSO_AUTH_SERVER_URL`: RHSSO auth server URL used for Observatorium authentication. Defaults to `''`.
 - `OBSERVATORIUM_RHSSO_REALM`: Realm of RHSSO used for Observatorium authentication. Defaults to `''`.

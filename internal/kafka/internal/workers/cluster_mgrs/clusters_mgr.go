@@ -42,7 +42,6 @@ const (
 	observabilityOperatorGroupName  = "observability-operator-group-name"
 	observabilityCatalogSourceName  = "observability-operator-manifests"
 	observabilitySubscriptionName   = "observability-operator"
-	observatoriumDexSecretName      = "observatorium-configuration-dex"
 	observatoriumSSOSecretName      = "observatorium-configuration-red-hat-sso"
 	syncsetName                     = "ext-managedservice-cluster-mgr"
 	strimziAddonNamespace           = constants.StrimziOperatorNamespace
@@ -772,7 +771,6 @@ func (c *ClusterManager) buildResourceSet(cluster api.Cluster) types.ResourceSet
 	}
 
 	r = append(r,
-		c.buildObservatoriumDexSecretResource(),
 		c.buildObservatoriumSSOSecretResource(),
 		c.buildObservabilityCatalogSourceResource(),
 		c.buildObservabilityOperatorGroupResource(),
@@ -891,31 +889,6 @@ func (c *ClusterManager) buildObservabilityEnterpriseCloudwatchLoggingCredential
 	}
 	cloudwatchCredentialSecret.StringData = stringData
 	return cloudwatchCredentialSecret
-}
-
-func (c *ClusterManager) buildObservatoriumDexSecretResource() *k8sCoreV1.Secret {
-	observabilityConfig := c.ObservabilityConfiguration
-	stringDataMap := map[string]string{
-		"authType":    observatorium.AuthTypeDex,
-		"gateway":     observabilityConfig.ObservatoriumGateway,
-		"tenant":      observabilityConfig.ObservatoriumTenant,
-		"dexUrl":      observabilityConfig.DexUrl,
-		"dexPassword": observabilityConfig.DexPassword,
-		"dexSecret":   observabilityConfig.DexSecret,
-		"dexUsername": observabilityConfig.DexUsername,
-	}
-	return &k8sCoreV1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
-			Kind:       "Secret",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      observatoriumDexSecretName,
-			Namespace: observabilityNamespace,
-		},
-		Type:       k8sCoreV1.SecretTypeOpaque,
-		StringData: stringDataMap,
-	}
 }
 
 func (c *ClusterManager) buildObservabilityRemoteWriteServiceAccountCredential(cluster *api.Cluster) *k8sCoreV1.Secret {

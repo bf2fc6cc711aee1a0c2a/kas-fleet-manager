@@ -59,21 +59,11 @@ var (
 		ClusterType: api.EnterpriseDataPlaneClusterType.String(),
 	}
 	observabilityConfig = &observatorium.ObservabilityConfiguration{
-		DexUrl:                     "http://dummy",
-		DexUsername:                "dummy",
-		DexPassword:                "dummy",
-		DexSecret:                  "dummy",
-		DexSecretFile:              "dummy",
-		DexPasswordFile:            "dummy",
 		RedHatSsoAuthServerUrl:     "http://dummy",
 		RedHatSsoRealm:             "dummy",
 		RedHatSsoTenant:            "dummy",
 		RedHatSsoTokenRefresherUrl: "http://dummy",
-		ObservatoriumGateway:       "http://dummy",
-		ObservatoriumTenant:        "dummy",
 		AuthType:                   "redhat",
-		AuthToken:                  "dummy",
-		AuthTokenFile:              "dummy",
 		ObservabilityConfigTag:     "main",
 		ObservabilityConfigRepo:    "dummy",
 		ObservabilityConfigChannel: "resources",
@@ -787,9 +777,9 @@ func TestClusterManager_processProvisionedClusters(t *testing.T) {
 						return nil
 					},
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
-						// the resource set must contain 10 items: the observability resources plus two image pull secrets
-						if len(resources.Resources) != 10 {
-							return apiErrors.GeneralError(fmt.Sprintf("expected 10 items in the resource set but got %v", len(resources.Resources)))
+						// the resource set must contain 9 items: the observability resources plus two image pull secrets
+						if len(resources.Resources) != 9 {
+							return apiErrors.GeneralError(fmt.Sprintf("expected 9 items in the resource set but got %v", len(resources.Resources)))
 						}
 						return nil
 					},
@@ -2218,18 +2208,12 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 // buildObservabilityConfig builds a observability coreConfig used for testing
 func buildObservabilityConfig() observatorium.ObservabilityConfiguration {
 	observabilityConfig := observatorium.ObservabilityConfiguration{
-		DexUrl:                     "dex-url",
-		DexPassword:                "dex-password",
-		DexUsername:                "dex-username",
-		DexSecret:                  "dex-secret",
-		ObservatoriumTenant:        "tenant",
-		ObservatoriumGateway:       "gateway",
 		ObservabilityConfigRepo:    "obs-config-repo",
 		ObservabilityConfigChannel: "obs-config-channel",
 		ObservabilityConfigTag:     "obs-config-tag",
 		RedHatSsoAuthServerUrl:     "red-hat-sso-auth-server-url",
 		RedHatSsoRealm:             "red-hat-sso-realm",
-		AuthType:                   "dex",
+		AuthType:                   "redhat",
 		DataPlaneObservabilityConfig: observatorium.DataPlaneObservabilityConfig{
 			Enabled: true,
 			RemoteWriteConfiguration: observatorium.DataPlaneObservabilityRemoteWriteConfiguration{
@@ -2356,26 +2340,6 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 	}
 
 	resources = append(resources,
-		&k8sCoreV1.Secret{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
-				Kind:       "Secret",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      observatoriumDexSecretName,
-				Namespace: observabilityNamespace,
-			},
-			Type: k8sCoreV1.SecretTypeOpaque,
-			StringData: map[string]string{
-				"authType":    observatorium.AuthTypeDex,
-				"dexPassword": observabilityConfig.DexPassword,
-				"dexSecret":   observabilityConfig.DexSecret,
-				"dexUsername": observabilityConfig.DexUsername,
-				"gateway":     observabilityConfig.ObservatoriumGateway,
-				"dexUrl":      observabilityConfig.DexUrl,
-				"tenant":      observabilityConfig.ObservatoriumTenant,
-			},
-		},
 		&k8sCoreV1.Secret{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),

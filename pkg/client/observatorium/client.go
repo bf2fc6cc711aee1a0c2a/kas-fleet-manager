@@ -22,7 +22,6 @@ type ClientConfiguration struct {
 	BaseURL    string
 	Timeout    time.Duration
 	AuthToken  string
-	Cookie     string
 	Debug      bool
 	EnableMock bool
 	Insecure   bool
@@ -39,7 +38,6 @@ type Client struct {
 func NewObservatoriumClient(c *ObservabilityConfiguration) (client *Client, err error) {
 	// Create Observatorium client
 	observatoriumConfig := &Configuration{
-		Cookie:   c.Cookie,
 		Timeout:  c.Timeout,
 		Debug:    c.Debug,
 		Insecure: c.Insecure,
@@ -48,9 +46,6 @@ func NewObservatoriumClient(c *ObservabilityConfiguration) (client *Client, err 
 
 	if c.AuthType == AuthTypeSso {
 		observatoriumConfig.BaseURL = c.RedHatSsoTokenRefresherUrl
-	} else {
-		observatoriumConfig.BaseURL = c.ObservatoriumGateway + "/api/metrics/v1/" + c.ObservatoriumTenant
-		observatoriumConfig.AuthToken = c.AuthToken
 	}
 
 	if c.EnableMock {
@@ -70,7 +65,6 @@ func NewClient(config *Configuration) (*Client, error) {
 		Config: &ClientConfiguration{
 			Timeout:    config.Timeout,
 			AuthToken:  config.AuthToken,
-			Cookie:     config.Cookie,
 			Debug:      config.Debug,
 			EnableMock: false,
 			Insecure:   config.Insecure,
@@ -128,17 +122,6 @@ func (p observatoriumRoundTripper) RoundTrip(request *http.Request) (*http.Respo
 	path := strings.TrimPrefix(request.URL.String(), p.config.BaseURL)
 	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
-	}
-
-	if p.config.AuthType == AuthTypeDex {
-		if p.config.AuthToken != "" {
-			request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", p.config.AuthToken))
-		} else if p.config.Cookie != "" {
-			request.Header.Add("Cookie", p.config.Cookie)
-		} else {
-			metrics.IncreaseObservatoriumRequestCount(statusCode, path, request.Method)
-			return nil, errors.Errorf("can't request metrics without auth")
-		}
 	}
 
 	start := time.Now()

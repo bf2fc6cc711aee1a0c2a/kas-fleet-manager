@@ -13,7 +13,6 @@ import (
 var (
 	observabilityConfiguration = NewObservabilityConfigurationConfig()
 	configuration              = Configuration{
-		Cookie:   observabilityConfiguration.Cookie,
 		Timeout:  observabilityConfiguration.Timeout,
 		Debug:    observabilityConfiguration.Debug,
 		Insecure: observabilityConfiguration.Insecure,
@@ -136,7 +135,6 @@ func Test_RoundTrip(t *testing.T) {
 	config := ClientConfiguration{
 		Timeout:    configuration.Timeout,
 		AuthToken:  configuration.AuthToken,
-		Cookie:     configuration.Cookie,
 		Debug:      configuration.Debug,
 		EnableMock: false,
 		Insecure:   configuration.Insecure,
@@ -170,65 +168,6 @@ func Test_RoundTrip(t *testing.T) {
 				request: req,
 			},
 			wantErr: false,
-		},
-		{
-			name: "should return no error with roundTripper's AuthType set to AuthTypeDex and sample valid request and non-empty AuthToken",
-			fields: fields{
-				p: observatoriumRoundTripper{
-					config: config,
-					wrapped: observatoriumRoundTripper{
-						config:  config,
-						wrapped: pAPI.DefaultRoundTripper,
-					},
-				},
-			},
-			args: args{
-				request: req,
-			},
-			modifyFn: func(config *observatoriumRoundTripper) {
-				config.config.AuthType = AuthTypeDex
-				config.config.AuthToken = testValue
-			},
-			wantErr: false,
-		},
-		{
-			name: "should return no error with roundTripper's AuthType set to AuthTypeDex and sample valid request and non-empty Cookie",
-			fields: fields{
-				p: observatoriumRoundTripper{
-					config: config,
-					wrapped: observatoriumRoundTripper{
-						config:  config,
-						wrapped: pAPI.DefaultRoundTripper,
-					},
-				},
-			},
-			args: args{
-				request: req,
-			},
-			modifyFn: func(config *observatoriumRoundTripper) {
-				config.config.AuthType = AuthTypeDex
-				config.config.Cookie = testValue
-			},
-			wantErr: false,
-		},
-		{
-			name: "should return an error with roundTripper's AuthType set to AuthTypeDex empty auth fields",
-			fields: fields{
-				p: observatoriumRoundTripper{
-					config: config,
-					wrapped: observatoriumRoundTripper{
-						config:  config,
-						wrapped: pAPI.DefaultRoundTripper,
-					},
-				},
-			},
-			args: args{
-				request: req,
-			},
-			modifyFn: func(config *observatoriumRoundTripper) {
-				config.config.AuthType = AuthTypeDex
-			},
-			wantErr: true,
 		},
 	}
 
