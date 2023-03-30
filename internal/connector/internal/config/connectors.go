@@ -60,10 +60,10 @@ func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringArrayVar(&c.ConnectorCatalogDirs, "connector-catalog", c.ConnectorCatalogDirs, "Directory containing connector catalog entries")
 	fs.StringArrayVar(&c.ConnectorMetadataDirs, "connector-metadata", c.ConnectorMetadataDirs, "Directory containing connector metadata configuration files")
 	fs.DurationVar(&c.ConnectorEvalDuration, "connector-eval-duration", c.ConnectorEvalDuration, "Connector eval duration in golang duration format")
-	fs.StringArrayVar(&c.ConnectorEvalOrganizations, "connector-eval-organizations", c.ConnectorEvalOrganizations, "Connector eval organization IDs")
+	fs.StringSliceVar(&c.ConnectorEvalOrganizations, "connector-eval-organizations", c.ConnectorEvalOrganizations, "Connector eval organization IDs")
 	fs.BoolVar(&c.ConnectorNamespaceLifecycleAPI, "connector-namespace-lifecycle-api", c.ConnectorNamespaceLifecycleAPI, "Enable APIs to create, update, delete non-eval Namespaces")
 	fs.BoolVar(&c.ConnectorEnableUnassignedConnectors, "connector-enable-unassigned-connectors", c.ConnectorEnableUnassignedConnectors, "Enable support for 'unassigned' state for Connectors")
-	fs.StringArrayVar(&c.ConnectorsSupportedChannels, "connectors-supported-channels", c.ConnectorsSupportedChannels, "Connector channels that are visible")
+	fs.StringSliceVar(&c.ConnectorsSupportedChannels, "connectors-supported-channels", c.ConnectorsSupportedChannels, "Connector channels that are visible")
 }
 
 func (c *ConnectorsConfig) ReadFiles() error {
