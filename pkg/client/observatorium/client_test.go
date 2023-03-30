@@ -19,7 +19,6 @@ var (
 		AuthType: "test",
 		BaseURL:  "",
 	}
-	testValue  = "test"
 	invalidUrl = ":::"
 )
 
