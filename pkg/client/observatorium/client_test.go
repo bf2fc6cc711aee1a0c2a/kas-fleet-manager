@@ -14,7 +14,6 @@ var (
 	observabilityConfiguration = NewObservabilityConfigurationConfig()
 	configuration              = Configuration{
 		Timeout:  observabilityConfiguration.Timeout,
-		Debug:    observabilityConfiguration.Debug,
 		Insecure: observabilityConfiguration.Insecure,
 		AuthType: "test",
 		BaseURL:  "",
@@ -134,7 +133,6 @@ func Test_RoundTrip(t *testing.T) {
 	config := ClientConfiguration{
 		Timeout:    configuration.Timeout,
 		AuthToken:  configuration.AuthToken,
-		Debug:      configuration.Debug,
 		EnableMock: false,
 		Insecure:   configuration.Insecure,
 		AuthType:   configuration.AuthType,

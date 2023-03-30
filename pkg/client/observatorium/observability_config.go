@@ -31,7 +31,6 @@ type ObservabilityConfiguration struct {
 	AuthType   string        `json:"auth_type" yaml:"auth_type"`
 	Timeout    time.Duration `json:"timeout"`
 	Insecure   bool          `json:"insecure"`
-	Debug      bool          `json:"debug"`
 	EnableMock bool          `json:"enable_mock"`
 
 	// Configuration repo for the Observability operator
@@ -230,7 +229,6 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 	return &ObservabilityConfiguration{
 		AuthType:                   "redhat",
 		Timeout:                    240 * time.Second,
-		Debug:                      true, // TODO: false
 		EnableMock:                 false,
 		Insecure:                   true, // TODO: false
 		ObservabilityConfigRepo:    "quay.io/rhoas/observability-resources-mk",
@@ -253,7 +251,6 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 	fs.DurationVar(&c.Timeout, "observatorium-timeout", c.Timeout, "Timeout for Observatorium client")
 	fs.BoolVar(&c.Insecure, "observatorium-ignore-ssl", c.Insecure, "ignore SSL Observatorium certificate")
 	fs.BoolVar(&c.EnableMock, "enable-observatorium-mock", c.EnableMock, "Enable mock Observatorium client")
-	fs.BoolVar(&c.Debug, "observatorium-debug", c.Debug, "Debug flag for Observatorium client")
 
 	fs.StringVar(&c.ObservabilityConfigRepo, "observability-config-repo", c.ObservabilityConfigRepo, "Repo for the observability operator configuration repo")
 	fs.StringVar(&c.ObservabilityConfigChannel, "observability-config-channel", c.ObservabilityConfigChannel, "Channel for the observability operator configuration repo")

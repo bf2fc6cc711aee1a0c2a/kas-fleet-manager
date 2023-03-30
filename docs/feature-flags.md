@@ -79,7 +79,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 - **enable-observatorium-mock**: Enables use of a mock Observatorium client.
     - `observatorium-timeout` [Optional]: Timeout to be used for Observatorium requests (default: `240s`).
     - `observatorium-token-file` [Optional]: The path to the file containing a token for authenticating with Observatorium (default: `'secrets/observatorium.token'`).
-- **observatorium-debug**: Enables Observatorium debug logging.
 - **observatorium-ignore-ssl**: Disables Observatorium TLS verification.
 - **observatorium-auth-type**[Optional]: This allows for the choice of either Red Hat SSO (`redhat`) as the authentication medium for interaction between kas-fleet-manager and Observatorium (default: `redhat`, options: `redhat`).
 
