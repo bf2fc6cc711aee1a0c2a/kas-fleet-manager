@@ -2079,12 +2079,7 @@ components:
           type: integer
         total:
           type: integer
-        items:
-          items:
-            $ref: '#/components/schemas/ObjectReference'
-          type: array
       required:
-      - items
       - kind
       - page
       - size
@@ -2227,6 +2222,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorClusterList_allOf'
+      required:
+      - items
     Channel:
       default: stable
       enum:
@@ -2312,6 +2309,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorList_allOf'
+      required:
+      - items
     ConnectorType:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -2325,6 +2324,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorTypeList_allOf'
+      required:
+      - items
     ConnectorTypeLabelCount:
       description: Represents a connector type label and the number of types with
         that label
@@ -2434,6 +2435,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorNamespaceList_allOf'
+      required:
+      - items
     ConnectorNamespaceState:
       enum:
       - disconnected
@@ -2475,8 +2478,7 @@ components:
       properties:
         collections:
           items:
-            allOf:
-            - $ref: '#/components/schemas/ObjectReference'
+            $ref: '#/components/schemas/ObjectReference'
           type: array
     ConnectorClusterStatus_status:
       properties:

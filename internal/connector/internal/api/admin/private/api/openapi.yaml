@@ -1825,6 +1825,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorAdminViewList_allOf'
+      required:
+      - items
     ConnectorDeploymentAdminView:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -1890,10 +1892,14 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorDeploymentAdminViewList_allOf'
+      required:
+      - items
     ConnectorTypeAdminViewList:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorTypeAdminViewList_allOf'
+      required:
+      - items
     ConnectorTypeAdminView:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -1910,6 +1916,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorClusterAdminList_allOf'
+      required:
+      - items
     ConnectorClusterAdminStatus:
       properties:
         state:
@@ -1972,6 +1980,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorNamespaceList_allOf'
+      required:
+      - items
     List:
       properties:
         kind:
@@ -1982,17 +1992,18 @@ components:
           type: integer
         total:
           type: integer
-        items:
-          items:
-            $ref: '#/components/schemas/ObjectReference'
-          type: array
       required:
-      - items
       - kind
       - page
       - size
       - total
       type: object
+    ConnectorNamespace:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/ConnectorNamespaceMeta'
+      - $ref: '#/components/schemas/ConnectorNamespace_allOf'
+      description: A connector namespace
     ObjectReference:
       properties:
         id:
@@ -2002,12 +2013,6 @@ components:
         href:
           type: string
       type: object
-    ConnectorNamespace:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/ConnectorNamespaceMeta'
-      - $ref: '#/components/schemas/ConnectorNamespace_allOf'
-      description: A connector namespace
     ConnectorNamespaceMeta:
       allOf:
       - $ref: '#/components/schemas/ObjectMeta'

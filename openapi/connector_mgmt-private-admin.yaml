@@ -1000,6 +1000,7 @@ components:
         - $ref: "connector_mgmt.yaml#/components/schemas/ConnectorStatus"
 
     ConnectorAdminViewList:
+      required: [ items ]
       allOf:
         - $ref: "connector_mgmt.yaml#/components/schemas/List"
         - type: object
@@ -1112,6 +1113,7 @@ components:
           format: int64
 
     ConnectorDeploymentAdminViewList:
+      required: [ items ]
       allOf:
         - $ref: 'connector_mgmt.yaml#/components/schemas/List'
         - type: object
@@ -1123,6 +1125,7 @@ components:
                   - $ref: '#/components/schemas/ConnectorDeploymentAdminView'
 
     ConnectorTypeAdminViewList:
+      required: [ items ]
       allOf:
         - $ref: 'connector_mgmt.yaml#/components/schemas/List'
         - type: object
@@ -1152,6 +1155,7 @@ components:
           type: object
 
     ConnectorClusterAdminList:
+      required: [ items ]
       allOf:
         - $ref: "connector_mgmt.yaml#/components/schemas/List"
         - type: object

@@ -593,6 +593,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorDeploymentList_allOf'
+      required:
+      - items
     ConnectorDeploymentWatchEvent:
       allOf:
       - $ref: '#/components/schemas/WatchEvent'
@@ -717,6 +719,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorNamespaceDeploymentList_allOf'
+      required:
+      - items
     ConnectorNamespaceDeployment:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -852,12 +856,7 @@ components:
           type: integer
         total:
           type: integer
-        items:
-          items:
-            $ref: '#/components/schemas/ObjectReference'
-          type: array
       required:
-      - items
       - kind
       - page
       - size
