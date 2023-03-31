@@ -66,7 +66,6 @@ func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration,
 			kasFleetshardConfig *config.KasFleetshardConfig, providerConfig *config.ProviderConfig,
 			keycloakConfig *keycloak.KeycloakConfig) {
-			kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
 			observabilityConfiguration.EnableMock = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
 			dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters

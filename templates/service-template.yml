@@ -458,11 +458,6 @@ parameters:
   description: The public HTTP host URL of the service
   value: "https://api.openshift.com"
 
-- name: ENABLE_KAFKA_LIFE_SPAN
-  displayName: Enables Kafka life span
-  description: Enables the ability to deprovision kafka instances that have a type/size with a lifespan and have expired
-  value: "false"
-
 - name: DATAPLANE_CLUSTER_SCALING_TYPE
   displayName: Data Plane Cluster Scaling Type
   description: Data Plane Cluster Scaling type (manual/auto/none). If set to none, scaling is disabled.
@@ -1028,7 +1023,6 @@ objects:
             - --node-prewarming-config-file=/config/node-prewarming-configuration.yaml
             - --enable-kafka-owner-config=${ENABLE_KAFKA_OWNER}
             - --kafka-owner-list-file=/config/kafka-owner-list.yaml
-            - --enable-deletion-of-expired-kafka=${ENABLE_KAFKA_LIFE_SPAN}
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
