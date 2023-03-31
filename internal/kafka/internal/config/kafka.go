@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -13,7 +14,6 @@ type KafkaConfig struct {
 	KafkaDomainName              string
 	BrowserUrl                   string
 
-	KafkaLifespan          *KafkaLifespanConfig
 	Quota                  *KafkaQuotaConfig
 	SupportedInstanceTypes *KafkaSupportedInstanceTypesConfig
 	EnableKafkaOwnerConfig bool
@@ -26,7 +26,6 @@ func NewKafkaConfig() *KafkaConfig {
 		EnableKafkaCNAMERegistration: false,
 		EnableKafkaOwnerConfig:       false,
 		KafkaDomainName:              "kafka.bf2.dev",
-		KafkaLifespan:                NewKafkaLifespanConfig(),
 		Quota:                        NewKafkaQuotaConfig(),
 		SupportedInstanceTypes:       NewKafkaSupportedInstanceTypesConfig(),
 		KafkaOwnerListFile:           "config/kafka-owner-list.yaml",
@@ -36,7 +35,6 @@ func NewKafkaConfig() *KafkaConfig {
 
 func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.EnableKafkaCNAMERegistration, "enable-kafka-cname-registration", c.EnableKafkaCNAMERegistration, "Enable custom CNAME registration for Kafka instances")
-	fs.BoolVar(&c.KafkaLifespan.EnableDeletionOfExpiredKafka, "enable-deletion-of-expired-kafka", c.KafkaLifespan.EnableDeletionOfExpiredKafka, "Enable the deletion of kafkas when its life span has expired")
 	fs.StringVar(&c.KafkaDomainName, "kafka-domain-name", c.KafkaDomainName, "The domain name to use for Kafka instances")
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
 	fs.BoolVar(&c.Quota.AllowDeveloperInstance, "allow-developer-instance", c.Quota.AllowDeveloperInstance, "Allow the creation of kafka developer instances")

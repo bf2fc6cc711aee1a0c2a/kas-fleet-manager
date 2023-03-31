@@ -15,7 +15,6 @@ func Test_NewKafkaConfig(t *testing.T) {
 			name: "should return NewKafkaConfig",
 			want: &KafkaConfig{
 				KafkaDomainName:        "kafka.bf2.dev",
-				KafkaLifespan:          NewKafkaLifespanConfig(),
 				Quota:                  NewKafkaQuotaConfig(),
 				BrowserUrl:             "http://localhost:8080/",
 				SupportedInstanceTypes: NewKafkaSupportedInstanceTypesConfig(),

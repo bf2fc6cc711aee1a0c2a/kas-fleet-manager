@@ -42,7 +42,6 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"enable-kafka-external-certificate":     "false",
 		"allow-developer-instance":              "true",
 		"quota-type":                            "quota-management-list",
-		"enable-deletion-of-expired-kafka":      "true",
 		"dataplane-cluster-scaling-type":        "manual",
 		"strimzi-operator-addon-id":             "managed-kafka-qe",
 		"kas-fleetshard-addon-id":               "kas-fleetshard-operator-qe",
