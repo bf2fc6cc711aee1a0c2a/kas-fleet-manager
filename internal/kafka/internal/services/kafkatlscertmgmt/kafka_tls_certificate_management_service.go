@@ -3,6 +3,7 @@ package kafkatlscertmgmt
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -175,6 +176,7 @@ func (certManagementService *kafkaTLSCertificateManagementService) IsAutomaticCe
 }
 
 func NewKafkaTLSCertificateManagementService(
+	connectionFactory *db.ConnectionFactory,
 	awsConfig *config.AWSConfig,
 	kafkaTLSCertificateManagementConfig *config.KafkaTLSCertificateManagementConfig,
 ) (KafkaTLSCertificateManagementService, error) {
@@ -188,7 +190,7 @@ func NewKafkaTLSCertificateManagementService(
 	case config.InMemoryTLSCertStorageType:
 		storage = newInMemoryStorage()
 	case config.SecureTLSCertStorageType:
-		storage, err = newSecureStorage(awsConfig, kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig)
+		storage, err = newSecureStorage(connectionFactory, awsConfig, kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig)
 	}
 
 	var certManagementClient certMagicClientWrapper
