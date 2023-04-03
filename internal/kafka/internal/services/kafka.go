@@ -826,12 +826,13 @@ func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 			}
 		}
 
-		// only revoke the certificates if they have been generated and the certificate is not shared among all kafkas
-		if kafkaRequest.HasCertificateInfo() && !kafkaRequest.IsUsingSharedTLSCertificate(k.kafkaConfig) {
-			err = k.kafkaTLSCertificateManagementService.RevokeCertificate(context.Background(), kafkaRequest.KafkasRoutesBaseDomainName, kafkatlscertmgmt.CessationOfOperation)
-			if err != nil {
-				return errors.NewWithCause(errors.ErrorGeneral, err, "error revoking certificate for the base domain %q of kafka with id %q", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
-			}
+	}
+
+	// only revoke the certificates if they have been generated and the certificate is not shared among all kafkas
+	if kafkaRequest.HasCertificateInfo() && !kafkaRequest.IsUsingSharedTLSCertificate(k.kafkaConfig) {
+		err := k.kafkaTLSCertificateManagementService.RevokeCertificate(context.Background(), kafkaRequest.KafkasRoutesBaseDomainName, kafkatlscertmgmt.CessationOfOperation)
+		if err != nil {
+			return errors.NewWithCause(errors.ErrorGeneral, err, "error revoking certificate for the base domain %q of kafka with id %q", kafkaRequest.KafkasRoutesBaseDomainName, kafkaRequest.ID)
 		}
 	}
 
