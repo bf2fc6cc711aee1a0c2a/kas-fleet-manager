@@ -3,10 +3,6 @@ package kafkatlscertmgmt
 import (
 	"context"
 	"fmt"
-	"io/fs"
-	"strings"
-	"sync"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -15,7 +11,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
 	"github.com/aws/aws-secretsmanager-caching-go/secretcache"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/sync"
 	"github.com/caddyserver/certmagic"
+	"io/fs"
+	"strings"
 )
 
 //go:generate moq -out secretmanager_client_moq.go . SecretManagerClient
@@ -24,14 +24,13 @@ type SecretManagerClient = secretsmanageriface.SecretsManagerAPI
 var _ certmagic.Storage = &secureStorage{}
 
 type secureStorage struct {
-	secretPrefix     string
-	lock             sync.Mutex
-	secretCache      *secretcache.Cache
-	storageItemLocks map[string]*sync.Mutex
-	secretClient     SecretManagerClient
+	secretPrefix string
+	secretCache  *secretcache.Cache
+	secretClient SecretManagerClient
+	lock         sync.DistributedLockMgr
 }
 
-func newSecureStorage(config *config.AWSConfig, automaticCertificateManagementConfig config.AutomaticCertificateManagementConfig) (*secureStorage, error) {
+func newSecureStorage(connectionFactory *db.ConnectionFactory, config *config.AWSConfig, automaticCertificateManagementConfig config.AutomaticCertificateManagementConfig) (*secureStorage, error) {
 	awsConfig := &aws.Config{
 		Credentials: credentials.NewStaticCredentials(
 			config.SecretManager.AccessKey,
@@ -55,41 +54,23 @@ func newSecureStorage(config *config.AWSConfig, automaticCertificateManagementCo
 		return nil, err
 	}
 	return &secureStorage{
-		secretClient:     secretClient,
-		secretCache:      secretCache,
-		lock:             sync.Mutex{},
-		storageItemLocks: map[string]*sync.Mutex{},
-		secretPrefix:     config.SecretManager.SecretPrefix,
+		secretClient: secretClient,
+		secretCache:  secretCache,
+		secretPrefix: config.SecretManager.SecretPrefix,
+		lock:         sync.NewDistributedLockMgr(connectionFactory.New()),
 	}, nil
 }
 
 // Lock blocks until it can acquire the name-specific lock.
 // The process of obtaining a name-specific lock is atomic, as required per the certmagic.Locker
 // interface documentation: https://pkg.go.dev/github.com/caddyserver/certmagic#Locker.
-// NOTE: The intent here is to not implement a distributed locking mechanism but an in-process locking mechanism good enough for
-// our certificate management logic which happens within one reconciliater leader.
+// NOTE: A distributed lock is implemented by leveraging the database lock
 func (storage *secureStorage) Lock(ctx context.Context, key string) error {
-	storage.lock.Lock()
-	mu, ok := storage.storageItemLocks[key]
-	if !ok {
-		// initialize the storage item lock the first time if it does not exist yet
-		mu = &sync.Mutex{}
-		storage.storageItemLocks[key] = mu
-	}
-	storage.lock.Unlock()
-	mu.Lock()
-	return nil
-
+	return storage.lock.Lock(key)
 }
 
 func (storage *secureStorage) Unlock(ctx context.Context, key string) error {
-	mu, ok := storage.storageItemLocks[key]
-	if !ok {
-		return fs.ErrNotExist
-	}
-
-	mu.Unlock()
-	return nil
+	return storage.lock.Unlock(key)
 }
 
 func (storage *secureStorage) Store(ctx context.Context, key string, value []byte) error {
