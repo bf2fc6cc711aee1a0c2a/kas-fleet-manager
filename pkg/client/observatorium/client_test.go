@@ -127,7 +127,6 @@ func Test_RoundTrip(t *testing.T) {
 
 	config := ClientConfiguration{
 		Timeout:    configuration.Timeout,
-		AuthToken:  configuration.AuthToken,
 		EnableMock: false,
 		Insecure:   configuration.Insecure,
 	}
