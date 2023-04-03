@@ -917,7 +917,10 @@ func Test_kafkaService_Delete(t *testing.T) {
 							EnableAuthenticationOnKafka: true,
 						}
 					},
-					DeleteServiceAccountInternalFunc: func(clientId string) *errors.ServiceError {
+					DeleteServiceAccountInternalFunc: nil, // should never be called
+				},
+				kafkaTLSCertificateManagementService: &kafkatlscertmgmt.KafkaTLSCertificateManagementServiceMock{
+					RevokeCertificateFunc: func(ctx context.Context, domain string, reason kafkatlscertmgmt.CertificateRevocationReason) error {
 						return nil
 					},
 				},
@@ -926,6 +929,10 @@ func Test_kafkaService_Delete(t *testing.T) {
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.ID = testID
+					kafkaRequest.ClusterID = ""
+					kafkaRequest.KafkasRoutesBaseDomainName = "bade domain"
+					kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef = "crt-ref"
+					kafkaRequest.KafkasRoutesBaseDomainTLSKeyRef = "key-ref"
 				}),
 			},
 			setupFn: func() {
@@ -1074,7 +1081,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			},
 		},
 		{
-			name: "successfully deletes a Kafka request when kafka has certificates info generated",
+			name: "successfully deletes a Kafka request when kafka has certificates info generated and the Kafka is assigned to a data plane cluster i.e cluster_id set",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				keycloakService: &sso.KeycloakServiceMock{
@@ -1099,6 +1106,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.ID = testID
+					kafkaRequest.ClusterID = "some-cluster-id"
 					kafkaRequest.CanaryServiceAccountClientID = "canary-id"
 					kafkaRequest.KafkasRoutesBaseDomainName = "bade domain"
 					kafkaRequest.KafkasRoutesBaseDomainTLSCrtRef = "crt-ref"
