@@ -5,8 +5,7 @@ import (
 )
 
 type Configuration struct {
-	BaseURL   string
-	AuthToken string
-	Timeout   time.Duration
-	Insecure  bool
+	BaseURL  string
+	Timeout  time.Duration
+	Insecure bool
 }

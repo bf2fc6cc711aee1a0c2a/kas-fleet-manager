@@ -21,7 +21,6 @@ import (
 type ClientConfiguration struct {
 	BaseURL    string
 	Timeout    time.Duration
-	AuthToken  string
 	EnableMock bool
 	Insecure   bool
 }
@@ -57,7 +56,6 @@ func NewClient(config *Configuration) (*Client, error) {
 	client := &Client{
 		Config: &ClientConfiguration{
 			Timeout:    config.Timeout,
-			AuthToken:  config.AuthToken,
 			EnableMock: false,
 			Insecure:   config.Insecure,
 		},
@@ -90,7 +88,6 @@ func NewClientMock(config *Configuration) (*Client, error) {
 	client := &Client{
 		Config: &ClientConfiguration{
 			Timeout:    config.Timeout,
-			AuthToken:  config.AuthToken,
 			EnableMock: true,
 			Insecure:   config.Insecure,
 		},
