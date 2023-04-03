@@ -6,6 +6,8 @@ import (
 )
 
 // DistributedLock manages locks on the database through the usage of the `distributed_lock` table.
+// It works similarly to a sync.Mutex, allowing for locking and unlocking.
+// The lock is acquired by executing an "INSERT INTO ... ON CONFLICT DO NOTHING" command on the database.
 // WARNING: a lock can only be released by the instance that initially created it.
 type DistributedLock interface {
 	Lock() error

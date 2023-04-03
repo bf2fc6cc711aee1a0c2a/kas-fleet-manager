@@ -15,6 +15,7 @@ func newDistributedLockMock(db *gorm.DB, lockID string) DistributedLock {
 	return &distributedLockMock{dl: dl, db: db, id: lockID}
 }
 
+// This object mocks the `DistributedMock` object and is to be used with a mocked database
 type distributedLockMock struct {
 	dl DistributedLock
 	db *gorm.DB
