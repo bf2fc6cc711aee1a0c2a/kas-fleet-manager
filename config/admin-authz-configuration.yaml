@@ -1,10 +1,16 @@
 ---
 # This file contains the role mapping for the admin API based on the HTTP methods.
-# Each HTTP method allows configuring an arbitrary amount of roles that authorize requests to the API.
-# Each of the role mapping must correspond to an existing Rover group 
-# (https://rover.redhat.com/groups/) in order to grant access to the HTTP method containing that role
-# Configuration presented below is only used for testing purposes. The actual configuration deployed in 
-# production and stage environments will be provided in the saas template in app-interface
+# Each HTTP method allows configuring an arbitrary amount of roles
+# that authorize requests to the API. Any arbitrary role names can be configured.
+# When a request is performed to a Fleet Manager admin API endpoint, Fleet
+# Manager checks if any of the role names specified for the used
+# HTTP method matches with any element in the `.realm_access.roles`
+# array, part of the JWT claims in the JWT token received.
+# If an HTTP method is not specified, or no roles are specified for a given
+# HTTP method, then the requests made to it will always be unauthorized.
+# The configuration presented below is only used for testing purposes. The
+# actual configuration deployed in production and stage environments will be
+# provided in the saas template in app-interface.
 - method: GET
   roles:
     - "kas-fleet-manager-admin-full"
