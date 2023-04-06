@@ -40,6 +40,11 @@ func Test_MoveProcessorSecretsToVault(t *testing.T) {
 	g.Expect(vaultKey).NotTo(gomega.BeEmpty())
 	g.Expect(vaultService.GetSecretString(vaultKey)).To(gomega.Equal("client-secret"))
 	g.Expect(resource.ServiceAccount.ClientSecret).To(gomega.Equal(""))
+
+	_ = vaultService.ForEachSecret(func(name string, owningResource string) bool {
+		g.Expect(owningResource).To(gomega.ContainSubstring("v2alpha1"))
+		return true
+	})
 }
 
 func Test_GetProcessorSecretRefs(t *testing.T) {

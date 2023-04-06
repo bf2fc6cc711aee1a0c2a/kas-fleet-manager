@@ -7,7 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
-const OwningProcessorResourcePrefix = "/v1/processor/"
+const OwningProcessorResourcePrefix = "/v2alpha1/processor/"
 
 func stripProcessorSecretReferences(resource *dbapi.Processor) *errors.ServiceError {
 	// clear out secrets..
