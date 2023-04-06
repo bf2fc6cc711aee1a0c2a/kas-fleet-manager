@@ -15,6 +15,12 @@
 				"choice" : {
 					"$ref" : "#/definitions/org.apache.camel.model.ChoiceDefinition"
 				},
+				"convert-body-to" : {
+					"$ref" : "#/definitions/org.apache.camel.model.ConvertBodyDefinition"
+				},
+				"convertBodyTo" : {
+					"$ref" : "#/definitions/org.apache.camel.model.ConvertBodyDefinition"
+				},
 				"filter" : {
 					"$ref" : "#/definitions/org.apache.camel.model.FilterDefinition"
 				},
@@ -69,6 +75,9 @@
 				"setProperty" : {
 					"$ref" : "#/definitions/org.apache.camel.model.SetPropertyDefinition"
 				},
+				"split" : {
+					"$ref" : "#/definitions/org.apache.camel.model.SplitDefinition"
+				},
 				"step" : {
 					"$ref" : "#/definitions/org.apache.camel.model.StepDefinition"
 				},
@@ -118,6 +127,35 @@
 					}
 				}
 			}
+		},
+		"org.apache.camel.model.ConvertBodyDefinition" : {
+			"oneOf" : [ {
+				"type" : "string"
+			}, {
+				"type" : "object",
+				"additionalProperties" : false,
+				"properties" : {
+					"charset" : {
+						"type" : "string"
+					},
+					"description" : {
+						"type" : "string"
+					},
+					"id" : {
+						"type" : "string"
+					},
+					"inherit-error-handler" : {
+						"type" : "boolean"
+					},
+					"mandatory" : {
+						"type" : "boolean"
+					},
+					"type" : {
+						"type" : "string"
+					}
+				}
+			} ],
+			"required" : [ "type" ]
 		},
 		"org.apache.camel.model.DataFormatDefinition" : {
 			"type" : "object",
@@ -487,6 +525,69 @@
 				}
 			},
 			"required" : [ "name" ]
+		},
+		"org.apache.camel.model.SplitDefinition" : {
+			"type" : "object",
+			"additionalProperties" : false,
+			"anyOf" : [ {
+				"$ref" : "#/definitions/org.apache.camel.model.language.ExpressionDefinition"
+			} ],
+			"properties" : {
+				"aggregation-strategy" : {
+					"type" : "string"
+				},
+				"aggregation-strategy-method-allow-null" : {
+					"type" : "boolean"
+				},
+				"aggregation-strategy-method-name" : {
+					"type" : "string"
+				},
+				"delimiter" : {
+					"type" : "string"
+				},
+				"description" : {
+					"type" : "string"
+				},
+				"executor-service" : {
+					"type" : "string"
+				},
+				"expression" : {
+					"$ref" : "#/definitions/org.apache.camel.model.language.ExpressionDefinition"
+				},
+				"id" : {
+					"type" : "string"
+				},
+				"inherit-error-handler" : {
+					"type" : "boolean"
+				},
+				"on-prepare" : {
+					"type" : "string"
+				},
+				"parallel-aggregate" : {
+					"type" : "boolean"
+				},
+				"parallel-processing" : {
+					"type" : "boolean"
+				},
+				"share-unit-of-work" : {
+					"type" : "boolean"
+				},
+				"steps" : {
+					"type" : "array",
+					"items" : {
+						"$ref" : "#/definitions/org.apache.camel.model.ProcessorDefinition"
+					}
+				},
+				"stop-on-exception" : {
+					"type" : "boolean"
+				},
+				"streaming" : {
+					"type" : "boolean"
+				},
+				"timeout" : {
+					"type" : "string"
+				}
+			}
 		},
 		"org.apache.camel.model.StepDefinition" : {
 			"type" : "object",
