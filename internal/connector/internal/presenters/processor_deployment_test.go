@@ -32,9 +32,6 @@ func Test_PresentProcessorDeployment(t *testing.T) {
 		Channel:         "stable",
 		DesiredState:    "ready",
 		Owner:           "owner",
-		CloudProvider:   "cloud_provider",
-		Region:          "region",
-		MultiAZ:         false,
 		OrganisationId:  "organisation_id",
 		Version:         1,
 		Annotations: []dbapi.ProcessorAnnotation{{

@@ -48,9 +48,6 @@ type Processor struct {
 	Channel         string
 	DesiredState    ProcessorDesiredState
 	Owner           string
-	CloudProvider   string
-	Region          string
-	MultiAZ         bool
 	OrganisationId  string
 	Version         int64                   `gorm:"type:bigserial;index"`
 	Annotations     []ProcessorAnnotation   `gorm:"foreignKey:ProcessorID;references:ID"`
