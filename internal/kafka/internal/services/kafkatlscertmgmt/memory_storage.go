@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/caddyserver/certmagic"
 )
 
@@ -40,7 +41,11 @@ func newInMemoryStorage() *inMemoryStorage {
 func (storage *inMemoryStorage) Lock(ctx context.Context, key string) error {
 	mu, ok := storage.store[key]
 	if !ok {
-		return fs.ErrNotExist
+		mu = inMemoryStorageItem{
+			lastModified: time.Now(),
+			mu:           &sync.Mutex{},
+		}
+		storage.store[key] = mu
 	}
 
 	mu.Lock()
@@ -58,11 +63,18 @@ func (storage *inMemoryStorage) Unlock(ctx context.Context, key string) error {
 }
 
 func (storage *inMemoryStorage) Store(ctx context.Context, key string, value []byte) error {
-	storage.store[key] = inMemoryStorageItem{
-		value:        value,
-		lastModified: time.Now(),
-		mu:           &sync.Mutex{},
+	mu, ok := storage.store[key]
+	if !ok {
+		mu = inMemoryStorageItem{
+			mu: &sync.Mutex{},
+		}
 	}
+	mu.value = value
+	mu.lastModified = time.Now()
+	if strings.HasPrefix(key, "acme/") {
+		logger.Logger.Infof("storing key '%s' with value %v", key, string(value))
+	}
+	storage.store[key] = mu
 	return nil
 }
 
