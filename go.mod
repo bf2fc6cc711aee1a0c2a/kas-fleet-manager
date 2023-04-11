@@ -47,7 +47,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0
 	github.com/selvatico/go-mocket v1.0.7
 	github.com/senseyeio/duration v0.0.0-20180430131211-7c2a214ada46
-	github.com/spf13/cobra v1.6.1
+	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spyzhov/ajson v0.8.0
 	github.com/xeipuuv/gojsonschema v1.2.0
@@ -105,7 +105,7 @@ require (
 	github.com/hashicorp/go-memdb v1.3.3 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/imdario/mergo v0.3.12 // indirect
-	github.com/inconshreveable/mousetrap v1.0.1 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.5 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.12.0 // indirect
