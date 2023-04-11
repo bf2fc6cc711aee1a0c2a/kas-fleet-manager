@@ -177,6 +177,7 @@ Some relevant documents are:
 * [Data Plane Setup](docs/data-plane-osd-cluster-options.md)
 * [Access Control](docs/access-control.md)
 * [Quota Management](docs/quota-management-list-configuration.md)
+* [Fleet Manager Admin API endpoints overview](docs/admin-api-overview.md)
 * [Explanation of JWT token claims used across the fleet-manager](docs/jwt-claims.md)
 * [kas-fleet-manager implementation information](docs/implementation.md)
 * [Data Plane Cluster dynamic scaling architecture](docs/architecture/data-plane-osd-cluster-dynamic-scaling.md)
