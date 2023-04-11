@@ -136,7 +136,7 @@ func Test_Cluster_Create(t *testing.T) {
 				cluster: mocks.BuildCluster(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithQueryException()
+				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithExecException()
 			},
 			wantErr: true,
 		},
