@@ -433,7 +433,7 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 	var resourceList dbapi.ConnectorDeploymentList
 	dbConn := k.connectionFactory.New()
 	// specify preload for annotations only, to avoid skipping deleted connectors
-	dbConn = dbConn.Preload("Annotations").Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector")
+	dbConn = dbConn.Unscoped().Preload("Annotations").Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector")
 
 	pagingMeta := &api.PagingMeta{
 		Page: listArgs.Page,
@@ -505,7 +505,16 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 		return services.HandleGoneError("Connector deployment", "id", deploymentStatus.ID)
 	}
 
-	if err := dbConn.Model(&deploymentStatus).Where("id = ? and version <= ?", deploymentStatus.ID, deploymentStatus.Version).Save(&deploymentStatus).Error; err != nil {
+	// See https://github.com/go-gorm/gorm/issues/6139
+	// We can no longer rely on the Save throwing a constraint violation exception when upserting a record that already exists.
+	// By first checking that the record existences we ensure the Save only updates an existing record vs trying to create a duplicate.
+	existing := dbapi.ConnectorDeploymentStatus{}
+	dbConn.Unscoped().Where("id = ?", deploymentStatus.ID).First(&existing)
+	// If it was not found existing.Version will be zero.
+	if existing.Version > deploymentStatus.Version {
+		return errors.Conflict("failed to update deployment status, probably a stale deployment status version was used: %d", deploymentStatus.Version)
+	}
+	if err := dbConn.Unscoped().Model(&deploymentStatus).Where("id = ? and version <= ?", deploymentStatus.ID, deploymentStatus.Version).Save(&deploymentStatus).Error; err != nil {
 		return errors.Conflict("failed to update deployment status: %s, probably a stale deployment status version was used: %d", err.Error(), deploymentStatus.Version)
 	}
 
