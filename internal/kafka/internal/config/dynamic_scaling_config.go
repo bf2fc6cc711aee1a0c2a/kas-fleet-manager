@@ -23,10 +23,9 @@ func NewDynamicScalingConfig() DynamicScalingConfig {
 		ComputeMachinePerCloudProvider: map[cloudproviders.CloudProviderID]ComputeMachinesConfig{},
 		EnableDynamicScaleUpManagerScaleUpTrigger:     true,
 		EnableDynamicScaleDownManagerScaleDownTrigger: true,
-		// Temporarily provision new data plane cluster with the latest version of openshift 4.11 available on ocm
-		// as the fleetshard operator addon is currently incompatible with 4.12.
-		// To be set back to an empty string once https://issues.redhat.com/browse/MGDSTRM-10450 is resolved.
-		NewDataPlaneOpenShiftVersion: "openshift-v4.11.22",
+		// Provision new data plane cluster with the latest version of openshift 4.11 available on ocm
+		// This should only be bumped to the next minor version once testing on that version has been completed.
+		NewDataPlaneOpenShiftVersion: "openshift-v4.11.36",
 	}
 }
 
