@@ -31,7 +31,6 @@ type ProcessorsService interface {
 	Delete(ctx context.Context, id string) *errors.ServiceError
 	//Workers
 	ForEach(f func(*dbapi.Processor) *errors.ServiceError, query string, args ...interface{}) []error
-	GetLatestProcessorShardMetadata() (*dbapi.ProcessorShardMetadata, *errors.ServiceError)
 	SaveStatus(ctx context.Context, resource dbapi.ProcessorStatus) *errors.ServiceError
 	//Admin
 	ForceDelete(ctx context.Context, id string) *errors.ServiceError
@@ -315,24 +314,6 @@ func (p *processorsService) ForEach(f func(*dbapi.Processor) *errors.ServiceErro
 
 	}
 	return errs
-}
-
-func (p *processorsService) GetLatestProcessorShardMetadata() (*dbapi.ProcessorShardMetadata, *errors.ServiceError) {
-	resource := &dbapi.ProcessorShardMetadata{}
-	dbConn := p.connectionFactory.New()
-
-	err := dbConn.
-		Where(dbapi.ProcessorShardMetadata{}).
-		Order("revision desc").
-		First(&resource).Error
-
-	if err != nil {
-		if services.IsRecordNotFoundError(err) {
-			return nil, errors.NotFound("processor type shard metadata not found")
-		}
-		return nil, errors.GeneralError("unable to get processor shard metadata: %s", err)
-	}
-	return resource, nil
 }
 
 func (p *processorsService) SaveStatus(ctx context.Context, resource dbapi.ProcessorStatus) *errors.ServiceError {

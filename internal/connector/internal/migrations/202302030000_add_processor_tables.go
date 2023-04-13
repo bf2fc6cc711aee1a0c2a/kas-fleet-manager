@@ -115,6 +115,23 @@ func addProcessorTables(migrationId string) *gormigrate.Migration {
 			_ = tx.Where("lease_type = ?", "processor").Delete(&api.LeaderLease{})
 			return nil
 		}),
+		db.FuncAction(func(tx *gorm.DB) error {
+			// We don't want to delete the leader lease table on rollback because it's shared with the kas-fleet-manager
+			// so, we just create it here if it does not exist yet... but we don't drop it on rollback.
+			err := tx.Migrator().AutoMigrate(&LeaderLease{})
+			if err != nil {
+				return err
+			}
+			now := time.Now().Add(-time.Minute) //set to an expired time
+			return tx.Create(&api.LeaderLease{
+				Expires:   &now,
+				LeaseType: "processor_type",
+			}).Error
+		}, func(tx *gorm.DB) error {
+			// The leader lease table may have already been dropped, by the kafka migration rollback, ignore error
+			_ = tx.Where("lease_type = ?", "processor_type").Delete(&api.LeaderLease{})
+			return nil
+		}),
 		db.CreateTableAction(&ProcessorStatus{}),
 		db.CreateTableAction(&ProcessorAnnotation{}),
 		db.CreateTableAction(&Processor{}),
@@ -155,14 +172,5 @@ func addProcessorTables(migrationId string) *gormigrate.Migration {
 			DROP TRIGGER IF EXISTS processor_deployments_version_trigger ON processor_deployments
 		`),
 		db.CreateTableAction(&ProcessorShardMetadata{}),
-		db.FuncAction(func(tx *gorm.DB) error {
-			// Processors don't really support different metadata but include a default until we decide how we want to manage
-			return tx.Create(&ProcessorShardMetadata{
-				ShardMetadata: nil,
-			}).Error
-		}, func(tx *gorm.DB) error {
-			// No need to delete the row as the whole table will be dropped.
-			return nil
-		}),
 	)
 }

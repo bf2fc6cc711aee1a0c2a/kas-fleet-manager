@@ -37,9 +37,6 @@ var _ ProcessorsService = &ProcessorsServiceMock{}
 //			GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 //				panic("mock out the Get method")
 //			},
-//			GetLatestProcessorShardMetadataFunc: func() (*dbapi.ProcessorShardMetadata, *errors.ServiceError) {
-//				panic("mock out the GetLatestProcessorShardMetadata method")
-//			},
 //			ListFunc: func(ctx context.Context, listArgs *coreService.ListArguments, clusterId string) (dbapi.ProcessorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
 //				panic("mock out the List method")
 //			},
@@ -73,9 +70,6 @@ type ProcessorsServiceMock struct {
 
 	// GetFunc mocks the Get method.
 	GetFunc func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError)
-
-	// GetLatestProcessorShardMetadataFunc mocks the GetLatestProcessorShardMetadata method.
-	GetLatestProcessorShardMetadataFunc func() (*dbapi.ProcessorShardMetadata, *errors.ServiceError)
 
 	// ListFunc mocks the List method.
 	ListFunc func(ctx context.Context, listArgs *coreService.ListArguments, clusterId string) (dbapi.ProcessorWithConditionsList, *api.PagingMeta, *errors.ServiceError)
@@ -128,9 +122,6 @@ type ProcessorsServiceMock struct {
 			// ID is the id argument value.
 			ID string
 		}
-		// GetLatestProcessorShardMetadata holds details about calls to the GetLatestProcessorShardMetadata method.
-		GetLatestProcessorShardMetadata []struct {
-		}
 		// List holds details about calls to the List method.
 		List []struct {
 			// Ctx is the ctx argument value.
@@ -165,7 +156,6 @@ type ProcessorsServiceMock struct {
 	lockForEach                               sync.RWMutex
 	lockForceDelete                           sync.RWMutex
 	lockGet                                   sync.RWMutex
-	lockGetLatestProcessorShardMetadata       sync.RWMutex
 	lockList                                  sync.RWMutex
 	lockResolveProcessorRefsWithBase64Secrets sync.RWMutex
 	lockSaveStatus                            sync.RWMutex
@@ -353,33 +343,6 @@ func (mock *ProcessorsServiceMock) GetCalls() []struct {
 	mock.lockGet.RLock()
 	calls = mock.calls.Get
 	mock.lockGet.RUnlock()
-	return calls
-}
-
-// GetLatestProcessorShardMetadata calls GetLatestProcessorShardMetadataFunc.
-func (mock *ProcessorsServiceMock) GetLatestProcessorShardMetadata() (*dbapi.ProcessorShardMetadata, *errors.ServiceError) {
-	if mock.GetLatestProcessorShardMetadataFunc == nil {
-		panic("ProcessorsServiceMock.GetLatestProcessorShardMetadataFunc: method is nil but ProcessorsService.GetLatestProcessorShardMetadata was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockGetLatestProcessorShardMetadata.Lock()
-	mock.calls.GetLatestProcessorShardMetadata = append(mock.calls.GetLatestProcessorShardMetadata, callInfo)
-	mock.lockGetLatestProcessorShardMetadata.Unlock()
-	return mock.GetLatestProcessorShardMetadataFunc()
-}
-
-// GetLatestProcessorShardMetadataCalls gets all the calls that were made to GetLatestProcessorShardMetadata.
-// Check the length with:
-//
-//	len(mockedProcessorsService.GetLatestProcessorShardMetadataCalls())
-func (mock *ProcessorsServiceMock) GetLatestProcessorShardMetadataCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockGetLatestProcessorShardMetadata.RLock()
-	calls = mock.calls.GetLatestProcessorShardMetadata
-	mock.lockGetLatestProcessorShardMetadata.RUnlock()
 	return calls
 }
 

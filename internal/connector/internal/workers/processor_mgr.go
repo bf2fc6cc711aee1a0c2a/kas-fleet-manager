@@ -17,6 +17,7 @@ import (
 type ProcessorManager struct {
 	workers.BaseWorker
 	processorsService           services.ProcessorsService
+	processorTypesService       services.ProcessorTypesService
 	processorDeploymentsService services.ProcessorDeploymentsService
 	namespaceService            services.ConnectorNamespaceService
 	lastVersion                 int64
@@ -27,6 +28,7 @@ type ProcessorManager struct {
 // NewProcessorManager creates a new processor manager
 func NewProcessorManager(
 	processorsService services.ProcessorsService,
+	processorTypesService services.ProcessorTypesService,
 	processorDeploymentsService services.ProcessorDeploymentsService,
 	namespaceService services.ConnectorNamespaceService,
 	db *db.ConnectionFactory,
@@ -39,6 +41,7 @@ func NewProcessorManager(
 			Reconciler: reconciler,
 		},
 		processorsService:           processorsService,
+		processorTypesService:       processorTypesService,
 		processorDeploymentsService: processorDeploymentsService,
 		namespaceService:            namespaceService,
 		db:                          db,
@@ -106,7 +109,7 @@ func (m *ProcessorManager) reconcilePreparing(ctx context.Context, processor *db
 	}
 
 	// Processors don't really support different metadata but include this until we decide how we want to manage
-	shardMetadata, err := m.processorsService.GetLatestProcessorShardMetadata()
+	shardMetadata, err := m.processorTypesService.GetLatestProcessorShardMetadata()
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get latest Shard Metadata for Processor %s", processor.ID)
 	}

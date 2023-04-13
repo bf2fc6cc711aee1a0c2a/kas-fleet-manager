@@ -55,6 +55,7 @@ func serviceProviders() di.Option {
 		di.Provide(services.NewConnectorClusterService, di.As(new(services.ConnectorClusterService)), di.As(new(auth.AuthAgentService))),
 		di.Provide(services.NewConnectorNamespaceService, di.As(new(services.ConnectorNamespaceService))),
 		di.Provide(services.NewProcessorsService, di.As(new(services.ProcessorsService))),
+		di.Provide(services.NewProcessorTypesService, di.As(new(services.ProcessorTypesService))),
 		di.Provide(services.NewProcessorDeploymentsService, di.As(new(services.ProcessorDeploymentsService))),
 		di.Provide(authz.NewAuthZService, di.As(new(authz.AuthZService))),
 		di.Provide(handlers.NewConnectorNamespaceHandler),
@@ -69,7 +70,9 @@ func serviceProviders() di.Option {
 		di.Provide(workers.NewConnectorManager, di.As(new(coreWorkers.Worker))),
 		di.Provide(workers.NewNamespaceManager, di.As(new(coreWorkers.Worker))),
 		di.Provide(workers.NewProcessorManager, di.As(new(coreWorkers.Worker))),
+		di.Provide(workers.NewProcessorTypeManager, di.As(new(coreWorkers.Worker))),
 		di.Provide(workers.NewApiServerReadyCondition),
+		di.Provide(workers.NewApiServerReadyConditionForProcessors),
 	)
 }
 
