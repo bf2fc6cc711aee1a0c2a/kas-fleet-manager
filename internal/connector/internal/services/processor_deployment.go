@@ -125,7 +125,7 @@ func (k *processorDeploymentsService) List(ctx context.Context, clusterId string
 	var resourceList dbapi.ProcessorDeploymentList
 	dbConn := k.connectionFactory.New()
 	// specify preload for annotations only, to avoid skipping deleted processors
-	dbConn = dbConn.Preload("Annotations").Joins("Status").Joins("ProcessorShardMetadata").Joins("Processor")
+	dbConn = dbConn.Joins("Status").Joins("ProcessorShardMetadata").Joins("Processor")
 
 	pagingMeta := &api.PagingMeta{
 		Page: listArgs.Page,

@@ -67,15 +67,17 @@ type connectorClusterService struct {
 
 func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService vault.VaultService,
 	connectorTypesService ConnectorTypesService, connectorsService ConnectorsService,
-	keycloakService sso.KafkaKeycloakService, connectorNamespaceService ConnectorNamespaceService) *connectorClusterService {
+	keycloakService sso.KafkaKeycloakService, connectorNamespaceService ConnectorNamespaceService,
+	processorDeploymentsService ProcessorDeploymentsService) *connectorClusterService {
 	return &connectorClusterService{
-		connectionFactory:         connectionFactory,
-		bus:                       bus,
-		connectorTypesService:     connectorTypesService,
-		vaultService:              vaultService,
-		connectorsService:         connectorsService,
-		keycloakService:           keycloakService,
-		connectorNamespaceService: connectorNamespaceService,
+		connectionFactory:           connectionFactory,
+		bus:                         bus,
+		connectorTypesService:       connectorTypesService,
+		vaultService:                vaultService,
+		connectorsService:           connectorsService,
+		keycloakService:             keycloakService,
+		connectorNamespaceService:   connectorNamespaceService,
+		processorDeploymentsService: processorDeploymentsService,
 	}
 }
 
