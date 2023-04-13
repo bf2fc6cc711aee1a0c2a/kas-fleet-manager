@@ -191,9 +191,9 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 
 			// /api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}
 			agentV2Alpha1Router := apiV2Alpha1Router.PathPrefix("/agent/kafka_connector_clusters/{connector_cluster_id}").Subrouter()
-			agentV2Alpha1Router.HandleFunc("/processors/deployments", s.ConnectorClusterHandler.ListProcessorDeployments).Methods(http.MethodGet)
-			agentV2Alpha1Router.HandleFunc("/processors/deployments/{processor_deployment_id}", s.ConnectorClusterHandler.GetProcessorDeployment).Methods(http.MethodGet)
-			agentV2Alpha1Router.HandleFunc("/processors/deployments/{processor_deployment_id}/status", s.ConnectorClusterHandler.UpdateProcessorDeploymentStatus).Methods(http.MethodPut)
+			agentV2Alpha1Router.HandleFunc("/processors", s.ConnectorClusterHandler.ListProcessorDeployments).Methods(http.MethodGet)
+			agentV2Alpha1Router.HandleFunc("/processors/{processor_deployment_id}", s.ConnectorClusterHandler.GetProcessorDeployment).Methods(http.MethodGet)
+			agentV2Alpha1Router.HandleFunc("/processors/{processor_deployment_id}/status", s.ConnectorClusterHandler.UpdateProcessorDeploymentStatus).Methods(http.MethodPut)
 
 			// Expose v2alpha1 API
 			v2alpha1Metadata := api.VersionMetadata{

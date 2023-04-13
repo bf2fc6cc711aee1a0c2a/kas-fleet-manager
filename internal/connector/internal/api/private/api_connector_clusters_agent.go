@@ -531,7 +531,7 @@ func (a *ConnectorClustersAgentApiService) GetClusterAssignedProcessorDeployment
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors/deployments"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors"
 	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -933,7 +933,7 @@ func (a *ConnectorClustersAgentApiService) UpdateProcessorDeploymentStatus(ctx _
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors/deployments/{processor_deployment_id}/status"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors/{processor_deployment_id}/status"
 	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarPath = strings.Replace(localVarPath, "{"+"processor_deployment_id"+"}", _neturl.QueryEscape(parameterToString(processorDeploymentId, "")), -1)

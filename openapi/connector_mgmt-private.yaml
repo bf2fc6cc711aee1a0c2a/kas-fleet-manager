@@ -405,7 +405,7 @@ paths:
               schema:
                 $ref: 'connector_mgmt.yaml#/components/schemas/Error'
 
-  '/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors/deployments':
+  '/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors':
     parameters:
       - name: connector_cluster_id
         description: The id of the connector cluster
@@ -462,7 +462,7 @@ paths:
                   $ref: 'connector_mgmt.yaml#/components/examples/500Example'
           description: Unexpected error occurred
 
-  '/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors/deployments/{processor_deployment_id}/status':
+  '/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors/{processor_deployment_id}/status':
     parameters:
       - name: connector_cluster_id
         description: The id of the connector cluster

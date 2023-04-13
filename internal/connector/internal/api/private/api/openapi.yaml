@@ -454,7 +454,7 @@ paths:
       summary: update the connector namespace status
       tags:
       - Connector Clusters Agent
-  /api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors/deployments:
+  /api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors:
     get:
       description: Returns a list of processor deployments assigned to the cluster.
       operationId: getClusterAssignedProcessorDeployments
@@ -534,8 +534,8 @@ paths:
       summary: Returns a list of processor deployments assigned to the cluster.
       tags:
       - Connector Clusters Agent
-  ? /api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors/deployments/{processor_deployment_id}/status
-  : put:
+  /api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/{connector_cluster_id}/processors/{processor_deployment_id}/status:
+    put:
       description: update the processor deployment status
       operationId: updateProcessorDeploymentStatus
       parameters:
