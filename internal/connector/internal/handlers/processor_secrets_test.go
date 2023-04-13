@@ -20,8 +20,8 @@ func Test_StripProcessorSecretReferences(t *testing.T) {
 	_ = stripProcessorSecretReferences(&resource)
 
 	g.Expect(resource.ServiceAccount.ClientId).To(gomega.Equal("client-id"))
-	g.Expect(resource.ServiceAccount.ClientSecret).To(gomega.Equal(""))
-	g.Expect(resource.ServiceAccount.ClientSecretRef).To(gomega.Equal(""))
+	g.Expect(resource.ServiceAccount.ClientSecret).To(gomega.BeEmpty())
+	g.Expect(resource.ServiceAccount.ClientSecretRef).To(gomega.BeEmpty())
 }
 
 func Test_MoveProcessorSecretsToVault(t *testing.T) {
@@ -39,7 +39,7 @@ func Test_MoveProcessorSecretsToVault(t *testing.T) {
 	vaultKey := resource.ServiceAccount.ClientSecretRef
 	g.Expect(vaultKey).NotTo(gomega.BeEmpty())
 	g.Expect(vaultService.GetSecretString(vaultKey)).To(gomega.Equal("client-secret"))
-	g.Expect(resource.ServiceAccount.ClientSecret).To(gomega.Equal(""))
+	g.Expect(resource.ServiceAccount.ClientSecret).To(gomega.BeEmpty())
 
 	_ = vaultService.ForEachSecret(func(name string, owningResource string) bool {
 		g.Expect(owningResource).To(gomega.ContainSubstring("v2alpha1"))

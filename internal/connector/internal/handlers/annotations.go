@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"strings"
 
@@ -34,11 +35,11 @@ func validateCreateAnnotations(annotations map[string]string) handlers.Validate 
 func validateAnnotations(annotations map[string]string) *errors.ServiceError {
 	for k, v := range annotations {
 		errs := validation.IsQualifiedName(k)
-		if len(errs) != 0 {
+		if !arrays.IsEmpty(errs) {
 			return errors.BadRequest("invalid annotation key %s: %s", k, strings.Join(errs, "; "))
 		}
 		errs = validation.IsValidLabelValue(v)
-		if len(errs) != 0 {
+		if !arrays.IsEmpty(errs) {
 			return errors.BadRequest("invalid annotation value %s: %s", v, strings.Join(errs, "; "))
 		}
 		for _, d := range reservedDomains {

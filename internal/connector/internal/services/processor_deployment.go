@@ -11,6 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -150,7 +151,7 @@ func (k *processorDeploymentsService) List(ctx context.Context, clusterId string
 	}
 
 	// Apply search query
-	if len(listArgs.Search) > 0 {
+	if !shared.StringEmpty(listArgs.Search) {
 		queryParser := coreServices.NewQueryParserWithColumnPrefix("processor_deployments", getValidProcessorDeploymentColumns()...)
 		searchDbQuery, err := queryParser.Parse(listArgs.Search)
 		if err != nil {
