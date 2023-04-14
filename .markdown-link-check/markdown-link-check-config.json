@@ -1,0 +1,10 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^https://gitlab.cee.redhat.com"
+    },
+    {
+      "pattern": "^https://github.com/bf2fc6cc711aee1a0c2a/observability-resources-mk"
+    }
+  ]
+}
