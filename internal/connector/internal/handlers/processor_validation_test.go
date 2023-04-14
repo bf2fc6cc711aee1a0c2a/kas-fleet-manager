@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
 	"testing"
 )
@@ -21,7 +24,7 @@ func Test_ValidateErrorHandler(t *testing.T) {
 			name:         "No explicit ErrorHandler",
 			errorHandler: public.ErrorHandler{},
 			assertion: func(eh public.ErrorHandler, g *gomega.WithT) {
-				g.Expect(validateErrorHandler(&eh)).To(gomega.BeNil())
+				g.Expect(validateProcessorErrorHandler(&eh)).To(gomega.BeNil())
 				g.Expect(eh.Stop).ToNot(gomega.BeNil())
 				g.Expect(eh.Log).To(gomega.BeNil())
 				g.Expect(eh.DeadLetterQueue).To(gomega.Equal(public.ErrorHandlerDeadLetterQueueDeadLetterQueue{}))
@@ -31,7 +34,7 @@ func Test_ValidateErrorHandler(t *testing.T) {
 			name:         "Explicit ErrorHandler::Stop",
 			errorHandler: public.ErrorHandler{Stop: map[string]interface{}{}},
 			assertion: func(eh public.ErrorHandler, g *gomega.WithT) {
-				g.Expect(validateErrorHandler(&eh)).To(gomega.BeNil())
+				g.Expect(validateProcessorErrorHandler(&eh)).To(gomega.BeNil())
 				g.Expect(eh.Stop).ToNot(gomega.BeNil())
 				g.Expect(eh.Log).To(gomega.BeNil())
 				g.Expect(eh.DeadLetterQueue).To(gomega.Equal(public.ErrorHandlerDeadLetterQueueDeadLetterQueue{}))
@@ -41,7 +44,7 @@ func Test_ValidateErrorHandler(t *testing.T) {
 			name:         "Explicit ErrorHandler::Log",
 			errorHandler: public.ErrorHandler{Log: map[string]interface{}{}},
 			assertion: func(eh public.ErrorHandler, g *gomega.WithT) {
-				g.Expect(validateErrorHandler(&eh)).To(gomega.BeNil())
+				g.Expect(validateProcessorErrorHandler(&eh)).To(gomega.BeNil())
 				g.Expect(eh.Stop).To(gomega.BeNil())
 				g.Expect(eh.Log).ToNot(gomega.BeNil())
 				g.Expect(eh.DeadLetterQueue).To(gomega.Equal(public.ErrorHandlerDeadLetterQueueDeadLetterQueue{}))
@@ -51,7 +54,7 @@ func Test_ValidateErrorHandler(t *testing.T) {
 			name:         "Explicit ErrorHandler::DeadLetterQueue",
 			errorHandler: public.ErrorHandler{DeadLetterQueue: public.ErrorHandlerDeadLetterQueueDeadLetterQueue{Topic: "dlq"}},
 			assertion: func(eh public.ErrorHandler, g *gomega.WithT) {
-				g.Expect(validateErrorHandler(&eh)).To(gomega.BeNil())
+				g.Expect(validateProcessorErrorHandler(&eh)).To(gomega.BeNil())
 				g.Expect(eh.Stop).To(gomega.BeNil())
 				g.Expect(eh.Log).To(gomega.BeNil())
 				g.Expect(eh.DeadLetterQueue).ToNot(gomega.Equal(public.ErrorHandlerDeadLetterQueueDeadLetterQueue{}))
@@ -61,7 +64,7 @@ func Test_ValidateErrorHandler(t *testing.T) {
 			name:         "Explicit ErrorHandlers::Multiple defined",
 			errorHandler: public.ErrorHandler{Log: map[string]interface{}{}, Stop: map[string]interface{}{}},
 			assertion: func(eh public.ErrorHandler, g *gomega.WithT) {
-				g.Expect(validateErrorHandler(&eh)).ToNot(gomega.BeNil())
+				g.Expect(validateProcessorErrorHandler(&eh)).ToNot(gomega.BeNil())
 			},
 		},
 	}
@@ -111,26 +114,45 @@ func Test_ValidateProcessorRequest(t *testing.T) {
 		panic("Unable to convert invalid Json string to Json object")
 	}
 
+	// Setup schema for Processor validation
+	processorType, err := SetupValidProcessorSchema()
+	if err != nil {
+		panic("Unable to convert Json schema string to Json object")
+	}
+	processorTypesService := &services.ProcessorTypesServiceMock{
+		CatalogEntriesReconciledFunc:      nil,
+		CleanupDeploymentsFunc:            nil,
+		CreateFunc:                        nil,
+		DeleteOrDeprecateRemovedTypesFunc: nil,
+		ForEachProcessorCatalogEntryFunc:  nil,
+		GetFunc: func(processorTypeId string) (*dbapi.ProcessorType, *errors.ServiceError) {
+			return processorType, nil
+		},
+		GetLatestProcessorShardMetadataFunc: nil,
+		ListFunc:                            nil,
+		PutProcessorShardMetadataFunc:       nil,
+	}
+
 	tests := []test{
 		{
 			name:    "Valid",
-			request: public.ProcessorRequest{Definition: validJson},
+			request: public.ProcessorRequest{Definition: validJson, Channel: "stable"},
 			assertion: func(request public.ProcessorRequest, g *gomega.WithT) {
-				g.Expect(validateProcessorRequest(&request)()).To(gomega.BeNil())
+				g.Expect(validateProcessorRequest(processorTypesService, &request)()).To(gomega.BeNil())
 			},
 		},
 		{
 			name:    "Invalid::1",
-			request: public.ProcessorRequest{Definition: invalidJson},
+			request: public.ProcessorRequest{Definition: invalidJson, Channel: "stable"},
 			assertion: func(request public.ProcessorRequest, g *gomega.WithT) {
-				g.Expect(validateProcessorRequest(&request)()).ToNot(gomega.BeNil())
+				g.Expect(validateProcessorRequest(processorTypesService, &request)()).ToNot(gomega.BeNil())
 			},
 		},
 		{
 			name:    "Invalid::Empty",
 			request: public.ProcessorRequest{},
 			assertion: func(request public.ProcessorRequest, g *gomega.WithT) {
-				g.Expect(validateProcessorRequest(&request)()).ToNot(gomega.BeNil())
+				g.Expect(validateProcessorRequest(processorTypesService, &request)()).ToNot(gomega.BeNil())
 			},
 		},
 	}
@@ -181,26 +203,45 @@ func Test_ValidateProcessor(t *testing.T) {
 		panic("Unable to convert invalid Json string to Json object")
 	}
 
+	// Setup schema for Processor validation
+	processorType, err := SetupValidProcessorSchema()
+	if err != nil {
+		panic("Unable to convert Json schema string to Json object")
+	}
+	processorTypesService := &services.ProcessorTypesServiceMock{
+		CatalogEntriesReconciledFunc:      nil,
+		CleanupDeploymentsFunc:            nil,
+		CreateFunc:                        nil,
+		DeleteOrDeprecateRemovedTypesFunc: nil,
+		ForEachProcessorCatalogEntryFunc:  nil,
+		GetFunc: func(processorTypeId string) (*dbapi.ProcessorType, *errors.ServiceError) {
+			return processorType, nil
+		},
+		GetLatestProcessorShardMetadataFunc: nil,
+		ListFunc:                            nil,
+		PutProcessorShardMetadataFunc:       nil,
+	}
+
 	tests := []test{
 		{
 			name:      "Valid",
-			processor: public.Processor{Definition: validJson},
+			processor: public.Processor{Definition: validJson, Channel: "stable"},
 			assertion: func(processor public.Processor, g *gomega.WithT) {
-				g.Expect(validateProcessor(&processor)()).To(gomega.BeNil())
+				g.Expect(validateProcessor(processorTypesService, &processor)()).To(gomega.BeNil())
 			},
 		},
 		{
 			name:      "Invalid::1",
-			processor: public.Processor{Definition: invalidJson},
+			processor: public.Processor{Definition: invalidJson, Channel: "stable"},
 			assertion: func(processor public.Processor, g *gomega.WithT) {
-				g.Expect(validateProcessor(&processor)()).ToNot(gomega.BeNil())
+				g.Expect(validateProcessor(processorTypesService, &processor)()).ToNot(gomega.BeNil())
 			},
 		},
 		{
 			name:      "Invalid::Empty",
 			processor: public.Processor{},
 			assertion: func(processor public.Processor, g *gomega.WithT) {
-				g.Expect(validateProcessor(&processor)()).ToNot(gomega.BeNil())
+				g.Expect(validateProcessor(processorTypesService, &processor)()).ToNot(gomega.BeNil())
 			},
 		},
 	}

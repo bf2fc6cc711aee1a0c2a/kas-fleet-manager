@@ -114,7 +114,7 @@ func (p *processorsService) Get(ctx context.Context, id string) (*dbapi.Processo
 
 func GetValidProcessorColumns() []string {
 	// state should be replaced with column name processor_statuses.phase
-	return []string{"id", "created_at", "updated_at", "name", "owner", "organisation_id", "desired_state", "state", "service_account_client_id", "namespace_id"}
+	return []string{"id", "created_at", "updated_at", "name", "owner", "organisation_id", "processor_type_id", "desired_state", "state", "channel", "namespace_id", "kafka_id", "kafka_bootstrap_server", "service_account_client_id"}
 }
 
 // List returns all processors visible to the user within the requested paging window.

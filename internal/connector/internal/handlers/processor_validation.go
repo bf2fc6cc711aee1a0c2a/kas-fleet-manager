@@ -3,41 +3,39 @@ package handlers
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/xeipuuv/gojsonschema"
+	"strings"
 )
 
-import _ "embed"
-
-//go:embed processor_schema.json
-var schema string
-
-func validateProcessorRequest(request *public.ProcessorRequest) handlers.Validate {
+func validateProcessorRequest(processorTypesService services.ProcessorTypesService, request *public.ProcessorRequest) handlers.Validate {
 	return func() *errors.ServiceError {
-		if err := validateErrorHandler(&request.ErrorHandler); err != nil {
+		if err := validateProcessorErrorHandler(&request.ErrorHandler); err != nil {
 			return err
 		}
 		if request.Definition == nil {
 			return errors.BadRequest("Processor definition is missing.")
 		}
-		return validate(request.Definition)
+		return validationProcessorDefinition(processorTypesService, &request.ProcessorTypeId, &request.Channel, &request.Definition)
 	}
 }
 
-func validateProcessor(resource *public.Processor) handlers.Validate {
+func validateProcessor(processorTypesService services.ProcessorTypesService, resource *public.Processor) handlers.Validate {
 	return func() *errors.ServiceError {
-		if err := validateErrorHandler(&resource.ErrorHandler); err != nil {
+		if err := validateProcessorErrorHandler(&resource.ErrorHandler); err != nil {
 			return err
 		}
 		if resource.Definition == nil {
 			return errors.BadRequest("Processor definition is missing.")
 		}
-		return validate(resource.Definition)
+		return validationProcessorDefinition(processorTypesService, &resource.ProcessorTypeId, &resource.Channel, &resource.Definition)
 	}
 }
 
-func validateErrorHandler(eh *public.ErrorHandler) *errors.ServiceError {
+func validateProcessorErrorHandler(eh *public.ErrorHandler) *errors.ServiceError {
 	if eh.Log == nil && eh.Stop == nil && eh.DeadLetterQueue == (public.ErrorHandlerDeadLetterQueueDeadLetterQueue{}) {
 		eh.Stop = map[string]interface{}{}
 	}
@@ -57,25 +55,36 @@ func validateErrorHandler(eh *public.ErrorHandler) *errors.ServiceError {
 	return nil
 }
 
-func validate(definition map[string]interface{}) *errors.ServiceError {
-	documentLoader := gojsonschema.NewGoLoader(definition)
-	schemaLoader := gojsonschema.NewStringLoader(schema)
-	schema, err := gojsonschema.NewSchema(schemaLoader)
+func validationProcessorDefinition(processorTypesService services.ProcessorTypesService, processorTypeId *string, channel *public.Channel, definition *map[string]interface{}) *errors.ServiceError {
+	pt, err := processorTypesService.Get(*processorTypeId)
 	if err != nil {
-		return errors.BadRequest("Invalid: %v", err)
+		return errors.BadRequest("invalid processor type id %v : %s", processorTypeId, err)
+	}
+	if !arrays.Contains(pt.ChannelNames(), string(*channel)) {
+		return errors.BadRequest("channel is not valid. Must be one of: %s", strings.Join(pt.ChannelNames(), ", "))
 	}
 
-	r, err := schema.Validate(documentLoader)
+	schemaDom, err := pt.JsonSchemaAsMap()
 	if err != nil {
-		return errors.BadRequest("Invalid: %v", err)
+		return err
 	}
-	if !r.Valid() {
-		message := "Processor definition contains errors:\n"
-		for i, e := range r.Errors() {
+	schemaLoader := gojsonschema.NewGoLoader(schemaDom)
+	documentLoader := gojsonschema.NewGoLoader(definition)
+	schema, serr := gojsonschema.NewSchema(schemaLoader)
+	if serr != nil {
+		return errors.BadRequest("invalid ProcessorType schema: %v", err)
+	}
+	result, serr := schema.Validate(documentLoader)
+	if serr != nil {
+		return errors.BadRequest("invalid ProcessorType definition: %v", err)
+	}
+	if !result.Valid() {
+		message := "ProcessorType definition does not conform to the ProcessorType schema. %d errors encountered. Errors: %s"
+		for i, e := range result.Errors() {
 			message = message + fmt.Sprintf("(%d) %v", i+1, e)
 
 		}
-		return errors.BadRequest(message)
+		return errors.BadRequest(message, len(result.Errors()))
 	}
 	return nil
 }

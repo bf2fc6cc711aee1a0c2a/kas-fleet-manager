@@ -27,15 +27,16 @@ import (
 
 const (
 	maxProcessorIdLength   = 32
-	defaultProcessorTypeId = "processor_v1"
+	defaultProcessorTypeId = "processor_0.1"
 )
 
 type ProcessorsHandler struct {
-	processorsService services.ProcessorsService
-	namespaceService  services.ConnectorNamespaceService
-	vaultService      vault.VaultService
-	authZService      authz.AuthZService
-	processorsConfig  *config.ProcessorsConfig
+	processorsService     services.ProcessorsService
+	processorTypesService services.ProcessorTypesService
+	namespaceService      services.ConnectorNamespaceService
+	vaultService          vault.VaultService
+	authZService          authz.AuthZService
+	processorsConfig      *config.ProcessorsConfig
 }
 
 // this is an initial guess at what operation is being performed in update
@@ -44,15 +45,16 @@ var processorStateToOperationsMap = map[public.ProcessorDesiredState]phase.Proce
 	public.PROCESSORDESIREDSTATE_STOPPED: phase.StopProcessor,
 }
 
-func NewProcessorsHandler(processorsService services.ProcessorsService,
+func NewProcessorsHandler(processorsService services.ProcessorsService, processorTypesService services.ProcessorTypesService,
 	namespaceService services.ConnectorNamespaceService, vaultService vault.VaultService, authZService authz.AuthZService,
 	processorsConfig *config.ProcessorsConfig) *ProcessorsHandler {
 	return &ProcessorsHandler{
-		processorsService: processorsService,
-		namespaceService:  namespaceService,
-		vaultService:      vaultService,
-		authZService:      authZService,
-		processorsConfig:  processorsConfig,
+		processorsService:     processorsService,
+		processorTypesService: processorTypesService,
+		namespaceService:      namespaceService,
+		vaultService:          vaultService,
+		authZService:          authZService,
+		processorsConfig:      processorsConfig,
 	}
 }
 
@@ -77,10 +79,11 @@ func (h ProcessorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.Validation("processor_type_id", &resource.ProcessorTypeId,
 				handlers.WithDefault(defaultProcessorTypeId),
 				handlers.IsOneOf(defaultProcessorTypeId)),
+			handlers.Validation("channel", (*string)(&resource.Channel), handlers.WithDefault("stable"), handlers.MaxLen(40)),
 			handlers.Validation("service_account.client_id", &resource.ServiceAccount.ClientId, handlers.MinLen(1)),
 			handlers.Validation("service_account.client_secret", &resource.ServiceAccount.ClientSecret, handlers.MinLen(1)),
 			handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.WithDefault("ready"), handlers.IsOneOf(dbapi.ValidProcessorDesiredStates...)),
-			validateProcessorRequest(&resource),
+			validateProcessorRequest(h.processorTypesService, &resource),
 			validateCreateAnnotations(resource.Annotations),
 		},
 
@@ -258,7 +261,7 @@ func (h ProcessorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				handlers.Validation("desired_state", (*string)(&resource.DesiredState), handlers.WithDefault("ready"), handlers.IsOneOf(dbapi.ValidProcessorDesiredStates...)),
 				validateProcessorImmutableProperties(patch, originalResource),
 				validatePatchAnnotations(resource.Annotations, originalResource.Annotations),
-				validateProcessor(&resource),
+				validateProcessor(h.processorTypesService, &resource),
 			}
 
 			// Don't validate user's tenancy in admin api calls

@@ -28,11 +28,12 @@ import (
 )
 
 type fields struct {
-	processorsService services.ProcessorsService
-	namespaceService  services.ConnectorNamespaceService
-	vaultService      vault.VaultService
-	authZService      authz.AuthZService
-	processorsConfig  *config.ProcessorsConfig
+	processorsService     services.ProcessorsService
+	processorTypesService services.ProcessorTypesService
+	namespaceService      services.ConnectorNamespaceService
+	vaultService          vault.VaultService
+	authZService          authz.AuthZService
+	processorsConfig      *config.ProcessorsConfig
 }
 type assertion func(body *[]byte, g *gomega.WithT, fields fields)
 
@@ -132,7 +133,7 @@ func Test_ProcessorsHandler_Get(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			h := NewProcessorsHandler(tt.fields.processorsService, tt.fields.namespaceService, tt.fields.vaultService, tt.fields.authZService, tt.fields.processorsConfig)
+			h := NewProcessorsHandler(tt.fields.processorsService, tt.fields.processorTypesService, tt.fields.namespaceService, tt.fields.vaultService, tt.fields.authZService, tt.fields.processorsConfig)
 			req, rw := GetHandlerParams("GET", fmt.Sprintf("/%s", tt.args.id), nil, t)
 			req = mux.SetURLVars(req, map[string]string{"processor_id": tt.args.id})
 			h.Get(rw, req)
@@ -233,7 +234,7 @@ func Test_ProcessorsHandler_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			h := NewProcessorsHandler(tt.fields.processorsService, tt.fields.namespaceService, tt.fields.vaultService, tt.fields.authZService, tt.fields.processorsConfig)
+			h := NewProcessorsHandler(tt.fields.processorsService, tt.fields.processorTypesService, tt.fields.namespaceService, tt.fields.vaultService, tt.fields.authZService, tt.fields.processorsConfig)
 			req, rw := GetHandlerParams("DELETE", fmt.Sprintf("/%s", tt.args.id), nil, t)
 			req = mux.SetURLVars(req, map[string]string{"processor_id": tt.args.id})
 			h.Delete(rw, req)
@@ -342,7 +343,7 @@ func Test_ProcessorsHandler_List(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			h := NewProcessorsHandler(tt.fields.processorsService, tt.fields.namespaceService, tt.fields.vaultService, tt.fields.authZService, tt.fields.processorsConfig)
+			h := NewProcessorsHandler(tt.fields.processorsService, tt.fields.processorTypesService, tt.fields.namespaceService, tt.fields.vaultService, tt.fields.authZService, tt.fields.processorsConfig)
 			req, rw := GetHandlerParams("GET", fmt.Sprintf("/%s", tt.args.url), nil, t)
 			h.List(rw, req)
 			resp := rw.Result()
@@ -413,6 +414,25 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 			}})
 	}
 
+	// Setup schema for Processor validation
+	processorType, err := SetupValidProcessorSchema()
+	if err != nil {
+		panic("Unable to convert Json schema string to Json object")
+	}
+	processorTypesService := &services.ProcessorTypesServiceMock{
+		CatalogEntriesReconciledFunc:      nil,
+		CleanupDeploymentsFunc:            nil,
+		CreateFunc:                        nil,
+		DeleteOrDeprecateRemovedTypesFunc: nil,
+		ForEachProcessorCatalogEntryFunc:  nil,
+		GetFunc: func(processorTypeId string) (*dbapi.ProcessorType, *errors.ServiceError) {
+			return processorType, nil
+		},
+		GetLatestProcessorShardMetadataFunc: nil,
+		ListFunc:                            nil,
+		PutProcessorShardMetadataFunc:       nil,
+	}
+
 	tests := []test{
 		{
 			args: args{
@@ -450,6 +470,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 						return nil, errors.NotFound("Not found")
 					},
 				},
+				processorTypesService: processorTypesService,
 			},
 			wantStatusCode: 404,
 			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
@@ -473,9 +494,10 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 						return nil
 					},
 				},
-				authZService:     authorizingAuthService,
-				namespaceService: nameSpaceService,
-				vaultService:     vaultService,
+				processorTypesService: processorTypesService,
+				authZService:          authorizingAuthService,
+				namespaceService:      nameSpaceService,
+				vaultService:          vaultService,
 				processorsConfig: &config.ProcessorsConfig{
 					ProcessorsEnabled: true,
 				},
@@ -502,9 +524,10 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 						return nil
 					},
 				},
-				authZService:     authorizingAuthService,
-				namespaceService: nameSpaceService,
-				vaultService:     vaultService,
+				processorTypesService: processorTypesService,
+				authZService:          authorizingAuthService,
+				namespaceService:      nameSpaceService,
+				vaultService:          vaultService,
 				processorsConfig: &config.ProcessorsConfig{
 					ProcessorsEnabled: true,
 				},
@@ -531,9 +554,10 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 						return nil
 					},
 				},
-				authZService:     authorizingAuthService,
-				namespaceService: nameSpaceService,
-				vaultService:     vaultService,
+				processorTypesService: processorTypesService,
+				authZService:          authorizingAuthService,
+				namespaceService:      nameSpaceService,
+				vaultService:          vaultService,
 				processorsConfig: &config.ProcessorsConfig{
 					ProcessorsEnabled: true,
 				},
@@ -563,9 +587,10 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 						return nil
 					},
 				},
-				authZService:     authorizingAuthService,
-				namespaceService: nameSpaceService,
-				vaultService:     vaultService,
+				processorTypesService: processorTypesService,
+				authZService:          authorizingAuthService,
+				namespaceService:      nameSpaceService,
+				vaultService:          vaultService,
 				processorsConfig: &config.ProcessorsConfig{
 					ProcessorsEnabled: true,
 				},
@@ -612,9 +637,10 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 						return nil
 					},
 				},
-				authZService:     authorizingAuthService,
-				namespaceService: nameSpaceService,
-				vaultService:     vaultService,
+				processorTypesService: processorTypesService,
+				authZService:          authorizingAuthService,
+				namespaceService:      nameSpaceService,
+				vaultService:          vaultService,
 				processorsConfig: &config.ProcessorsConfig{
 					ProcessorsEnabled: true,
 				},
@@ -651,9 +677,10 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 						return nil
 					},
 				},
-				authZService:     authorizingAuthService,
-				namespaceService: nameSpaceService,
-				vaultService:     vaultService,
+				processorTypesService: processorTypesService,
+				authZService:          authorizingAuthService,
+				namespaceService:      nameSpaceService,
+				vaultService:          vaultService,
 				processorsConfig: &config.ProcessorsConfig{
 					ProcessorsEnabled: true,
 				},
@@ -691,9 +718,10 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 						return nil
 					},
 				},
-				authZService:     authorizingAuthService,
-				namespaceService: nameSpaceService,
-				vaultService:     vaultService,
+				processorTypesService: processorTypesService,
+				authZService:          authorizingAuthService,
+				namespaceService:      nameSpaceService,
+				vaultService:          vaultService,
 				processorsConfig: &config.ProcessorsConfig{
 					ProcessorsEnabled: true,
 				},
@@ -731,9 +759,10 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 						return nil
 					},
 				},
-				authZService:     authorizingAuthService,
-				namespaceService: nameSpaceService,
-				vaultService:     vaultService,
+				processorTypesService: processorTypesService,
+				authZService:          authorizingAuthService,
+				namespaceService:      nameSpaceService,
+				vaultService:          vaultService,
 				processorsConfig: &config.ProcessorsConfig{
 					ProcessorsEnabled: true,
 				},
@@ -758,7 +787,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			h := NewProcessorsHandler(tt.fields.processorsService, tt.fields.namespaceService, tt.fields.vaultService, tt.fields.authZService, tt.fields.processorsConfig)
+			h := NewProcessorsHandler(tt.fields.processorsService, tt.fields.processorTypesService, tt.fields.namespaceService, tt.fields.vaultService, tt.fields.authZService, tt.fields.processorsConfig)
 			req, rw := GetHandlerParams("PATCH", fmt.Sprintf("/%s", tt.args.id), bytes.NewBuffer(tt.args.body), t)
 			req = req.WithContext(tt.args.ctx)
 			req = mux.SetURLVars(req, map[string]string{"processor_id": tt.args.id})
@@ -805,6 +834,25 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 				return nil
 			}},
 		nil)
+
+	// Setup schema for Processor validation
+	processorType, err := SetupValidProcessorSchema()
+	if err != nil {
+		panic("Unable to convert Json schema string to Json object")
+	}
+	processorTypesService := &services.ProcessorTypesServiceMock{
+		CatalogEntriesReconciledFunc:      nil,
+		CleanupDeploymentsFunc:            nil,
+		CreateFunc:                        nil,
+		DeleteOrDeprecateRemovedTypesFunc: nil,
+		ForEachProcessorCatalogEntryFunc:  nil,
+		GetFunc: func(processorTypeId string) (*dbapi.ProcessorType, *errors.ServiceError) {
+			return processorType, nil
+		},
+		GetLatestProcessorShardMetadataFunc: nil,
+		ListFunc:                            nil,
+		PutProcessorShardMetadataFunc:       nil,
+	}
 
 	tests := []test{
 		{
@@ -999,7 +1047,8 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 						return nil
 					},
 				},
-				vaultService: vaultService,
+				processorTypesService: processorTypesService,
+				vaultService:          vaultService,
 			},
 			wantStatusCode: 202,
 			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
@@ -1023,7 +1072,7 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			h := NewProcessorsHandler(tt.fields.processorsService, tt.fields.namespaceService, tt.fields.vaultService, tt.fields.authZService, tt.fields.processorsConfig)
+			h := NewProcessorsHandler(tt.fields.processorsService, tt.fields.processorTypesService, tt.fields.namespaceService, tt.fields.vaultService, tt.fields.authZService, tt.fields.processorsConfig)
 			req, rw := GetHandlerParams("CREATE", tt.args.url, bytes.NewBuffer(tt.args.body), t)
 			req = req.WithContext(tt.args.ctx)
 			h.Create(rw, req)
@@ -1053,7 +1102,7 @@ func mockProcessorWithConditions(params map[string]interface{}) *dbapi.Processor
 			Annotations:    nil,
 			Definition:     nil,
 			ErrorHandler:   nil,
-			Channel:        "",
+			Channel:        "stable",
 			Kafka:          dbapi.KafkaConnectionSettings{},
 			ServiceAccount: dbapi.ServiceAccount{},
 			Status:         dbapi.ProcessorStatus{},

@@ -75,14 +75,17 @@ func TestMain(m *testing.M) {
 			"INSERT INTO connector_shard_metadata (connector_type_id, channel) VALUES ('OldConnectorTypeStillInUseId', 'stable')",
 			"INSERT INTO connector_type_channels (connector_type_id, connector_channel_channel) VALUES ('OldConnectorTypeStillInUseId', 'stable')",
 		},
-		func(c *config.ConnectorsConfig, kc *keycloak.KeycloakConfig, reconcilerConfig *workers.ReconcilerConfig) {
+		func(c *config.ConnectorsConfig, p *config.ProcessorsConfig, kc *keycloak.KeycloakConfig, reconcilerConfig *workers.ReconcilerConfig) {
 			c.ConnectorsSupportedChannels = []string{"stable", "beta"}
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/resources/connector-catalog"}
+			c.ConnectorMetadataDirs = []string{"./internal/connector/test/integration/resources/connector-metadata"}
 			c.ConnectorMetadataDirs = []string{"./internal/connector/test/integration/resources/connector-metadata"}
 			c.ConnectorEvalDuration, _ = time.ParseDuration("2s")
 			c.ConnectorEvalOrganizations = []string{"13640210"}
 			c.ConnectorNamespaceLifecycleAPI = true
 			c.ConnectorEnableUnassignedConnectors = true
+			p.ProcessorCatalogDirs = []string{"./internal/connector/test/integration/resources/processor-catalog"}
+			p.ProcessorMetadataDirs = []string{"./internal/connector/test/integration/resources/processor-metadata"}
 			// always set reconciler config to 1 second for connector tests
 			reconcilerConfig.ReconcilerRepeatInterval = 1 * time.Second
 			// set sso provider if set in env

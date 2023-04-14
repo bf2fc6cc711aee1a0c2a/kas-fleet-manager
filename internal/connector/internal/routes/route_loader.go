@@ -39,6 +39,7 @@ type options struct {
 	ConnectorClusterHandler   *handlers.ConnectorClusterHandler
 	ConnectorNamespaceHandler *handlers.ConnectorNamespaceHandler
 	ProcessorsHandler         *handlers.ProcessorsHandler
+	ProcessorTypesHandler     *handlers.ProcessorTypesHandler
 	DB                        *db.ConnectionFactory
 	AdminRoleAuthZConfig      *auth.AdminRoleAuthZConfig
 }
@@ -186,6 +187,18 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 			apiV2Alpha1ProcessorsRouter.HandleFunc("/{processor_id}", s.ProcessorsHandler.Get).Methods(http.MethodGet)
 			apiV2Alpha1ProcessorsRouter.HandleFunc("/{processor_id}", s.ProcessorsHandler.Patch).Methods(http.MethodPatch)
 			apiV2Alpha1ProcessorsRouter.HandleFunc("/{processor_id}", s.ProcessorsHandler.Delete).Methods(http.MethodDelete)
+			apiV2Alpha1ProcessorsRouter.Use(authorizeMiddleware)
+			apiV2Alpha1ProcessorsRouter.Use(requireOrgID)
+
+			//  /api/connector_mgmt/v2alpha1/processor_types
+			v2alpha1Collections = append(v2alpha1Collections, api.CollectionMetadata{
+				ID:   "processorTypes",
+				Kind: "ProcessorTypesList",
+			})
+
+			apiV2Alpha1ProcessorTypesRouter := apiV2Alpha1Router.PathPrefix("/processor_types").Subrouter()
+			apiV2Alpha1ProcessorTypesRouter.HandleFunc("", s.ProcessorTypesHandler.List).Methods(http.MethodGet)
+			apiV2Alpha1ProcessorTypesRouter.HandleFunc("/{processor_type_id}", s.ProcessorTypesHandler.Get).Methods(http.MethodGet)
 			apiV2Alpha1ProcessorsRouter.Use(authorizeMiddleware)
 			apiV2Alpha1ProcessorsRouter.Use(requireOrgID)
 

@@ -1018,6 +1018,112 @@ paths:
                   $ref: "#/components/examples/500Example"
           description: An unexpected error occurred creating the connector namespace
 
+  #
+  # Processor Types
+  #
+  "/api/connector_mgmt/v2alpha1/processor_types/{processor_type_id}":
+    parameters:
+      - name: processor_type_id
+        description: The id of the processor type
+        schema:
+          type: string
+        in: path
+        required: true
+    get:
+      tags:
+        - Processor Types
+      security:
+        - Bearer: [ ]
+      operationId: getProcessorTypeByID
+      summary: Get a processor type by id
+      description: Get a processor type by id
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessorType"
+          description: The processor type matching the request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "#/components/examples/401Example"
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "#/components/examples/404Example"
+          description: No matching processor type exists
+        "410":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                404Example:
+                  $ref: "#/components/examples/410Example"
+          description: Processor type doesn't exist anymore
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "#/components/examples/500Example"
+          description: Unexpected error occurred
+
+  "/api/connector_mgmt/v2alpha1/processor_types":
+    get:
+      tags:
+        - Processor Types
+      security:
+        - Bearer: [ ]
+      operationId: getProcessorTypes
+      summary: Returns a list of processor types
+      description: Returns a list of processor types
+      parameters:
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
+        - $ref: "#/components/parameters/orderBy"
+        - $ref: "#/components/parameters/search"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessorTypeList"
+          description: A list of processor types
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                401Example:
+                  $ref: "#/components/examples/401Example"
+          description: Auth token is invalid
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                500Example:
+                  $ref: "#/components/examples/500Example"
+          description: Unexpected error occurred
+
+  #
+  # Processors
+  #
   /api/connector_mgmt/v2alpha1/processors:
     get:
       description: Returns a list of processors
@@ -2107,6 +2213,72 @@ components:
             error:
               type: string
 
+    #
+    # Processor Types
+    #
+    ProcessorType:
+      description: Represents a processor type supported by the API
+      required:
+        - name
+        - version
+        - schema
+      allOf:
+        - $ref: "#/components/schemas/ObjectReference"
+        - type: object
+          properties:
+            name:
+              description: Name of the processor type.
+              type: string
+            version:
+              description: Version of the processor type.
+              type: string
+            channels:
+              description: Channels of the processor type.
+              type: array
+              items:
+                $ref: "#/components/schemas/Channel"
+            description:
+              description: A description of the processor type.
+              type: string
+            deprecated:
+              description: Processor type is deprecated and removed from the catalog.
+              type: boolean
+            icon_href:
+              description: URL to an icon of the processor.
+              type: string
+            labels:
+              description: Labels used to categorize the processor.
+              type: array
+              items:
+                type: string
+            annotations:
+              $ref: "#/components/schemas/ProcessorResourceAnnotations"
+            featured_rank:
+              description: Ranking for featured processor types.
+              type: integer
+              format: int32
+            capabilities:
+              description: The capabilities supported by the processor type.
+              type: array
+              items:
+                type: string
+            schema:
+              description: >-
+                A json schema that can be used to validate a ProcessorRequest
+                definition field.
+              type: object
+
+    ProcessorTypeList:
+      required: [ items ]
+      allOf:
+        - $ref: "#/components/schemas/List"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ProcessorType"
+
     MemoryQuota:
       description: Memory quota for limits or requests
       type: string
@@ -2193,8 +2365,10 @@ components:
 
         * Cluster: id, created_at, updated_at, owner, organisation_id, name, state, client_id
         * Namespace: id, created_at, updated_at, name, cluster_id, owner, expiration, tenant_user_id, tenant_organisation_id, state
-        * Connector Types: id, created_at, updated_at, version, name, description, label, channel, featured_rank, pricing_tier
+        * Connector Types: id, created_at, updated_at, version, name, description, label, channel, featured_rank, pricing_tier, deprecated
         * Connectors: id, created_at, updated_at, name, owner, organisation_id, connector_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id, schema_registry_id, schema_registry_url
+        * Processor Types: id, created_at, updated_at, version, name, description, label, channel, featured_rank, pricing_tier, deprecated
+        * Processors: id, created_at, updated_at, name, owner, organisation_id, processor_type_id, desired_state, state, channel, namespace_id, kafka_id, kafka_bootstrap_server, service_account_client_id
 
         Allowed operators are `<>`, `=`, `IN`, `NOT IN`, `LIKE`, or `ILIKE`.
         Allowed conjunctive operators are `AND` and `OR`. However, you can use a maximum of 10 conjunctions in a search query.

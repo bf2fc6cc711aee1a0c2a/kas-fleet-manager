@@ -96,10 +96,12 @@ type ProcessorDeployment struct {
 }
 
 type ProcessorShardMetadata struct {
-	ID             int64 `gorm:"primaryKey:autoIncrement"`
-	Revision       int64 `gorm:"index:idx_processor_shard_revision;default:0"`
-	LatestRevision *int64
-	ShardMetadata  api.JSON `gorm:"type:jsonb"`
+	ID              int64  `gorm:"primaryKey:autoIncrement"`
+	ProcessorTypeId string `gorm:"index:idx_typeid_channel_revision;index:idx_typeid_channel"`
+	Channel         string `gorm:"index:idx_typeid_channel_revision;index:idx_typeid_channel"`
+	Revision        int64  `gorm:"index:idx_processor_shard_revision;default:0"`
+	LatestRevision  *int64
+	ShardMetadata   api.JSON `gorm:"type:jsonb"`
 }
 
 type ProcessorDeploymentList []ProcessorDeployment

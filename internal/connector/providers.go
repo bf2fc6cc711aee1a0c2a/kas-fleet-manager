@@ -64,6 +64,7 @@ func serviceProviders() di.Option {
 		di.Provide(handlers.NewConnectorsHandler),
 		di.Provide(handlers.NewConnectorClusterHandler),
 		di.Provide(handlers.NewProcessorsHandler),
+		di.Provide(handlers.NewProcessorTypesHandler),
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(workers.NewConnectorTypeManager, di.As(new(coreWorkers.Worker))),
 		di.Provide(workers.NewClusterManager, di.As(new(coreWorkers.Worker))),

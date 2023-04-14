@@ -184,7 +184,8 @@ Feature: create a processor
         "modified_at": "${response.modified_at}",
         "name": "example 1",
         "namespace_id": "${default_namespace_id}",
-        "processor_type_id": "processor_v1",
+        "processor_type_id": "processor_0.1",
+        "channel": "stable",
         "desired_state": "ready",
         "annotations": {
           "cos.bf2.org/organisation-id": "13640210"
@@ -225,7 +226,8 @@ Feature: create a processor
         "modified_at": "${response.modified_at}",
         "name": "example 1",
         "namespace_id": "${default_namespace_id}",
-        "processor_type_id": "processor_v1",
+        "processor_type_id": "processor_0.1",
+        "channel": "stable",
         "owner": "${greg_user_id}",
         "desired_state": "ready",
         "resource_version": 1,
@@ -267,7 +269,8 @@ Feature: create a processor
         "modified_at": "${response.items[0].modified_at}",
         "name": "example 1",
         "namespace_id": "${default_namespace_id}",
-        "processor_type_id": "processor_v1",
+        "processor_type_id": "processor_0.1",
+        "channel": "stable",
         "owner": "${greg_user_id}",
         "desired_state": "ready",
         "resource_version": 1,
@@ -328,7 +331,7 @@ Feature: create a processor
         "id": "21",
         "kind": "Error",
         "operation_id": "${response.operation_id}",
-        "reason": "processor_type_id is not valid. Must be one of: processor_v1"
+        "reason": "processor_type_id is not valid. Must be one of: processor_0.1"
       }
       """
 
@@ -565,7 +568,8 @@ Feature: create a processor
         "modified_at": "${response.modified_at}",
         "name": "my-new-name",
         "namespace_id": "${default_namespace_id}",
-        "processor_type_id": "processor_v1",
+        "processor_type_id": "processor_0.1",
+        "channel": "stable",
         "owner": "${greg_user_id}",
         "desired_state": "deleted",
         "resource_version": ${response.resource_version},

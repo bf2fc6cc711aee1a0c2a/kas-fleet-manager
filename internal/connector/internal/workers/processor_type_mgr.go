@@ -1,10 +1,13 @@
 package workers
 
 import (
+	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
+	"github.com/pkg/errors"
+	"reflect"
 	"sync"
 	"time"
 
@@ -80,15 +83,20 @@ func (k *ProcessorTypeManager) Reconcile() []error {
 		// runs only at startup and while requests are not being served
 		// this call handles types that are not in catalog anymore,
 		// removing unused types and marking used types as deprecated
-		// TODO. See ConnectorTypeManager
+		if err := k.processorTypesService.DeleteOrDeprecateRemovedTypes(); err != nil {
+			return []error{err}
+		}
 
 		// We only need to reconcile channel updates once per process startup since,
 		// configured channel settings are only loaded on startup.
 		// These operations, once completed successfully, make the condition at runStartupReconcileCheckWorker() to pass
 		// practically starting the serving of requests from the service.
 		// IMPORTANT: Everything that should run before the first request is served should happen before this
-		// TODO. See ConnectorTypeManager
-		if err := k.ReconcileProcessorCatalog(); err != nil {
+		if err := k.processorTypesService.ForEachProcessorCatalogEntry(k.ReconcileProcessorCatalog); err != nil {
+			return []error{err}
+		}
+
+		if err := k.processorTypesService.CleanupDeployments(); err != nil {
 			return []error{err}
 		}
 
@@ -99,31 +107,60 @@ func (k *ProcessorTypeManager) Reconcile() []error {
 	return nil
 }
 
-func (k *ProcessorTypeManager) ReconcileProcessorCatalog() *serviceError.ServiceError {
-	// Hard coded until the Processor Catalog is available
+func (k *ProcessorTypeManager) ReconcileProcessorCatalog(processorTypeId string, channel string, processorChannelConfig *config.ProcessorChannelConfig) *serviceError.ServiceError {
 	processorShardMetadata := dbapi.ProcessorShardMetadata{
-		ID:             1,
-		Revision:       0,
-		LatestRevision: nil,
-		ShardMetadata:  api.JSON(`{"dummy":"metadata"}`),
+		ProcessorTypeId: processorTypeId,
+		Channel:         channel,
 	}
 
-	if _, err := k.processorTypesService.PutProcessorShardMetadata(&processorShardMetadata); err != nil {
-		return err
+	var err error
+	processorShardMetadata.Revision, err = GetProcessorShardMetadataRevision(processorChannelConfig.ShardMetadata)
+	if err != nil {
+		return serviceError.GeneralError("Failed to convert Processor Type %s, Channel %s. Error in loaded Processor Type Shard Metadata %+v: %v", processorTypeId, channel, processorChannelConfig.ShardMetadata, err.Error())
+	}
+	processorShardMetadata.ShardMetadata, err = json.Marshal(processorChannelConfig.ShardMetadata)
+	if err != nil {
+		return serviceError.GeneralError("Failed to convert Processor Type %s, Channel %s: %v", processorTypeId, channel, err.Error())
+	}
+
+	// We store processor type channels so that we can track changes and trigger redeployment of
+	// associated connectors upon connector type channel changes.
+	_, serr := k.processorTypesService.PutProcessorShardMetadata(&processorShardMetadata)
+	if serr != nil {
+		return serr
 	}
 
 	return nil
 }
 
+func GetProcessorShardMetadataRevision(processorShardMetadata map[string]interface{}) (int64, error) {
+	revision, processorRevisionFound := processorShardMetadata["processor_revision"]
+	if processorRevisionFound {
+		floatRevision, isfloat64 := revision.(float64)
+		if isfloat64 {
+			return int64(floatRevision), nil
+		} else {
+			return 0, errors.Errorf("processor_revision in Shard Metadata was not an int but a %v", reflect.TypeOf(revision).Kind())
+		}
+	} else {
+		return 0, errors.Errorf("processor_revision not found in Shard Metadata")
+	}
+}
+
 func (k *ProcessorTypeManager) runStartupReconcileCheckWorker() {
 	go func() {
-		// wait 5 seconds to check to allow the reconcile function to run...
-		time.Sleep(checkCatalogEntriesDuration)
 		for !k.startupReconcileDone {
 			glog.V(5).Infoln("Waiting for startup processor catalog updates...")
-			// This will check the Processor Catalog has been loaded, parsed and stored
-			// See ConnectorTypeManager for a better implementation (when the Processor Catalog is available)
-			k.startupReconcileDone = true
+			// Check that ProcessorTypes in the current configured catalog have the same checksums as the ones stored in the db (comparing them by id).
+			done, err := k.processorTypesService.CatalogEntriesReconciled()
+			if err != nil {
+				glog.Errorf("Error checking catalog entry checksums: %s", err)
+			} else if done {
+				k.startupReconcileDone = true
+			} else {
+				// wait another 5 seconds to check
+				time.Sleep(checkCatalogEntriesDuration)
+			}
 		}
 		glog.V(5).Infoln("Wait for processor catalog updates done!")
 		k.startupReconcileWG.Done()

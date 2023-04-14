@@ -59,11 +59,59 @@ func addProcessorTables(migrationId string) *gormigrate.Migration {
 		Status          ProcessorStatus         `gorm:"foreignKey:ID"`
 	}
 
+	type ProcessorChannel struct {
+		Channel   string `gorm:"primaryKey"`
+		CreatedAt time.Time
+		UpdatedAt time.Time
+		// needed for soft delete. See https://gorm.io/docs/delete.html#Soft-Delete
+		DeletedAt gorm.DeletedAt
+	}
+
+	type ProcessorTypeLabel struct {
+		ProcessorTypeID string `gorm:"primaryKey"`
+		Label           string `gorm:"primaryKey"`
+	}
+
+	type ProcessorTypeAnnotation struct {
+		ProcessorTypeID string `gorm:"primaryKey;index"`
+		Key             string `gorm:"primaryKey;not null"`
+		Value           string `gorm:"not null"`
+	}
+
+	type ProcessorTypeCapability struct {
+		ProcessorTypeID string `gorm:"primaryKey"`
+		Capability      string `gorm:"primaryKey"`
+	}
+
+	type ProcessorType struct {
+		db.Model
+		Name    string `gorm:"index"`
+		Version string
+		// Type's channels
+		Channels    []ProcessorChannel `gorm:"many2many:processor_type_channels;"`
+		Description string
+		Deprecated  bool `gorm:"not null;default:false"`
+		// URL to an icon of the processor.
+		IconHref string
+		// labels used to categorize the processor
+		Labels []ProcessorTypeLabel `gorm:"foreignKey:ProcessorTypeID"`
+		// annotations metadata
+		Annotations []ProcessorTypeAnnotation `gorm:"foreignKey:ProcessorTypeID;references:ID"`
+		// processor capabilities used to understand what features a processor might support
+		FeaturedRank int32                     `gorm:"not null;default:0"`
+		Capabilities []ProcessorTypeCapability `gorm:"foreignKey:ProcessorTypeID"`
+		// A json schema that can be used to validate a processor's definition field.
+		JsonSchema api.JSON `gorm:"type:jsonb"`
+		Checksum   *string
+	}
+
 	type ProcessorShardMetadata struct {
-		ID             int64 `gorm:"primaryKey:autoIncrement"`
-		Revision       int64 `gorm:"index:idx_processor_shard_revision;default:0"`
-		LatestRevision *int64
-		ShardMetadata  api.JSON `gorm:"type:jsonb"`
+		ID              int64  `gorm:"primaryKey:autoIncrement"`
+		ProcessorTypeId string `gorm:"index:idx_processortypeid_channel_revision;index:idx_processortypeid_channel"`
+		Channel         string `gorm:"index:idx_processortypeid_channel_revision;index:idx_processortypeid_channel"`
+		Revision        int64  `gorm:"index:idx_processortypeid_channel_revision;default:0"`
+		LatestRevision  *int64
+		ShardMetadata   api.JSON `gorm:"type:jsonb"`
 	}
 
 	type ProcessorDeploymentStatus struct {
@@ -171,6 +219,12 @@ func addProcessorTables(migrationId string) *gormigrate.Migration {
 		`, `
 			DROP TRIGGER IF EXISTS processor_deployments_version_trigger ON processor_deployments
 		`),
+		db.ExecAction("", "DROP TABLE processor_type_channels"),
 		db.CreateTableAction(&ProcessorShardMetadata{}),
+		db.CreateTableAction(&ProcessorTypeAnnotation{}),
+		db.CreateTableAction(&ProcessorTypeCapability{}),
+		db.CreateTableAction(&ProcessorTypeLabel{}),
+		db.CreateTableAction(&ProcessorChannel{}),
+		db.CreateTableAction(&ProcessorType{}),
 	)
 }

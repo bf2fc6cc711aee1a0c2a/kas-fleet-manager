@@ -146,6 +146,11 @@ Feature: create a connector
             "href": "/api/connector_mgmt/v2alpha1/processors",
             "id": "processors",
             "kind": "ProcessorList"
+          },
+          {
+            "href": "/api/connector_mgmt/v2alpha1/processorTypes",
+            "id": "processorTypes",
+            "kind": "ProcessorTypesList"
           }
         ]
       }
@@ -165,6 +170,11 @@ Feature: create a connector
             "href": "/api/connector_mgmt/v2alpha1/processors",
             "id": "processors",
             "kind": "ProcessorList"
+          },
+          {
+            "href": "/api/connector_mgmt/v2alpha1/processorTypes",
+            "id": "processorTypes",
+            "kind": "ProcessorTypesList"
           }
         ]
       }
