@@ -26,7 +26,7 @@ file in the root directory of the repository.
 * Changes have been verified by one additional reviewer against:
     * each required environment
     * each supported upgrade path
-* If the changes could have an impact on the clients (either UI or CLI), a JIRA should be created for making the required changes on the client side and acknowledged by one of the client side team members.    
+* If the changes could have an impact on the clients (either UI or CLI), a JIRA should be created for making the required changes on the client side and acknowledged by one of the client side team members.
 * PR has been merged
 
 
@@ -55,7 +55,7 @@ $GOPATH
 ```
 
 ## Set up Git Hooks
-Run the following command to set up git hooks for the project. 
+Run the following command to set up git hooks for the project.
 
 ```
 make setup/git/hooks
@@ -87,7 +87,10 @@ Set the following configuration in your **Launch.json** file.
 }
 ```
 ## Modifying the API definition
-The services' OpenAPI specification is located in `openapi/kas-fleet-manager.yaml`. It can be modified using Apicurio Studio, Swagger or manually. The OpenAPI files follows the [RHOAS API standards](https://api.appservices.tech/docs/api-standards.html), each modification has to adhere to it.  
+The services' OpenAPI specification is located in `openapi/kas-fleet-manager.yaml`.
+It can be modified using Apicurio Studio, Swagger or manually. The OpenAPI
+files follow the [RHOAS API standards](https://github.com/redhat-developer/app-services-api-guidelines/blob/main/docs/api-standards.md),
+each modification has to adhere to it.
 
 Once you've made your changes, the second step is to validate it:
 
@@ -101,16 +104,16 @@ Once the schema is valid, the remaining step is to generate the openapi modules 
 make openapi/generate
 ```
 ## Adding a new ConfigModule
-See the [Adding a new Config Module](./docs/adding-a-new-ConfigModule.md) documentation for more information.
+See the [Adding a new Config Module](docs/adding-a-new-config-module.md) documentation for more information.
 
 ## Adding a new endpoint
-See the [adding-a-new-endpoint](./docs/adding-a-new-endpoint.md) documentation.
+See the [adding-a-new-endpoint](docs/adding-a-new-endpoint.md) documentation.
 
 ## Adding New Serve Command Flags
-See the [Adding Flags to KAS Fleet Manager](./docs/adding-new-flags.md) documentation for more information.
+See the [Adding Flags to KAS Fleet Manager](docs/adding-new-flags.md) documentation for more information.
 
 ## Testing
-See the [automated testing](./docs/automated-testing.md) documentation.
+See the [automated testing](docs/automated-testing.md) documentation.
 
 ## Logging Standards & Best Practices
   * Log only actionable information, which will be read by a human or a machine for auditing or debugging purposes
@@ -131,7 +134,7 @@ Log to this level any error based information that might want to be brought to s
 
 #### Error
 Log to this level any error that is fatal to the given transaction and affects expected user operation. This may or may not include failed connections, missing expected data, or other unrecoverable outcomes.
-Error handling should be implemented by following these best practices as laid out in [this guide](docs/error-handing.md).
+Error handling should be implemented by following these best practices as laid out in [this guide](docs/best-practices/error-handling.md).
 
 #### Fatal
 Log to this level any error that is fatal to the service and requires the service to be immediately shutdown in order to prevent data loss or other unrecoverable states. This should be limited to scripts and fail-fast scenarios in service startup *only* and *never* because of a user operation in an otherwise healthy servce.
@@ -160,17 +163,17 @@ glog.V(10).Info("biz")
 
 ### Sentry Logging
 Sentry monitors errors/exceptions in a real-time environment. It provides detailed information about captured errors. See [sentry](https://sentry.io/welcome/) for more details.
- 
+
 Logging can be enabled by importing the sentry-go package: "github.com/getsentry/sentry-go
 
 Following are possible ways of logging events via Sentry:
 
 ```go
 sentry.CaptureMessage(message) // for logging message
-sentry.CaptureEvent(event) // capture the events 
+sentry.CaptureEvent(event) // capture the events
 sentry.CaptureException(error) // capture the exception
-``` 
-Example : 
+```
+Example :
 ```go
 func check(err error, msg string) {
 	if err != nil && err != http.ErrServerClosed {
@@ -200,4 +203,4 @@ make code/fix
 
 ## Writing Docs
 
-Please see the [README](./docs/README.md) in `docs` directory.
+Please see the [README](docs/README.md) in `docs` directory.

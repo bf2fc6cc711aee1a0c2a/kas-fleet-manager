@@ -13,7 +13,7 @@ Returned values are:
 * The index of the value into the list of passed-in values (-1 if not found)
 * The found value or the _zero value_ for the `T` type
 
-Some example usage can be found [here](../pkg/shared/utils/arrays/generic_array_utils_test.go)
+Some example usage can be found [here](../../pkg/shared/utils/arrays/generic_array_utils_test.go)
 
 ### Filter
 

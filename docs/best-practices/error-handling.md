@@ -54,7 +54,7 @@ err := fmt.Errorf("wrap error: %w", err)
 
 ### Capture the original error when creating a new ServiceError
 
-When a new [ServiceError](../pkg/errors/errors.go) is created and it is caused by the another error, use the `NewWithCause` function to create the new one, but retain the original error value.
+When a new [ServiceError](../../pkg/errors/errors.go) is created and it is caused by the another error, use the `NewWithCause` function to create the new one, but retain the original error value.
 Make sure the message for the `Reason` field of the new `ServiceError` does not leak any internal information.
 
 #### Do
@@ -82,8 +82,8 @@ if err := somefunc(); err != nil {
 There is no need to log an error or forward it to Sentry at the place where it occurs. We have central places to handle errors.
 The main places where errors handled are:
 
-1. The [handError](../pkg/handlers/framework.go#L42) function. All errors for HTTP requested should be handled here, and it will log the error to logs and forward the error to Sentry.
-2. The [runReconcile](../pkg/workers/reconciler.go#L87) function. All errors occur in the background workers should be handled here.
+1. The [errorHandler](../../pkg/handlers/framework.go) function. All errors for HTTP requested should be handled here, and it will log the error to logs and forward the error to Sentry.
+2. The [runReconcile](../../pkg/workers/reconciler.go) function. All errors occur in the background workers should be handled here.
 3. If the error is not returned to the caller, we should use an instance of the `UHCLogger` to log the error which will make sure it is captured by Sentry as well.
 
 #### Do

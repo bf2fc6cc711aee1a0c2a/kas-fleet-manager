@@ -29,7 +29,7 @@ A new `InterfaceNameMock` struct will be generated and can be used in tests.
 For more information on using `moq`, see:
 
 - [The moq repository](https://github.com/matryer/moq)
-- The IDGenerator [interface](../pkg/client/ocm/id.go) and [mock](../pkg/client/ocm/idgenerator_moq_test.go) in this repository 
+- The IDGenerator [interface](../pkg/client/ocm/id.go) and [mock](../pkg/client/ocm/idgenerator_moq.go) in this repository 
 
 For mocking the OCM client, [this wrapper interface](../pkg/client/ocm/client.go). If using the OCM SDK in
 any component of the system, please ensure the OCM SDK logic is placed inside this mock-able
