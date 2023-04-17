@@ -11,3 +11,9 @@
     - processor
   annotations:
     cos.bf2.org/pricing-tier: free
+- id: unknown
+  featured-rank: 0
+  labels:
+    - processor
+  annotations:
+    cos.bf2.org/pricing-tier: free

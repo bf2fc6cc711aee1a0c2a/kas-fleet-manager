@@ -5,7 +5,7 @@
 #       featured-rank: an integer rank for sorting featured processors
 #       labels: processor labels, used for Processor categories
 #       annotations: processor annotations, used for system properties such as pricing tiers
-- id: processor_0.1
+- id: unknown
   featured-rank: 0
   labels:
     - processor

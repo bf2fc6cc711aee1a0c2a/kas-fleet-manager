@@ -98,13 +98,13 @@ func (c *ProcessorsConfig) readProcessorMetadata() (processorMetadata map[string
 				return nil
 			}
 
-			glog.Infof("Loading Processor metadata from file %s", path)
+			glog.Infof("loading processor metadata from file %s", path)
 
 			// Read the file
 			var metas []ProcessorMetadata
 			err = shared.ReadYamlFile(path, &metas)
 			if err != nil {
-				return fmt.Errorf("error reading Processor metadata from %s: %s", path, err)
+				return fmt.Errorf("error reading processor metadata from %s: %s", path, err)
 			}
 			for _, m := range metas {
 				processorMetadata[m.ProcessorTypeId] = m
@@ -114,7 +114,7 @@ func (c *ProcessorsConfig) readProcessorMetadata() (processorMetadata map[string
 		})
 
 		if err != nil {
-			return nil, fmt.Errorf("error listing Processor metadata in %s: %s", metaDir, err)
+			return nil, fmt.Errorf("error listing processor metadata in %s: %s", metaDir, err)
 		}
 	}
 
@@ -136,7 +136,7 @@ func (c *ProcessorsConfig) readProcessorCatalog(processorMetadata map[string]Pro
 				return nil
 			}
 
-			glog.Infof("Loading Processors from file %s", path)
+			glog.Infof("Loading processors from file %s", path)
 
 			// Read the file
 			buf, err := os.ReadFile(path)
@@ -157,7 +157,7 @@ func (c *ProcessorsConfig) readProcessorCatalog(processorMetadata map[string]Pro
 				entry.ProcessorType.Labels = meta.Labels
 				entry.ProcessorType.Annotations = meta.Annotations
 			} else {
-				return fmt.Errorf("missing metadata for Procesor %s", id)
+				return fmt.Errorf("missing metadata for processor %s", id)
 			}
 
 			// compute checksum for catalog entry to look for updates
@@ -195,7 +195,7 @@ func (c *ProcessorsConfig) readProcessorCatalog(processorMetadata map[string]Pro
 					return nil
 				}
 
-				return fmt.Errorf("connector type '%s' defined in '%s' and '%s'", id, path, prev)
+				return fmt.Errorf("processor type '%s' defined in '%s' and '%s'", id, path, prev)
 			}
 
 			c.CatalogChecksums[id] = sum
@@ -203,13 +203,13 @@ func (c *ProcessorsConfig) readProcessorCatalog(processorMetadata map[string]Pro
 
 			c.CatalogEntries = append(c.CatalogEntries, entry)
 
-			glog.Infof("loaded connector %s from file %s", id, path)
+			glog.Infof("loaded processor %s from file %s", id, path)
 
 			return nil
 		})
 
 		if err != nil {
-			return fmt.Errorf("error listing connector catalogs in %s: %s", dir, err)
+			return fmt.Errorf("error listing processor catalogs in %s: %s", dir, err)
 		}
 	}
 
