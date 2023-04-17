@@ -1,0 +1,38 @@
+name: PR check Markdown links
+
+# Only run this workflow on PRs
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# Disable permissions for all available scopes for the GITHUB_TOKEN
+# except for the metadata scope.
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-markdown-link-check:
+    # Only run the job on non-draft PRs
+    if: "github.event.pull_request.draft == false"
+    name: Check PR Markdown links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code under the $GITHUB_WORKSPACE directory
+        uses: actions/checkout@v3
+      - name: Check markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@1.0.15
+        with:
+          use-quiet-mode: 'no'
+          use-verbose-mode: 'yes'
+          config-file: './.markdown-link-check/markdown-link-check-config.json'
+          check-modified-files-only: 'no'
+          file-extension: '.md'
+          # Unfortunately there's currently not a way to ignore specific
+          # directories/paths in the GitHub action so we need to specify
+          # the desired set of directories/paths that we want to check
+          # in order to avoid checking undesired directories/paths
+          folder-path: './docs, ./pkg, ./templates, ./.github, ./cmd, ./internal, ./openapi, ./docker, ./scripts'
+          file-path: './README.md, ./CONTRIBUTING.md'
