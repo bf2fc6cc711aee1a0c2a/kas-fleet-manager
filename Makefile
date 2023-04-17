@@ -161,6 +161,22 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/rhoasapi-installation/spectral 2> /dev/n
 	}
 endif
 
+MARKDOWN_LINK_CHECK ?= ${LOCAL_BIN_PATH}/markdown-link-check
+markdown-link-check-install:
+ifeq (, $(shell which ${NPM} 2> /dev/null))
+	@echo "npm is not available please install it to be able to install markdown-link-check"
+	exit 1
+endif
+ifeq (, $(shell which ${LOCAL_BIN_PATH}/markdown-link-check 2> /dev/null))
+	@{ \
+    set -e ;\
+    mkdir -p ${LOCAL_BIN_PATH} ;\
+    mkdir -p ${LOCAL_BIN_PATH}/markdown-link-check-installation ;\
+    cd ${LOCAL_BIN_PATH} ;\
+    ${NPM} install --prefix ${LOCAL_BIN_PATH}/markdown-link-check-installation markdown-link-check@3.10.3 ;\
+    ln -s markdown-link-check-installation/node_modules/.bin/markdown-link-check markdown-link-check ;\
+	}
+endif
 
 .PHONY: openapi/spec/validate
 openapi/spec/validate: specinstall
@@ -177,6 +193,7 @@ help:
 	@echo ""
 	@echo "make verify                                             verify source code"
 	@echo "make lint                                               lint go files and .yaml templates"
+	@echo "make lint/markdown-link-check                           check for broken links in markdown files"
 	@echo "make binary                                             compile binaries"
 	@echo "make install                                            compile binaries and install in GOPATH bin"
 	@echo "make run                                                run the application"
@@ -263,6 +280,10 @@ lint/templates: specinstall
 	$(SPECTRAL) lint templates/*.yml templates/*.yaml --ignore-unknown-format --ruleset .validate-templates.yaml
 .PHONY: lint/templates
 
+MARKDOWN_LINK_CHECK_CONFIG_DIR ?= $(PROJECT_PATH)/.markdown-link-check
+MARKDOWN_LINK_CHECK_CONFIG ?= $(MARKDOWN_LINK_CHECK_CONFIG_DIR)/markdown-link-check-config.json
+lint/markdown-link-check: markdown-link-check-install
+	find $(PROJECT_PATH) -type f -not -path '$(PROJECT_PATH)/bin*' -name '*.md' -exec $(MARKDOWN_LINK_CHECK) -q -c $(MARKDOWN_LINK_CHECK_CONFIG) {} \;
 
 # Runs linter against go files and .y(a)ml files in the templates directory
 # Requires golangci-lint to be installed @ $(go env GOPATH)/bin/golangci-lint
