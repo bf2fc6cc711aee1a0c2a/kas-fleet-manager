@@ -66,7 +66,6 @@ var clusterMetricsStatuses = []api.ClusterStatus{
 	api.ClusterCleanup,
 	api.ClusterWaitingForKasFleetShardOperator,
 	api.ClusterReady,
-	api.ClusterFull,
 	api.ClusterFailed,
 	api.ClusterDeprovisioning,
 }

@@ -95,15 +95,6 @@ var defaultUpdateKafkaStatusFunc mockKasFleetshardSyncupdateKafkaClusterStatusFu
 
 	dataplaneClusters = append(dataplaneClusters, readyDataplaneClusters...)
 
-	fullDataplaneClusters, err := clusterService.FindAllClusters(services.FindClusterCriteria{
-		Status: api.ClusterFull,
-	})
-	if err != nil {
-		return fmt.Errorf("unable to retrieve a list of clusters in a '%s' state: %s", api.ClusterFull, err)
-	}
-
-	dataplaneClusters = append(dataplaneClusters, fullDataplaneClusters...)
-
 	for _, dataplaneCluster := range dataplaneClusters {
 		ctx, err := NewAuthenticatedContextForDataPlaneCluster(helper, dataplaneCluster.ClusterID)
 		if err != nil {

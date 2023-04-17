@@ -263,17 +263,6 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "When cluster is full then status reports can be processed",
-			apiCluster: &api.Cluster{
-				Status: api.ClusterFull,
-			},
-			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(sampleValidApplicationConfigForDataPlaneClusterTest(nil))
-
-			},
-			want: true,
-		},
-		{
 			name: "When cluster is waiting for KAS Fleet Shard operator then status reports can be processed",
 			apiCluster: &api.Cluster{
 				Status: api.ClusterWaitingForKasFleetShardOperator,
