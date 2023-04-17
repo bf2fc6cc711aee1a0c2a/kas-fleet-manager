@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/onsi/gomega"
 )
 
@@ -31,7 +32,7 @@ func Test_memoryStorage_Load(t *testing.T) {
 		t.Run(testcase.name, func(t *testing.T) {
 			t.Parallel()
 			g := gomega.NewWithT(t)
-			storage := newInMemoryStorage()
+			storage := newInMemoryStorage(db.NewMockConnectionFactory(nil))
 
 			storeErr := storage.Store(context.Background(), testcase.args.key, testcase.args.value)
 			g.Expect(storeErr != nil).To(gomega.Equal(testcase.wantErr))

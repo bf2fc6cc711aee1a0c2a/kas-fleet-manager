@@ -3,8 +3,9 @@ package kafkatlscertmgmt
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -188,7 +189,7 @@ func NewKafkaTLSCertificateManagementService(
 			Path: "secrets/tls/",
 		}
 	case config.InMemoryTLSCertStorageType:
-		storage = newInMemoryStorage()
+		storage = newInMemoryStorage(connectionFactory)
 	case config.SecureTLSCertStorageType:
 		storage, err = newSecureStorage(connectionFactory, awsConfig, kafkaTLSCertificateManagementConfig.AutomaticCertificateManagementConfig)
 	}

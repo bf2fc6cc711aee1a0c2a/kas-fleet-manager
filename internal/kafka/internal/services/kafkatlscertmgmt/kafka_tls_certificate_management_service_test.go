@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/caddyserver/certmagic"
 	"github.com/onsi/gomega"
 )
@@ -20,7 +21,7 @@ func Test_kafkaTLSCertificateManagementService_GetCertificate(t *testing.T) {
 		request GetCertificateRequest
 	}
 
-	storageWithCerts := newInMemoryStorage()
+	storageWithCerts := newInMemoryStorage(db.NewMockConnectionFactory(nil))
 	crtRef := "some-crt-ref"
 	keyRef := "some-key-ref"
 
@@ -102,7 +103,7 @@ func Test_kafkaTLSCertificateManagementService_GetCertificate(t *testing.T) {
 		{
 			name: "should return an error when loading from the storage returns an error",
 			fields: fields{
-				storage: newInMemoryStorage(),
+				storage: newInMemoryStorage(db.NewMockConnectionFactory(nil)),
 				config: &config.KafkaTLSCertificateManagementConfig{
 					CertificateManagementStrategy: config.AutomaticCertificateManagement,
 				},
@@ -144,7 +145,7 @@ func Test_kafkaTLSCertificateManagementService_RevokeCertificate(t *testing.T) {
 		reason CertificateRevocationReason
 	}
 
-	inMemoryStorage := newInMemoryStorage()
+	inMemoryStorage := newInMemoryStorage(db.NewMockConnectionFactory(nil))
 	certKey := "cert-key"
 	privateKey := "private-key"
 	_ = inMemoryStorage.Store(context.Background(), certKey, []byte{})
