@@ -43,7 +43,7 @@ require (
 	github.com/prometheus/client_model v0.3.0
 	github.com/prometheus/common v0.42.0
 	github.com/redhat-developer/app-services-sdk-go/serviceaccounts v0.4.0
-	github.com/rs/xid v1.4.0
+	github.com/rs/xid v1.5.0
 	github.com/santhosh-tekuri/jsonschema/v3 v3.1.0
 	github.com/selvatico/go-mocket v1.0.7
 	github.com/senseyeio/duration v0.0.0-20180430131211-7c2a214ada46
