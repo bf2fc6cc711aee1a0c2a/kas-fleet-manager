@@ -29,7 +29,7 @@ A new `InterfaceNameMock` struct will be generated and can be used in tests.
 For more information on using `moq`, see:
 
 - [The moq repository](https://github.com/matryer/moq)
-- The IDGenerator [interface](../pkg/client/ocm/id.go) and [mock](../pkg/client/ocm/idgenerator_moq_test.go) in this repository 
+- The IDGenerator [interface](../pkg/client/ocm/id.go) and [mock](../pkg/client/ocm/idgenerator_moq.go) in this repository
 
 For mocking the OCM client, [this wrapper interface](../pkg/client/ocm/client.go). If using the OCM SDK in
 any component of the system, please ensure the OCM SDK logic is placed inside this mock-able
@@ -60,7 +60,7 @@ defer teardown()
 
 See [TestKafkaPost integration test](../internal/kafka/test/integration/kafkas_test.go) as an example of this.
 
->NOTE: the `teardown` function is responsible for performing post test cleanups e.g of service accounts that are provisioned 
+>NOTE: the `teardown` function is responsible for performing post test cleanups e.g of service accounts that are provisioned
 for the Fleetshard authentication or Kafka canary service account. Ensure that if the integration test of a new features provision external resources, then these are properly cleanedup.
 
 Integration tests in this service can take advantage of running in an "emulated OCM API". This
@@ -129,15 +129,15 @@ import (
 func MyTestFunction(t *testing.T) {
     err := utils.NewPollerBuilder().
         // test output should go to `t.Logf` instead of `fmt.Printf`
-        OutputFunction(t.Logf). 
+        OutputFunction(t.Logf).
         // sets number of retries and interval between each retry
         IntervalAndRetries(10 * time.Second, 10).
         OnRetry(func(attempt int, maxAttempts int) (done bool, err error) { // function executed on each retry
-            // put your logic here 
+            // put your logic here
             return true, nil
         }).
         Build().Poll()
-    if err != nil { 
+    if err != nil {
         // ...
     }
     // ...
@@ -148,9 +148,9 @@ func MyTestFunction(t *testing.T) {
 
 ### Mock KAS Fleetshard Sync
 The mock [KAS Fleetshard Sync](../internal/kafka/test/mocks/kasfleetshardsync/kas-fleetshard-sync.go) is used to reconcile data plane and Kafka cluster status during integration tests. This also needs to be used even when running integration tests against a real OCM environment as the KAS Fleetshard Sync in the data plane cluster cannot
-communicate to the KAS Fleet Manager during integration test runs. 
+communicate to the KAS Fleet Manager during integration test runs.
 
-The mock KAS Fleetshard Sync needs to be started at the start of a test that requires updates to a data plane or Kafka cluster status. 
+The mock KAS Fleetshard Sync needs to be started at the start of a test that requires updates to a data plane or Kafka cluster status.
 
 **Example Usage:**
 ```go
@@ -233,4 +233,4 @@ Some endpoints will act differently depending on privileges of the entity callin
 
 ### Avoid setting up Kafka_SRE Identity Provider for Dataplane clusters
 
-The KafkaSRE identity provider is automatically setup for each cluster in `cluster_provisioned` state and it is reconciled every time for all the clusters in `ready` state. This step is not done if the cluster IDP has already been configured i.e the `identity_provider_id` column is set. When it is not required to set up the IDP, you just have to make sure that the dataplane cluster in under test has the `IdentityProviderID` field / `identity_provider_id` column set to a dummy value.  
+The KafkaSRE identity provider is automatically setup for each cluster in `cluster_provisioned` state and it is reconciled every time for all the clusters in `ready` state. This step is not done if the cluster IDP has already been configured i.e the `identity_provider_id` column is set. When it is not required to set up the IDP, you just have to make sure that the dataplane cluster in under test has the `IdentityProviderID` field / `identity_provider_id` column set to a dummy value.
