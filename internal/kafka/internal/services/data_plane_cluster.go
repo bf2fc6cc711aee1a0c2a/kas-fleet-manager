@@ -175,7 +175,5 @@ func (d *dataPlaneClusterService) isFleetShardOperatorReady(status *dbapi.DataPl
 }
 
 func (d *dataPlaneClusterService) clusterCanProcessStatusReports(cluster *api.Cluster) bool {
-	return cluster.Status == api.ClusterReady ||
-		cluster.Status == api.ClusterFull ||
-		cluster.Status == api.ClusterWaitingForKasFleetShardOperator
+	return cluster.Status == api.ClusterReady || cluster.Status == api.ClusterWaitingForKasFleetShardOperator
 }

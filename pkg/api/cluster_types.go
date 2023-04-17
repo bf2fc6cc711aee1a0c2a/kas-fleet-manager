@@ -102,8 +102,6 @@ const (
 	ClusterCleanup ClusterStatus = "cleanup"
 	// ClusterWaitingForKasFleetShardOperator the cluster is waiting for the KAS fleetshard operator to be ready
 	ClusterWaitingForKasFleetShardOperator ClusterStatus = "waiting_for_kas_fleetshard_operator"
-	// ClusterFull the cluster is full and cannot accept more Kafka clusters
-	ClusterFull ClusterStatus = "full"
 
 	ClusterProviderOCM        ClusterProviderType = "ocm"
 	ClusterProviderAwsEKS     ClusterProviderType = "aws_eks"
