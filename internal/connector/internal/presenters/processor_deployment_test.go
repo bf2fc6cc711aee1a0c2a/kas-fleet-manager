@@ -103,7 +103,7 @@ func Test_PresentProcessorDeployment(t *testing.T) {
 	g.Expect(pd).ToNot(gomega.BeNil())
 	g.Expect(pd.Id).To(gomega.Equal("deployment_id"))
 	g.Expect(pd.Kind).To(gomega.Equal(KindProcessorDeployment))
-	g.Expect(pd.Href).To(gomega.Equal("/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/cluster_id/processors/deployments/deployment_id"))
+	g.Expect(pd.Href).To(gomega.Equal("/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/cluster_id/processors/deployment_id"))
 	g.Expect(pd.Spec).ToNot(gomega.BeNil())
 	g.Expect(pd.Spec.ProcessorId).To(gomega.Equal("id"))
 	g.Expect(pd.Spec.NamespaceId).To(gomega.Equal("namespace_id"))

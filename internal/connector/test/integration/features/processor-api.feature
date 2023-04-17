@@ -72,6 +72,11 @@ Feature: create a processor
       """
 
   Scenario: Create eval namespace and create processor
+    ########################################################################
+    # *ALL* Processor Integration Tests are ran within a locked block.
+    # Both Connector and Processor tests manipulate a Cluster and related
+    # resources. To avoid conflicts Processor tests do not run in parallel.
+    ########################################################################
     Given LOCK--------------------------------------------------------------
     Given I am logged in as "Greg"
     When I POST path "/v1/kafka_connector_clusters" with json body:
@@ -153,6 +158,10 @@ Feature: create a processor
     #{}
     #"""
     And the ".total" selection from the response should match "1"
+
+    ########################################################################
+    # Create processor tests
+    ########################################################################
 
     # Create a Processor in the provisioned namespace
     When I POST path "/v2alpha1/processors?async=true" with json body:
@@ -254,6 +263,42 @@ Feature: create a processor
       }
       """
 
+    # Try to create another Processor with an invalid processor_type_id
+    When I POST path "/v2alpha1/processors?async=true" with json body:
+      """
+      {
+        "kind": "Processor",
+        "name": "example 1",
+        "namespace_id": "${default_namespace_id}",
+        "processor_type_id": "invalid",
+        "kafka": {
+          "id": "mykafka-id",
+          "url": "mykafka-url"
+        },
+        "service_account": {
+          "client_id": "myclient",
+          "client_secret": "myclient_secret"
+        },
+        "definition": { "from": { "uri": "kafka:my-topic", "steps": []} }
+      }
+      """
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "processor_type_id is not valid. Must be one of: processor_0.1"
+      }
+      """
+
+    ########################################################################
+    # List processor tests
+    ########################################################################
+
     # List processors
     When I GET path "/v2alpha1/processors"
     Then the response code should be 200
@@ -303,37 +348,9 @@ Feature: create a processor
       }
       """
 
-    # Try to create another Processor with an invalid processor_type_id
-    When I POST path "/v2alpha1/processors?async=true" with json body:
-      """
-      {
-        "kind": "Processor",
-        "name": "example 1",
-        "namespace_id": "${default_namespace_id}",
-        "processor_type_id": "invalid",
-        "kafka": {
-          "id": "mykafka-id",
-          "url": "mykafka-url"
-        },
-        "service_account": {
-          "client_id": "myclient",
-          "client_secret": "myclient_secret"
-        },
-        "definition": { "from": { "uri": "kafka:my-topic", "steps": []} }
-      }
-      """
-    Then the response code should be 400
-    And the response should match json:
-      """
-      {
-        "code": "CONNECTOR-MGMT-21",
-        "href": "/api/connector_mgmt/v1/errors/21",
-        "id": "21",
-        "kind": "Error",
-        "operation_id": "${response.operation_id}",
-        "reason": "processor_type_id is not valid. Must be one of: processor_0.1"
-      }
-      """
+    ########################################################################
+    # Update processor tests
+    ########################################################################
 
     # Check immutable fields
     Given I set the "Content-Type" header to "application/merge-patch+json"
@@ -529,12 +546,12 @@ Feature: create a processor
     Given I reset the vault counters
     Given I set the "Content-Type" header to "application/json"
     When I PATCH path "/v2alpha1/processors/${processor_id}" with json body:
-        """
-        {
-            "service_account": {
-              "client_secret": "patched_client_secret"
-            }
-        }
+      """
+      {
+          "service_account": {
+            "client_secret": "patched_client_secret"
+          }
+      }
         """
     Then the response code should be 202
     And the vault insert counter should be 1
@@ -548,7 +565,185 @@ Feature: create a processor
     When I GET path "/v2alpha1/processors/${processor_id}"
     Then the response code should be 404
 
-    # We are going to delete the connector...
+    ########################################################################
+    # Processor agent tests
+    ########################################################################
+
+    Given I am logged in as "Greg_shard"
+    And I set the "Authorization" header to "Bearer ${shard_token}"
+    When I GET path "/v2alpha1/agent/kafka_connector_clusters/${connector_cluster_id}/processors"
+    Then the response code should be 200
+    And I store the ".items[0].id" selection from the response as ${processor_deployment_id}
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "href": "/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/${connector_cluster_id}/processors/${processor_deployment_id}",
+            "id": "${processor_deployment_id}",
+            "kind": "ProcessorDeployment",
+            "metadata": {
+              "created_at": "${response.items[0].metadata.created_at}",
+              "updated_at": "${response.items[0].metadata.updated_at}",
+              "resolved_secrets": true,
+              "resource_version": 4
+            },
+            "spec": {
+              "definition": {
+                "from": {
+                  "steps": [],
+                  "uri": "kafka:my-topic"
+                }
+              },
+              "desired_state": "ready",
+              "error_handler": {
+                "dead_letter_queue": {},
+                "log": null,
+                "stop": {}
+              },
+              "kafka": {
+                "id": "mykafka-id",
+                "url": "mykafka-url"
+              },
+              "processor_id": "${processor_id}",
+              "namespace_id": "${default_namespace_id}",
+              "processor_resource_version": ${response.items[0].spec.processor_resource_version},
+              "processor_type_id": "processor_0.1",
+              "service_account": {
+                "client_id": "myclient",
+                "client_secret": "cGF0Y2hlZF9jbGllbnRfc2VjcmV0"
+              },
+              "shard_metadata": {
+                "annotations": {
+                  "trait.camel.apache.org/container.request-cpu": "0.20",
+                  "trait.camel.apache.org/container.request-memory": "128M",
+                  "trait.camel.apache.org/deployment.progress-deadline-seconds": "30"
+                },
+                "operators": [
+                  {
+                    "type": "camel-processor-operator",
+                    "version": "[1.0.0,2.0.0)"
+                  }
+                ],
+                "processor_image": "docker.io/rhoas/cos-processor:main-3ab5a9d34119bc1a6a9518fd66b1ba6a52aeee94",
+                "processor_revision": 91
+              }
+            },
+            "status": {
+              "operators": {
+                "assigned": {},
+                "available": {}
+              }
+            }
+          }
+        ],
+        "kind": "ProcessorDeploymentList",
+        "page": 1,
+        "size": 1,
+        "total": 1
+      }
+      """
+
+    When I PUT path "/v2alpha1/agent/kafka_connector_clusters/${connector_cluster_id}/processors/${processor_deployment_id}/status" with json body:
+      """
+      {
+        "phase":"ready",
+        "version": "0.0.1",
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }],
+        "operators": {
+          "assigned": {
+            "id": "operator_id",
+            "type": "operator_type"
+          }
+        }
+      }
+      """
+    Then the response code should be 204
+    And the response should match ""
+
+    When I GET path "/v2alpha1/agent/kafka_connector_clusters/${connector_cluster_id}/processors/${processor_deployment_id}"
+    Then the response code should be 200
+    And the response should match json:
+      """
+        {
+          "href": "/api/connector_mgmt/v2alpha1/agent/kafka_connector_clusters/${connector_cluster_id}/processors/${processor_deployment_id}",
+          "id": "${processor_deployment_id}",
+          "kind": "ProcessorDeployment",
+          "metadata": {
+            "created_at": "${response.metadata.created_at}",
+            "updated_at": "${response.metadata.updated_at}",
+            "resolved_secrets": true,
+            "resource_version": 5
+          },
+          "spec": {
+            "definition": {
+              "from": {
+                "steps": [],
+                "uri": "kafka:my-topic"
+              }
+            },
+            "desired_state": "ready",
+            "error_handler": {
+              "dead_letter_queue": {},
+              "log": null,
+              "stop": {}
+            },
+            "kafka": {
+              "id": "mykafka-id",
+              "url": "mykafka-url"
+            },
+            "processor_id": "${processor_id}",
+            "namespace_id": "${default_namespace_id}",
+            "processor_resource_version": ${response.spec.processor_resource_version},
+            "processor_type_id": "processor_0.1",
+            "service_account": {
+              "client_id": "myclient",
+              "client_secret": "cGF0Y2hlZF9jbGllbnRfc2VjcmV0"
+            },
+            "shard_metadata": {
+              "annotations": {
+                "trait.camel.apache.org/container.request-cpu": "0.20",
+                "trait.camel.apache.org/container.request-memory": "128M",
+                "trait.camel.apache.org/deployment.progress-deadline-seconds": "30"
+              },
+              "operators": [
+                {
+                  "type": "camel-processor-operator",
+                  "version": "[1.0.0,2.0.0)"
+                }
+              ],
+              "processor_image": "docker.io/rhoas/cos-processor:main-3ab5a9d34119bc1a6a9518fd66b1ba6a52aeee94",
+              "processor_revision": 91
+            }
+          },
+          "status": {
+            "conditions": [
+              {
+                "status": "True",
+                "type": "Ready"
+              }
+            ],
+            "operators": {
+              "assigned": {
+                "id": "operator_id",
+                "type": "operator_type"
+              },
+              "available": {}
+            },
+            "phase": "ready"
+          }
+        }
+      """
+
+    ########################################################################
+    # Delete processor tests
+    ########################################################################
+
+    # We are going to delete the processor...
     Given I reset the vault counters
     Given I am logged in as "Greg"
     When I DELETE path "/v2alpha1/processors/${processor_id}"
@@ -596,8 +791,9 @@ Feature: create a processor
       }
       """
 
-
-    #cleanup
+    ########################################################################
+    # Cleanup
+    ########################################################################
 
     # Delete namespaces
     Given I am logged in as "Greg"
@@ -635,4 +831,7 @@ Feature: create a processor
         }
       }
       """
+    ########################################################################
+    # End of Processor tests. Unlock.
+    ########################################################################
     And UNLOCK---------------------------------------------------------------
