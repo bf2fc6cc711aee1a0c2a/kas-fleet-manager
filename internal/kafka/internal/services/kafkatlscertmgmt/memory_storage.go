@@ -4,65 +4,52 @@ import (
 	"context"
 	"io/fs"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/sync"
 	"github.com/caddyserver/certmagic"
 )
 
 var _ certmagic.Storage = &inMemoryStorage{}
 
 type inMemoryStorageItem struct {
-	value []byte
-	mu    *sync.Mutex
-	sync.Locker
+	value        []byte
 	lastModified time.Time
-}
-
-func (item inMemoryStorageItem) Lock() {
-	item.mu.Lock()
-}
-
-func (item inMemoryStorageItem) Unlock() {
-	item.mu.Unlock()
 }
 
 type inMemoryStorage struct {
 	store map[string]inMemoryStorageItem
+	lock  sync.DistributedLockMgr
 }
 
-func newInMemoryStorage() *inMemoryStorage {
+func newInMemoryStorage(connectionFactory *db.ConnectionFactory) *inMemoryStorage {
 	return &inMemoryStorage{
 		store: map[string]inMemoryStorageItem{},
+		lock:  sync.NewDistributedLockMgr(connectionFactory.New()),
 	}
 }
 
 func (storage *inMemoryStorage) Lock(ctx context.Context, key string) error {
-	mu, ok := storage.store[key]
-	if !ok {
-		return fs.ErrNotExist
-	}
-
-	mu.Lock()
-	return nil
+	return storage.lock.Lock(key)
 }
 
 func (storage *inMemoryStorage) Unlock(ctx context.Context, key string) error {
-	mu, ok := storage.store[key]
-	if !ok {
-		return fs.ErrNotExist
-	}
-
-	mu.Unlock()
-	return nil
+	return storage.lock.Unlock(key)
 }
 
 func (storage *inMemoryStorage) Store(ctx context.Context, key string, value []byte) error {
-	storage.store[key] = inMemoryStorageItem{
-		value:        value,
-		lastModified: time.Now(),
-		mu:           &sync.Mutex{},
+	mu, ok := storage.store[key]
+	if !ok {
+		mu = inMemoryStorageItem{}
 	}
+	mu.value = value
+	mu.lastModified = time.Now()
+	if strings.HasPrefix(key, "acme/") {
+		logger.Logger.Infof("storing key '%s' with value %v", key, string(value))
+	}
+	storage.store[key] = mu
 	return nil
 }
 
