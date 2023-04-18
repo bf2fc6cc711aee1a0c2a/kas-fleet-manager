@@ -27,7 +27,7 @@ import (
 	"time"
 )
 
-type fields struct {
+type processorTestFields struct {
 	processorsService     services.ProcessorsService
 	processorTypesService services.ProcessorTypesService
 	namespaceService      services.ConnectorNamespaceService
@@ -35,7 +35,7 @@ type fields struct {
 	authZService          authz.AuthZService
 	processorsConfig      *config.ProcessorsConfig
 }
-type assertion func(body *[]byte, g *gomega.WithT, fields fields)
+type processorTestAssertion func(body *[]byte, g *gomega.WithT, fields processorTestFields)
 
 func toError(body *[]byte, g *gomega.WithT) api.Error {
 	var e api.Error
@@ -82,9 +82,9 @@ func Test_ProcessorsHandler_Get(t *testing.T) {
 	type test struct {
 		name           string
 		args           args
-		fields         fields
+		fields         processorTestFields
 		wantStatusCode int
-		assertion
+		processorTestAssertion
 	}
 
 	tests := []test{
@@ -92,14 +92,14 @@ func Test_ProcessorsHandler_Get(t *testing.T) {
 			args:           args{id: ""},
 			name:           "Processor Id not valid",
 			wantStatusCode: 400,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("33"))
 			},
 		},
 		{
 			args: args{id: "not-found-processor-id"},
 			name: "Processor Id not found",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 						return nil, errors.NotFound("Not found")
@@ -107,14 +107,14 @@ func Test_ProcessorsHandler_Get(t *testing.T) {
 				},
 			},
 			wantStatusCode: 404,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("7"))
 			},
 		},
 		{
 			args: args{id: "processor-id"},
 			name: "Get:: Success",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 						return mockProcessorWithConditions(map[string]interface{}{"id": "processor-id"}), nil
@@ -122,7 +122,7 @@ func Test_ProcessorsHandler_Get(t *testing.T) {
 				},
 			},
 			wantStatusCode: 200,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toProcessor(body, g).Id).To(gomega.Equal("processor-id"))
 			},
 		},
@@ -143,7 +143,7 @@ func Test_ProcessorsHandler_Get(t *testing.T) {
 			g.Expect(err).ToNot(gomega.HaveOccurred())
 			g.Expect(body).ToNot(gomega.BeNil())
 			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
-			tt.assertion(&body, g, tt.fields)
+			tt.processorTestAssertion(&body, g, tt.fields)
 		})
 	}
 }
@@ -156,9 +156,9 @@ func Test_ProcessorsHandler_Delete(t *testing.T) {
 	type test struct {
 		name           string
 		args           args
-		fields         fields
+		fields         processorTestFields
 		wantStatusCode int
-		assertion
+		processorTestAssertion
 	}
 
 	tests := []test{
@@ -166,14 +166,14 @@ func Test_ProcessorsHandler_Delete(t *testing.T) {
 			args:           args{id: ""},
 			name:           "Processor Id not valid",
 			wantStatusCode: 400,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("33"))
 			},
 		},
 		{
 			args: args{id: "not-found-processor-id"},
 			name: "Processor Id not found",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 						return nil, errors.NotFound("Not found")
@@ -181,14 +181,14 @@ func Test_ProcessorsHandler_Delete(t *testing.T) {
 				},
 			},
 			wantStatusCode: 404,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("7"))
 			},
 		},
 		{
 			args: args{id: "processor-id"},
 			name: "Delete:: Success",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 						return mockProcessorWithConditions(map[string]interface{}{
@@ -213,7 +213,7 @@ func Test_ProcessorsHandler_Delete(t *testing.T) {
 				},
 			},
 			wantStatusCode: 204,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				f, ok := fields.processorsService.(*services.ProcessorsServiceMock)
 				if !ok {
 					g.Fail("Failed to get reference to ProcessorsServiceMock")
@@ -244,7 +244,7 @@ func Test_ProcessorsHandler_Delete(t *testing.T) {
 			g.Expect(err).ToNot(gomega.HaveOccurred())
 			g.Expect(body).ToNot(gomega.BeNil())
 			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
-			tt.assertion(&body, g, tt.fields)
+			tt.processorTestAssertion(&body, g, tt.fields)
 		})
 	}
 }
@@ -257,15 +257,15 @@ func Test_ProcessorsHandler_List(t *testing.T) {
 	type test struct {
 		name           string
 		args           args
-		fields         fields
+		fields         processorTestFields
 		wantStatusCode int
-		assertion
+		processorTestAssertion
 	}
 
 	tests := []test{
 		{
 			name: "Successful list:: Empty results",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *coreService.ListArguments, clusterId string) (dbapi.ProcessorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
 						list := dbapi.ProcessorWithConditionsList{}
@@ -275,13 +275,13 @@ func Test_ProcessorsHandler_List(t *testing.T) {
 				},
 			},
 			wantStatusCode: 200,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(len(toProcessorList(body, g).Items)).To(gomega.Equal(0))
 			},
 		},
 		{
 			name: "Successful list:: Basic results",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *coreService.ListArguments, clusterId string) (dbapi.ProcessorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
 						list := dbapi.ProcessorWithConditionsList{
@@ -300,7 +300,7 @@ func Test_ProcessorsHandler_List(t *testing.T) {
 				},
 			},
 			wantStatusCode: 200,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				list := toProcessorList(body, g)
 				g.Expect(list.Page).To(gomega.Equal(int32(0)))
 				g.Expect(list.Total).To(gomega.Equal(int32(2)))
@@ -312,7 +312,7 @@ func Test_ProcessorsHandler_List(t *testing.T) {
 			args: args{
 				url: "?page=1&size=2&search=search&orderBy=orderBy",
 			},
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *coreService.ListArguments, clusterId string) (dbapi.ProcessorWithConditionsList, *api.PagingMeta, *errors.ServiceError) {
 						list := dbapi.ProcessorWithConditionsList{}
@@ -322,7 +322,7 @@ func Test_ProcessorsHandler_List(t *testing.T) {
 				},
 			},
 			wantStatusCode: 200,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				f, ok := fields.processorsService.(*services.ProcessorsServiceMock)
 				if !ok {
 					g.Fail("Failed to get reference to ProcessorsServiceMock")
@@ -352,7 +352,7 @@ func Test_ProcessorsHandler_List(t *testing.T) {
 			g.Expect(err).ToNot(gomega.HaveOccurred())
 			g.Expect(body).ToNot(gomega.BeNil())
 			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
-			tt.assertion(&body, g, tt.fields)
+			tt.processorTestAssertion(&body, g, tt.fields)
 		})
 	}
 }
@@ -368,9 +368,9 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 	type test struct {
 		name           string
 		args           args
-		fields         fields
+		fields         processorTestFields
 		wantStatusCode int
-		assertion
+		processorTestAssertion
 	}
 
 	token, _ := authentication.TokenFromContext(ctx)
@@ -441,7 +441,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 			},
 			name:           "Processor Id not valid",
 			wantStatusCode: 400,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("33"))
 			},
 		},
@@ -453,7 +453,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 			},
 			name:           "Content-Type header not valid",
 			wantStatusCode: 400,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("21"))
 			},
 		},
@@ -464,7 +464,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				contentType: "application/json",
 			},
 			name: "Non-existent Processor",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 						return nil, errors.NotFound("Not found")
@@ -473,7 +473,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				processorTypesService: processorTypesService,
 			},
 			wantStatusCode: 404,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("7"))
 			},
 		},
@@ -485,7 +485,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				contentType: "application/json",
 			},
 			name: "Immutable field:: namespace_id",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 						return existingProcessor(dbapi.ProcessorStatusPhaseReady, dbapi.ProcessorReady), nil
@@ -503,7 +503,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				},
 			},
 			wantStatusCode: 409,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("21"))
 			},
 		},
@@ -515,7 +515,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				contentType: "application/json",
 			},
 			name: "Immutable field:: processor_type_id",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 						return existingProcessor(dbapi.ProcessorStatusPhaseReady, dbapi.ProcessorReady), nil
@@ -533,7 +533,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				},
 			},
 			wantStatusCode: 409,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("21"))
 			},
 		},
@@ -545,7 +545,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				contentType: "application/json",
 			},
 			name: "Immutable field:: channel",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 						return existingProcessor(dbapi.ProcessorStatusPhaseReady, dbapi.ProcessorReady), nil
@@ -563,7 +563,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				},
 			},
 			wantStatusCode: 409,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("21"))
 			},
 		},
@@ -575,7 +575,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				contentType: APPLICATION_JSON,
 			},
 			name: "Update:: Successful:: Ready",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 						return existingProcessor(dbapi.ProcessorStatusPhaseReady, dbapi.ProcessorReady), nil
@@ -596,7 +596,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				},
 			},
 			wantStatusCode: 202,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				f, ok := fields.processorsService.(*services.ProcessorsServiceMock)
 				if !ok {
 					g.Fail("Failed to get reference to ProcessorsServiceMock")
@@ -625,7 +625,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				contentType: APPLICATION_JSON,
 			},
 			name: "Update:: Successful:: Preparing",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 						return existingProcessor(dbapi.ProcessorStatusPhasePreparing, dbapi.ProcessorReady), nil
@@ -646,7 +646,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				},
 			},
 			wantStatusCode: 202,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				f, ok := fields.processorsService.(*services.ProcessorsServiceMock)
 				if !ok {
 					g.Fail("Failed to get reference to ProcessorsServiceMock")
@@ -665,7 +665,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				contentType: APPLICATION_JSON,
 			},
 			name: "Update:: Successful:: Deleting",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 						return existingProcessor(dbapi.ProcessorStatusPhaseDeleting, dbapi.ProcessorReady), nil
@@ -686,7 +686,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				},
 			},
 			wantStatusCode: 202,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				f, ok := fields.processorsService.(*services.ProcessorsServiceMock)
 				if !ok {
 					g.Fail("Failed to get reference to ProcessorsServiceMock")
@@ -706,7 +706,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				contentType: APPLICATION_JSON,
 			},
 			name: "Update:: Successful:: Deleted",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 						return existingProcessor(dbapi.ProcessorStatusPhaseDeleted, dbapi.ProcessorReady), nil
@@ -727,7 +727,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				},
 			},
 			wantStatusCode: 202,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				f, ok := fields.processorsService.(*services.ProcessorsServiceMock)
 				if !ok {
 					g.Fail("Failed to get reference to ProcessorsServiceMock")
@@ -747,7 +747,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				contentType: APPLICATION_JSON,
 			},
 			name: "Update:: Successful:: Deprovisioning",
-			fields: fields{
+			fields: processorTestFields{
 				processorsService: &services.ProcessorsServiceMock{
 					GetFunc: func(ctx context.Context, id string) (*dbapi.ProcessorWithConditions, *errors.ServiceError) {
 						return existingProcessor(dbapi.ProcessorStatusPhaseDeprovisioning, dbapi.ProcessorReady), nil
@@ -768,7 +768,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 				},
 			},
 			wantStatusCode: 202,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				f, ok := fields.processorsService.(*services.ProcessorsServiceMock)
 				if !ok {
 					g.Fail("Failed to get reference to ProcessorsServiceMock")
@@ -799,7 +799,7 @@ func Test_ProcessorsHandler_Update(t *testing.T) {
 			g.Expect(err).ToNot(gomega.HaveOccurred())
 			g.Expect(body).ToNot(gomega.BeNil())
 			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
-			tt.assertion(&body, g, tt.fields)
+			tt.processorTestAssertion(&body, g, tt.fields)
 		})
 	}
 }
@@ -814,9 +814,9 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 	type test struct {
 		name           string
 		args           args
-		fields         fields
+		fields         processorTestFields
 		wantStatusCode int
-		assertion
+		processorTestAssertion
 	}
 
 	token, _ := authentication.TokenFromContext(ctx)
@@ -862,11 +862,11 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 				body: []byte(`{}`),
 				ctx:  ctx,
 			},
-			fields: fields{
+			fields: processorTestFields{
 				authZService: authz.NewAuthZService(nil, nil, nil),
 			},
 			wantStatusCode: 400,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("103"))
 			},
 		},
@@ -877,11 +877,11 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 				body: []byte(`{"name": "", "namespace_id": "namespace_id"}`),
 				ctx:  ctx,
 			},
-			fields: fields{
+			fields: processorTestFields{
 				authZService: authorizingAuthService,
 			},
 			wantStatusCode: 400,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("33"))
 			},
 		},
@@ -892,11 +892,11 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 				body: []byte(`{"name": "name", "namespace_id": "namespace_id", "kafka": {"id": "", "url": "kafka_url"}, "service_account": {"client_id": "client_id", "client_secret": "client_secret"} }`),
 				ctx:  ctx,
 			},
-			fields: fields{
+			fields: processorTestFields{
 				authZService: authorizingAuthService,
 			},
 			wantStatusCode: 400,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("33"))
 			},
 		},
@@ -907,11 +907,11 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 				body: []byte(`{"name": "name", "namespace_id": "namespace_id", "kafka": {"id": "kafka_id", "url": ""}, "service_account": {"client_id": "client_id", "client_secret": "client_secret"} }`),
 				ctx:  ctx,
 			},
-			fields: fields{
+			fields: processorTestFields{
 				authZService: authorizingAuthService,
 			},
 			wantStatusCode: 400,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("33"))
 			},
 		},
@@ -922,11 +922,11 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 				body: []byte(`{"name": "name", "namespace_id": "namespace_id", "kafka": {"id": "kafka_id", "url": "kafka_url"}, "service_account": {"client_id": ""} }`),
 				ctx:  ctx,
 			},
-			fields: fields{
+			fields: processorTestFields{
 				authZService: authorizingAuthService,
 			},
 			wantStatusCode: 400,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("33"))
 			},
 		},
@@ -937,11 +937,11 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 				body: []byte(`{"name": "name", "namespace_id": "namespace_id", "kafka": {"id": "kafka_id", "url": "kafka_url"}, "service_account": {"client_id": "client_id", "client_secret": ""} }`),
 				ctx:  ctx,
 			},
-			fields: fields{
+			fields: processorTestFields{
 				authZService: authorizingAuthService,
 			},
 			wantStatusCode: 400,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("33"))
 			},
 		},
@@ -952,11 +952,11 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 				body: []byte(`{"name": "name", "namespace_id": "namespace_id", "kafka": {"id": "kafka_id", "url": "kafka_url"}, "service_account": {"client_id": "client_id", "client_secret": "client_secret"}, "desired_state": "failed" }`),
 				ctx:  ctx,
 			},
-			fields: fields{
+			fields: processorTestFields{
 				authZService: authorizingAuthService,
 			},
 			wantStatusCode: 400,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("21"))
 			},
 		},
@@ -967,14 +967,14 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 				body: []byte(`{"name": "name", "namespace_id": "", "kafka": {"id": "kafka_id", "url": "kafka_url"}, "service_account": {"client_id": "client_id", "client_secret": "client_secret"} }`),
 				ctx:  ctx,
 			},
-			fields: fields{
+			fields: processorTestFields{
 				authZService: authorizingAuthService,
 				processorsConfig: &config.ProcessorsConfig{
 					ProcessorsEnabled: true,
 				},
 			},
 			wantStatusCode: 400,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("33"))
 			},
 		},
@@ -985,7 +985,7 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 				body: []byte(`{"name": "name", "namespace_id": "namespace_id", "kafka": {"id": "kafka_id", "url": "kafka_url"}, "service_account": {"client_id": "client_id", "client_secret": "client_secret"} }`),
 				ctx:  ctx,
 			},
-			fields: fields{
+			fields: processorTestFields{
 				authZService: authz.NewAuthZService(nil,
 					&services.ConnectorNamespaceServiceMock{
 						GetNamespaceTenantFunc: func(namespaceId string) (*dbapi.ConnectorNamespace, *errors.ServiceError) {
@@ -994,7 +994,7 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 					nil),
 			},
 			wantStatusCode: 400,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("21"))
 			},
 		},
@@ -1005,7 +1005,7 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 				body: []byte(`{"name": "name", "namespace_id": "namespace_id", "kafka": {"id": "kafka_id", "url": "kafka_url"}, "service_account": {"client_id": "client_id", "client_secret": "client_secret"} }`),
 				ctx:  ctx,
 			},
-			fields: fields{
+			fields: processorTestFields{
 				authZService: authz.NewAuthZService(nil,
 					&services.ConnectorNamespaceServiceMock{
 						GetNamespaceTenantFunc: func(namespaceId string) (*dbapi.ConnectorNamespace, *errors.ServiceError) {
@@ -1019,7 +1019,7 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 					nil),
 			},
 			wantStatusCode: 403,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				g.Expect(toError(body, g).ID).To(gomega.Equal("120"))
 			},
 		},
@@ -1030,7 +1030,7 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 				body: []byte(`{"name": "name", "namespace_id": "namespace_id", "kafka": {"id": "kafka_id", "url": "kafka_url"}, "service_account": {"client_id": "client_id", "client_secret": "client_secret"}, "definition": { "from": { "uri": "kafka:my-topic", "steps": [] }} }`),
 				ctx:  ctx,
 			},
-			fields: fields{
+			fields: processorTestFields{
 				authZService: authorizingAuthService,
 				processorsConfig: &config.ProcessorsConfig{
 					ProcessorsEnabled: true,
@@ -1051,7 +1051,7 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 				vaultService:          vaultService,
 			},
 			wantStatusCode: 202,
-			assertion: func(body *[]byte, g *gomega.WithT, fields fields) {
+			processorTestAssertion: func(body *[]byte, g *gomega.WithT, fields processorTestFields) {
 				processor := toProcessor(body, g)
 				g.Expect(processor).NotTo(gomega.BeNil())
 				g.Expect(processor.Id).NotTo(gomega.BeNil())
@@ -1082,7 +1082,7 @@ func Test_ProcessorsHandler_Create(t *testing.T) {
 			g.Expect(err).ToNot(gomega.HaveOccurred())
 			g.Expect(body).ToNot(gomega.BeNil())
 			g.Expect(resp.StatusCode).To(gomega.Equal(tt.wantStatusCode))
-			tt.assertion(&body, g, tt.fields)
+			tt.processorTestAssertion(&body, g, tt.fields)
 		})
 	}
 }

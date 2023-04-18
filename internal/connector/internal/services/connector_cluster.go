@@ -23,6 +23,7 @@ import (
 	"gorm.io/gorm"
 )
 
+//go:generate moq -out connector_cluster_moq.go . ConnectorClusterService
 type ConnectorClusterService interface {
 	Create(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError
 	Get(ctx context.Context, id string) (*dbapi.ConnectorCluster, *errors.ServiceError)

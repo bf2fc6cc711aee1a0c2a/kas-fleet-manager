@@ -120,17 +120,9 @@ func Test_ValidateProcessorRequest(t *testing.T) {
 		panic("Unable to convert Json schema string to Json object")
 	}
 	processorTypesService := &services.ProcessorTypesServiceMock{
-		CatalogEntriesReconciledFunc:      nil,
-		CleanupDeploymentsFunc:            nil,
-		CreateFunc:                        nil,
-		DeleteOrDeprecateRemovedTypesFunc: nil,
-		ForEachProcessorCatalogEntryFunc:  nil,
 		GetFunc: func(processorTypeId string) (*dbapi.ProcessorType, *errors.ServiceError) {
 			return processorType, nil
 		},
-		GetLatestProcessorShardMetadataFunc: nil,
-		ListFunc:                            nil,
-		PutProcessorShardMetadataFunc:       nil,
 	}
 
 	tests := []test{
@@ -209,17 +201,9 @@ func Test_ValidateProcessor(t *testing.T) {
 		panic("Unable to convert Json schema string to Json object")
 	}
 	processorTypesService := &services.ProcessorTypesServiceMock{
-		CatalogEntriesReconciledFunc:      nil,
-		CleanupDeploymentsFunc:            nil,
-		CreateFunc:                        nil,
-		DeleteOrDeprecateRemovedTypesFunc: nil,
-		ForEachProcessorCatalogEntryFunc:  nil,
 		GetFunc: func(processorTypeId string) (*dbapi.ProcessorType, *errors.ServiceError) {
 			return processorType, nil
 		},
-		GetLatestProcessorShardMetadataFunc: nil,
-		ListFunc:                            nil,
-		PutProcessorShardMetadataFunc:       nil,
 	}
 
 	tests := []test{
