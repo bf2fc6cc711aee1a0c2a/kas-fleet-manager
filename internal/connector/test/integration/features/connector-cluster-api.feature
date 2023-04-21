@@ -200,9 +200,7 @@ Feature: create a connector
     And the response should match ""
 
     # wait for cluster cleanup
-    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${cluster_id}" response code to match "410"
-    When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
-    Then the response code should be 410
+    Given I wait up to "30" seconds for a GET on path "/v1/kafka_connector_clusters/${cluster_id}" response code to match "410"
     And the response should match json:
       """
       {

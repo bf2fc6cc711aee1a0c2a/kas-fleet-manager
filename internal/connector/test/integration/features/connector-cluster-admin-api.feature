@@ -2,12 +2,12 @@ Feature: connector cluster admin API
 
   Background:
     Given the path prefix is "/api/connector_mgmt"
-    Given an org admin user named "Jimmy"
+    Given an org admin user named "UniqueID Org Admin User"
     Given a user named "Shard"
-    Given an admin user named "Ricky Bobby" with roles "cos-fleet-manager-admin-full"
+    Given an admin user named "UniqueID Admin User" with roles "cos-fleet-manager-admin-full"
 
   Scenario: connector cluster is created and agent update status.
-    Given I am logged in as "Jimmy"
+    Given I am logged in as "UniqueID Org Admin User"
     Given I store an UID as ${openshift.id.1}
     Given I store an UID as ${openshift.id.2}
 
@@ -78,7 +78,7 @@ Feature: connector cluster admin API
     # Get connector cluster status with connector-fleet-manager-admin-full role
     # -----------------------------------------------------------------------------------
 
-    Given I am logged in as "Ricky Bobby"
+    Given I am logged in as "UniqueID Admin User"
     When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 200
     And the ".status.conditions[0].type" selection from the response should match "Ready"
@@ -137,7 +137,7 @@ Feature: connector cluster admin API
     # Get connector cluster status with connector-fleet-manager-admin-full role
     # -----------------------------------------------------------------------------------
 
-    Given I am logged in as "Ricky Bobby"
+    Given I am logged in as "UniqueID Admin User"
     When I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 200
     And the ".status.conditions[0].type" selection from the response should match "Ready"
@@ -155,7 +155,7 @@ Feature: connector cluster admin API
     # Get connector cluster status as org admin
     # -----------------------------------------------------------------------------------
 
-    Given I am logged in as "Jimmy"
+    Given I am logged in as "UniqueID Org Admin User"
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 200
     And the ".status.platform" selection from the response should match "null"
@@ -166,7 +166,7 @@ Feature: connector cluster admin API
     # -----------------------------------------------------------------------------------
 
     # delete namespace
-    Given I am logged in as "Ricky Bobby"
+    Given I am logged in as "UniqueID Admin User"
 
     When I DELETE path "/v1/admin/kafka_connector_namespaces/${connector_namespace_id}"
     Then the response code should be 204
@@ -176,10 +176,8 @@ Feature: connector cluster admin API
     And the response should match ""
 
     # wait for cluster cleanup
-    Given I am logged in as "Jimmy"
+    Given I am logged in as "UniqueID Org Admin User"
     Given I wait up to "30" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response code to match "410"
-    When I GET path "/v1/kafka_connector_namespaces/${connector_namespace_id}"
-    Then the response code should be 410
     And the response should match json:
       """
       {
@@ -193,16 +191,14 @@ Feature: connector cluster admin API
       """
 
     # delete cluster
-    Given I am logged in as "Jimmy"
+    Given I am logged in as "UniqueID Org Admin User"
     When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
     Then the response code should be 204
     And the response should match ""
 
     # wait for cluster cleanup
-    Given I am logged in as "Jimmy"
+    Given I am logged in as "UniqueID Org Admin User"
     Given I wait up to "30" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "410"
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
-    Then the response code should be 410
     And the response should match json:
       """
       {
