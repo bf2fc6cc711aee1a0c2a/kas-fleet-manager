@@ -15,9 +15,10 @@ package cucumber
 
 import (
 	"context"
-	"github.com/rs/xid"
 	"sync"
 	"time"
+
+	"github.com/rs/xid"
 
 	"github.com/cucumber/godog"
 )
@@ -33,14 +34,17 @@ func init() {
 
 		ctx.Before(func(ctx context.Context, sc *godog.Scenario) (context.Context, error) {
 			testCaseLock.RLock()
+			s.hasReadLock = true
 			return ctx, nil
 		})
 
 		ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
 			if s.hasTestCaseLock {
 				testCaseLock.Unlock()
-			} else {
+				s.hasTestCaseLock = false
+			} else if s.hasReadLock {
 				testCaseLock.RUnlock()
+				s.hasReadLock = false
 			}
 
 			return ctx, nil
@@ -52,7 +56,10 @@ func (s *TestScenario) lock() error {
 	// User might have already locked the scenario.
 	if !s.hasTestCaseLock {
 		// Convert to write lock to be the only executing scenario.
-		testCaseLock.RUnlock()
+		if s.hasReadLock {
+			testCaseLock.RUnlock()
+			s.hasReadLock = false
+		}
 		testCaseLock.Lock()
 		s.hasTestCaseLock = true
 	}
@@ -62,9 +69,12 @@ func (s *TestScenario) lock() error {
 func (s *TestScenario) unlock() error {
 	// User might have already unlocked the scenario.
 	if s.hasTestCaseLock {
-		// Convert to read lock to to allow other scenarios to keep running.
+		// Convert to read lock in order to allow other scenarios to keep running.
 		testCaseLock.Unlock()
-		testCaseLock.RLock()
+		if !s.hasReadLock {
+			testCaseLock.RLock()
+			s.hasReadLock = true
+		}
 		s.hasTestCaseLock = false
 	}
 	return nil
