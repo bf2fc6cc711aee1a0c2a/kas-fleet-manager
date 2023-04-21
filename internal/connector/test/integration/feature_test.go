@@ -116,17 +116,15 @@ func TestFeatures(t *testing.T) {
 			testName = strings.ReplaceAll(testName, "-", "_")
 
 			t.Run(testName, func(t *testing.T) {
-				// To preserve the current behavior, the test are market to be "safely" run in parallel, however
-				// we may think to introduce a new naming convention i.e. files that ends with _parallel would
-				// cause t.Parallel() to be invoked, other tests won't, so they won't be executed concurrently.
-				//
-				// This could help reducing/removing the need of explicit lock
-				t.Parallel()
+				// The assumption is that features run sequentially and scenario in a feature runs concurrently
+				// Running features in parallel brakes locking steps and test users session mechanisms
+				//t.Parallel()
 
 				o := opts
 				o.TestingT = t
 				o.Paths = []string{path.Join(root, info.Name())}
-				//o.Randomize = -1
+				o.Randomize = -1
+				o.StopOnFailure = true
 				_, exists := os.LookupEnv("GODOG_NO_COLORS")
 				if exists {
 					o.NoColors = true
@@ -135,7 +133,7 @@ func TestFeatures(t *testing.T) {
 				s := cucumber.NewTestSuite(helper)
 
 				status := godog.TestSuite{
-					Name:                "connectors",
+					Name:                "connectors-" + testName,
 					Options:             &o,
 					ScenarioInitializer: s.InitializeScenario,
 				}.Run()
