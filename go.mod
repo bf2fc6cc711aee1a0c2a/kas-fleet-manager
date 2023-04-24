@@ -27,7 +27,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/itchyny/gojq v0.12.12
 	github.com/lib/pq v1.10.7
-	github.com/libdns/route53 v1.3.2
+	github.com/libdns/route53 v1.3.3
 	github.com/looplab/fsm v1.0.1
 	github.com/mattn/go-sqlite3 v1.14.3 // indirect
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
