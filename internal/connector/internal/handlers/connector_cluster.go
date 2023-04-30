@@ -257,11 +257,11 @@ func (o *ConnectorClusterHandler) buildAddonParams(cluster *dbapi.ConnectorClust
 			Value: authTokenURL,
 		},
 		{
-			Id:    "mas-sso-base-url",
+			Id:    "sso-base-url",
 			Value: o.Keycloak.GetRealmConfig().BaseURL,
 		},
 		{
-			Id:    "mas-sso-realm",
+			Id:    "sso-realm",
 			Value: o.Keycloak.GetRealmConfig().Realm,
 		},
 		{
