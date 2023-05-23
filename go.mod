@@ -26,7 +26,7 @@ require (
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/itchyny/gojq v0.12.12
-	github.com/lib/pq v1.10.7
+	github.com/lib/pq v1.10.9
 	github.com/libdns/route53 v1.3.3
 	github.com/looplab/fsm v1.0.1
 	github.com/mattn/go-sqlite3 v1.14.3 // indirect
