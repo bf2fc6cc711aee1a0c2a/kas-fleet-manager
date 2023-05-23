@@ -10,7 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
+	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go/serviceaccountmgmt/apiv1/client"
 )
 
 const (
@@ -272,7 +272,7 @@ func (mockServer *redhatSSOMock) createServiceAccountHandler(w http.ResponseWrit
 		ClientId:    &clientId,
 		Secret:      &secret,
 		Name:        &serviceAccountCreateRequestData.Name,
-		Description: &serviceAccountCreateRequestData.Description,
+		Description: serviceAccountCreateRequestData.Description,
 	}
 
 	mockServer.serviceAccounts[clientId] = serviceAccountData

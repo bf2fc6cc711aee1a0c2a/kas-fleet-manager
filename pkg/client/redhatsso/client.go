@@ -14,7 +14,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
-	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-go/serviceaccounts/apiv1internal/client"
+	serviceaccountsclient "github.com/redhat-developer/app-services-sdk-core/app-services-sdk-go/serviceaccountmgmt/apiv1/client"
 )
 
 const (
@@ -189,7 +189,7 @@ func (c *rhSSOClient) CreateServiceAccount(accessToken string, name string, desc
 		ServiceAccountCreateRequestData(
 			serviceaccountsclient.ServiceAccountCreateRequestData{
 				Name:        name,
-				Description: description,
+				Description: &description,
 			}).Execute()
 
 	if resp != nil {
