@@ -440,7 +440,7 @@ func (k *KafkaManager) updateExpiresAtBasedOnQuotaEntitlement(kafka *dbapi.Kafka
 		}
 
 		// set expires_at to now + grace period days
-		expiresAtTime := time.Now().AddDate(0, 0, billingModel.GracePeriodDays)
+		expiresAtTime := time.Now().AddDate(0, 0, billingModel.GracePeriodDays).Add(time.Hour * 12)
 		logger.Logger.Infof("quota entitlement for kafka instance %q is no longer active, updating expires_at to %q", kafka.ID, expiresAtTime.Format(time.RFC1123Z))
 		return k.updateKafkaExpirationDate(kafka, &expiresAtTime)
 	}
