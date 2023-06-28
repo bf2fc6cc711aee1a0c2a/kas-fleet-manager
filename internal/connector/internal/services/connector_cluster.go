@@ -396,11 +396,20 @@ func (k *connectorClusterService) GetClientID(clusterID string) (string, error) 
 // SaveDeployment creates a connector deployment in the database
 func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *dbapi.ConnectorDeployment) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
-
-	if err := dbConn.Save(resource).Error; err != nil {
-		return services.HandleCreateError(`Connector deployment`, err)
+	if resource.Version != 0 {
+		dbConn = dbConn.Where("version = ?", resource.Version)
 	}
 
+	saveResult := dbConn.Save(resource)
+	if err := saveResult.Error; err != nil {
+		return services.HandleCreateError(`Connector deployment`, err)
+	}
+	if saveResult.RowsAffected == 0 {
+		return errors.Conflict("Optimistic locking: resource version changed from %v", resource.Version)
+	}
+
+	//refresh version
+	dbConn = k.connectionFactory.New()
 	if err := dbConn.Where("id = ?", resource.ID).Select("version").First(&resource).Error; err != nil {
 		return services.HandleGetError(`Connector deployment`, "id", resource.ID, err)
 	}
@@ -416,11 +425,20 @@ func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *
 
 func (k *connectorClusterService) UpdateDeployment(resource *dbapi.ConnectorDeployment) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
+
+	if resource.Version != 0 {
+		dbConn = dbConn.Where("version = ?", resource.Version)
+	}
+
 	updates := dbConn.Where("id = ?", resource.ID).
 		Updates(resource)
 	if err := updates.Error; err != nil {
-		return services.HandleUpdateError(`Connector namespace`, err)
+		return services.HandleUpdateError(`Connector deployment`, err)
 	}
+	if updates.RowsAffected == 0 {
+		return errors.Conflict("Optimistic locking: resource version changed from %v", resource.Version)
+	}
+
 	return nil
 }
 
@@ -494,7 +512,7 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Context, deploymentStatus dbapi.ConnectorDeploymentStatus) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
-	// lets get the connector id of the deployment..
+	// let's get the connector id of the deployment...
 	deployment := dbapi.ConnectorDeployment{}
 	if err := dbConn.Unscoped().Select("connector_id", "deleted_at").
 		Where("id = ?", deploymentStatus.ID).
@@ -505,7 +523,7 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 		return services.HandleGoneError("Connector deployment", "id", deploymentStatus.ID)
 	}
 
-	if err := dbConn.Model(&deploymentStatus).Where("id = ? and version <= ?", deploymentStatus.ID, deploymentStatus.Version).Save(&deploymentStatus).Error; err != nil {
+	if err := dbConn.Where("id = ? and version <= ?", deploymentStatus.ID, deploymentStatus.Version).Save(&deploymentStatus).Error; err != nil {
 		return errors.Conflict("failed to update deployment status: %s, probably a stale deployment status version was used: %d", err.Error(), deploymentStatus.Version)
 	}
 
@@ -531,8 +549,8 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 		}
 	}
 
-	// update the connector status
-	if err := dbConn.Where("id = ?", deployment.ConnectorID).Updates(&connectorStatus).Error; err != nil {
+	// update the connector status, don't updated deleted statues
+	if err := dbConn.Where("deleted_at IS NULL AND id = ?", deployment.ConnectorID).Updates(&connectorStatus).Error; err != nil {
 		return services.HandleUpdateError("Connector status", err)
 	}
 
@@ -564,7 +582,7 @@ func (k *connectorClusterService) FindAvailableNamespace(owner string, orgID str
 
 func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context, connectorID string) (resource dbapi.ConnectorDeployment, serr *errors.ServiceError) {
 
-	if err := k.connectionFactory.New().Preload(clause.Associations).
+	if err := k.connectionFactory.New().
 		Joins("Status").Joins("ConnectorShardMetadata").Joins("Connector").
 		Where("connector_id = ?", connectorID).First(&resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector deployment", "connector_id", connectorID, err)

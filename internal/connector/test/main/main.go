@@ -14,9 +14,9 @@ func main() {
 	// every log messages is prefixed by an error message stating the flags haven't been parsed.
 	_ = flag.CommandLine.Parse([]string{})
 
-	// Always log to stderr by default
-	if err := flag.Set("logtostderr", "true"); err != nil {
-		glog.Infof("Unable to set logtostderr to true")
+	// Always also log to stderr by default
+	if err := flag.Set("alsologtostderr", "true"); err != nil {
+		glog.Infof("Unable to set alsologtostderr to true")
 	}
 
 	env, err := environments.New(environments.GetEnvironmentStrFromEnv(), connector.ConfigProviders(false))

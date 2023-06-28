@@ -94,6 +94,7 @@ type TestScenario struct {
 	sessions        map[string]*TestSession
 	Variables       map[string]interface{}
 	hasTestCaseLock bool
+	hasReadLock     bool
 }
 
 func (s *TestScenario) User() *TestUser {

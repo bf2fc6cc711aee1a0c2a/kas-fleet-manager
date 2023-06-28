@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"gorm.io/gorm/clause"
 	"regexp"
 	"strings"
+
+	"gorm.io/gorm/clause"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
@@ -35,7 +36,7 @@ type ConnectorsService interface {
 	Update(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError
 	SaveStatus(ctx context.Context, resource dbapi.ConnectorStatus) *errors.ServiceError
 	Delete(ctx context.Context, id string) *errors.ServiceError
-	ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) []error
+	ForEach(f func(*dbapi.Connector) *errors.ServiceError, joins string, query string, args ...interface{}) []error
 	ForceDelete(ctx context.Context, id string) *errors.ServiceError
 
 	ResolveConnectorRefsWithBase64Secrets(resource *dbapi.Connector) (bool, *errors.ServiceError)
@@ -351,16 +352,21 @@ func (k *connectorsService) Update(ctx context.Context, resource *dbapi.Connecto
 	return nil
 }
 
-func (k *connectorsService) SaveStatus(ctx context.Context, resource dbapi.ConnectorStatus) *errors.ServiceError {
+func (k *connectorsService) SaveStatus(ctx context.Context, connectorStatus dbapi.ConnectorStatus) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Model(resource).Save(resource).Error; err != nil {
+	if err := dbConn.Where("deleted_at IS NULL").Save(&connectorStatus).Error; err != nil {
 		return errors.GeneralError("failed to update: %s", err.Error())
 	}
 	return nil
 }
 
-func (k *connectorsService) ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) []error {
+func (k *connectorsService) ForEach(f func(*dbapi.Connector) *errors.ServiceError, joins string, query string, args ...interface{}) []error {
 	dbConn := k.connectionFactory.New()
+
+	if joins != "" {
+		dbConn = dbConn.Joins(joins)
+	}
+
 	rows, err := dbConn.
 		Model(&dbapi.Connector{}).
 		Where(query, args...).

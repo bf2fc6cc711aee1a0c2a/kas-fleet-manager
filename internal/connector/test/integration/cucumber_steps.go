@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 	"github.com/golang/glog"
@@ -38,7 +39,7 @@ func (s *extender) iResetTheVaultCounters() error {
 }
 
 func (s *extender) theVaultDeleteCounterShouldBe(expected int64) error {
-	// we can only check the delete count on the TmpVault service impl...
+	// we can only check delete count on the TmpVault service impl...
 	var service vault.VaultService
 	if err := s.Suite.Helper.Env.ServiceContainer.Resolve(&service); err != nil {
 		return err
@@ -106,19 +107,27 @@ func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as str
 
 const clientIdList = "_client_id_list"
 
-func (s *extender) deleteKeycloakClients(sc *godog.Scenario, err error) {
+func (s *extender) deleteKeycloakClients() error {
 
 	if clientIds, ok := s.Variables[clientIdList].([]string); ok {
 		env := s.Suite.Helper.Env
 		var keycloakService sso.KafkaKeycloakService
 		env.MustResolve(&keycloakService)
 
+		var collectedErrors errors.ErrorList
 		for _, clientID := range clientIds {
 			if err := keycloakService.DeleteServiceAccountInternal(clientID); err != nil {
 				glog.Errorf("Error deleting keycloak client with clientId %s: %s", clientID, err)
+				collectedErrors.AddErrors(err)
 			}
 		}
+
+		if !collectedErrors.IsEmpty() {
+			return collectedErrors
+		}
+
 	}
+	return nil
 }
 
 func (s *extender) rememberKeycloakClientForCleanup(clientID string) error {
@@ -201,8 +210,7 @@ func init() {
 		ctx.Step(`^I delete or deprecate types not in latest connector catalog$`, e.iDeleteOrDeprecateRemovedTypes)
 
 		ctx.After(func(ctx context.Context, sc *godog.Scenario, err error) (context.Context, error) {
-			e.deleteKeycloakClients(sc, err)
-			return ctx, err
+			return ctx, e.deleteKeycloakClients()
 		})
 	})
 }

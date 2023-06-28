@@ -26,7 +26,6 @@ type ConnectorManager struct {
 	connectorClusterService services.ConnectorClusterService
 	connectorTypesService   services.ConnectorTypesService
 	vaultService            vault.VaultService
-	lastVersion             int64
 	db                      *db.ConnectionFactory
 	ctx                     context.Context
 }
@@ -79,26 +78,25 @@ func (k *ConnectorManager) Reconcile() []error {
 	}
 
 	// reconcile assigning connectors in "ready" desired state with "assigning" phase and a valid namespace id
-	k.doReconcile(&errs, "assigning", k.reconcileAssigning,
+	k.doReconcile(&errs, "assigning", k.reconcileAssigning, "",
 		"desired_state = ? AND phase = ? AND connectors.namespace_id IS NOT NULL", dbapi.ConnectorReady, dbapi.ConnectorStatusPhaseAssigning)
 
 	// reconcile unassigned connectors in "unassigned" desired state and "deleted" phase
-	k.doReconcile(&errs, "unassigned", k.reconcileUnassigned,
+	k.doReconcile(&errs, "unassigned", k.reconcileUnassigned, "",
 		"desired_state = ? AND phase = ?", dbapi.ConnectorUnassigned, dbapi.ConnectorStatusPhaseDeleted)
 
 	// reconcile deleting connectors with no deployments
-	k.doReconcile(&errs, "deleting", k.reconcileDeleting,
+	k.doReconcile(&errs, "deleting", k.reconcileDeleting, "",
 		"desired_state = ? AND phase = ?", dbapi.ConnectorDeleted, dbapi.ConnectorStatusPhaseDeleting)
 
 	// reconcile deleted connectors with no deployments
-	k.doReconcile(&errs, "deleted", k.reconcileDeleted,
+	k.doReconcile(&errs, "deleted", k.reconcileDeleted, "",
 		"desired_state = ? AND phase IN ?", dbapi.ConnectorDeleted,
 		[]string{string(dbapi.ConnectorStatusPhaseAssigning), string(dbapi.ConnectorStatusPhaseDeleted)})
 
 	// reconcile connector updates for assigned connectors that aren't being deleted...
-	k.doReconcile(&errs, "updated", k.reconcileConnectorUpdate,
-		"version > ? AND phase NOT IN ?", k.lastVersion,
-		[]string{string(dbapi.ConnectorStatusPhaseAssigning), string(dbapi.ConnectorStatusPhaseDeleting), string(dbapi.ConnectorStatusPhaseDeleted)})
+	k.doReconcile(&errs, "updated", k.reconcileConnectorUpdate, "LEFT JOIN connector_deployments ON connectors.id = connector_deployments.connector_id",
+		"connectors.version <> connector_deployments.connector_version AND phase NOT IN ?", []string{string(dbapi.ConnectorStatusPhaseAssigning), string(dbapi.ConnectorStatusPhaseDeleting), string(dbapi.ConnectorStatusPhaseDeleted)})
 
 	return errs
 }
@@ -248,21 +246,10 @@ func (k *ConnectorManager) reconcileConnectorUpdate(ctx context.Context, connect
 		}
 	}
 
-	if cerr := db.AddPostCommitAction(ctx, func() {
-		k.lastVersion = connector.Version
-	}); cerr != nil {
-		glog.Errorf("Failed to AddPostCommitAction to save lastVersion %d: %v", connector.Version, cerr.Error())
-		if err == nil {
-			err = cerr
-		} else {
-			err = errors.Errorf("Multiple errors in reconciling connector %s: %s; %s", connector.ID, err, cerr)
-		}
-	}
-
 	return err
 }
 
-func (k *ConnectorManager) doReconcile(errs *[]error, reconcilePhase string, reconcileFunc func(ctx context.Context, connector *dbapi.Connector) error, query string, args ...interface{}) {
+func (k *ConnectorManager) doReconcile(errs *[]error, reconcilePhase string, reconcileFunc func(ctx context.Context, connector *dbapi.Connector) error, joins string, query string, args ...interface{}) {
 	var count int64
 	var serviceErrs []error
 	glog.V(5).Infof("Reconciling %s connectors...", reconcilePhase)
@@ -276,7 +263,7 @@ func (k *ConnectorManager) doReconcile(errs *[]error, reconcilePhase string, rec
 			count++
 			return nil
 		})
-	}, query, args...); len(serviceErrs) > 0 {
+	}, joins, query, args...); len(serviceErrs) > 0 {
 		*errs = append(*errs, serviceErrs...)
 	}
 	if count == 0 && len(serviceErrs) == 0 {

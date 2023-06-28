@@ -15,6 +15,8 @@ Feature: connector agent API
     Given an admin user named "Ricky Bobby" with roles "cos-fleet-manager-admin-full"
     Given an admin user named "Cal Naughton Jr." with roles "cos-fleet-manager-admin-write"
     Given an admin user named "Carley Bobby" with roles "cos-fleet-manager-admin-read"
+    Given an org admin user named "Org admin user1"
+    Given a user named "Shard1"
 
   Scenario: connector cluster is created and agent processes assigned a deployment.
     Given I am logged in as "Jimmy"
@@ -218,7 +220,7 @@ Feature: connector agent API
     Then the response code should be 200
     And the response header "Content-Type" should match "application/json;stream=watch"
 
-    Given I wait up to "2" seconds for a response event
+    Given I wait up to "5" seconds for a response event
     # yeah.. this event is kinda ugly.. upgrading openapi-generator to 5.0.1 should help us omit more fields.
     Then the response should match json:
       """
@@ -1406,18 +1408,7 @@ Feature: connector agent API
     # Should work for Cal, who can write
     Given I am logged in as "Cal Naughton Jr."
     Given I set the "Content-Type" header to "application/merge-patch+json"
-    When I PATCH path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments/${upgradable_deployment_id}" with json body:
-      """
-      {
-        "spec": {
-          "shard_metadata": {
-            "connector_revision": ${shard_metadata_latest_revision}
-          }
-        }
-      }
-      """
-    Then the response code should be 202
-    And the response should match json:
+    When I wait up to "30" seconds for a PATCH on path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments/${upgradable_deployment_id}" with json body: "{ "spec": { "shard_metadata": { "connector_revision": ${shard_metadata_latest_revision} } } }" response code to match "202" and response to match json:
       """
       {
         "href": "${response.href}",
@@ -1650,16 +1641,7 @@ Feature: connector agent API
 
     # Upgrade by operator
     Given I set the "Content-Type" header to "application/merge-patch+json"
-    When I PATCH path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments/${upgradable_deployment_id}" with json body:
-      """
-      {
-        "spec": {
-          "operator_id": "${available_operator_id}"
-        }
-      }
-      """
-    Then the response code should be 202
-    And the response should match json:
+    When I wait up to "30" seconds for a PATCH on path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments/${upgradable_deployment_id}" with json body: "{ "spec": { "operator_id": "${available_operator_id}" } }" response code to match "202" and response to match json:
       """
       {
         "href": "${response.href}",
@@ -1866,9 +1848,7 @@ Feature: connector agent API
 
     # api admin should be able to see new connector deployment
     Given I am logged in as "Ricky Bobby"
-    When I wait up to "10" seconds for a GET on path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "2"
-    Then I GET path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments"
-    And the ".total" selection from the response should match "2"
+    When I wait up to "30" seconds for a GET on path "/v1/admin/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "2"
 
     # soft delete connector using admin API
     When I DELETE path "/v1/admin/kafka_connectors/${forced_connector_id}"
@@ -1936,9 +1916,7 @@ Feature: connector agent API
     When I DELETE path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}?force=true"
     Then the response code should be 204
     # deleted namespace should get reconciled
-    When I wait up to "15" seconds for a GET on path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}" response code to match "410"
-    When I GET path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}"
-    Then the response code should be 410
+    When I wait up to "30" seconds for a GET on path "/v1/admin/kafka_connector_namespaces/${forced_namespace_id}" response code to match "410"
 
     # Bobby should be able to delete cluster as an org admin
     Given I am logged in as "Bobby"
@@ -1972,7 +1950,7 @@ Feature: connector agent API
 
     # Connectors that were assigning the cluster get updated to not refer to them.
     Given I am logged in as "Jimmy"
-    When I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".namespace_id" selection to match ""
+    When I wait up to "30" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".namespace_id" selection to match ""
     Then I GET path "/v1/kafka_connectors/${connector_id}"
     And the response code should be 200
     And the ".desired_state" selection from the response should match "unassigned"
@@ -1992,16 +1970,13 @@ Feature: connector agent API
     When I DELETE path "/v1/admin/kafka_connectors/${connector_id}"
     Then the response code should be 204
     # unassigned connector should get reconciled and deleted
-    When I wait up to "10" seconds for a GET on path "/v1/admin/kafka_connectors/${connector_id}" response code to match "410"
-    Then I GET path "/v1/admin/kafka_connectors/${connector_id}"
-    And the response code should be 410
+    When I wait up to "30" seconds for a GET on path "/v1/admin/kafka_connectors/${connector_id}" response code to match "410"
 
-
-  Scenario: Bobby can stop and start an existing connector
-    Given I am logged in as "Bobby"
+  Scenario: Org admin user1 can stop and start an existing connector
+    Given I am logged in as "Org admin user1"
 
     #---------------------------------------------------------------------------------------------
-    # Create a target cluster, and get the shard access token, and connect it using the Shard user
+    # Create a target cluster, and get the shard access token, and connect it using the Shard1 user
     # --------------------------------------------------------------------------------------------
     When I POST path "/v1/kafka_connector_clusters" with json body:
       """
@@ -2020,7 +1995,7 @@ Feature: connector agent API
     And get and store access token using the addon parameter response as ${shard_token} and clientID as ${clientID}
     And I remember keycloak client for cleanup with clientID: ${clientID}
 
-    Given I am logged in as "Shard"
+    Given I am logged in as "Shard1"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
       """
@@ -2055,14 +2030,11 @@ Feature: connector agent API
     And the response should match ""
 
     # verify that initially the namespace status includes connectors_deployed=0
-    Given I am logged in as "Bobby"
-    When I wait up to "10" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response ".status.connectors_deployed" selection to match "0"
-    Then I GET path "/v1/kafka_connector_namespaces/${connector_namespace_id}"
-    And the response code should be 200
-    And the ".status.connectors_deployed" selection from the response should match "0"
+    Given I am logged in as "Org admin user1"
+    When I wait up to "30" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response ".status.connectors_deployed" selection to match "0"
 
     # agent should be able to post individual namespace status
-    Given I am logged in as "Shard"
+    Given I am logged in as "Shard1"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/namespaces/${connector_namespace_id}/status" with json body:
       """
@@ -2086,7 +2058,7 @@ Feature: connector agent API
     #---------------------------------------------------------------------------------------------
     # Create a connector
     # --------------------------------------------------------------------------------------------
-    Given I am logged in as "Bobby"
+    Given I am logged in as "Org admin user1"
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
@@ -2114,19 +2086,14 @@ Feature: connector agent API
     Given I store the ".id" selection from the response as ${connector_id}
 
     # verify that the namespace status includes connectors_deployed=1
-    When I wait up to "10" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response ".status.connectors_deployed" selection to match "1"
-    Then I GET path "/v1/kafka_connector_namespaces/${connector_namespace_id}"
-    And the response code should be 200
-    And the ".status.connectors_deployed" selection from the response should match "1"
+    When I wait up to "30" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response ".status.connectors_deployed" selection to match "1"
 
     #-----------------------------------------------------------------------------------------------------------------
-    # Shard waits for the deployment, marks it ready, Bobby waits to see ready status.
+    # Shard1 waits for the deployment, marks it ready, Org admin user1 waits to see ready status.
     #-----------------------------------------------------------------------------------------------------------------
-    Given I am logged in as "Shard"
+    Given I am logged in as "Shard1"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
-    Given I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
-    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments"
-    Then the ".total" selection from the response should match "1"
+    Given I wait up to "30" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
     Given I store the ".items[0].id" selection from the response as ${connector_deployment_id}
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
@@ -2137,10 +2104,8 @@ Feature: connector agent API
       """
     Then the response code should be 204
 
-    Given I am logged in as "Bobby"
-    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".status" selection to match "ready"
-    When I GET path "/v1/kafka_connectors/${connector_id}"
-    Then the ".status.state" selection from the response should match "ready"
+    Given I am logged in as "Org admin user1"
+    Given I wait up to "30" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".status.state" selection to match "ready"
 
    # verify user can search for connector using name, state, and ilike
     When I GET path "/v1/kafka_connectors/?search=id+like+${connector_id}+and+name+ilike+Example%25+and+state+ilike+Ready&orderBy=id%2Cnamespace_id%2Cdesired_state%2Cstate+asc%2Cupdated_at+desc"
@@ -2149,7 +2114,7 @@ Feature: connector agent API
     And the ".items[0].namespace_id" selection from the response should match "${connector_namespace_id}"
 
     #-----------------------------------------------------------------------------------------------------------------
-    # Bobby sets desired state to stopped.. Agent sees deployment stopped, it updates status to stopped,, Bobby then see stopped status
+    # Org admin user1 sets desired state to stopped.. Agent sees deployment stopped, it updates status to stopped,, Org admin user1 then see stopped status
     #-----------------------------------------------------------------------------------------------------------------
     # Updating the connector config should update the deployment.
     Given I set the "Content-Type" header to "application/merge-patch+json"
@@ -2161,11 +2126,9 @@ Feature: connector agent API
       """
     Then the response code should be 202
 
-    Given I am logged in as "Shard"
+    Given I am logged in as "Shard1"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
-    Given I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "stopped"
-    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
-    Then the ".spec.desired_state" selection from the response should match "stopped"
+    Given I wait up to "30" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "stopped"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
       {
@@ -2175,12 +2138,12 @@ Feature: connector agent API
       """
     Then the response code should be 204
 
-    Given I am logged in as "Bobby"
+    Given I am logged in as "Org admin user1"
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the ".status.state" selection from the response should match "stopped"
 
     #-----------------------------------------------------------------------------------------------------------------
-    # Bobby sets desired state to ready.. Agent sees new deployment
+    # Org admin user1 sets desired state to ready.. Agent sees new deployment
     #-----------------------------------------------------------------------------------------------------------------
     Given I set the "Content-Type" header to "application/merge-patch+json"
     When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
@@ -2191,11 +2154,9 @@ Feature: connector agent API
       """
     Then the response code should be 202
 
-    Given I am logged in as "Shard"
+    Given I am logged in as "Shard1"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
-    Given I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
-    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments"
-    Then the ".total" selection from the response should match "1"
+    Given I wait up to "30" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
     And the ".items[0].spec.desired_state" selection from the response should match "ready"
 
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
@@ -2210,7 +2171,7 @@ Feature: connector agent API
     #-----------------------------------------------------------------------------------------------------------------
     # Agent try to update status with a stale version and get 500
     #-----------------------------------------------------------------------------------------------------------------
-    Given I am logged in as "Shard"
+    Given I am logged in as "Shard1"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
@@ -2220,19 +2181,17 @@ Feature: connector agent API
       }
       """
     Then the response code should be 409
-    
+
     #-----------------------------------------------------------------------------------------------------------------
-    # Bobby sets desired state to deleted.. Agent sees deployment deleted, it updates status to deleted, Bobby can not see the connector anymore
+    # Org admin user1 sets desired state to deleted.. Agent sees deployment deleted, it updates status to deleted, Org admin user1 can not see the connector anymore
     #-----------------------------------------------------------------------------------------------------------------
-    Given I am logged in as "Bobby"
+    Given I am logged in as "Org admin user1"
     When I DELETE path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 204
 
-    Given I am logged in as "Shard"
+    Given I am logged in as "Shard1"
     And I set the "Authorization" header to "Bearer ${shard_token}"
-    And I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "deleted"
-    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
-    Then the ".spec.desired_state" selection from the response should match "deleted"
+    And I wait up to "30" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "deleted"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
       {
@@ -2242,11 +2201,8 @@ Feature: connector agent API
       """
     Then the response code should be 204
 
-    Given I am logged in as "Bobby"
-    And I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "410"
-    When I GET path "/v1/kafka_connectors/${connector_id}"
-    Then the response code should be 410
-
+    Given I am logged in as "Org admin user1"
+    And I wait up to "30" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "410"
 
     #---------------------------------------------------------------------------------------------
     # Validate cluster delete completes with empty namespace removed after agent ack
@@ -2254,11 +2210,8 @@ Feature: connector agent API
     # expire the existing namespace
     Given I run SQL "UPDATE connector_namespaces SET expiration='1000-01-01 10:10:10+00' WHERE id = '${connector_namespace_id}';" expect 1 row to be affected.
     # check that the namespace state is now deleting
-    Given I am logged in as "Bobby"
-    When I wait up to "10" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response ".status.state" selection to match "deleting"
-    Then I GET path "/v1/kafka_connector_namespaces/${connector_namespace_id}"
-    And the response code should be 200
-    And the ".status.state" selection from the response should match "deleting"
+    Given I am logged in as "Org admin user1"
+    When I wait up to "30" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response ".status.state" selection to match "deleting"
 
     # delete the cluster
     Given I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
@@ -2266,13 +2219,10 @@ Feature: connector agent API
     And the response should match ""
 
     # check that the cluster state is now `deleting`
-    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response ".status.state" selection to match "deleting"
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
-    Then the response code should be 200
-    And the ".status.state" selection from the response should match "deleting"
+    Given I wait up to "30" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response ".status.state" selection to match "deleting"
 
     # validate namespace processing can handle namespace status update errors and removes deleting namespace
-    Given I am logged in as "Shard"
+    Given I am logged in as "Shard1"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
       """
@@ -2317,14 +2267,12 @@ Feature: connector agent API
     """
 
     # wait for cluster to be deleted
-    Given I am logged in as "Bobby"
-    Given I wait up to "10" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "410"
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}"
-    Then the response code should be 410
+    Given I am logged in as "Org admin user1"
+    Given I wait up to "30" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}" response code to match "410"
     And I can forget keycloak clientID: ${clientID}
 
     # agent should get 410 for deleted cluster
-    Given I am logged in as "Shard"
+    Given I am logged in as "Shard1"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
       """
@@ -2452,10 +2400,7 @@ Feature: connector agent API
       # wait for the agent to see deployment
       Given I am logged in as "Shard3"
       Given I set the "Authorization" header to "Bearer ${shard_token}"
-      When I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
-      When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments"
-      Then the response code should be 200
-      And the ".total" selection from the response should match "1"
+      When I wait up to "30" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
 
       # set deleted_at to delete connector
       When I run SQL "UPDATE connectors SET deleted_at='1000-01-01 00:00:00.000000+00' WHERE id = '${connector_id}';" expect 1 row to be affected.
@@ -2666,10 +2611,7 @@ Feature: connector agent API
       # wait for the agent to see deployment
     Given I am logged in as "Shard3"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
-    When I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
-    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments"
-    Then the response code should be 200
-    And the ".total" selection from the response should match "1"
+    When I wait up to "30" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
     Given I store the ".items[0].id" selection from the response as ${connector_deployment_id}
 
     # remember the current namespace version
@@ -2687,9 +2629,7 @@ Feature: connector agent API
     And the ".items[0].id" selection from the response should match "${connector_namespace_id}"
 
     # agent deletes unassigning connector
-    When I wait up to "10" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "unassigned"
-    When I GET path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
-    Then the ".spec.desired_state" selection from the response should match "unassigned"
+    When I wait up to "30" seconds for a GET on path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "unassigned"
     When I PUT path "/v1/agent/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
       {
@@ -2711,12 +2651,8 @@ Feature: connector agent API
 
     # wait for namespace to get deleted
     Given I am logged in as "Bobby"
-    When I wait up to "10" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response code to match "410"
-    When I GET path "/v1/kafka_connector_namespaces/${connector_namespace_id}"
-    Then the response code should be 410
+    When I wait up to "30" seconds for a GET on path "/v1/kafka_connector_namespaces/${connector_namespace_id}" response code to match "410"
 
     # connector must be unassigned
-    When I wait up to "10" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".desired_state" selection to match "unassigned"
-    When I GET path "/v1/kafka_connectors/${connector_id}"
-    And the ".desired_state" selection from the response should match "unassigned"
+    When I wait up to "30" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response ".desired_state" selection to match "unassigned"
     And the ".namespace_id" selection from the response should match ""

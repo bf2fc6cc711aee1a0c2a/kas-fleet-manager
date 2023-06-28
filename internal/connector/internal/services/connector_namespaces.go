@@ -3,10 +3,11 @@ package services
 import (
 	"context"
 	"fmt"
-	"gorm.io/gorm/clause"
 	"math/rand"
 	"strings"
 	"time"
+
+	"gorm.io/gorm/clause"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/profiles"
 
@@ -214,12 +215,14 @@ func (k *connectorNamespaceService) setConnectorsDeployed(namespaces dbapi.Conne
 		Id    string
 		Count int32
 	}, 0)
-	if err := k.connectionFactory.New().Model(&dbapi.ConnectorDeployment{}).
-		Select("namespace_id as id, count(*) as count").
-		Group("namespace_id").
-		Where("namespace_id in ?", ids).
-		Find(&result).Error; err != nil {
-		return services.HandleGetError(`Connector namespace`, `id`, ids, err)
+	if err := k.connectionFactory.New().
+		Table("connector_namespaces").
+		Joins("left join connector_deployments on connector_namespaces.id = namespace_id").
+		Select("connector_namespaces.id as id, count(*) as count").
+		Group("connector_namespaces.id").
+		Where("namespace_id is not null and connector_deployments.deleted_at is null and connector_namespaces.id in ?", ids).
+		Scan(&result).Error; err != nil {
+		return services.HandleGetError(`Connector namespace deployment count`, `namespaces ids`, ids, err)
 	}
 
 	// set counts for non-empty ns

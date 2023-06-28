@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"context"
+	"strings"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"k8s.io/apimachinery/pkg/util/validation"
-	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/utils/arrays"
 
@@ -36,7 +37,7 @@ func connectorValidationFunction(connectorTypesService services.ConnectorTypesSe
 	return func() *errors.ServiceError {
 		ct, err := connectorTypesService.Get(*connectorTypeId)
 		if err != nil {
-			return errors.BadRequest("YYY invalid connector type id %v : %s", connectorTypeId, err)
+			return errors.BadRequest("Invalid connector type id %v : %s", connectorTypeId, err)
 		}
 
 		if !arrays.Contains(ct.ChannelNames(), string(*channel)) {

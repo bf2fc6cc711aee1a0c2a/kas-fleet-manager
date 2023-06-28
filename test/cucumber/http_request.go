@@ -48,8 +48,9 @@ func init() {
 		ctx.Step(`^I (GET|POST|PUT|DELETE|PATCH|OPTION) path "([^"]*)"$`, s.sendHttpRequest)
 		ctx.Step(`^I (GET|POST|PUT|DELETE|PATCH|OPTION) path "([^"]*)" as a json event stream$`, s.sendHttpRequestAsEventStream)
 		ctx.Step(`^I (GET|POST|PUT|DELETE|PATCH|OPTION) path "([^"]*)" with json body:$`, s.SendHttpRequestWithJsonBody)
-		ctx.Step(`^I wait up to "([^"]*)" seconds for a GET on path "([^"]*)" response "([^"]*)" selection to match "([^"]*)"$`, s.iWaitUpToSecondsForAGETOnPathResponseSelectionToMatch)
-		ctx.Step(`^I wait up to "([^"]*)" seconds for a GET on path "([^"]*)" response code to match "([^"]*)"$`, s.iWaitUpToSecondsForAGETOnPathResponseCodeToMatch)
+		ctx.Step(`^I wait up to "([^"]*)" seconds for a (GET|POST|PUT|DELETE|PATCH|OPTION) on path "([^"]*)" response "([^"]*)" selection to match "([^"]*)"$`, s.iWaitUpToSecondsForResponseSelectionToMatch)
+		ctx.Step(`^I wait up to "([^"]*)" seconds for a (GET|POST|PUT|DELETE|PATCH|OPTION) on path "([^"]*)" response code to match "([^"]*)"$`, s.iWaitUpToSecondsForResponseCodeToMatch)
+		ctx.Step(`^I wait up to "([^"]*)" seconds for a (GET|POST|PUT|DELETE|PATCH|OPTION) on path "([^"]*)" with json body: "(.*?)" response code to match "([^"]*)" and response to match json:$`, s.iWaitUpToSecondsForResponseCodeToMatchAndResponseToMatch)
 		ctx.Step(`^I wait up to "([^"]*)" seconds for a response event$`, s.iWaitUpToSecondsForAResponseJsonEvent)
 	})
 }
@@ -187,22 +188,18 @@ func (s *TestScenario) iWaitUpToSecondsForAResponseJsonEvent(timeout float64) er
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout*float64(time.Second)))
 	defer cancel()
 
+	var err error
 	select {
 	case event := <-session.EventStreamEvents:
-
 		session.respJson = event
-		var err error
 		session.RespBytes, err = json.Marshal(event)
-		if err != nil {
-			return err
-		}
+		return err
 	case <-ctx.Done():
+		return fmt.Errorf("a Response Json event was not received in %v, last error was %w", time.Duration(timeout*float64(time.Second)), err)
 	}
-
-	return nil
 }
 
-func (s *TestScenario) iWaitUpToSecondsForAGETOnPathResponseCodeToMatch(timeout float64, path string, expected int) error {
+func (s *TestScenario) iWaitUpToSecondsForResponseCodeToMatch(timeout float64, method string, path string, expected int) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout*float64(time.Second)))
 	defer cancel()
@@ -212,25 +209,26 @@ func (s *TestScenario) iWaitUpToSecondsForAGETOnPathResponseCodeToMatch(timeout 
 		session.Ctx = nil
 	}()
 
+	var errRespCodeComparison error
 	for {
-		err := s.sendHttpRequest("GET", path)
+		err := s.sendHttpRequest(method, path)
 		if err == nil {
-			err = s.theResponseCodeShouldBe(expected)
-			if err == nil {
+			errRespCodeComparison = s.theResponseCodeShouldBe(expected)
+			if errRespCodeComparison == nil {
 				return nil
 			}
 		}
 
 		select {
 		case <-ctx.Done():
-			return nil
+			return fmt.Errorf("a Response with code %d from %s to path %s was not received in %v, last response error was %w", expected, method, path, time.Duration(timeout*float64(time.Second)), errRespCodeComparison)
 		default:
 			time.Sleep(time.Duration(timeout * float64(time.Second) / 10.0))
 		}
 	}
 }
 
-func (s *TestScenario) iWaitUpToSecondsForAGETOnPathResponseSelectionToMatch(timeout float64, path string, selection, expected string) error {
+func (s *TestScenario) iWaitUpToSecondsForResponseSelectionToMatch(timeout float64, method string, path string, selection, expected string) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout*float64(time.Second)))
 	defer cancel()
@@ -240,18 +238,50 @@ func (s *TestScenario) iWaitUpToSecondsForAGETOnPathResponseSelectionToMatch(tim
 		session.Ctx = nil
 	}()
 
+	var errRespComparison error
 	for {
-		err := s.sendHttpRequest("GET", path)
+		err := s.sendHttpRequest(method, path)
 		if err == nil {
-			err = s.theSelectionFromTheResponseShouldMatch(selection, expected)
-			if err == nil {
+			errRespComparison = s.theSelectionFromTheResponseShouldMatch(selection, expected)
+			if errRespComparison == nil {
 				return nil
 			}
 		}
 
 		select {
 		case <-ctx.Done():
-			return nil
+			return fmt.Errorf("a Response from %s to path %s with selection %s matching %s was not received in %v, last attempt error was %w", method, path, selection, expected, time.Duration(timeout*float64(time.Second)), errRespComparison)
+		default:
+			time.Sleep(time.Duration(timeout * float64(time.Second) / 10.0))
+		}
+	}
+}
+
+func (s *TestScenario) iWaitUpToSecondsForResponseCodeToMatchAndResponseToMatch(timeout float64, method string, path string, jsonTxt string, expectedCode int, expectedResponse *godog.DocString) error {
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout*float64(time.Second)))
+	defer cancel()
+	session := s.Session()
+	session.Ctx = ctx
+	defer func() {
+		session.Ctx = nil
+	}()
+
+	var errRespComparison error
+	var errRespCodeComparison error
+	for {
+		err := s.SendHttpRequestWithJsonBody(method, path, &godog.DocString{Content: jsonTxt})
+		if err == nil {
+			errRespCodeComparison = s.theResponseCodeShouldBe(expectedCode)
+			errRespComparison = s.TheResponseShouldMatchJsonDoc(expectedResponse)
+			if errRespCodeComparison == nil && errRespComparison == nil {
+				return nil
+			}
+		}
+
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("a Response with code %d and content %s from %s to path %s was not received in %v, last response error was %w", expectedCode, expectedResponse, method, path, time.Duration(timeout*float64(time.Second)), errRespComparison)
 		default:
 			time.Sleep(time.Duration(timeout * float64(time.Second) / 10.0))
 		}

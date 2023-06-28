@@ -395,12 +395,11 @@ func (h *ConnectorAdminHandler) DeleteConnector(writer http.ResponseWriter, requ
 
 			// check force flag to force deletion of connector and deployments
 			if parseBoolParam(request.URL.Query().Get("force")) {
-				serviceError = h.ConnectorsService.ForceDelete(request.Context(), connectorId)
+				return nil, h.ConnectorsService.ForceDelete(request.Context(), connectorId)
 			} else {
 				ctx := request.Context()
 				return nil, HandleConnectorDelete(ctx, h.ConnectorsService, h.NamespaceService, connectorId)
 			}
-			return nil, serviceError
 		},
 	}
 
@@ -605,6 +604,7 @@ func (h *ConnectorAdminHandler) PatchConnectorDeployment(writer http.ResponseWri
 			// Handle the fields that support being updated...
 			var updatedDeployment dbapi.ConnectorDeployment
 			updatedDeployment.ID = existingDeployment.ID
+			updatedDeployment.Version = existingDeployment.Version
 			if len(resource.Spec.ShardMetadata) != 0 {
 				// channel update
 				updateRevision, err := workers.GetShardMetadataRevision(resource.Spec.ShardMetadata)
