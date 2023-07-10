@@ -44,7 +44,7 @@ This lists the feature flags and their sub-configurations to enable/disable and 
     - `kafka-tls-key-file` [Required]: The path to the file containing the Kafka TLS private key (default: `'secrets/kafka-tls.key'`).
 - **enable-developer-instance**: Enable the creation of one kafka developer instances per user    
 - **quota-type**: Sets the quota service to be used for access control when requesting Kafka instances (options: `ams` or `quota-management-list`, default: `quota-management-list`).
-    > For more information on the quota service implementation, see the [quota service architecture](./architecture/quota-service-implementation) architecture documentation.
+    > For more information on the quota service implementation, see the [quota service architecture](./architecture/quota-service-implementation.md) architecture documentation.
     - If this is set to `quota-management-list`, quotas will be managed via the quota management list configuration. 
         > See [quota control](./quota-management-list-configuration.md) documentation for more information about the quota management list.
         - `enable-instance-limit-control` [Required]: Enables enforcement of limits on how much Kafka instances a user can create (default: `false`). 

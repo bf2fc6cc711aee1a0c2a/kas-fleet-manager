@@ -48,7 +48,7 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 ### Adding a New Config File
 If the new configuration flag doesn't fit in any of the existing config file, a new one should be created.
 
-1. See the [Adding a New Config File](/docs/adding-a-new-config-module.md) documentation.
+1. See the [Adding a New Config File](adding-a-new-config-module.md) documentation.
 2. Define any new flags in the `AddFlags()` function.
 
 ### Verify Addition of New Flags

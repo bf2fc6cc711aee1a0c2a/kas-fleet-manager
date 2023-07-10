@@ -12,7 +12,7 @@ Data Plane OSD Cluster Dynamic Scaling functionality currently deals with:
 
 ## Autoscaling of worker nodes of an OSD cluster
 
-Autoscaling of worker nodes of an OSD cluster is done by leveraging the [Cluster Autoscaler](https://docs.openshift.com/container-platform/4.9/machine_management/applying-autoscaling.html) as described in [AP-15: Dynamic Scaling of Data Plane Clusters](https://architecture.appservices.tech/ap/15/#autoscaling-of-nodes). For Manual clusters, this has to be enabled manually. Worker node autoscaling is enabled by default for all clusters that are created dynamically by the Fleet manager
+Autoscaling of worker nodes of an OSD cluster is done by leveraging the [Cluster Autoscaler](https://docs.openshift.com/container-platform/4.9/machine_management/applying-autoscaling.html) as described in [AP-15: Dynamic Scaling of Data Plane Clusters](https://architecture.bf2.dev/ap/15/). For Manual clusters, this has to be enabled manually. Worker node autoscaling is enabled by default for all clusters that are created dynamically by the Fleet manager
 
 ## Prewarming of worker nodes 
 

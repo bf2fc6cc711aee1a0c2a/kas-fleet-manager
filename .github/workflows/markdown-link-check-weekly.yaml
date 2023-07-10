@@ -1,0 +1,32 @@
+name: Weekly check Markdown links
+
+# Run this workflow every Monday at 07:00 UTC
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+
+# Disable permissions for all available scopes for the GITHUB_TOKEN
+# except for the metadata scope.
+permissions: {}
+
+jobs:
+  weekly-markdown-link-check:
+    name: Weekly Check Markdown links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code under the $GITHUB_WORKSPACE directory
+        uses: actions/checkout@v3
+      - name: Check markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@1.0.15
+        with:
+          use-quiet-mode: 'no'
+          use-verbose-mode: 'yes'
+          config-file: './.markdown-link-check/markdown-link-check-config.json'
+          check-modified-files-only: 'no'
+          file-extension: '.md'
+          # Unfortunately there's currently not a way to ignore specific
+          # directories/paths in the GitHub action so we need to specify
+          # the desired set of directories/paths that we want to check
+          # in order to avoid checking undesired directories/paths
+          folder-path: './docs, ./pkg, ./templates, ./.github, ./cmd, ./internal, ./openapi, ./docker, ./scripts'
+          file-path: './README.md, ./CONTRIBUTING.md'
