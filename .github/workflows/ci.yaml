@@ -90,7 +90,7 @@ jobs:
 
     steps:
       - name: Check out code under the $GITHUB_WORKSPACE directory
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Go 1.19.6
         uses: actions/setup-go@v4
         with:
