@@ -189,7 +189,7 @@ help:
 	@echo "make test/cluster/cleanup                               remove OSD cluster after running tests against real OCM"
 	@echo "make test/run                                           Run the test container"
 	@echo "make code/fix                                           format files"
-	@echo "make moq/generate"                                      generate go moq files"
+	@echo "make moq/generate                                       generate go moq files"
 	@echo "make generate                                           generate go and openapi modules"
 	@echo "make openapi/generate                                   generate openapi modules"
 	@echo "make openapi/validate                                   validate openapi schema"
