@@ -13,13 +13,14 @@
 #   - [required] ams_product: AMS product to be used. Accepted values: ['RHOSAK', 'RHOSAKTrial', 'RHOSAKEval', 'RHOSAKCC']
 #   - [required] ams_billing_models: List of AMS available billing models: Accepted values: ['standard', 'marketplace', 'marketplace-rhm', 'marketplace-aws']
 #   - [optional] grace_period_days: The length of time in days when a Kafka instance is set to be in a 'grace period'. Default value: 0, minimum value: 0
-#                                   This configuration only applies to kafka billing models that can be 'promoted' to another kafka billing model. 
 #  
 #                                   A Kafka instance enters a 'grace period' when a user or an organisation's subscription is no longer valid 
-#                                   (i.e. subscription in AMS expires). 
-#                                   During this grace period, the Kafka instance status changes to 'suspended' and the only action a user can perform 
-#                                   is to 'promote' their Kafka instance to use a valid subscription of another kafka billing model.
-#                                   If the Kafka instance has not been promoted by the end of the grace period, the Kafka expires and is marked for deletion.
+#                                   (i.e. subscription in AMS is not active or is no longer available). 
+#                                   During this grace period, the Kafka instance status changes to 'suspended'. The only actions a user can perform are to:
+#                                      1. Renew their subscription
+#                                      2. Promote their Kafka instance to use an active subscription of another Kafka billing model (if the option is available)
+#                                   If the subscription has not been renewed or the Kafka instance has not been promoted by the end of the grace period, the 
+#                                   Kafka instance expires and is marked for deletion.
 # 
 #                                   If this field is not specified or is set to 0, Kafka instances with this instance type and billing model are not given
 #                                   any grace period. In this case, when the user or organisation's subscription is no longer valid, the Kafka instance 
